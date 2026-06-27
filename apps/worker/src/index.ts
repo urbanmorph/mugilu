@@ -5,7 +5,7 @@ import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
 import { renderStationOg, renderConditionsOg } from "./og";
 import { faviconSvg, appleIconPng } from "./icon";
 import { findNearest, parseLatLon } from "./near";
-import { buildConditions, renderConditionsMarkdown } from "./conditions";
+import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
 import {
   renderConditionsPage,
   renderHome,
@@ -25,7 +25,7 @@ import { collectFires, loadFires } from "./firms";
 import { nationalHighlights, worstAirStation } from "./highlights";
 import type { NationalHighlights } from "./highlights";
 import { stateAt } from "./place";
-import { ambientRisk, parsePersona } from "./score";
+import { parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
 export interface Env {
@@ -231,7 +231,7 @@ export default {
         return renderConditionsOg(conditions, persona);
       }
       if (ext === "json") {
-        const body = { ...conditions, ambient: ambientRisk(conditions, persona) };
+        const body = serializeConditionsV1(conditions, persona);
         return cachedResponse(JSON.stringify(body, null, 2), "application/json; charset=utf-8");
       }
       if (ext === "md") {

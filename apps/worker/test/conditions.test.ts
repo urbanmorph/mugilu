@@ -1,7 +1,29 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildConditions, renderConditionsMarkdown } from "../src/conditions";
+import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "../src/conditions";
 import type { Snapshot } from "../src/types";
+
+test("serializeConditionsV1: a stable, self-describing /c v1 contract", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch();
+  try {
+    const c = await buildConditions(snap(), 12.9716, 77.5946);
+    const v1 = serializeConditionsV1(c, "everyone") as Record<string, any>;
+    assert.equal(v1.schema, "mugilu/conditions");
+    assert.equal(v1.version, 1); // a version handle exists
+    assert.equal(v1.units.pollutants.co, "mg/m3"); // CO mg/m³ vs the rest is discoverable
+    assert.ok(Array.isArray(v1.warnings)); // one null convention: always a list
+    assert.equal(v1.air.kind, "measured"); // provenance always present
+    assert.equal(v1.air.yll_years, 1.96); // renamed from cryptic `yll`
+    assert.ok("as_of" in v1.air); // per-layer freshness
+    assert.equal(v1.heat.kind, "modelled");
+    assert.ok("risk_band" in v1.ambient && !("band" in v1.ambient)); // no enum clash with air.band
+    assert.equal(v1.ambient.driver, v1.ambient.driver.toLowerCase()); // matches the layer keys
+    assert.equal(typeof v1.ambient.summary, "string");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
 
 const FORECAST = {
   current: {

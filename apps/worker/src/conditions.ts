@@ -7,7 +7,7 @@ import { nearestPlace } from "./place";
 import { getLocationAlerts } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
-import { ambientRisk, ambientMeaning, smokeLevel, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, PERSONA_LABEL } from "./score";
 import type { Persona } from "./score";
 
 // Beyond this, a ground station is too far to represent the query point, so we
@@ -235,4 +235,75 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
 
   out.push("---", c.attribution, "", `> ${c.disclaimer}`);
   return out.join("\n");
+}
+
+// Units are not otherwise discoverable from the bare numbers — notably CO is
+// mg/m³ while the other pollutants are µg/m³. This map ships in every response.
+const UNITS = {
+  pollutants: { co: "mg/m3", default: "ug/m3" },
+  aqi: "cpcb_0_500",
+  yll_years: "years",
+  temp_c: "C",
+  apparent_c: "C",
+  wet_bulb_c: "C",
+  wbgt_c: "C",
+  wind: "km/h",
+  visibility: "m",
+  distance_km: "km",
+  frp_sum: "MW",
+  score: "0-100",
+  level: "0-3",
+};
+
+/** Serialize the internal model into the stable, self-describing /c `.json` v1
+ *  contract: a `schema` + `version` handle, a `units` map, machine-readable
+ *  provenance (`kind`) and freshness (`as_of`) on every layer, consistent
+ *  naming (`yll_years`, ambient `risk_band`, lowercase driver ids) and one null
+ *  convention (`place: null`, `warnings: []`) — so a stranger can build on it
+ *  without reading source. The HTML/MD/PNG renderers keep the internal model. */
+export function serializeConditionsV1(c: Conditions, persona: Persona) {
+  const risk = ambientRisk(c, persona);
+  const also = personaAlso(risk);
+  const modelled = <T extends object>(o: T | null) => (o ? { kind: "modelled" as const, ...o, as_of: c.as_of } : null);
+  return {
+    schema: "mugilu/conditions",
+    version: 1,
+    location: c.location,
+    place: c.place ?? null,
+    as_of: c.as_of,
+    units: UNITS,
+    air: c.air
+      ? {
+          kind: c.air.station ? ("measured" as const) : ("modelled" as const),
+          aqi: c.air.aqi,
+          aqi_scale: "cpcb",
+          band: c.air.band,
+          pollutants: c.air.pollutants,
+          yll_years: c.air.yll ?? null,
+          station: c.air.station,
+          source: c.air.source,
+          as_of: c.air_as_of ?? c.as_of,
+        }
+      : null,
+    heat: modelled(c.heat),
+    rain: modelled(c.rain),
+    uv: modelled(c.uv),
+    dust: modelled(c.dust),
+    wind: modelled(c.wind),
+    visibility: modelled(c.visibility),
+    smoke: c.smoke ? { kind: "observed" as const, ...c.smoke, window_h: 24, as_of: c.as_of } : null,
+    warnings: (c.warnings ?? []).map((w) => ({ ...w, source: "sachet" as const })),
+    ambient: {
+      risk_band: risk.band,
+      level: risk.level,
+      score: risk.score,
+      driver: risk.driver.toLowerCase(),
+      persona: risk.persona,
+      summary: ambientMeaning(risk),
+      persona_also: also ?? null,
+      hazards: risk.hazards.map((h) => ({ hazard: h.hazard.toLowerCase(), level: h.level, risk_band: h.band })),
+    },
+    attribution: c.attribution,
+    disclaimer: c.disclaimer,
+  };
 }

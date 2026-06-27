@@ -46,6 +46,7 @@ export interface HazardRisk {
 }
 export interface AmbientRisk {
   band: RiskBand;
+  level: number; // 0–3, the worst hazard's level (band as an integer)
   score: number; // 0–100 proxy of the worst hazard (band midpoint)
   driver: string; // the dominant hazard
   persona: Persona;
@@ -180,10 +181,10 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
   }
 
   if (hazards.length === 0) {
-    return { band: "low", score: 0, driver: "none", persona, hazards };
+    return { band: "low", level: 0, score: 0, driver: "none", persona, hazards };
   }
   const worst = hazards.reduce((a, b) => (b.level > a.level ? b : a));
-  return { band: worst.band, score: SCORE[worst.level], driver: worst.hazard, persona, hazards };
+  return { band: worst.band, level: worst.level, score: SCORE[worst.level], driver: worst.hazard, persona, hazards };
 }
 
 // What each band means in plain language, per dominant hazard, so the score

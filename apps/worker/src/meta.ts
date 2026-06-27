@@ -40,11 +40,14 @@ export function llmsTxt(siteUrl: string): string {
 - Terms and attribution: ${siteUrl}/terms
 
 ## What a conditions response carries
-air (AQI + band + pollutants + AQLI years-of-life-lost, from the nearest ground
-station), heat (temperature, humidity, feels-like, wet-bulb), rain, uv, dust, any
-official NDMA/SACHET warnings active at the point, and an "ambient" object naming
-the worst hazard weighted by persona. Attribution and a disclaimer travel inside
-every response.
+The JSON is a versioned, self-describing contract: a "schema" and "version", and a
+"units" map (notably CO is mg/m3 while other pollutants are ug/m3). Layers: air
+(AQI + band + pollutants + AQLI years-of-life-lost), heat (temperature, humidity,
+feels-like, wet-bulb, WBGT), rain, uv, dust, wind, visibility, fire/crop-burn smoke
+(NASA FIRMS), and any official NDMA/SACHET warnings at the point. Each layer carries
+its "source", a "kind" (measured / modelled / observed) and its own "as_of". An
+"ambient" object names the single worst hazard weighted by persona, with a plain
+"summary". Attribution and a disclaimer travel inside every response.
 
 ## Sources
 Air: CPCB, Airnet (CSTEP), Aurassure via the OAQ broker, plus OpenAQ.
