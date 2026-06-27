@@ -33,7 +33,9 @@ export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40)
   try {
     const res = await fetch(url, {
       cf: { cacheTtl: 300, cacheEverything: true },
-      signal: AbortSignal.timeout(4000),
+      // Tight bound on the /c cold path: SACHET is a slow gov API, and warnings
+      // are an enrichment — don't let it hold up the whole page.
+      signal: AbortSignal.timeout(2500),
     });
     if (!res.ok) return [];
     const body = (await res.json()) as { alerts?: RawAlert[] };

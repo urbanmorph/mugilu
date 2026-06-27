@@ -278,6 +278,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .raw{margin:.95rem 0 0;font:500 .82rem var(--mono);letter-spacing:.02em}
 .raw a{color:var(--cond);text-decoration:none}
 .raw a:hover{text-decoration:underline}
+.cxback{margin:1.1rem 0 0;font-size:.9rem}.cxback a{color:var(--muted);text-decoration:none}.cxback a:hover{color:var(--ink)}
 @media(prefers-reduced-motion:no-preference){
 .coord,.loc,.when,.warn,.amb,.lyr{animation:rise .55s both cubic-bezier(.2,.7,.2,1)}
 .loc{animation-delay:.03s}.when{animation-delay:.06s}.warn{animation-delay:.09s}.amb{animation-delay:.12s}
@@ -395,6 +396,24 @@ function renderWarning(w: Warning): string {
   const meta = [w.severity, w.until ? `until ${w.until}` : ""].filter(Boolean).join(" · ");
   return `<div class="warn" style="--wc:${warnColor(w.color)}">${icon("warn")}<div><b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div></div>`;
 }
+
+// Records this /c visit into the browser's "Your places" list (first-party,
+// localStorage; no login, no server). The reverse-geocoded label is read from
+// the page so "use my location" shows a name, not raw coordinates.
+const PLACE_RECORDER = `<script>
+(function(){try{
+var pp=location.pathname.split('/');
+if(pp[1]!=='c'||!pp[2]||pp[2].indexOf(',')<0)return;
+var id=pp[2],c=id.split(','),el=document.querySelector('h1.loc'),label=el?el.textContent.trim():id;
+var K='mugilu:places',L;try{L=JSON.parse(localStorage.getItem(K))||[]}catch(e){L=[]}
+var p=L.filter(function(x){return x.id===id})[0];
+if(p){p.n=(p.n||0)+1;p.t=Date.now();if(!p.name)p.label=label}
+else{L.push({id:id,lat:c[0],lon:c[1],label:label,n:1,t:Date.now(),fav:false})}
+L.sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});
+var f=L.filter(function(x){return x.fav}),r=L.filter(function(x){return !x.fav}).slice(0,Math.max(0,12-f.length));
+localStorage.setItem(K,JSON.stringify(f.concat(r)));
+}catch(e){}})();
+</script>`;
 
 export function renderConditionsPage(c: Conditions, persona: Persona = "everyone"): string {
   const risk = ambientRisk(c, persona);
@@ -574,12 +593,13 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
       <p class="attr">${esc(c.attribution)}</p>
       <p class="disc">${esc(c.disclaimer)}</p>
       <p class="raw"><a href="/c/${slug}.json">JSON</a> · <a href="/c/${slug}.md">Markdown</a> · <a href="/c/${slug}.png">PNG</a> · <a href="/embed/${slug}">Embed</a></p>
+      <p class="cxback"><a href="/">← Look up another place</a></p>
     </footer>
   </article>`;
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
   const desc = `${c.place ?? stationCity ?? slug}: ${ambientMeaning(risk)} Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.`;
-  return shell(`${place}: mugilu`, body, css, desc);
+  return shell(`${place}: mugilu`, body + PLACE_RECORDER, css, desc);
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun" — the time travels on embeds/PNGs. */
@@ -845,10 +865,19 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg
 .ac li{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.95rem}
 .ac li span{color:var(--muted);font-size:.85rem}
 .ac li.on,.ac li:hover{background:var(--bg)}
+.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:42ch}.shint b{color:var(--ink);font-weight:600}
 .nearme{display:inline-flex;align-items:center;gap:.4rem;font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;margin:0 0 1rem}
 .nearme .ic{width:16px;height:16px;color:var(--sky)}
 .notice{color:#b45309;font-size:.9rem;margin:.2rem 0 1rem}
 .cities{color:var(--muted);font-size:.9rem;line-height:1.9}.cities a{color:var(--sky);text-decoration:none}
+.yourplaces{margin:0 0 1.2rem}
+.yourplaces h2{margin:0 0 .4rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pl{display:flex;align-items:center;gap:.55rem;padding:3px 0}
+.pl a{flex:1;color:var(--ink);text-decoration:none;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .plfav{background:none;border:0;cursor:pointer;font-size:1.05rem;color:var(--muted);padding:0;line-height:1}
+.pl .plfav.on{color:var(--sky)}
+.pl .plx{background:none;border:0;cursor:pointer;color:var(--muted);font-size:.95rem;padding:0 .15rem;opacity:.45;line-height:1}
+.pl .plx:hover{opacity:1}
 .hero-now{margin:0 0 1.4rem;border:1px solid color-mix(in srgb,var(--cond,var(--sky)) 32%,var(--line));border-radius:14px;padding:14px 16px;background:linear-gradient(180deg,color-mix(in srgb,var(--cond,var(--sky)) 13%,var(--card)),var(--card))}
 .hero-now h2{margin:0 0 .5rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .hero-now .hl{display:block;text-decoration:none;color:var(--ink);padding:5px 0;font-size:.98rem;line-height:1.35}
@@ -880,14 +909,16 @@ export function renderHome(
   <p class="covers"><span>${icon("air")} air</span><span>${icon("heat")} heat</span><span>${icon("rain")} rain</span><span>${icon("sun")} UV</span><span>${icon("dust")} dust</span><span>${icon("warn")} warnings</span></p>
   <div class="acwrap">
     <form class="search" action="/go" method="get" role="search">
-      <input id="q" name="q" type="search" placeholder="Search a city or place…" autocomplete="off" autofocus aria-label="Search a place">
+      <input id="q" name="q" type="search" placeholder="A place in India, or lat,lon" autocomplete="off" autofocus aria-label="Look up a place in India">
       <button type="submit">Go</button>
     </form>
     <ul id="ac" class="ac" role="listbox"></ul>
   </div>
+  <p class="shint">Look up any spot in India to see <b>its sky</b> — air, heat, rain, dust. It's not a map.</p>
   <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} Use my location</button>
   ${notice}
   ${highlights ? renderHero(highlights, meta) : ""}
+  <div id="yp" class="yourplaces" hidden></div>
   <p class="cities">Popular: ${cityLinks}</p>
   <script>
   var b=document.getElementById('nearme'),label=b.textContent;
@@ -896,12 +927,39 @@ export function renderHome(
   var q=document.getElementById('q'),ac=document.getElementById('ac'),items=[],ix=-1,t,seq=0;
   function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}
   function hide(){ac.innerHTML='';items=[];ix=-1;}
-  function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].className=i===ix?'on':'';}
+  function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].className=i===ix?'on':'';if(items[ix])pf('/c/'+items[ix].lat+','+items[ix].lon);}
   function go(i){var x=items[i];if(x)location.href='/c/'+x.lat+','+x.lon;}
-  q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(t);if(v.length<2){hide();return;}var s=++seq;t=setTimeout(function(){fetch('/suggest?q='+encodeURIComponent(v)).then(function(r){return r.json();}).then(function(d){if(s!==seq)return;items=d.suggestions||[];ix=-1;ac.innerHTML=items.map(function(x,i){return '<li role="option" data-i="'+i+'"><b>'+esc(x.label)+'</b>'+(x.sublabel?' <span>'+esc(x.sublabel)+'</span>':'')+'</li>';}).join('');}).catch(function(){if(s===seq)hide();});},150);});
+  q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(t);if(v.length<2){hide();return;}var s=++seq;t=setTimeout(function(){fetch('/suggest?q='+encodeURIComponent(v)).then(function(r){return r.json();}).then(function(d){if(s!==seq)return;items=d.suggestions||[];ix=-1;ac.innerHTML=items.map(function(x,i){return '<li role="option" data-i="'+i+'"><b>'+esc(x.label)+'</b>'+(x.sublabel?' <span>'+esc(x.sublabel)+'</span>':'')+'</li>';}).join('');if(items[0])pf('/c/'+items[0].lat+','+items[0].lon);}).catch(function(){if(s===seq)hide();});},150);});
   q.addEventListener('keydown',function(e){if(!items.length)return;if(e.key==='ArrowDown'){ix=(ix+1)%items.length;e.preventDefault();paint();}else if(e.key==='ArrowUp'){ix=(ix-1+items.length)%items.length;e.preventDefault();paint();}else if(e.key==='Enter'&&ix>=0){e.preventDefault();go(ix);}else if(e.key==='Escape'){hide();}});
   ac.addEventListener('mousedown',function(e){var li=e.target.closest('li');if(li)go(+li.getAttribute('data-i'));});
   q.addEventListener('blur',function(){setTimeout(hide,150);});
+  // Warm the edge + upstreams for a /c URL so the click lands instantly (dedup).
+  function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
+  ac.addEventListener('mouseover',function(e){var li=e.target.closest('li');if(li){var x=items[+li.getAttribute('data-i')];if(x)pf('/c/'+x.lat+','+x.lon);}});
+  // Your places: recents + favourites from localStorage (first-party, no login).
+  (function(){
+    var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;
+    function load(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}}
+    function save(L){try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}}
+    function nm(p){return p.name||p.label||(p.lat+', '+p.lon);}
+    function ord(L){return L.slice().sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});}
+    function render(){
+      var L=ord(load());
+      if(!L.length){yp.hidden=true;return;}
+      yp.hidden=false;
+      yp.innerHTML='<h2>Your places</h2>'+L.map(function(p){return '<div class="pl" data-id="'+esc(p.id)+'"><button class="plfav'+(p.fav?' on':'')+'" data-a="fav" type="button" aria-pressed="'+(p.fav?'true':'false')+'" title="Favourite">'+(p.fav?'\\u2605':'\\u2606')+'</button><a href="/c/'+esc(p.lat)+','+esc(p.lon)+'">'+esc(nm(p))+'</a><button class="plx" data-a="ren" type="button" title="Rename">\\u270e</button><button class="plx" data-a="del" type="button" title="Remove">\\u00d7</button></div>';}).join('');
+      L.slice(0,4).forEach(function(p){pf('/c/'+p.lat+','+p.lon);});
+      if(L[0]&&!render.sr){render.sr=1;try{var sr=document.createElement('script');sr.type='speculationrules';sr.textContent=JSON.stringify({prerender:[{source:'list',urls:['/c/'+L[0].lat+','+L[0].lon]}]});document.head.appendChild(sr);}catch(e){}}
+    }
+    yp.addEventListener('click',function(e){
+      var btn=e.target.closest('button[data-a]');if(!btn)return;
+      var id=btn.closest('.pl').getAttribute('data-id'),a=btn.getAttribute('data-a');
+      var L=load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
+      if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt('Name this place (e.g. Home, Office)',p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});
+      save(L);render();
+    });
+    render();
+  })();
   </script>`;
 
   return shell("mugilu: India's open sky", body, HOME_CSS);

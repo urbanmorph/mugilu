@@ -38,6 +38,21 @@ test("renderHome: near-me is progressive enhancement (geolocation)", () => {
   assert.match(renderHome(), /geolocation/);
 });
 
+test("renderHome: search sets expectations (a sky lookup, not a map)", () => {
+  const html = renderHome();
+  assert.match(html, /not a map/i); // dispels the Google-Maps assumption
+  assert.match(html, /lat,lon/); // placeholder signals coordinates work
+});
+
+test("renderHome: has the 'Your places' list (localStorage recents/favourites) + prefetch", () => {
+  const html = renderHome();
+  assert.match(html, /id="yp"/); // the Your-places mount
+  assert.match(html, /mugilu:places/); // reads the localStorage store
+  assert.match(html, /Your places/);
+  assert.match(html, /rel='prefetch'/); // warms the top places
+  assert.match(html, /speculationrules/); // prerenders the top one
+});
+
 test("renderHome: near-me resets on bfcache restore (pageshow), not stuck on 'Locating…'", () => {
   assert.match(renderHome(), /pageshow/);
 });

@@ -33,11 +33,23 @@ test("renderConditionsPage: a valid HTML document with the brand and place", () 
   assert.match(html, /Bengaluru/);
 });
 
+test("renderConditionsPage: has a back-to-search link (consistent with other pages)", () => {
+  const html = renderConditionsPage(conditions());
+  assert.match(html, /class="cxback"/);
+  assert.match(html, /Look up another place/);
+});
+
 test("renderConditionsPage: a sub-zero reading renders as Cold (directional thermal)", () => {
   const c = conditions({ heat: { temp_c: 2, apparent_c: -1, humidity_pct: 70, source: "open-meteo" }, air: null });
   const html = renderConditionsPage(c);
   assert.match(html, /cold/i); // headline + advice are cold, not "warm"/"heat"
   assert.doesNotMatch(html, /Severe heat|dangerous heat/i);
+});
+
+test("renderConditionsPage: records the visit into the browser 'Your places' store", () => {
+  const html = renderConditionsPage(conditions());
+  assert.match(html, /mugilu:places/); // localStorage recorder present
+  assert.match(html, /h1\.loc/); // reads the reverse-geocoded label off the page
 });
 
 test("renderConditionsPage: has a meta description (SEO) naming the place", () => {
