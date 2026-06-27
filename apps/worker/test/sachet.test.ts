@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getLocationAlerts } from "../src/sachet";
+import { getLocationAlerts, parseSachetRss } from "../src/sachet";
 
 // Mirrors a real FetchLocationWiseAlerts alert (Dehradun, live).
 const RESP = {
@@ -37,6 +37,31 @@ test("getLocationAlerts: normalizes FetchLocationWiseAlerts into warnings", asyn
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test("parseSachetRss: parses the national feed into alerts", () => {
+  const xml = `<?xml version="1.0"?><rss><channel><title>All India: CAP Feeds</title>
+  <item><title>Heavy rain over Idukki</title><description/><category>Met</category>
+  <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=111</link>
+  <author>controlroom@ndma.gov.in (IMD Thiruvananthapuram)</author>
+  <guid isPermaLink="false">111</guid><pubDate>Mon, 22 Jun 2026 05:46:11 GMT</pubDate></item>
+  <item><title>Thunderstorm over Delhi</title><category>Met</category>
+  <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=222</link>
+  <author>(IMD Delhi)</author><guid isPermaLink="false">222</guid><pubDate>x</pubDate></item>
+  </channel></rss>`;
+  const alerts = parseSachetRss(xml);
+  assert.equal(alerts.length, 2);
+  assert.equal(alerts[0].identifier, "111");
+  assert.equal(alerts[0].headline, "Heavy rain over Idukki");
+  assert.equal(alerts[0].category, "Met");
+  assert.match(alerts[0].issuer, /Thiruvananthapuram/);
+  assert.match(alerts[0].link, /FetchXMLFile/);
+  assert.equal(alerts[1].identifier, "222");
+});
+
+test("parseSachetRss: empty or garbage feed → []", () => {
+  assert.deepEqual(parseSachetRss("<rss></rss>"), []);
+  assert.deepEqual(parseSachetRss(""), []);
 });
 
 test("getLocationAlerts: empty list and upstream errors both → []", async () => {

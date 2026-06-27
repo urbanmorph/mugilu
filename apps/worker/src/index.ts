@@ -9,6 +9,7 @@ import { renderConditionsPage, renderHome } from "./page";
 import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
+import { collectWarnings } from "./sachet";
 import { nationalHighlights } from "./highlights";
 import { ambientRisk, parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
@@ -252,6 +253,17 @@ export default {
       }
     }
 
+    // Manual trigger: poll + archive SACHET warnings. /warnings/collect?key=OAQ_API_KEY
+    if (url.pathname === "/warnings/collect") {
+      const key = url.searchParams.get("key");
+      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      try {
+        return Response.json({ ok: true, ...(await collectWarnings(env)) });
+      } catch (e) {
+        return Response.json({ ok: false, error: String(e) }, { status: 500 });
+      }
+    }
+
     // Debug: peek at the current signature without exposing it.
     if (url.pathname === "/sig") {
       const key = url.searchParams.get("key");
@@ -278,6 +290,13 @@ export default {
         refreshLatest(env).then(
           (snap) => console.log(`[refresh] ${snap.station_count} stations`),
           (e) => console.error("[refresh] failed:", e),
+        ),
+      );
+      ctx.waitUntil(
+        collectWarnings(env).then(
+          (r) =>
+            console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
+          (e) => console.error("[warnings] failed:", e),
         ),
       );
     }
