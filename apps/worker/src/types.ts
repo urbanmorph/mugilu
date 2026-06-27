@@ -78,10 +78,12 @@ export interface AirConditions {
   pollutants: NormalizedStation["pollutants"];
   /** AQLI years-of-life lost from PM2.5; null if no PM2.5. */
   yll: number | null;
-  /** The station this reading came from, and how far it is. */
-  station: { id: string; name: string; city: string; distance_km: number };
-  /** Provider behind the reading (via the OAQ broker). */
-  source: ProviderId;
+  /** The station this reading came from; null when modelled (no station near). */
+  station: { id: string; name: string; city: string; distance_km: number } | null;
+  /** Provider behind the reading (via the OAQ broker), or "open-meteo" when modelled. */
+  source: ProviderId | "open-meteo";
+  /** True when air is modelled (Open-Meteo) rather than a ground station. */
+  modelled?: boolean;
 }
 
 /** Heat / humid-heat, modelled. Filled by the Open-Meteo adapter (A3). */

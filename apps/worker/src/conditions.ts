@@ -1,10 +1,48 @@
-import type { Conditions, Snapshot } from "./types";
+import type { AirConditions, Conditions, NearStation, Snapshot } from "./types";
 import { findNearest } from "./near";
 import { getOpenMeteo } from "./openmeteo";
+import { computeAqi, aqiBand } from "./aqi";
 import { nearestPlace } from "./place";
 import { getLocationAlerts } from "./sachet";
 import { ambientRisk, ambientMeaning, PERSONA_LABEL } from "./score";
 import type { Persona } from "./score";
+
+// Beyond this, a ground station is too far to represent the query point, so we
+// prefer Open-Meteo's modelled PM (gap-fill) over a distant monitor.
+const STATION_MAX_KM = 50;
+
+/** Air from a ground station (measured), with its provider as the source. */
+function measuredAir(s: NearStation): AirConditions {
+  return {
+    aqi: s.aqi,
+    band: s.band,
+    pollutants: s.pollutants,
+    yll: s.yll ?? null,
+    station: { id: s.id, name: s.name, city: s.city, distance_km: s.distance_km },
+    source: s.provider,
+  };
+}
+
+// AQLI: years of life lost if this PM2.5 persisted as the annual average.
+// Same coefficient (0.098 yr per µg/m³, Ebenstein et al. 2017) the stations use.
+function lifeYearsLost(pm25: number | undefined): number | null {
+  return pm25 == null ? null : +(Math.max(0, pm25 - 5) * 0.098).toFixed(2);
+}
+
+/** Air modelled by Open-Meteo when no station is near; CPCB AQI computed in-app. */
+function modelledAir(m: { pm25?: number; pm10?: number; o3?: number }): AirConditions {
+  const pollutants = { pm25: m.pm25, pm10: m.pm10, o3: m.o3 };
+  const aqi = computeAqi(pollutants);
+  return {
+    aqi,
+    band: aqiBand(aqi),
+    pollutants,
+    yll: lifeYearsLost(m.pm25),
+    station: null,
+    source: "open-meteo",
+    modelled: true,
+  };
+}
 
 // Shared license-passthrough fields for the conditions contract.
 //
@@ -50,32 +88,29 @@ export async function buildConditions(
   lat: number,
   lon: number,
 ): Promise<Conditions> {
-  let air: Conditions["air"] = null;
+  // Nearest station that actually has a reading, from ANY provider (CPCB,
+  // Airnet, Aurassure via OAQ). The very closest is often null, so don't stop
+  // there; fall back to overall nearest only if nothing has a reading.
+  let nearest: NearStation | undefined;
   if (snapshot) {
-    // Nearest station that actually has a reading, from ANY provider (CPCB,
-    // Airnet, Aurassure via OAQ). The very closest is often null, so don't stop
-    // there; fall back to overall nearest only if nothing has a reading.
     const withReading = snapshot.stations.filter((s) => s.aqi != null);
     const pool = withReading.length ? withReading : snapshot.stations;
-    const [nearest] = findNearest(pool, lat, lon, 1);
-    if (nearest) {
-      air = {
-        aqi: nearest.aqi,
-        band: nearest.band,
-        pollutants: nearest.pollutants,
-        yll: nearest.yll ?? null,
-        station: {
-          id: nearest.id,
-          name: nearest.name,
-          city: nearest.city,
-          distance_km: nearest.distance_km,
-        },
-        source: nearest.provider,
-      };
-    }
+    [nearest] = findNearest(pool, lat, lon, 1);
   }
 
   const [om, warnings] = await Promise.all([getOpenMeteo(lat, lon), getLocationAlerts(lat, lon)]);
+
+  // Prefer a nearby measured station; beyond STATION_MAX_KM fall back to the
+  // Open-Meteo model so air is filled for any coordinate, not just monitored
+  // cities. A far station still beats nothing if the model is unavailable.
+  let air: Conditions["air"] = null;
+  if (nearest && nearest.aqi != null && nearest.distance_km <= STATION_MAX_KM) {
+    air = measuredAir(nearest);
+  } else if (om.airModel) {
+    air = modelledAir(om.airModel);
+  } else if (nearest && nearest.aqi != null) {
+    air = measuredAir(nearest);
+  }
 
   return {
     location: { lat, lon },
@@ -130,10 +165,14 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (p.o3 != null) parts.push(`O₃ ${p.o3}`);
     if (parts.length) out.push(`- ${parts.join(" · ")} µg/m³`);
     if (c.air.yll != null) out.push(`- Est. life-expectancy impact: ${c.air.yll} yrs (AQLI)`);
-    out.push(
-      `- Nearest station: ${c.air.station.name}, ${c.air.station.city} (${c.air.station.distance_km} km) · via ${c.air.source.toUpperCase()}`,
-      "",
-    );
+    if (c.air.station) {
+      out.push(
+        `- Nearest station: ${c.air.station.name}, ${c.air.station.city} (${c.air.station.distance_km} km) · via ${c.air.source.toUpperCase()}`,
+      );
+    } else {
+      out.push("- Modelled (no station nearby) · via Open-Meteo");
+    }
+    out.push("");
   }
   if (c.heat) {
     out.push("## Heat");
@@ -143,8 +182,11 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (c.heat.wet_bulb_c != null) out.push(`- Wet-bulb: ${c.heat.wet_bulb_c} °C`);
     out.push("");
   }
-  if (c.rain && c.rain.precipitation_mm != null) {
-    out.push("## Rain", `- Precipitation: ${c.rain.precipitation_mm} mm`, "");
+  if (c.rain && (c.rain.precipitation_mm != null || c.rain.probability_pct != null)) {
+    out.push("## Rain");
+    if (c.rain.precipitation_mm != null) out.push(`- Precipitation: ${c.rain.precipitation_mm} mm`);
+    if (c.rain.probability_pct != null) out.push(`- Chance of rain: ${c.rain.probability_pct}%`);
+    out.push("");
   }
   if (c.uv && c.uv.index != null) {
     out.push("## UV", `- UV index: ${c.uv.index}`, "");

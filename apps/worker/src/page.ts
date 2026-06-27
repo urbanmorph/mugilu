@@ -229,7 +229,8 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   const risk = ambientRisk(c, persona);
   const coords = `${c.location.lat}, ${c.location.lon}`;
   const slug = coords.replace(", ", ",");
-  const place = c.place ? esc(c.place) : c.air?.station.city ? esc(c.air.station.city) : coords;
+  const stationCity = c.air?.station?.city;
+  const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : coords;
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = BAND_LABEL[band] ?? "n/a";
@@ -239,7 +240,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
         <h2><span class="ci" aria-hidden="true">💨</span> Air</h2>
         <p class="big">AQI ${c.air.aqi ?? "n/a"}</p>
         <p class="tag">${bandLabel}</p>
-        <p class="src">measured nearby · ${c.air.station.distance_km} km</p>
+        <p class="src">${c.air.station ? `measured nearby · ${c.air.station.distance_km} km` : "modelled (no station nearby)"}</p>
       </section>`
     : `<section class="card air"><h2><span class="ci" aria-hidden="true">💨</span> Air</h2><p class="big">n/a</p><p class="src">no station nearby</p></section>`;
 

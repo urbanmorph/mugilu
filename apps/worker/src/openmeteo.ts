@@ -12,6 +12,8 @@ export interface OpenMeteoConditions {
   rain: RainConditions | null;
   uv: UvConditions | null;
   dust: DustConditions | null;
+  /** Modelled air pollutants, the gap-filler when no ground station is near. */
+  airModel: { pm25?: number; pm10?: number; o3?: number } | null;
 }
 
 interface OmResponse {
@@ -43,12 +45,12 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
   const coords = `latitude=${quantize(lat)}&longitude=${quantize(lon)}&timezone=auto`;
   const forecastUrl =
     `${FORECAST_URL}?${coords}&current=` +
-    "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation";
-  const airUrl = `${AIR_QUALITY_URL}?${coords}&current=uv_index,dust,aerosol_optical_depth`;
+    "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation,precipitation_probability";
+  const airUrl = `${AIR_QUALITY_URL}?${coords}&current=pm2_5,pm10,ozone,uv_index,dust,aerosol_optical_depth`;
 
   const [forecast, air] = await Promise.allSettled([fetchCurrent(forecastUrl), fetchCurrent(airUrl)]);
 
-  const out: OpenMeteoConditions = { heat: null, rain: null, uv: null, dust: null };
+  const out: OpenMeteoConditions = { heat: null, rain: null, uv: null, dust: null, airModel: null };
 
   if (forecast.status === "fulfilled" && forecast.value.current) {
     const c = forecast.value.current;
@@ -59,7 +61,11 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
       wet_bulb_c: num(c.wet_bulb_temperature_2m),
       source: "open-meteo",
     };
-    out.rain = { precipitation_mm: num(c.precipitation), source: "open-meteo" };
+    out.rain = {
+      precipitation_mm: num(c.precipitation),
+      probability_pct: num(c.precipitation_probability),
+      source: "open-meteo",
+    };
   } else if (forecast.status === "rejected") {
     console.error("[open-meteo] forecast failed:", forecast.reason);
   }
@@ -72,6 +78,11 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
       aod: num(c.aerosol_optical_depth),
       source: "open-meteo",
     };
+    const pm25 = num(c.pm2_5);
+    const pm10 = num(c.pm10);
+    const o3 = num(c.ozone);
+    // Only offer a model fill when at least one PM value is present (PM drives AQI).
+    out.airModel = pm25 != null || pm10 != null ? { pm25, pm10, o3 } : null;
   } else if (air.status === "rejected") {
     console.error("[open-meteo] air-quality failed:", air.reason);
   }
