@@ -33,6 +33,12 @@ test("renderConditionsPage: a valid HTML document with the brand and place", () 
   assert.match(html, /Bengaluru/);
 });
 
+test("renderConditionsPage: has a meta description (SEO) naming the place", () => {
+  const html = renderConditionsPage(conditions());
+  assert.match(html, /<meta name="description" content="[^"]+">/);
+  assert.match(html, /<meta name="description" content="[^"]*Bengaluru/);
+});
+
 test("renderConditionsPage: stamps freshness as a relative <time> (absolute fallback + upgrade script)", () => {
   const html = renderConditionsPage(conditions());
   // server renders the absolute IST time inside a data-rel <time> (the no-JS fallback)

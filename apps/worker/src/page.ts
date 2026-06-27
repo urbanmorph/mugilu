@@ -176,7 +176,10 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .ic{width:18px;height:18px;flex:none;vertical-align:-.18em}
 `;
 
-function shell(title: string, body: string, css: string): string {
+const DEFAULT_DESC =
+  "mugilu — the open sky of India, one coordinate at a time. Air, heat, rain, UV, dust and official warnings for any point, with the single worst hazard named for you.";
+
+function shell(title: string, body: string, css: string, desc: string = DEFAULT_DESC): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -186,6 +189,7 @@ function shell(title: string, body: string, css: string): string {
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>${title}</title>
+<meta name="description" content="${esc(desc)}">
 <style>${BASE_CSS}${css}</style>
 </head>
 <body>
@@ -507,7 +511,8 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   </article>`;
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
-  return shell(`${place}: mugilu`, body, css);
+  const desc = `${c.place ?? stationCity ?? slug}: ${ambientMeaning(risk)} Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.`;
+  return shell(`${place}: mugilu`, body, css, desc);
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun" — the time travels on embeds/PNGs. */
@@ -668,7 +673,12 @@ export function renderAbout(): string {
   <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
   <p class="aback"><a href="/">← back to mugilu</a></p>
   </article>`;
-  return shell("About: mugilu", body, ABOUT_CSS);
+  return shell(
+    "About: mugilu",
+    body,
+    ABOUT_CSS,
+    "Why mugilu exists: one whole-sky view for any point in India, built as open infrastructure others can build on. The origin story, the sources, and how to use the data.",
+  );
 }
 
 /** Terms & attribution: the disclaimer in full, plus per-source credit/licence.
@@ -696,7 +706,12 @@ export function renderTerms(): string {
 
   <p class="adisc">A digital commons by <a href="https://urbanmorph.com">urbanmorph</a>, alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
   <p class="aback"><a href="/">← back to mugilu</a></p>`;
-  return shell("Terms & attribution: mugilu", body, ABOUT_CSS);
+  return shell(
+    "Terms & attribution: mugilu",
+    body,
+    ABOUT_CSS,
+    "mugilu's sources, licences and attribution — open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
+  );
 }
 
 /** A real 404 page (the catch-all used to return 200 with a debug string). */
@@ -739,7 +754,12 @@ export function renderWarningsPage(snap: WarningsSnapshot | null): string {
     <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD directly. mugilu mirrors the SACHET feed and keeps an archive of every alert.</p>
     <p class="aback"><a href="/">← back to mugilu</a></p>
   </article>`;
-  return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS);
+  return shell(
+    "Active warnings: mugilu",
+    body,
+    ABOUT_CSS + WLIST_CSS,
+    "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed — available as HTML, JSON and Markdown.",
+  );
 }
 
 const HOME_CSS = `
@@ -751,7 +771,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg
 .covers .ic{width:16px;height:16px;color:var(--sky)}
 .search{display:flex;gap:8px;margin:0 0 .8rem}
 .search input{flex:1;font-size:1rem;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
-.search button{font-size:1rem;font-weight:600;padding:12px 18px;border:0;border-radius:12px;background:var(--sky);color:#fff;cursor:pointer}
+.search button{font-size:1rem;font-weight:600;padding:12px 18px;border:0;border-radius:12px;background:color-mix(in srgb,var(--sky) 86%,#000);color:#fff;cursor:pointer}
 .acwrap{position:relative}
 .ac{list-style:none;margin:4px 0 0;padding:4px;position:absolute;left:0;right:0;z-index:9;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
 .ac:empty{display:none}
