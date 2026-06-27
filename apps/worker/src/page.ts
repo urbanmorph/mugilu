@@ -1,7 +1,7 @@
 import type { Conditions, Warning } from "./types";
 import type { NationalHighlights } from "./highlights";
 import { ambientRisk, ambientMeaning, PERSONAS, PERSONA_LABEL } from "./score";
-import type { AmbientRisk, Persona, RiskBand } from "./score";
+import type { Persona, RiskBand } from "./score";
 
 // The worker-rendered HTML pages (Phase B): the location page and the lookup
 // home page. Layperson-first, mobile-first, self-contained (inline CSS + cloud),
@@ -51,13 +51,6 @@ function dustWord(ug: number | undefined): string {
   if (ug < 20) return "low";
   if (ug < 50) return "moderate";
   return "high";
-}
-
-function heatNote(h: Conditions["heat"]): string {
-  if (!h) return "";
-  if ((h.humidity_pct ?? 0) >= 70 && (h.apparent_c ?? 0) >= 30) return "Humid. Drink water.";
-  if ((h.apparent_c ?? 0) >= 40) return "Stay in the shade.";
-  return "";
 }
 
 function heatPhrase(apparent: number, wetBulb?: number): string {
@@ -128,41 +121,57 @@ function shell(title: string, body: string, css: string): string {
 </html>`;
 }
 
+// The conditions page as an "atmospheric almanac": a sky-tinted backdrop that
+// takes its hue from the live dominant hazard (--cond, set per request), an
+// editorial serif Ambient statement, and the readings as hairline-ruled strata
+// (not cards). Inline-SVG line icons, currentColor so the driver layer glows.
 const CONDITIONS_CSS = `
-.crumbs{font-size:.8rem;color:var(--muted);margin:.2rem 0 .5rem}
-.crumbs a{color:var(--muted);text-decoration:none}
-.crumbs a:hover{color:var(--sky)}
-.crumbs span{margin:0 .3rem;opacity:.5}
-.place{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin:.2rem 0 0}
-.also{margin:.9rem 0 0;color:var(--muted);font-size:.92rem}
-.asof{color:var(--muted);font-size:.85rem;margin:.1rem 0 1rem}
-.verdict{font-size:1.15rem;line-height:1.35;margin:0 0 1.2rem}
-.warn{border-left:5px solid var(--wc,#64748b);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 1rem;font-weight:600;line-height:1.4}
-.warn .wsrc{display:block;margin-top:3px;color:var(--muted);font-size:.78rem;font-weight:400}
-.ambient{display:flex;gap:14px;align-items:flex-start;border:1px solid color-mix(in srgb,var(--rc,var(--sky)) 32%,var(--line));border-radius:16px;padding:18px;margin:0 0 .7rem;background:linear-gradient(140deg,color-mix(in srgb,var(--rc,var(--sky)) 22%,var(--card)),var(--card) 72%)}
-.ambient .aicon{font-size:2.6rem;line-height:1;flex:none}
-.ambient .abody{min-width:0}
-.ambient .alabel{margin:0;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.ambient .aband{margin:.12rem 0 .2rem;font-size:2.2rem;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--rc,var(--ink))}
-.ambient .adriver{margin:0;font-weight:600;line-height:1.35}
-.personas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 1.2rem;padding:0}
-.personas .pill{font-size:.82rem;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
-.personas .pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.cards{display:grid;gap:12px;grid-template-columns:1fr}
-@media(min-width:480px){.cards{grid-template-columns:1fr 1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
-.card h2{margin:0;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.card h2 .ci{font-size:1.05rem;margin-right:.1rem}
-.card.air{border-left:5px solid var(--band,var(--sky))}
-.big{font-size:1.8rem;font-weight:700;margin:.3rem 0 .1rem;letter-spacing:-.02em}
-.tag{margin:0;font-weight:600}
-.note{margin:.4rem 0 0;color:var(--sky);font-weight:600;font-size:.92rem}
-.src{margin:.5rem 0 0;color:var(--muted);font-size:.8rem}
-.more{margin:1.2rem 0 0}.more summary{cursor:pointer;color:var(--muted);font-weight:600}
-.more ul{margin:.6rem 0 0;padding-left:1.1rem}
-.attr{margin:1.6rem 0 .3rem;color:var(--muted);font-size:.8rem}
-.disclaimer{margin:.2rem 0;color:var(--muted);font-size:.78rem;line-height:1.4}
-.data{margin:1rem 0 0;font-size:.8rem}.data a{color:var(--sky)}
+:root{--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--hair:color-mix(in srgb,var(--ink) 12%,transparent)}
+body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--bg)),color-mix(in srgb,var(--cond) 7%,var(--bg)) 18%,var(--bg) 50%) var(--bg) no-repeat}
+.ic{width:18px;height:18px}
+.coord{font:500 .78rem/1.4 var(--mono);letter-spacing:.04em;color:var(--muted);margin:.4rem 0 0}
+.loc{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6.5vw,2.15rem);line-height:1.05;letter-spacing:-.01em;margin:.35rem 0 0}
+.when{color:var(--muted);font-size:.9rem;margin:.3rem 0 0}
+.warn{display:flex;gap:.65rem;align-items:flex-start;margin:1.3rem 0 0;padding:.8rem .95rem;background:color-mix(in srgb,var(--wc) 14%,var(--bg));border-left:3px solid var(--wc);border-radius:0 7px 7px 0}
+.warn .ic{color:var(--wc);flex:none;margin-top:1px}
+.warn b{font-weight:700;font-size:.95rem;line-height:1.35}
+.warn .wsrc{display:block;margin-top:2px;color:var(--muted);font-size:.76rem;font-weight:500}
+.amb{margin:1.7rem 0 .2rem}
+.amb-eye{display:flex;align-items:center;gap:.45rem;font:600 .76rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 .55rem}
+.amb-eye .ic{width:15px;height:15px;color:var(--cond)}
+.amb-head{font-family:var(--serif);font-weight:600;font-size:clamp(2.6rem,12vw,3.7rem);line-height:.95;letter-spacing:-.025em;margin:0;color:var(--ink)}
+.amb-head .b{color:var(--cond)}
+.amb-say{font-family:var(--serif);font-size:1.18rem;line-height:1.42;margin:.65rem 0 0;color:var(--ink);max-width:32ch}
+.who{display:flex;flex-wrap:wrap;gap:.35rem 1rem;margin:1.2rem 0 0;padding:0}
+.who a{font:500 .9rem var(--sans);color:var(--muted);text-decoration:none;padding-bottom:2px;border-bottom:2px solid transparent}
+.who a.on{color:var(--ink);border-color:var(--cond)}
+.strata{margin:1.8rem 0 0;border-top:1px solid var(--hair)}
+.lyr{display:grid;grid-template-columns:5.4rem 1fr;gap:0 1rem;padding:1.05rem .1rem;border-bottom:1px solid var(--hair)}
+.lyr dt{display:flex;align-items:center;gap:.5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
+.lyr dt .ic{flex:none}
+.lyr.on dt{color:var(--cond)}
+.lyr dd{margin:0;display:flex;flex-direction:column;gap:.16rem;min-width:0}
+.lyr .num{font:700 2.2rem/1 var(--sans);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.lyr .q{font-size:.95rem;color:var(--ink)}
+.lyr .q b{font-weight:700}
+.lyr .q .qa{color:var(--muted);text-transform:uppercase;font-size:.72rem;letter-spacing:.05em}
+.lyr .q .qa.nu{text-transform:none;letter-spacing:.01em}
+.lyr .sub{color:var(--muted);font-size:.82rem;line-height:1.5}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:.35rem;vertical-align:.06em}
+.dot.meas{background:var(--ink)}
+.dot.mod{background:transparent;border:1.5px solid var(--muted)}
+.cx footer{margin:2.1rem 0 0;border-top:1px solid var(--hair);padding-top:1.1rem}
+.attr{color:var(--muted);font-size:.8rem;margin:0 0 .3rem}
+.disc{color:var(--muted);font-size:.76rem;line-height:1.5;margin:0}
+.raw{margin:.95rem 0 0;font:500 .82rem var(--mono);letter-spacing:.02em}
+.raw a{color:var(--cond);text-decoration:none}
+.raw a:hover{text-decoration:underline}
+@media(prefers-reduced-motion:no-preference){
+.coord,.loc,.when,.warn,.amb,.lyr{animation:rise .55s both cubic-bezier(.2,.7,.2,1)}
+.loc{animation-delay:.03s}.when{animation-delay:.06s}.warn{animation-delay:.09s}.amb{animation-delay:.12s}
+.strata .lyr:nth-child(1){animation-delay:.2s}.strata .lyr:nth-child(2){animation-delay:.26s}.strata .lyr:nth-child(3){animation-delay:.32s}.strata .lyr:nth-child(4){animation-delay:.38s}.strata .lyr:nth-child(5){animation-delay:.44s}
+}
+@keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 `;
 
 function warnColor(color: string): string {
@@ -178,12 +187,6 @@ function warnColor(color: string): string {
   }
 }
 
-/** A pinned official-warning banner, the most urgent thing on the page. */
-function renderWarning(w: Warning): string {
-  const meta = [w.severity, w.until ? `until ${w.until}` : ""].filter(Boolean).join(" · ");
-  return `<div class="warn" style="--wc:${warnColor(w.color)}">⚠ <b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div>`;
-}
-
 const RISK_COLOR: Record<RiskBand, string> = {
   low: "#16a34a",
   moderate: "#ca8a04",
@@ -197,81 +200,147 @@ const RISK_LABEL: Record<RiskBand, string> = {
   severe: "Severe",
 };
 
-const DRIVER_ICON: Record<string, string> = {
-  Air: "💨",
-  Heat: "🔥",
-  UV: "☀️",
-  Dust: "🌫️",
-  Warning: "⚠️",
-  none: "🌤️",
+// Inline Lucide-style line icons (MIT). currentColor + one stroke weight, so each
+// inherits its context colour (muted by default, the condition hue on the driver).
+const ICON: Record<string, string> = {
+  air: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>',
+  heat: '<path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  dust: '<path d="M5.2 6.2 6.6 7.6M2 13h2M20 13h2M17.4 7.6l1.4-1.4M22 17H2M22 21H2"/><path d="M16 13a4 4 0 0 0-8 0"/>',
+  rain: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+  warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
 };
+ICON.clear = ICON.sun;
 
-/** The Ambient read: state first (big icon + band in the live condition colour) + persona toggle. */
-function renderAmbient(c: Conditions, risk: AmbientRisk): string {
-  const base = `/c/${c.location.lat},${c.location.lon}`;
-  const pills = PERSONAS.map((p) => {
-    const href = p === "everyone" ? base : `${base}?as=${p}`;
-    return `<a class="pill${p === risk.persona ? " on" : ""}" href="${href}">${esc(PERSONA_LABEL[p])}</a>`;
-  }).join("");
-  return `
-  <section class="ambient" style="--rc:${RISK_COLOR[risk.band]}">
-    <span class="aicon" aria-hidden="true">${DRIVER_ICON[risk.driver] ?? "🌤️"}</span>
-    <div class="abody">
-      <p class="alabel">Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</p>
-      <p class="aband">${RISK_LABEL[risk.band]}</p>
-      <p class="adriver">${esc(ambientMeaning(risk))}</p>
-    </div>
-  </section>
-  <nav class="personas" aria-label="Who is this for">${pills}</nav>`;
+function icon(name: string): string {
+  return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] ?? ""}</svg>`;
+}
+
+// Ambient driver -> icon key, and the noun for the headline ("High heat.").
+const DRIVER_KEY: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Warning: "warn", none: "clear" };
+const COND_NOUN: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Warning: "alert", none: "sky" };
+
+/** Wet-bulb survivability read: ~31 is the theoretical limit, >=28 is severe. */
+function wetBulb(wb: number): [string, string] {
+  if (wb >= 31) return ["dangerous", "#dc2626"];
+  if (wb >= 28) return ["severe", "#ea580c"];
+  if (wb >= 26) return ["caution", "#ca8a04"];
+  return ["safe", "var(--muted)"];
+}
+
+/** One reading as a hairline-ruled stratum: icon + label, a big figure, a tail. */
+function lyr(key: string, label: string, on: boolean, num: string, q: string, sub: string): string {
+  return `<div class="lyr${on ? " on" : ""}"><dt>${icon(key)}<span>${label}</span></dt><dd><span class="num">${num}</span><span class="q">${q}</span>${sub ? `<span class="sub">${sub}</span>` : ""}</dd></div>`;
+}
+
+/** A pinned official warning, the most urgent thing on the page. */
+function renderWarning(w: Warning): string {
+  const meta = [w.severity, w.until ? `until ${w.until}` : ""].filter(Boolean).join(" · ");
+  return `<div class="warn" style="--wc:${warnColor(w.color)}">${icon("warn")}<div><b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div></div>`;
 }
 
 export function renderConditionsPage(c: Conditions, persona: Persona = "everyone"): string {
   const risk = ambientRisk(c, persona);
-  const coords = `${c.location.lat}, ${c.location.lon}`;
-  const slug = coords.replace(", ", ",");
+  const slug = `${c.location.lat},${c.location.lon}`;
   const stationCity = c.air?.station?.city;
-  const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : coords;
+  const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = BAND_LABEL[band] ?? "n/a";
+  const condColor = RISK_COLOR[risk.band];
 
-  const airCard = c.air
-    ? `<section class="card air" style="--band:${bandColor}">
-        <h2><span class="ci" aria-hidden="true">💨</span> Air</h2>
-        <p class="big">AQI ${c.air.aqi ?? "n/a"}</p>
-        <p class="tag">${bandLabel}</p>
-        <p class="src">${c.air.station ? `measured nearby · ${c.air.station.distance_km} km` : "modelled (no station nearby)"}</p>
-      </section>`
-    : `<section class="card air"><h2><span class="ci" aria-hidden="true">💨</span> Air</h2><p class="big">n/a</p><p class="src">no station nearby</p></section>`;
+  // Persona toggles (understated text, not chips).
+  const base = `/c/${slug}`;
+  const pills = PERSONAS.map((p) => {
+    const href = p === "everyone" ? base : `${base}?as=${p}`;
+    return `<a${p === risk.persona ? ' class="on"' : ""} href="${href}">${esc(PERSONA_LABEL[p])}</a>`;
+  }).join("");
 
-  const heatCard = c.heat
-    ? `<section class="card heat">
-        <h2><span class="ci" aria-hidden="true">🔥</span> Heat</h2>
-        <p class="big">Feels ${round(c.heat.apparent_c)}°</p>
-        <p class="tag">${round(c.heat.temp_c)}° · ${round(c.heat.humidity_pct)}% humidity</p>
-        ${heatNote(c.heat) ? `<p class="note">${heatNote(c.heat)}</p>` : ""}
-        <p class="src">estimated</p>
-      </section>`
-    : "";
+  // Editorial headline: "High heat." (band coloured) or "All clear." when calm.
+  const head =
+    risk.band === "low"
+      ? '<span class="b">All clear.</span>'
+      : `<span class="b">${RISK_LABEL[risk.band]}</span> ${COND_NOUN[risk.driver] ?? "sky"}.`;
 
-  const also: string[] = [];
-  if (c.uv?.index != null) also.push(`☀️ Sun ${uvWord(c.uv.index)}`);
-  if (c.dust?.dust_ug_m3 != null) also.push(`🌫️ Dust ${dustWord(c.dust.dust_ug_m3)}`);
-  if (c.rain?.precipitation_mm) also.push(`🌧️ Rain ${c.rain.precipitation_mm} mm`);
+  // The readings, as strata. Each renders only when it has a value; the Ambient
+  // driver's stratum is highlighted (icon + label in the condition colour).
+  const strata: string[] = [];
+  if (c.air) {
+    const marker = c.air.station
+      ? `<i class="dot meas"></i>measured · ${c.air.station.distance_km} km`
+      : '<i class="dot mod"></i>modelled here';
+    const aqli = c.air.yll != null ? ` · ~${c.air.yll} yrs life lost` : "";
+    strata.push(
+      lyr(
+        "air",
+        "Air",
+        risk.driver === "Air",
+        c.air.aqi != null ? String(c.air.aqi) : "n/a",
+        `<span class="qa">AQI</span> <b style="color:${bandColor}">${bandLabel}</b>`,
+        `${marker}${aqli}`,
+      ),
+    );
+  }
+  if (c.heat) {
+    let sub = `${round(c.heat.temp_c)}° actual · ${round(c.heat.humidity_pct)}% humidity`;
+    if (c.heat.wet_bulb_c != null) {
+      const [wn, wc] = wetBulb(c.heat.wet_bulb_c);
+      sub += ` · wet-bulb ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${wn}</b>`;
+    }
+    strata.push(
+      lyr(
+        "heat",
+        "Heat",
+        risk.driver === "Heat",
+        `${round(c.heat.apparent_c)}°`,
+        `<span class="qa">feels like</span> <b>${heatPhrase(c.heat.apparent_c ?? 0, c.heat.wet_bulb_c)}</b>`,
+        sub,
+      ),
+    );
+  }
+  if (c.uv?.index != null) {
+    strata.push(
+      lyr("sun", "Sun", risk.driver === "UV", String(Math.round(c.uv.index)), `<span class="qa">UV index</span> <b>${uvWord(c.uv.index)}</b>`, ""),
+    );
+  }
+  if (c.dust?.dust_ug_m3 != null) {
+    strata.push(
+      lyr("dust", "Dust", risk.driver === "Dust", String(Math.round(c.dust.dust_ug_m3)), `<span class="qa nu">µg/m³</span> <b>${dustWord(c.dust.dust_ug_m3)}</b>`, ""),
+    );
+  }
+  if (c.rain && (c.rain.probability_pct != null || c.rain.precipitation_mm != null)) {
+    const mm = c.rain.precipitation_mm;
+    if (c.rain.probability_pct != null) {
+      strata.push(
+        lyr("rain", "Rain", false, `${c.rain.probability_pct}%`, '<span class="qa">chance of rain</span>', mm ? `${mm} mm falling now` : ""),
+      );
+    } else {
+      strata.push(lyr("rain", "Rain", false, String(mm), '<span class="qa nu">mm</span> <b>now</b>', ""));
+    }
+  }
 
   const body = `
-  <nav class="crumbs"><a href="/">mugilu</a> <span>/</span> ${place}</nav>
-  <p class="place">${place}</p>
-  <p class="asof">updated just now</p>
-  ${renderAmbient(c, risk)}
-  ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
-  <div class="cards">${airCard}${heatCard}</div>
-  ${also.length ? `<p class="also">${also.map((a) => esc(a)).join(" · ")}</p>` : ""}
-  <p class="attr">${esc(c.attribution)}</p>
-  <p class="disclaimer">${esc(c.disclaimer)}</p>
-  <p class="data"><a href="/c/${slug}.json">data (JSON)</a> · <a href="/c/${slug}.md">markdown</a></p>`;
+  <article class="cx">
+    <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
+    <h1 class="loc">${place}</h1>
+    <p class="when">the sky over this spot, right now</p>
+    ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
+    <section class="amb">
+      <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</span></p>
+      <p class="amb-head">${head}</p>
+      <p class="amb-say">${esc(ambientMeaning(risk))}</p>
+      <nav class="who" aria-label="Who is this for">${pills}</nav>
+    </section>
+    <dl class="strata">${strata.join("")}</dl>
+    <footer>
+      <p class="attr">${esc(c.attribution)}</p>
+      <p class="disc">${esc(c.disclaimer)}</p>
+      <p class="raw"><a href="/c/${slug}.json">JSON</a> · <a href="/c/${slug}.md">Markdown</a></p>
+    </footer>
+  </article>`;
 
-  return shell(`${place}: mugilu`, body, CONDITIONS_CSS);
+  const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
+  return shell(`${place}: mugilu`, body, css);
 }
 
 const ABOUT_CSS = `
