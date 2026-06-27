@@ -9,7 +9,8 @@ import { renderConditionsPage, renderHome } from "./page";
 import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
-import type { Snapshot, NormalizedStation } from "./types";
+import { nationalHighlights } from "./highlights";
+import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
 export interface Env {
   OAQ_KV: KVNamespace;
@@ -50,7 +51,14 @@ export default {
 
     // Lookup-first home page.
     if (url.pathname === "/") {
-      return cachedResponse(renderHome(url.searchParams.get("notfound") ?? undefined), "text/html; charset=utf-8");
+      const obj = await env.OAQ_R2.get("data/conditions.json");
+      const highlights = obj
+        ? nationalHighlights(((await obj.json()) as ConditionsSnapshot).points)
+        : undefined;
+      return cachedResponse(
+        renderHome(url.searchParams.get("notfound") ?? undefined, highlights),
+        "text/html; charset=utf-8",
+      );
     }
 
     // Resolve a place name to coordinates and redirect to its conditions page.

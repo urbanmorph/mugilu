@@ -1,4 +1,5 @@
 import type { Conditions } from "./types";
+import type { NationalHighlights } from "./highlights";
 
 // The worker-rendered HTML pages (Phase B): the location page and the lookup
 // home page. Layperson-first, mobile-first, self-contained (inline CSS + cloud),
@@ -74,6 +75,37 @@ function heatNote(h: Conditions["heat"]): string {
   return "";
 }
 
+function heatPhrase(apparent: number, wetBulb?: number): string {
+  if (wetBulb != null && wetBulb >= 28) return "dangerous humid heat";
+  if (apparent >= 45) return "extreme heat";
+  if (apparent >= 40) return "severe heat";
+  if (apparent >= 35) return "very hot";
+  return "warm";
+}
+
+function dustPhrase(d: number): string {
+  if (d >= 500) return "severe dust";
+  if (d >= 150) return "high dust";
+  if (d >= 50) return "moderate dust";
+  return "light dust";
+}
+
+/** The "right now in India" hero — heat- and dust-led (never air-led). */
+function renderHero(h: NationalHighlights): string {
+  const rows: string[] = [];
+  if (h.hottest) {
+    rows.push(
+      `<a class="hl" href="/c/${h.hottest.lat},${h.hottest.lon}"><span>🔥</span> Hottest: <b>${esc(h.hottest.name)}</b> — feels ${Math.round(h.hottest.apparent_c)}°, ${heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c)}</a>`,
+    );
+  }
+  if (h.dustiest) {
+    rows.push(
+      `<a class="hl" href="/c/${h.dustiest.lat},${h.dustiest.lon}"><span>🌫️</span> Dustiest: <b>${esc(h.dustiest.name)}</b> — ${dustPhrase(h.dustiest.dust_ug_m3)}</a>`,
+    );
+  }
+  return rows.length ? `<section class="hero-now"><h2>Right now in India</h2>${rows.join("")}</section>` : "";
+}
+
 const CLOUD =
   '<svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true" style="vertical-align:-4px">' +
   '<g fill="#0284c7"><rect x="14" y="35" width="36" height="13" rx="6.5"/>' +
@@ -132,7 +164,7 @@ const CONDITIONS_CSS = `
 export function renderConditionsPage(c: Conditions): string {
   const coords = `${c.location.lat}, ${c.location.lon}`;
   const slug = coords.replace(", ", ",");
-  const place = c.air?.station.city ? esc(c.air.station.city) : coords;
+  const place = c.place ? esc(c.place) : c.air?.station.city ? esc(c.air.station.city) : coords;
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = BAND_LABEL[band] ?? "—";
@@ -189,6 +221,10 @@ const HOME_CSS = `
 .notice{color:#b45309;font-size:.9rem;margin:.2rem 0 1rem}
 .cities{color:var(--muted);font-size:.9rem;line-height:1.9}.cities a{color:var(--sky);text-decoration:none}
 .browse{margin:1.4rem 0 0;font-size:.85rem}.browse a{color:var(--muted)}
+.hero-now{margin:0 0 1.4rem;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
+.hero-now h2{margin:0 0 .5rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.hero-now .hl{display:block;text-decoration:none;color:var(--ink);padding:5px 0;font-size:.98rem;line-height:1.35}
+.hero-now .hl b{font-weight:700}.hero-now .hl span{margin-right:6px}
 `;
 
 const CITIES = [
@@ -200,7 +236,7 @@ const CITIES = [
   { name: "Hyderabad", lat: 17.39, lon: 78.49 },
 ];
 
-export function renderHome(notFound?: string): string {
+export function renderHome(notFound?: string, highlights?: NationalHighlights): string {
   const cityLinks = CITIES.map((c) => `<a href="/c/${c.lat},${c.lon}">${c.name}</a>`).join(" · ");
   const notice = notFound
     ? `<p class="notice">Couldn't find "${esc(notFound)}" — try a city or place name.</p>`
@@ -217,6 +253,7 @@ export function renderHome(notFound?: string): string {
   </div>
   <button id="nearme" class="nearme" type="button" hidden>📍 Use my location</button>
   ${notice}
+  ${highlights ? renderHero(highlights) : ""}
   <p class="cities">Popular: ${cityLinks}</p>
   <p class="browse"><a href="/index.json">Browse all stations</a></p>
   <script>

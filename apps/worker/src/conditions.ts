@@ -1,6 +1,7 @@
 import type { Conditions, Snapshot } from "./types";
 import { findNearest } from "./near";
 import { getOpenMeteo } from "./openmeteo";
+import { nearestPlace } from "./place";
 
 // Shared license-passthrough fields for the conditions contract.
 //
@@ -69,6 +70,7 @@ export async function buildConditions(
 
   return {
     location: { lat, lon },
+    place: nearestPlace(lat, lon) ?? undefined,
     as_of: new Date().toISOString(),
     air,
     heat: om.heat,

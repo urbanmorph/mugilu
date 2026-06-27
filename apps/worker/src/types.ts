@@ -113,6 +113,8 @@ export interface DustConditions {
 /** The assembled response for /c/{lat},{lon} (A4). Unfilled layers are null. */
 export interface Conditions {
   location: { lat: number; lon: number };
+  /** Nearest admin label (ward in metros, district elsewhere), if resolvable. */
+  place?: string;
   as_of: string; // ISO timestamp of assembly
   air: AirConditions | null;
   heat: HeatConditions | null;
