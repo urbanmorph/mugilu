@@ -4,6 +4,8 @@ import { getOpenMeteo } from "./openmeteo";
 import { computeAqi, aqiBand } from "./aqi";
 import { nearestPlace } from "./place";
 import { getLocationAlerts } from "./sachet";
+import { fireRiskAt } from "./firms";
+import type { FiresSnapshot } from "./firms";
 import { ambientRisk, ambientMeaning, PERSONA_LABEL } from "./score";
 import type { Persona } from "./score";
 
@@ -65,6 +67,7 @@ const SOURCE_CREDIT: Record<string, string> = {
   aurassure: "Aurassure via OAQ",
   "open-meteo": "Open-Meteo (CC-BY 4.0)",
   sachet: "NDMA / IMD (SACHET)",
+  firms: "NASA FIRMS",
 };
 
 /** Build a deduped, ready-to-paste attribution line from contributing sources. */
@@ -87,6 +90,7 @@ export async function buildConditions(
   snapshot: Snapshot | null,
   lat: number,
   lon: number,
+  fires: FiresSnapshot | null = null,
 ): Promise<Conditions> {
   // Nearest station that actually has a reading, from ANY provider (CPCB,
   // Airnet, Aurassure via OAQ). The very closest is often null, so don't stop
@@ -112,6 +116,15 @@ export async function buildConditions(
     air = measuredAir(nearest);
   }
 
+  // Fire / crop-burn smoke pressure from the FIRMS snapshot (active detections
+  // within 100 km). Null when we haven't collected fires yet; count 0 means we
+  // checked and found none nearby.
+  let smoke: Conditions["smoke"] = null;
+  if (fires) {
+    const r = fireRiskAt(fires.fires, lat, lon, 100);
+    smoke = { count: r.count, frp_sum: r.frp_sum, nearest_km: r.nearest_km, radius_km: 100, source: "firms" };
+  }
+
   return {
     location: { lat, lon },
     place: nearestPlace(lat, lon) ?? undefined,
@@ -121,6 +134,7 @@ export async function buildConditions(
     rain: om.rain,
     uv: om.uv,
     dust: om.dust,
+    smoke,
     warnings: warnings.length ? warnings : undefined,
     attribution: buildAttribution([
       air?.source,
@@ -128,6 +142,7 @@ export async function buildConditions(
       om.rain?.source,
       om.uv?.source,
       om.dust?.source,
+      smoke && smoke.count > 0 ? "firms" : undefined,
       warnings.length ? "sachet" : undefined,
     ]),
     disclaimer: DISCLAIMER,
@@ -195,6 +210,12 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     out.push("## Dust");
     if (c.dust.dust_ug_m3 != null) out.push(`- Dust: ${c.dust.dust_ug_m3} µg/m³`);
     if (c.dust.aod != null) out.push(`- Aerosol optical depth: ${c.dust.aod}`);
+    out.push("");
+  }
+  if (c.smoke && c.smoke.count > 0) {
+    out.push("## Smoke", `- Active fires within ${c.smoke.radius_km} km: **${c.smoke.count}** (last 24h)`);
+    if (c.smoke.frp_sum) out.push(`- Total fire power nearby: ${c.smoke.frp_sum} MW`);
+    if (c.smoke.nearest_km != null) out.push(`- Nearest fire: ${c.smoke.nearest_km} km`);
     out.push("");
   }
 

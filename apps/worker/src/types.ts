@@ -112,6 +112,15 @@ export interface DustConditions {
   source: string;
 }
 
+/** Fire / crop-burn smoke pressure at a point, from NASA FIRMS detections. */
+export interface SmokeConditions {
+  count: number; // active fire detections within the radius, last 24h
+  frp_sum: number; // total fire radiative power nearby (MW)
+  nearest_km: number | null;
+  radius_km: number;
+  source: string; // "firms"
+}
+
 /** An official NDMA/SACHET warning active at a point (IMD/SDMA-issued). */
 export interface Warning {
   event: string; // disaster_type, e.g. "Thunderstorm with Lightning"
@@ -136,6 +145,8 @@ export interface Conditions {
   rain: RainConditions | null;
   uv: UvConditions | null;
   dust: DustConditions | null;
+  /** Fire / crop-burn smoke (NASA FIRMS); null when not collected yet. */
+  smoke: SmokeConditions | null;
   /** Official NDMA/SACHET warnings active at this point. */
   warnings?: Warning[];
   /** Ready-to-paste credit line for whatever sources contributed. */

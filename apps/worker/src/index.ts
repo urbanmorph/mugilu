@@ -12,6 +12,7 @@ import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions, applyAlias } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings } from "./sachet";
+import { collectFires, loadFires } from "./firms";
 import { nationalHighlights } from "./highlights";
 import { ambientRisk, parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
@@ -22,6 +23,8 @@ export interface Env {
   OAQ_API_KEY: string;
   OAQ_BROKER_URL: string;
   OAQ_BASE_URL: string;
+  /** NASA FIRMS map key for the fire/crop-burn smoke layer (optional). */
+  FIRMS_MAP_KEY?: string;
 }
 
 /** Standard cached, CORS-open API response for a given body + content-type. */
@@ -183,7 +186,8 @@ export default {
       const { lat, lon } = coords;
       const persona = parsePersona(url.searchParams.get("as"));
       const snap = await loadSnapshot();
-      const conditions = await buildConditions(snap, lat, lon);
+      const fires = await loadFires(env);
+      const conditions = await buildConditions(snap, lat, lon, fires);
       if (ext === "png") {
         return renderConditionsOg(conditions, persona);
       }
@@ -207,7 +211,8 @@ export default {
       if (!coords) return badRequest("coordinates out of range");
       const persona = parsePersona(url.searchParams.get("as"));
       const snap = await loadSnapshot();
-      const conditions = await buildConditions(snap, coords.lat, coords.lon);
+      const fires = await loadFires(env);
+      const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
       return cachedResponse(renderEmbed(conditions, persona, SITE_URL), "text/html; charset=utf-8");
     }
 
@@ -314,6 +319,17 @@ export default {
       }
     }
 
+    // Manual trigger: poll + archive FIRMS fire detections. /fires/collect?key=OAQ_API_KEY
+    if (url.pathname === "/fires/collect") {
+      const key = url.searchParams.get("key");
+      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      try {
+        return Response.json({ ok: true, ...(await collectFires(env)) });
+      } catch (e) {
+        return Response.json({ ok: false, error: String(e) }, { status: 500 });
+      }
+    }
+
     // Debug: peek at the current signature without exposing it.
     if (url.pathname === "/sig") {
       const key = url.searchParams.get("key");
@@ -352,6 +368,12 @@ export default {
           (r) =>
             console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
           (e) => console.error("[warnings] failed:", e),
+        ),
+      );
+      ctx.waitUntil(
+        collectFires(env).then(
+          (r) => console.log(`[firms] ${r.count} detections`),
+          (e) => console.error("[firms] failed:", e),
         ),
       );
     }

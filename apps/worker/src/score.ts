@@ -30,11 +30,11 @@ const SCORE: Record<number, number> = { 0: 15, 1: 45, 2: 72, 3: 95 };
 // Hazards each persona is extra-sensitive to (bumped one level if already risky).
 const SENSITIVE: Record<Persona, string[]> = {
   everyone: [],
-  asthma: ["Air", "Dust"],
-  elderly: ["Heat", "Air"],
-  child: ["UV", "Air", "Heat"],
-  outdoor: ["Heat", "UV"],
-  heart: ["Heat", "Air"],
+  asthma: ["Air", "Dust", "Smoke"],
+  elderly: ["Heat", "Air", "Smoke"],
+  child: ["UV", "Air", "Heat", "Smoke"],
+  outdoor: ["Heat", "UV", "Smoke"],
+  heart: ["Heat", "Air", "Smoke"],
 };
 
 export interface HazardRisk {
@@ -93,6 +93,17 @@ function dustLevel(c: Conditions): number | null {
   return d >= 500 ? 3 : d >= 150 ? 2 : d >= 80 ? 1 : 0;
 }
 
+// Fire/crop-burn smoke: active FIRMS detections within 100km, last 24h. Bands
+// calibrated against real India fire data (off-peak: Delhi ~3, Chennai ~13, the
+// NW burning belt 50+; dense clusters 100-250). Null when no fires nearby.
+function smokeLevel(c: Conditions): number | null {
+  const s = c.smoke;
+  if (!s || s.count <= 0) return null;
+  if (s.count >= 30 || s.frp_sum >= 250) return 3;
+  if (s.count >= 10 || s.frp_sum >= 80) return 2;
+  return 1;
+}
+
 function warnLevel(c: Conditions): number | null {
   if (!c.warnings?.length) return null;
   const colors = c.warnings.map((w: Warning) => w.color.toLowerCase());
@@ -109,6 +120,7 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
     ["Heat", heatLevel(c)],
     ["UV", uvLevel(c)],
     ["Dust", dustLevel(c)],
+    ["Smoke", smokeLevel(c)],
     ["Warning", warnLevel(c)],
   ];
 
@@ -148,6 +160,11 @@ const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
     moderate: "Some dust in the air.",
     high: "Dusty. Mask up if you're sensitive.",
     severe: "Heavy dust. Limit time outdoors.",
+  },
+  Smoke: {
+    moderate: "Fires burning nearby. Sensitive groups, watch the air.",
+    high: "Heavy burning nearby. Keep windows shut, limit time outdoors.",
+    severe: "Intense fires nearby. Treat the air as hazardous; stay indoors.",
   },
   Warning: {
     moderate: "An official advisory is in effect.",

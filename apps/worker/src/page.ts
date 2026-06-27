@@ -222,6 +222,7 @@ const ICON: Record<string, string> = {
   heat: '<path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
   dust: '<path d="M5.2 6.2 6.6 7.6M2 13h2M20 13h2M17.4 7.6l1.4-1.4M22 17H2M22 21H2"/><path d="M16 13a4 4 0 0 0-8 0"/>',
+  smoke: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
   rain: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
   warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
   compass: '<circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>',
@@ -239,8 +240,8 @@ function icon(name: string): string {
 }
 
 // Ambient driver -> icon key, and the noun for the headline ("High heat.").
-const DRIVER_KEY: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Warning: "warn", none: "clear" };
-const COND_NOUN: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Warning: "alert", none: "sky" };
+const DRIVER_KEY: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Smoke: "smoke", Warning: "warn", none: "clear" };
+const COND_NOUN: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Smoke: "smoke", Warning: "alert", none: "sky" };
 
 /** Wet-bulb survivability read: ~31 is the theoretical limit, >=28 is severe. */
 function wetBulb(wb: number): [string, string] {
@@ -340,6 +341,15 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
       lyr("dust", "Dust", risk.driver === "Dust", String(Math.round(c.dust.dust_ug_m3)), `<span class="qa nu">µg/m³</span> <b>${dustWord(c.dust.dust_ug_m3)}</b>`, "", scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500)),
     );
   }
+  if (c.smoke && c.smoke.count > 0) {
+    const word =
+      c.smoke.count >= 30 || c.smoke.frp_sum >= 250 ? "heavy" : c.smoke.count >= 10 || c.smoke.frp_sum >= 80 ? "notable" : "some";
+    const sub =
+      c.smoke.nearest_km != null ? `nearest ${c.smoke.nearest_km} km · ${c.smoke.frp_sum} MW total` : `${c.smoke.frp_sum} MW`;
+    strata.push(
+      lyr("smoke", "Smoke", risk.driver === "Smoke", String(c.smoke.count), `<span class="qa nu">fires &lt;100 km</span> <b>${word} burning</b>`, sub, scaleBar(Math.min(c.smoke.count, 60) / 60)),
+    );
+  }
   if (c.rain && (c.rain.probability_pct != null || c.rain.precipitation_mm != null)) {
     const mm = c.rain.precipitation_mm;
     if (c.rain.probability_pct != null) {
@@ -437,6 +447,8 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): s
     reads.push(`<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${uvWord(c.uv.index)}</span></div>`);
   if (c.dust?.dust_ug_m3 != null)
     reads.push(`<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>dust ${dustWord(c.dust.dust_ug_m3)}</span></div>`);
+  if (c.smoke && c.smoke.count > 0)
+    reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>fires &lt;100km</span></div>`);
 
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu — conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu — conditions at ${place}" width="600">`;
