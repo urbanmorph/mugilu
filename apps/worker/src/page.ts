@@ -115,6 +115,8 @@ function shell(title: string, body: string, css: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>${title}</title>
 <style>${BASE_CSS}${css}</style>
 </head>

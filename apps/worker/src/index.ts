@@ -3,6 +3,7 @@ import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
 import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
 import { renderStationOg } from "./og";
+import { faviconSvg, appleIconPng } from "./icon";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown } from "./conditions";
 import { renderConditionsPage, renderHome, renderAbout } from "./page";
@@ -54,6 +55,9 @@ export default {
     if (url.pathname === "/about") {
       return cachedResponse(renderAbout(), "text/html; charset=utf-8");
     }
+
+    if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
+    if (url.pathname === "/apple-touch-icon.png") return appleIconPng();
 
     // Lookup-first home page.
     if (url.pathname === "/") {
