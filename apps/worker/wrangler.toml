@@ -3,7 +3,14 @@ main = "src/index.ts"
 compatibility_date = "2026-01-01"
 account_id = "6ba72cdd965276a57d19bf0aadc4d551"
 
-# Hourly refresh at :05, daily hierarchy refresh at 20:30 UTC (02:00 IST).
+# Custom domain. Requires mugilu.live to be a zone in this Cloudflare account.
+routes = [
+  { pattern = "mugilu.live", custom_domain = true },
+]
+
+# Crons (UTC): ":05 hourly" = air refresh + SACHET warnings poll;
+# ":05 every 4h" = national conditions grid (fits Open-Meteo's free quota);
+# "20:30 daily" (02:00 IST) = provider hierarchy refresh.
 [triggers]
 crons = ["5 * * * *", "5 */4 * * *", "30 20 * * *"]
 
