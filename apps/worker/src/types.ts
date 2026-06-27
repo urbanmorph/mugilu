@@ -59,3 +59,68 @@ export interface Snapshot {
   providers: ProviderId[];
   stations: NormalizedStation[];
 }
+
+// ── Conditions: the coordinate → conditions contract ────────────────────────
+// The keystone of mugilu. Each data source is an adapter that fills part of
+// this; layers we can't fill are null. Provenance (`source`), `attribution`,
+// and the `disclaimer` travel WITH the data (see conditions.ts) so a consumer
+// that drops the MCP/init instructions still receives the licence terms.
+
+/** A station plus its great-circle distance from the query point. */
+export interface NearStation extends NormalizedStation {
+  distance_km: number;
+}
+
+/** Air quality at a point — taken from the nearest ground station. */
+export interface AirConditions {
+  aqi: number | null;
+  band: NormalizedStation["band"];
+  pollutants: NormalizedStation["pollutants"];
+  /** AQLI years-of-life lost from PM2.5; null if no PM2.5. */
+  yll: number | null;
+  /** The station this reading came from, and how far it is. */
+  station: { id: string; name: string; city: string; distance_km: number };
+  /** Provider behind the reading (via the OAQ broker). */
+  source: ProviderId;
+}
+
+/** Heat / humid-heat — modelled. Filled by the Open-Meteo adapter (A3). */
+export interface HeatConditions {
+  temp_c?: number;
+  humidity_pct?: number;
+  apparent_c?: number; // "feels like"
+  wet_bulb_c?: number; // survivability metric
+  source: string;
+}
+
+export interface RainConditions {
+  precipitation_mm?: number;
+  probability_pct?: number;
+  source: string;
+}
+
+export interface UvConditions {
+  index?: number;
+  source: string;
+}
+
+export interface DustConditions {
+  aod?: number; // aerosol optical depth (unitless)
+  dust_ug_m3?: number;
+  source: string;
+}
+
+/** The assembled response for /c/{lat},{lon} (A4). Unfilled layers are null. */
+export interface Conditions {
+  location: { lat: number; lon: number };
+  as_of: string; // ISO timestamp of assembly
+  air: AirConditions | null;
+  heat: HeatConditions | null;
+  rain: RainConditions | null;
+  uv: UvConditions | null;
+  dust: DustConditions | null;
+  /** Ready-to-paste credit line for whatever sources contributed. */
+  attribution: string;
+  /** Always present, always relayed. */
+  disclaimer: string;
+}

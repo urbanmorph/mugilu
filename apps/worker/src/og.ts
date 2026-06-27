@@ -47,7 +47,7 @@ export function renderStationOg(s: NormalizedStation, generatedAt: string): Resp
   const html =
     `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b0b0c;color:#ededed;padding:60px 72px;font-family:sans-serif;">` +
       `<div style="display:flex;justify-content:space-between;font-size:26px;color:#a1a1aa;">` +
-        `<div style="display:flex;">oaq · India air quality</div>` +
+        `<div style="display:flex;">mugilu · India air quality</div>` +
         `<div style="display:flex;">${esc(updated)}</div>` +
       `</div>` +
       `<div style="display:flex;flex:1;align-items:center;margin-top:32px;">` +
@@ -63,7 +63,7 @@ export function renderStationOg(s: NormalizedStation, generatedAt: string): Resp
       `</div>` +
       `<div style="display:flex;justify-content:space-between;font-size:22px;color:#71717a;margin-top:32px;">` +
         `<div style="display:flex;">${esc(s.provider.toUpperCase())} via oaq.notf.in</div>` +
-        `<div style="display:flex;">urbanmorph/oaq</div>` +
+        `<div style="display:flex;">urbanmorph/mugilu</div>` +
       `</div>` +
     `</div>`;
 

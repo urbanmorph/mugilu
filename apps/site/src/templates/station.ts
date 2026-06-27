@@ -138,7 +138,7 @@ ${(() => {
 `;
 
   return layout({
-    title: `${s.name}, ${s.city} — Air Quality${s.aqi !== null ? ` AQI ${s.aqi} (${bandLabel})` : ""} | oaq`,
+    title: `${s.name}, ${s.city} — Air Quality${s.aqi !== null ? ` AQI ${s.aqi} (${bandLabel})` : ""} | mugilu`,
     description,
     canonical,
     siteUrl,

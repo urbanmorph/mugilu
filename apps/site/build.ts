@@ -17,7 +17,7 @@ const dist = join(here, "dist");
 const staticDir = join(here, "static");
 
 const DATA_URL = process.env.DATA_URL ?? "http://127.0.0.1:8787/data/latest.json";
-const SITE_URL = process.env.SITE_URL ?? "https://oaq.pages.dev";
+const SITE_URL = process.env.SITE_URL ?? "https://mugilu.live";
 
 function copyDir(src: string, dst: string) {
   if (!existsSync(src)) return;
@@ -130,7 +130,7 @@ ${urls.map((u) => `<url><loc>${u}</loc></url>`).join("\n")}
   // 7. llms.txt
   writeFile(
     join(dist, "llms.txt"),
-    `# oaq — India air quality leaderboard
+    `# mugilu — India air quality leaderboard
 
 > Unofficial mirror of oaq.notf.in. ${snap.station_count} stations across India,
 > updated hourly. Data from CPCB, Airnet (CSTEP), and Aurassure via the OAQ

@@ -3,6 +3,11 @@ import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
 import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
 import { renderStationOg } from "./og";
+import { findNearest, parseLatLon } from "./near";
+import { buildConditions, renderConditionsMarkdown } from "./conditions";
+import { renderConditionsPage, renderHome } from "./page";
+import { geocode, geocodeList } from "./geocode";
+import { buildSuggestions } from "./suggest";
 import type { Snapshot, NormalizedStation } from "./types";
 
 export interface Env {
@@ -13,14 +18,60 @@ export interface Env {
   OAQ_BASE_URL: string;
 }
 
+/** Standard cached, CORS-open API response for a given body + content-type. */
+function cachedResponse(body: string, contentType: string): Response {
+  return new Response(body, {
+    headers: {
+      "content-type": contentType,
+      "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
+      "access-control-allow-origin": "*",
+    },
+  });
+}
+
+/** 400 with a JSON `{ error }` body (CORS-open), matching the API error shape. */
+function badRequest(message: string): Response {
+  return Response.json(
+    { error: message },
+    { status: 400, headers: { "access-control-allow-origin": "*" } },
+  );
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
 
-    const SITE_URL = "https://oaq.pages.dev"; // TODO: wire via env at Phase 5
+    const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
+    }
+
+    // Lookup-first home page.
+    if (url.pathname === "/") {
+      return cachedResponse(renderHome(url.searchParams.get("notfound") ?? undefined), "text/html; charset=utf-8");
+    }
+
+    // Resolve a place name to coordinates and redirect to its conditions page.
+    // Keeps search zero-JS — a plain form GET. /go?q=Bengaluru → 302 /c/{lat},{lon}
+    if (url.pathname === "/go") {
+      const q = (url.searchParams.get("q") ?? "").trim();
+      const hit = await geocode(q);
+      if (!hit) {
+        return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
+      }
+      const lat = +hit.lat.toFixed(4);
+      const lon = +hit.lon.toFixed(4);
+      return Response.redirect(`${url.origin}/c/${lat},${lon}`, 302);
+    }
+
+    // Typeahead suggestions — gazetteer (our stations) + alias + coord-parse +
+    // India-ranked geocoding. Powers the intelligent search box. /suggest?q=…
+    if (url.pathname === "/suggest") {
+      const q = url.searchParams.get("q") ?? "";
+      const snap = await loadSnapshot();
+      const suggestions = await buildSuggestions(snap?.stations ?? [], q, geocodeList);
+      return cachedResponse(JSON.stringify({ q, suggestions }), "application/json; charset=utf-8");
     }
 
     // Cached snapshot loader — used by /index.{json,md} and /s/*.json|.md.
@@ -54,6 +105,47 @@ export default {
           "access-control-allow-origin": "*",
         },
       });
+    }
+
+    // Nearest air-quality stations to a point — haversine over the snapshot
+    // already in memory. The lat/lng entry point for the air layer (A2).
+    if (url.pathname === "/near") {
+      const coords = parseLatLon(url.searchParams.get("lat"), url.searchParams.get("lon"));
+      if (!coords) return badRequest("valid `lat` and `lon` query params are required");
+      const { lat, lon } = coords;
+      const nRaw = Number(url.searchParams.get("n") ?? "5");
+      const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 50) : 5;
+      const snap = await loadSnapshot();
+      if (!snap) return new Response("no snapshot yet", { status: 503 });
+      const stations = findNearest(snap.stations, lat, lon, n);
+      return cachedResponse(
+        JSON.stringify(
+          { query: { lat, lon, n }, generated_at: snap.generated_at, count: stations.length, stations },
+          null,
+          2,
+        ),
+        "application/json; charset=utf-8",
+      );
+    }
+
+    // Conditions at a coordinate (A4): nearest-station air + Open-Meteo
+    // heat/rain/uv/dust, assembled into the normalized schema.
+    // /c/{lat},{lon}.{json,md}
+    const condMatch = url.pathname.match(/^\/c\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\.(json|md))?$/);
+    if (condMatch) {
+      const [, latStr, lonStr, ext] = condMatch;
+      const coords = parseLatLon(latStr, lonStr);
+      if (!coords) return badRequest("coordinates out of range");
+      const { lat, lon } = coords;
+      const snap = await loadSnapshot();
+      const conditions = await buildConditions(snap, lat, lon);
+      if (ext === "json") {
+        return cachedResponse(JSON.stringify(conditions, null, 2), "application/json; charset=utf-8");
+      }
+      if (ext === "md") {
+        return cachedResponse(renderConditionsMarkdown(conditions), "text/markdown; charset=utf-8");
+      }
+      return cachedResponse(renderConditionsPage(conditions), "text/html; charset=utf-8");
     }
 
     // Per-station OG image: /og/s/{provider}/{raw_id}.png (rendered via workers-og).
@@ -144,7 +236,7 @@ export default {
       });
     }
 
-    return new Response("oaq-worker — /health, /refresh, /sig", {
+    return new Response("mugilu — /health, /refresh, /sig", {
       headers: { "content-type": "text/plain" },
     });
   },

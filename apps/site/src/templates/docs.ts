@@ -2,9 +2,9 @@ import { layout } from "./layout";
 
 export function renderDocsIndex(siteUrl: string): string {
   return layout({
-    title: "Documentation | oaq",
+    title: "Documentation | mugilu",
     description:
-      "Documentation for the oaq mirror — API reference, AI agent guide, data sources, and attribution.",
+      "Documentation for mugilu — API reference, AI agent guide, data sources, and attribution.",
     canonical: `${siteUrl}/docs`,
     siteUrl,
     body: `
@@ -35,7 +35,7 @@ export function renderDocsIndex(siteUrl: string): string {
     <li><a href="/openapi.yaml">OpenAPI spec</a></li>
     <li><a href="/llms.txt">llms.txt</a></li>
     <li><a href="/sitemap.xml">Sitemap</a></li>
-    <li><a href="https://github.com/urbanmorph/oaq">GitHub</a></li>
+    <li><a href="https://github.com/urbanmorph/mugilu">GitHub</a></li>
   </ul>
 </section>
 `,
@@ -45,9 +45,9 @@ export function renderDocsIndex(siteUrl: string): string {
 export function renderApiDocs(siteUrl: string): string {
   // Scalar is loaded from CDN — static script tag, ~70 KB, renders openapi.yaml.
   return layout({
-    title: "API Reference | oaq",
+    title: "API Reference | mugilu",
     description:
-      "OpenAPI 3.1 reference for the oaq mirror. 4 read-only endpoints: leaderboard and per-station in JSON and Markdown.",
+      "OpenAPI 3.1 reference for mugilu. 4 read-only endpoints: leaderboard and per-station in JSON and Markdown.",
     canonical: `${siteUrl}/docs/api`,
     siteUrl,
     extraHead: `
@@ -75,9 +75,9 @@ export function renderApiDocs(siteUrl: string): string {
 
 export function renderAiAgents(siteUrl: string): string {
   return layout({
-    title: "AI Agents | oaq",
+    title: "AI Agents | mugilu",
     description:
-      "How to ingest the oaq mirror with ChatGPT, Claude, Perplexity, and other LLM agents. JSON and Markdown variants of every page.",
+      "How to ingest mugilu with ChatGPT, Claude, Perplexity, and other LLM agents. JSON and Markdown variants of every page.",
     canonical: `${siteUrl}/docs/ai-agents`,
     siteUrl,
     body: `
@@ -187,9 +187,9 @@ const HEALTH_IMPACT_SECTION = `
 
 export function renderDataSources(siteUrl: string): string {
   return layout({
-    title: "Data Sources | oaq",
+    title: "Data Sources | mugilu",
     description:
-      "Attribution and licensing for the three air quality providers mirrored by oaq: CPCB, Airnet (CSTEP), and Aurassure.",
+      "Attribution and licensing for the three air quality providers mirrored by mugilu: CPCB, Airnet (CSTEP), and Aurassure.",
     canonical: `${siteUrl}/docs/data-sources`,
     siteUrl,
     body: `
@@ -245,7 +245,7 @@ export function renderDataSources(siteUrl: string): string {
     terms apply to the upstream sources.
   </p>
   <p>
-    The site code is <a href="https://github.com/urbanmorph/oaq/blob/main/LICENSE">MIT-licensed</a>.
+    The site code is <a href="https://github.com/urbanmorph/mugilu/blob/main/LICENSE">MIT-licensed</a>.
   </p>
 </section>
 
@@ -265,9 +265,9 @@ ${HEALTH_IMPACT_SECTION}
 
 export function renderAbout(siteUrl: string): string {
   return layout({
-    title: "About | oaq",
+    title: "About | mugilu",
     description:
-      "About the oaq mirror — why it exists, how it's built, and how it differs from oaq.notf.in.",
+      "About mugilu — why it exists, how it's built, and how it differs from oaq.notf.in.",
     canonical: `${siteUrl}/about`,
     siteUrl,
     body: `
@@ -328,7 +328,7 @@ export function renderAbout(siteUrl: string): string {
 <section>
   <h2>Source code</h2>
   <p>
-    <a href="https://github.com/urbanmorph/oaq">github.com/urbanmorph/oaq</a> — MIT license.
+    <a href="https://github.com/urbanmorph/mugilu">github.com/urbanmorph/mugilu</a> — MIT license.
   </p>
 </section>
 `,

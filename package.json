@@ -1,14 +1,14 @@
 {
-  "name": "oaq",
+  "name": "mugilu",
   "private": true,
   "version": "0.0.0",
-  "description": "Unofficial mirror of oaq.notf.in — India air quality leaderboard.",
+  "description": "mugilu — India's open sky. Live air quality across India; expanding to heat, rain, UV, dust & official warnings.",
   "license": "MIT",
   "scripts": {
-    "dev:worker": "pnpm --filter oaq-worker dev",
-    "dev:site": "pnpm --filter oaq-site dev",
-    "build:site": "pnpm --filter oaq-site build",
-    "deploy:worker": "pnpm --filter oaq-worker deploy"
+    "dev:worker": "pnpm --filter mugilu-worker dev",
+    "dev:site": "pnpm --filter mugilu-site dev",
+    "build:site": "pnpm --filter mugilu-site build",
+    "deploy:worker": "pnpm --filter mugilu-worker deploy"
   },
   "packageManager": "pnpm@9.0.0"
 }

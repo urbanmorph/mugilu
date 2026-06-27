@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: oaq mirror API
+  title: mugilu API
   version: "0.1.0"
   summary: Read-only mirror of the OAQ Data Broker for India.
   description: |
@@ -17,9 +17,9 @@ info:
     name: MIT
     identifier: MIT
   contact:
-    url: https://github.com/urbanmorph/oaq
+    url: https://github.com/urbanmorph/mugilu
 servers:
-  - url: https://oaq.pages.dev
+  - url: https://mugilu.live
     description: Production
 tags:
   - name: leaderboard

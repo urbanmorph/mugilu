@@ -175,7 +175,7 @@ export function renderHome(snap: Snapshot, siteUrl: string): string {
 `;
 
   return layout({
-    title: `India Air Quality Leaderboard — ${snap.station_count} stations ranked live | oaq`,
+    title: `India Air Quality Leaderboard — ${snap.station_count} stations ranked live | mugilu`,
     description,
     canonical: siteUrl + "/",
     siteUrl,

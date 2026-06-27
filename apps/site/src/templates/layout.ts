@@ -45,12 +45,12 @@ ${jsonLdTags}
 </head>
 <body>
 <nav data-topnav class="site-nav">
-  <a class="brand" href="/"><strong>oaq</strong></a>
+  <a class="brand" href="/"><strong>mugilu</strong></a>
   <ul class="site-links">
     <li><a href="/docs">docs</a></li>
     <li><a href="/docs/api">api</a></li>
     <li><a href="/about">about</a></li>
-    <li><a href="https://github.com/urbanmorph/oaq">github</a></li>
+    <li><a href="https://github.com/urbanmorph/mugilu">github</a></li>
   </ul>
 </nav>
 
@@ -67,11 +67,14 @@ ${opts.body}
   </p>
   <p>
     UI built on <a href="https://oat.ink">Oat</a> by <a href="https://github.com/knadh">Kailash Nadh</a>.
-    Code <a href="https://github.com/urbanmorph/oaq/blob/main/LICENSE">MIT-licensed</a>.
+    Code <a href="https://github.com/urbanmorph/mugilu/blob/main/LICENSE">MIT-licensed</a>.
     Not affiliated with OAQ, Oat, or any data provider.
   </p>
   <p class="footer-links">
     <a href="/llms.txt">llms.txt</a> · <a href="/sitemap.xml">sitemap</a> · <a href="/robots.txt">robots</a> · <a href="/openapi.yaml">openapi</a>
+  </p>
+  <p class="footer-links">
+    made by <a href="https://urbanmorph.com">urbanmorph</a> · a digital commons · <a href="https://pdgi.org">pdgi.org</a>
   </p>
 </footer>
 </body>

@@ -1,4 +1,4 @@
-name = "oaq-worker"
+name = "mugilu-worker"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
 account_id = "6ba72cdd965276a57d19bf0aadc4d551"

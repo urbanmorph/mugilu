@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="mugilu — India's open sky">
+  <!-- mugilu app-icon lockup — self-contained tile (works on any background),
+       mirroring mdshare's logo.svg. White cloud over the lowercase wordmark on a
+       sky gradient. The on-page header wordmark is CSS text, not this file. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#0284c7"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#sky)"/>
+  <g fill="#ffffff">
+    <rect x="84" y="92" width="88" height="30" rx="15"/>
+    <circle cx="110" cy="88" r="22"/>
+    <circle cx="140" cy="78" r="27"/>
+    <circle cx="164" cy="94" r="17"/>
+  </g>
+  <text x="128" y="190" font-family="ui-sans-serif, -apple-system, 'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="46" fill="#ffffff" text-anchor="middle" letter-spacing="-1">mugilu</text>
+</svg>
