@@ -29,8 +29,8 @@ No third-party analytics, no tracking, no ad tech, no accounts, no email, no per
 Evidence: the pages ship no analytics or third-party scripts; the client-side-only geolocation in the home page source.
 
 ### Built to be built on (cooperativism for infrastructure) — 🟡
-mugilu's reason to exist is to be infrastructure others build on: the same readings come as open, machine-readable data and (soon) an embeddable widget, so anyone can put the whole sky behind their own map, story, dashboard or alert — credited. It is not a contribution platform in the bharatlas sense (you don't publish your own data here); the cooperativism is in lowering the floor for everyone else's tools.
-Direction: ship the documented API, the MCP server, and the embed/snapshot endpoints so "build on it" is real, not just a promise. Tracked in [/about](https://mugilu.live/about) ("Build on it").
+mugilu's reason to exist is to be infrastructure others build on: the same readings come as open, machine-readable data, an embeddable widget (`/embed/{lat},{lon}`), and a timestamped snapshot image (`/c/{lat},{lon}.png`) — so anyone can put the whole sky behind their own map, story, dashboard or alert, credited, with one line of HTML. It is not a contribution platform in the bharatlas sense (you don't publish your own data here); the cooperativism is in lowering the floor for everyone else's tools.
+Direction: the embed widget and snapshot image ship today; still to come are a documented API and an MCP server so apps and AI agents can query the sky directly. Tracked in [/about](https://mugilu.live/about) ("Build on it").
 
 ### Humans in the loop (AI does not cut people out) — 🟡
 The machine-readable rights signals are already here: the source, attribution and disclaimer travel inside every JSON and Markdown response by design, so an agent that drops the wrapper still receives the credit and the limits. What's missing is the formal layer: an MCP server, schema.org `creditText`/`usageInfo` on the pages, and a usage stanza in `robots.txt`.
