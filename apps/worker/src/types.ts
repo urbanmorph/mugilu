@@ -144,6 +144,9 @@ export interface Conditions {
   /** Nearest admin label (ward in metros, district elsewhere), if resolvable. */
   place?: string;
   as_of: string; // ISO timestamp of assembly
+  /** ISO time the air reading is from: the hourly snapshot when measured, or
+   *  ~now when modelled live. Anchors the "updated X ago" freshness on /c. */
+  air_as_of?: string;
   air: AirConditions | null;
   heat: HeatConditions | null;
   rain: RainConditions | null;
@@ -183,6 +186,7 @@ export interface Centroid {
   source_layer: string;
   lat: number;
   lon: number;
+  state?: string; // title-cased state/UT, so a place name is recognisable
 }
 
 /** A grid point with its current conditions. */

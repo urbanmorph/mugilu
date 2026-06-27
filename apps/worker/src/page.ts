@@ -2,7 +2,7 @@ import type { Conditions, Warning, AirPollutants } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
-import { ambientRisk, ambientMeaning, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
@@ -83,20 +83,72 @@ function dustPhrase(d: number): string {
   return "light dust";
 }
 
-/** The "right now in India" hero, heat- and dust-led (never air-led). */
-function renderHero(h: NationalHighlights): string {
+// Risk band of each highlight, so the hero can wear the severity of what it
+// shows. Same cutoffs as score.ts (apparent/wet-bulb, dust µg/m³, CPCB band),
+// mapped to the four-step risk palette the /c page uses.
+const RISK_RANK: Record<RiskBand, number> = { low: 0, moderate: 1, high: 2, severe: 3 };
+function heatBand(apparent?: number, wb?: number): RiskBand {
+  if ((apparent != null && apparent >= 45) || (wb != null && wb >= 31)) return "severe";
+  if ((apparent != null && apparent >= 40) || (wb != null && wb >= 28)) return "high";
+  if ((apparent != null && apparent >= 35) || (wb != null && wb >= 26)) return "moderate";
+  return "low";
+}
+function dustBand(d: number): RiskBand {
+  return d >= 500 ? "severe" : d >= 150 ? "high" : d >= 80 ? "moderate" : "low";
+}
+function airBand(b: string): RiskBand {
+  return b === "severe" || b === "vpoor" ? "severe" : b === "poor" ? "high" : b === "moderate" ? "moderate" : "low";
+}
+
+/** The "right now in India" hero. Heat- and dust-led from the 4-hourly grid,
+ *  plus a worst-air row from the hourly snapshot — each row state-qualified (so
+ *  the place is recognisable), stamped with its own freshness, and coloured by
+ *  its severity; the whole card takes the tint of the worst extreme, like /c. */
+function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?: string }): string {
   const rows: string[] = [];
+  let worst: RiskBand = "low";
+  const place = (name: string, state?: string) => esc(state ? `${name}, ${state}` : name);
+  const age = (iso?: string) => (iso ? ` <span class="age">· ${relTime(iso)}</span>` : "");
+  const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
+    if (RISK_RANK[band] > RISK_RANK[worst]) worst = band;
+    return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="/c/${lat},${lon}">${body}${age(iso)}</a>`;
+  };
   if (h.hottest) {
     rows.push(
-      `<a class="hl" href="/c/${h.hottest.lat},${h.hottest.lon}">${icon("heat")}Hottest: <b>${esc(h.hottest.name)}</b>, feels ${Math.round(h.hottest.apparent_c)}°, ${heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c)}</a>`,
+      row(
+        heatBand(h.hottest.apparent_c, h.hottest.wet_bulb_c),
+        h.hottest.lat,
+        h.hottest.lon,
+        `${icon("heat")}Hottest: <b>${place(h.hottest.name, h.hottest.state)}</b>, feels ${Math.round(h.hottest.apparent_c)}°, ${heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c)}`,
+        meta?.gridAsOf,
+      ),
     );
   }
   if (h.dustiest) {
     rows.push(
-      `<a class="hl" href="/c/${h.dustiest.lat},${h.dustiest.lon}">${icon("dust")}Dustiest: <b>${esc(h.dustiest.name)}</b>, ${dustPhrase(h.dustiest.dust_ug_m3)}</a>`,
+      row(
+        dustBand(h.dustiest.dust_ug_m3),
+        h.dustiest.lat,
+        h.dustiest.lon,
+        `${icon("dust")}Dustiest: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${dustPhrase(h.dustiest.dust_ug_m3)}`,
+        meta?.gridAsOf,
+      ),
     );
   }
-  return rows.length ? `<section class="hero-now"><h2>Right now in India</h2>${rows.join("")}</section>` : "";
+  if (h.worstAir) {
+    rows.push(
+      row(
+        airBand(h.worstAir.band),
+        h.worstAir.lat,
+        h.worstAir.lon,
+        `${icon("air")}Worst air: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${BAND_LABEL[h.worstAir.band] ?? ""}`,
+        meta?.airAsOf,
+      ),
+    );
+  }
+  return rows.length
+    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>Right now in India</h2>${rows.join("")}</section>`
+    : "";
 }
 
 const CLOUD =
@@ -140,6 +192,9 @@ function shell(title: string, body: string, css: string): string {
 <header class="bar"><a class="brand" href="/">${CLOUD} mugilu</a></header>
 <main>${body}</main>
 <footer class="foot"><a href="/about">about</a> · <a href="/terms">terms</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
+<script>
+(function(){function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
+</script>
 </body>
 </html>`;
 }
@@ -164,6 +219,8 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .amb-head{font-family:var(--serif);font-weight:600;font-size:clamp(2.6rem,12vw,3.7rem);line-height:.95;letter-spacing:-.025em;margin:0;color:var(--ink)}
 .amb-head .b{color:var(--cond)}
 .amb-say{font-family:var(--serif);font-size:1.18rem;line-height:1.42;margin:.65rem 0 0;color:var(--ink);max-width:32ch}
+.amb-also{display:flex;align-items:flex-start;gap:.4rem;font:500 .92rem/1.4 var(--sans);color:var(--cond);margin:.7rem 0 0;max-width:34ch}
+.amb-also .ic{width:16px;height:16px;flex:none;margin-top:.1rem}
 .who{display:flex;flex-wrap:wrap;gap:.35rem 1rem;margin:1.2rem 0 0;padding:0}
 .who a{font:500 .9rem var(--sans);color:var(--muted);text-decoration:none;padding-bottom:2px;border-bottom:2px solid transparent}
 .who a.on{color:var(--ink);border-color:var(--cond)}
@@ -303,6 +360,7 @@ function renderWarning(w: Warning): string {
 
 export function renderConditionsPage(c: Conditions, persona: Persona = "everyone"): string {
   const risk = ambientRisk(c, persona);
+  const also = personaAlso(risk);
   const slug = `${c.location.lat},${c.location.lon}`;
   const stationCity = c.air?.station?.city;
   const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
@@ -431,12 +489,13 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   <article class="cx">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc">${place}</h1>
-    <p class="when">the sky over this spot, right now</p>
+    <p class="when">the sky over this spot · updated ${relTime(c.air_as_of ?? c.as_of)}</p>
     ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
     <section class="amb">
       <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</span></p>
       <p class="amb-head">${head}</p>
       <p class="amb-say">${esc(ambientMeaning(risk))}</p>
+      ${also ? `<p class="amb-also">${icon("users")}${esc(also)}</p>` : ""}
       <nav class="who" aria-label="Who is this for">${pills}</nav>
     </section>
     <dl class="strata">${strata.join("")}</dl>
@@ -463,6 +522,13 @@ function istTime(iso: string): string {
     " IST · " +
     new Date(iso).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })
   );
+}
+
+/** A relative-time element: the worker renders the absolute IST time (the no-JS /
+ *  crawler fallback); the shell script upgrades it to "X ago" at view-time, so a
+ *  cached page never shows a stale "N min ago" baked in at render time. */
+function relTime(iso: string): string {
+  return `<time data-rel datetime="${iso}">${istTime(iso)}</time>`;
 }
 
 // The embeddable widget (A "build on it" surface): a compact, self-contained
@@ -696,11 +762,12 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg
 .nearme .ic{width:16px;height:16px;color:var(--sky)}
 .notice{color:#b45309;font-size:.9rem;margin:.2rem 0 1rem}
 .cities{color:var(--muted);font-size:.9rem;line-height:1.9}.cities a{color:var(--sky);text-decoration:none}
-.hero-now{margin:0 0 1.4rem;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
+.hero-now{margin:0 0 1.4rem;border:1px solid color-mix(in srgb,var(--cond,var(--sky)) 32%,var(--line));border-radius:14px;padding:14px 16px;background:linear-gradient(180deg,color-mix(in srgb,var(--cond,var(--sky)) 13%,var(--card)),var(--card))}
 .hero-now h2{margin:0 0 .5rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .hero-now .hl{display:block;text-decoration:none;color:var(--ink);padding:5px 0;font-size:.98rem;line-height:1.35}
 .hero-now .hl b{font-weight:700}
-.hero-now .hl .ic{width:18px;height:18px;color:var(--sky);margin-right:8px;vertical-align:-.2em}
+.hero-now .age{color:var(--muted);font-weight:400;font-size:.85em}
+.hero-now .hl .ic{width:18px;height:18px;color:var(--hue,var(--sky));margin-right:8px;vertical-align:-.2em}
 `;
 
 export const CITIES = [
@@ -712,7 +779,11 @@ export const CITIES = [
   { name: "Hyderabad", lat: 17.39, lon: 78.49 },
 ];
 
-export function renderHome(notFound?: string, highlights?: NationalHighlights): string {
+export function renderHome(
+  notFound?: string,
+  highlights?: NationalHighlights,
+  meta?: { gridAsOf?: string; airAsOf?: string },
+): string {
   const cityLinks = CITIES.map((c) => `<a href="/c/${c.lat},${c.lon}">${c.name}</a>`).join(" · ");
   const notice = notFound ? `<p class="notice">Couldn't find "${esc(notFound)}". Try a city or place name.</p>` : "";
 
@@ -729,7 +800,7 @@ export function renderHome(notFound?: string, highlights?: NationalHighlights): 
   </div>
   <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} Use my location</button>
   ${notice}
-  ${highlights ? renderHero(highlights) : ""}
+  ${highlights ? renderHero(highlights, meta) : ""}
   <p class="cities">Popular: ${cityLinks}</p>
   <script>
   var b=document.getElementById('nearme'),label=b.textContent;

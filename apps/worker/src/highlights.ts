@@ -1,11 +1,13 @@
-import type { ConditionsPoint } from "./types";
+import type { ConditionsPoint, NormalizedStation } from "./types";
 
 // The national multi-hazard "right now" picture, drives the landing hero.
 // Deliberately NOT air-led: heat and dust first (per the whole-sky framing).
 
 export interface NationalHighlights {
-  hottest?: { name: string; lat: number; lon: number; apparent_c: number; wet_bulb_c?: number };
-  dustiest?: { name: string; lat: number; lon: number; dust_ug_m3: number };
+  hottest?: { name: string; state?: string; lat: number; lon: number; apparent_c: number; wet_bulb_c?: number };
+  dustiest?: { name: string; state?: string; lat: number; lon: number; dust_ug_m3: number };
+  /** Worst-AQI station from the hourly air snapshot — fresher than the grid. */
+  worstAir?: { name: string; state?: string; lat: number; lon: number; aqi: number; band: NormalizedStation["band"] };
 }
 
 /** The single most extreme heat + dust point across the national grid. */
@@ -14,12 +16,32 @@ export function nationalHighlights(points: ConditionsPoint[]): NationalHighlight
   for (const p of points) {
     const feels = p.wx.apparent_c;
     if (feels != null && (!out.hottest || feels > out.hottest.apparent_c)) {
-      out.hottest = { name: p.name, lat: p.lat, lon: p.lon, apparent_c: feels, wet_bulb_c: p.wx.wet_bulb_c };
+      out.hottest = {
+        name: p.name,
+        state: p.state,
+        lat: p.lat,
+        lon: p.lon,
+        apparent_c: feels,
+        wet_bulb_c: p.wx.wet_bulb_c,
+      };
     }
     const dust = p.wx.dust_ug_m3;
     if (dust != null && (!out.dustiest || dust > out.dustiest.dust_ug_m3)) {
-      out.dustiest = { name: p.name, lat: p.lat, lon: p.lon, dust_ug_m3: dust };
+      out.dustiest = { name: p.name, state: p.state, lat: p.lat, lon: p.lon, dust_ug_m3: dust };
     }
   }
   return out;
+}
+
+/** The single worst-AQI station with coordinates, from the hourly air snapshot.
+ *  Sourced separately from the 4-hourly weather grid, so the home hero can show
+ *  a genuinely fresher air row beside the heat/dust ones. */
+export function worstAirStation(stations: NormalizedStation[]): NationalHighlights["worstAir"] {
+  let worst: NationalHighlights["worstAir"];
+  for (const s of stations) {
+    if (s.aqi != null && s.lat != null && s.lon != null && (!worst || s.aqi > worst.aqi)) {
+      worst = { name: s.city || s.name, lat: s.lat, lon: s.lon, aqi: s.aqi, band: s.band };
+    }
+  }
+  return worst;
 }

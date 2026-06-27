@@ -53,6 +53,41 @@ const NAME_KEYS = [
   "KGISWardName",
 ];
 
+// District features carry their state in the properties (LGD: stname); ward
+// layers don't, so map each ward city to its state. So every centroid (hence
+// every grid highlight) is placeable: "Lucknow, Uttar Pradesh".
+const STATE_KEYS = ["stname", "State_Name", "STATE", "st_nm", "state_name", "State"];
+const WARD_STATES = {
+  wards_bengaluru_gba: "Karnataka",
+  wards_delhi: "Delhi",
+  wards_chennai: "Tamil Nadu",
+  wards_hyderabad: "Telangana",
+  wards_mumbai: "Maharashtra",
+  wards_kolkata: "West Bengal",
+  wards_pune: "Maharashtra",
+  wards_ahmedabad: "Gujarat",
+  wards_jaipur: "Rajasthan",
+  wards_gurugram: "Haryana",
+  wards_kochi: "Kerala",
+  wards_bhubaneshwar: "Odisha",
+  wards_vizag: "Andhra Pradesh",
+  wards_thane: "Maharashtra",
+  wards_indore: "Madhya Pradesh",
+  wards_coimbatore: "Tamil Nadu",
+};
+
+function titleCase(s) {
+  return s
+    .toLowerCase()
+    .replace(/\b([a-z])/g, (_, c) => c.toUpperCase())
+    .replace(/ And /g, " and ");
+}
+
+function pickState(props) {
+  for (const k of STATE_KEYS) if (props[k]) return titleCase(String(props[k]).trim());
+  return undefined;
+}
+
 function ringSignedArea(ring) {
   let a = 0;
   for (let i = 0, n = ring.length - 1; i < n; i++) {
@@ -133,13 +168,15 @@ for (const layer of LAYERS) {
   for (let i = 0; i < feats.length; i++) {
     const c = featureCentroid(feats[i].geometry);
     if (!c) continue;
+    const props = feats[i].properties || {};
     all.push({
       id: `${layer.id}-${i}`,
-      name: pickName(feats[i].properties || {}) || `${layer.id}-${i}`,
+      name: pickName(props) || `${layer.id}-${i}`,
       level: layer.level,
       source_layer: layer.id,
       lat: c.lat,
       lon: c.lon,
+      state: layer.level === "ward" ? WARD_STATES[layer.id] : pickState(props),
     });
     n++;
   }

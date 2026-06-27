@@ -125,10 +125,13 @@ export async function buildConditions(
     smoke = { count: r.count, frp_sum: r.frp_sum, nearest_km: r.nearest_km, radius_km: 100, source: "firms" };
   }
 
+  const as_of = new Date().toISOString();
   return {
     location: { lat, lon },
     place: nearestPlace(lat, lon) ?? undefined,
-    as_of: new Date().toISOString(),
+    as_of,
+    // Measured air is from the hourly snapshot; modelled air is live (~now).
+    air_as_of: air && air.station && snapshot ? snapshot.generated_at : as_of,
     air,
     heat: om.heat,
     rain: om.rain,

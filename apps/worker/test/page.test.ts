@@ -33,6 +33,15 @@ test("renderConditionsPage: a valid HTML document with the brand and place", () 
   assert.match(html, /Bengaluru/);
 });
 
+test("renderConditionsPage: stamps freshness as a relative <time> (absolute fallback + upgrade script)", () => {
+  const html = renderConditionsPage(conditions());
+  // server renders the absolute IST time inside a data-rel <time> (the no-JS fallback)
+  assert.match(html, /<time[^>]*data-rel[^>]*datetime="[^"]+"[^>]*>[^<]*IST/);
+  // and the shell ships the tiny upgrade script that rewrites it to "X ago" at view-time
+  assert.match(html, /time\[data-rel\]\[datetime\]/);
+  assert.doesNotMatch(html, /this spot, right now/); // the bare "right now" is gone
+});
+
 test("renderConditionsPage: shows the air, heat and disclaimer", () => {
   const html = renderConditionsPage(conditions());
   assert.match(html, /57/); // AQI value

@@ -22,7 +22,9 @@ import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import type { WarningsSnapshot } from "./sachet";
 import { collectFires, loadFires } from "./firms";
-import { nationalHighlights } from "./highlights";
+import { nationalHighlights, worstAirStation } from "./highlights";
+import type { NationalHighlights } from "./highlights";
+import { stateAt } from "./place";
 import { ambientRisk, parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
@@ -90,12 +92,30 @@ export default {
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return appleIconPng();
 
-    // Lookup-first home page.
+    // Lookup-first home page. Heat/dust highlights come from the 4-hourly grid;
+    // the worst-air row from the hourly snapshot (fresher) — each stamped with
+    // its own age, and the air point's state resolved from the grid.
     if (url.pathname === "/") {
-      const obj = await env.OAQ_R2.get("data/conditions.json");
-      const highlights = obj ? nationalHighlights(((await obj.json()) as ConditionsSnapshot).points) : undefined;
+      const [gridObj, airSnap] = await Promise.all([env.OAQ_R2.get("data/conditions.json"), loadSnapshot()]);
+      let highlights: NationalHighlights | undefined;
+      let gridAsOf: string | undefined;
+      if (gridObj) {
+        const grid = (await gridObj.json()) as ConditionsSnapshot;
+        highlights = nationalHighlights(grid.points);
+        gridAsOf = grid.generated_at;
+      }
+      if (airSnap) {
+        const worst = worstAirStation(airSnap.stations);
+        if (worst) {
+          worst.state = stateAt(worst.lat, worst.lon);
+          highlights = { ...(highlights ?? {}), worstAir: worst };
+        }
+      }
       return cachedResponse(
-        renderHome(url.searchParams.get("notfound") ?? undefined, highlights),
+        renderHome(url.searchParams.get("notfound") ?? undefined, highlights, {
+          gridAsOf,
+          airAsOf: airSnap?.generated_at,
+        }),
         "text/html; charset=utf-8",
       );
     }

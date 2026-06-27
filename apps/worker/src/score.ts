@@ -188,3 +188,26 @@ export function ambientMeaning(risk: AmbientRisk): string {
   if (risk.band === "low") return "Conditions are good right now.";
   return ADVICE[risk.driver]?.[risk.band] ?? "Take some care outdoors.";
 }
+
+const HAZARD_NOUN: Record<string, string> = {
+  Air: "air",
+  Heat: "heat",
+  UV: "the sun",
+  Dust: "dust",
+  Smoke: "smoke",
+  Warning: "the official warning",
+};
+
+/** The persona callout (option A): surface the persona's OWN top trigger when
+ *  it's elevated (high+) but isn't the headline driver — so an asthmatic on a
+ *  severe-heat day still hears the air is bad, without the heat being buried.
+ *  Returns null for "everyone" or when the driver already is their concern. */
+export function personaAlso(risk: AmbientRisk): string | null {
+  if (risk.persona === "everyone") return null;
+  const sensitive = SENSITIVE[risk.persona] ?? [];
+  const top = risk.hazards
+    .filter((h) => sensitive.includes(h.hazard) && h.hazard !== risk.driver && h.level >= 2)
+    .sort((a, b) => b.level - a.level)[0];
+  if (!top) return null;
+  return `For ${PERSONA_LABEL[risk.persona].toLowerCase()}, also watch: ${HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()} is ${top.band}.`;
+}

@@ -14,8 +14,7 @@ function cityOf(sourceLayer: string): string | null {
   return m[1].charAt(0).toUpperCase() + m[1].slice(1);
 }
 
-/** Nearest admin label for a point: "Ward, City" in metros, a district name elsewhere. */
-export function nearestPlace(lat: number, lon: number): string | null {
+function nearestCentroid(lat: number, lon: number): Centroid | null {
   let best: Centroid | null = null;
   let bestD = Infinity;
   for (const c of GRID) {
@@ -25,10 +24,22 @@ export function nearestPlace(lat: number, lon: number): string | null {
       best = c;
     }
   }
+  return best;
+}
+
+/** Nearest admin label for a point: "Ward, City" in metros, "District, State" elsewhere. */
+export function nearestPlace(lat: number, lon: number): string | null {
+  const best = nearestCentroid(lat, lon);
   if (!best) return null;
   if (best.level === "ward") {
     const city = cityOf(best.source_layer);
     return city ? `${best.name}, ${city}` : best.name;
   }
-  return best.name;
+  return best.state ? `${best.name}, ${best.state}` : best.name;
+}
+
+/** The state/UT a point falls in, via the nearest grid centroid (for points
+ *  whose own source lacks a reliable state, e.g. the air stations). */
+export function stateAt(lat: number, lon: number): string | undefined {
+  return nearestCentroid(lat, lon)?.state ?? undefined;
 }

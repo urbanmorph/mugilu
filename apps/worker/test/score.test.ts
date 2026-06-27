@@ -1,7 +1,28 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ambientRisk, ambientMeaning } from "../src/score";
+import { ambientRisk, ambientMeaning, personaAlso } from "../src/score";
 import type { Conditions } from "../src/types";
+
+test("personaAlso: surfaces an asthmatic's air trigger under a heat headline (option A)", () => {
+  // Severe heat (the headline) + moderate air. Asthma is sensitive to air.
+  const c = cond({
+    air: {
+      aqi: 130,
+      band: "moderate",
+      pollutants: {},
+      yll: null,
+      station: { id: "x", name: "x", city: "x", distance_km: 1 },
+      source: "cpcb",
+    },
+    heat: { wbgt_c: 36, apparent_c: 44, source: "om" },
+  });
+  const everyone = ambientRisk(c, "everyone");
+  assert.equal(everyone.driver, "Heat");
+  assert.equal(personaAlso(everyone), null); // no callout for everyone
+  const asthma = ambientRisk(c, "asthma");
+  assert.equal(asthma.driver, "Heat"); // the killer hazard is NOT buried
+  assert.match(personaAlso(asthma) ?? "", /air/i); // ...but the air trigger is surfaced
+});
 
 function cond(partial: Partial<Conditions>): Conditions {
   return {

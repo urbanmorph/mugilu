@@ -18,6 +18,22 @@ test("renderHome: includes city quick-links to /c", () => {
   assert.match(html, /Delhi/);
 });
 
+test("renderHome: hero shows state-qualified places, the worst-air row, and per-row ages", () => {
+  const html = renderHome(
+    undefined,
+    {
+      hottest: { name: "Lucknow", state: "Uttar Pradesh", lat: 26.85, lon: 80.95, apparent_c: 44 },
+      worstAir: { name: "Byrnihat", state: "Meghalaya", lat: 26.0, lon: 91.8, aqi: 312, band: "severe" },
+    },
+    { gridAsOf: "2026-06-27T12:00:00Z", airAsOf: "2026-06-27T15:00:00Z" },
+  );
+  assert.match(html, /Lucknow, Uttar Pradesh/); // state-qualified so it's placeable
+  assert.match(html, /Worst air/); // the fresher hourly-air row
+  assert.match(html, /Byrnihat, Meghalaya/);
+  assert.match(html, /AQI 312/);
+  assert.match(html, /<time[^>]*data-rel/); // each row stamped with its own age
+});
+
 test("renderHome: near-me is progressive enhancement (geolocation)", () => {
   assert.match(renderHome(), /geolocation/);
 });
