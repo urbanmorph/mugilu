@@ -2,6 +2,7 @@ import type { Conditions, Snapshot } from "./types";
 import { findNearest } from "./near";
 import { getOpenMeteo } from "./openmeteo";
 import { nearestPlace } from "./place";
+import { getLocationAlerts } from "./sachet";
 
 // Shared license-passthrough fields for the conditions contract.
 //
@@ -23,6 +24,7 @@ const SOURCE_CREDIT: Record<string, string> = {
   airnet: "Airnet / CSTEP via OAQ",
   aurassure: "Aurassure via OAQ",
   "open-meteo": "Open-Meteo (CC-BY 4.0)",
+  sachet: "NDMA / IMD (SACHET)",
 };
 
 /** Build a deduped, ready-to-paste attribution line from contributing sources. */
@@ -66,7 +68,7 @@ export async function buildConditions(
     }
   }
 
-  const om = await getOpenMeteo(lat, lon);
+  const [om, warnings] = await Promise.all([getOpenMeteo(lat, lon), getLocationAlerts(lat, lon)]);
 
   return {
     location: { lat, lon },
@@ -77,12 +79,14 @@ export async function buildConditions(
     rain: om.rain,
     uv: om.uv,
     dust: om.dust,
+    warnings: warnings.length ? warnings : undefined,
     attribution: buildAttribution([
       air?.source,
       om.heat?.source,
       om.rain?.source,
       om.uv?.source,
       om.dust?.source,
+      warnings.length ? "sachet" : undefined,
     ]),
     disclaimer: DISCLAIMER,
   };
@@ -96,6 +100,16 @@ export function renderConditionsMarkdown(c: Conditions): string {
     `*As of ${c.as_of}.*`,
     "",
   ];
+
+  if (c.warnings?.length) {
+    out.push("## ⚠ Official warnings");
+    for (const w of c.warnings) {
+      out.push(
+        `- **${w.event}** (${w.severity}${w.until ? `, until ${w.until}` : ""}) — ${w.area} · ${w.issuer}`,
+      );
+    }
+    out.push("");
+  }
 
   if (c.air) {
     out.push("## Air", `- AQI **${c.air.aqi ?? "—"}** (${c.air.band})`);

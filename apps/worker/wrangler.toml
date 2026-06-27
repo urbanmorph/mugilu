@@ -5,7 +5,7 @@ account_id = "6ba72cdd965276a57d19bf0aadc4d551"
 
 # Hourly refresh at :05, daily hierarchy refresh at 20:30 UTC (02:00 IST).
 [triggers]
-crons = ["5 * * * *", "30 20 * * *"]
+crons = ["5 * * * *", "5 */4 * * *", "30 20 * * *"]
 
 [[kv_namespaces]]
 binding = "OAQ_KV"

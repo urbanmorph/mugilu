@@ -110,6 +110,19 @@ export interface DustConditions {
   source: string;
 }
 
+/** An official NDMA/SACHET warning active at a point (IMD/SDMA-issued). */
+export interface Warning {
+  event: string; // disaster_type, e.g. "Thunderstorm with Lightning"
+  severity: string; // WATCH / Severe / Extreme …
+  color: string; // severity_color: yellow / orange / red
+  certainty: string; // severity_level
+  area: string; // area_description
+  issuer: string; // alert_source
+  until: string; // short effective-end time
+  identifier: string; // → FetchXMLFile for full CAP
+  headline: string; // warning_message (may be localized)
+}
+
 /** The assembled response for /c/{lat},{lon} (A4). Unfilled layers are null. */
 export interface Conditions {
   location: { lat: number; lon: number };
@@ -121,6 +134,8 @@ export interface Conditions {
   rain: RainConditions | null;
   uv: UvConditions | null;
   dust: DustConditions | null;
+  /** Official NDMA/SACHET warnings active at this point. */
+  warnings?: Warning[];
   /** Ready-to-paste credit line for whatever sources contributed. */
   attribution: string;
   /** Always present, always relayed. */

@@ -1,4 +1,4 @@
-import type { Conditions } from "./types";
+import type { Conditions, Warning } from "./types";
 import type { NationalHighlights } from "./highlights";
 
 // The worker-rendered HTML pages (Phase B): the location page and the lookup
@@ -145,6 +145,8 @@ const CONDITIONS_CSS = `
 .place{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin:.2rem 0 0}
 .asof{color:var(--muted);font-size:.85rem;margin:.1rem 0 1rem}
 .verdict{font-size:1.15rem;line-height:1.35;margin:0 0 1.2rem}
+.warn{border-left:5px solid var(--wc,#64748b);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 1rem;font-weight:600;line-height:1.4}
+.warn .wsrc{display:block;margin-top:3px;color:var(--muted);font-size:.78rem;font-weight:400}
 .cards{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:480px){.cards{grid-template-columns:1fr 1fr}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
@@ -160,6 +162,25 @@ const CONDITIONS_CSS = `
 .disclaimer{margin:.2rem 0;color:var(--muted);font-size:.78rem;line-height:1.4}
 .data{margin:1rem 0 0;font-size:.8rem}.data a{color:var(--sky)}
 `;
+
+function warnColor(color: string): string {
+  switch (color.toLowerCase()) {
+    case "red":
+      return "#dc2626";
+    case "orange":
+      return "#f97316";
+    case "yellow":
+      return "#ca8a04";
+    default:
+      return "#64748b";
+  }
+}
+
+/** A pinned official-warning banner — the most urgent thing on the page. */
+function renderWarning(w: Warning): string {
+  const meta = [w.severity, w.until ? `until ${w.until}` : ""].filter(Boolean).join(" · ");
+  return `<div class="warn" style="--wc:${warnColor(w.color)}">⚠ <b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div>`;
+}
 
 export function renderConditionsPage(c: Conditions): string {
   const coords = `${c.location.lat}, ${c.location.lon}`;
@@ -196,6 +217,7 @@ export function renderConditionsPage(c: Conditions): string {
   const body = `
   <p class="place">${place}</p>
   <p class="asof">updated just now</p>
+  ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
   <p class="verdict">${esc(verdict(c))}</p>
   <div class="cards">${airCard}${heatCard}</div>
   ${more.length ? `<details class="more"><summary>more</summary><ul>${more.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></details>` : ""}

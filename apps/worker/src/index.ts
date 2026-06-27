@@ -277,6 +277,9 @@ export default {
           (e) => console.error("[refresh] failed:", e),
         ),
       );
+    }
+    // National conditions grid every 4h — ~6 collects/day fits Open-Meteo's free quota.
+    if (event.cron === "5 */4 * * *") {
       ctx.waitUntil(
         collectConditions(env).then(
           (s) => console.log(`[collect] ${s.point_count} points`),
