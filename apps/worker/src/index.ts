@@ -25,7 +25,7 @@ import { collectFires, loadFires } from "./firms";
 import { nationalHighlights, worstAirStation } from "./highlights";
 import type { NationalHighlights } from "./highlights";
 import { stateAt } from "./place";
-import { recordLookup, topPlaces, counters } from "./metrics";
+import { recordLookup, recordReferrer, topPlaces, topReferrers, counters } from "./metrics";
 import { parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
@@ -131,8 +131,12 @@ export default {
     // First-party usage counts: top looked-up places + format tallies. Aggregate,
     // privacy-preserving (rounded coords, no IP). The bharatlas-style read endpoint.
     if (url.pathname === "/api/counts") {
-      const [places, formats] = await Promise.all([topPlaces(env, 20), counters(env)]);
-      return cachedResponse(JSON.stringify({ places, formats }, null, 2), "application/json; charset=utf-8");
+      const [places, formats, referrers] = await Promise.all([
+        topPlaces(env, 20),
+        counters(env),
+        topReferrers(env, 25),
+      ]);
+      return cachedResponse(JSON.stringify({ places, formats, referrers }, null, 2), "application/json; charset=utf-8");
     }
 
     // Resolve a place name to coordinates and redirect to its conditions page.
@@ -243,6 +247,8 @@ export default {
       const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
       const conditions = await buildConditions(snap, lat, lon, fires);
       ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html"));
+      // API formats (.json/.md/.png) are a "build on it" surface — capture who.
+      if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
       if (ext === "png") {
         return renderConditionsOg(conditions, persona);
       }
@@ -268,6 +274,7 @@ export default {
       const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
       const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
       ctx.waitUntil(recordLookup(env, coords.lat, coords.lon, conditions.place, "embed"));
+      ctx.waitUntil(recordReferrer(env, "embed", req, url));
       return cachedResponse(renderEmbed(conditions, persona, SITE_URL), "text/html; charset=utf-8");
     }
 

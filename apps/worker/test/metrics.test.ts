@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { recordLookup, topPlaces, counters } from "../src/metrics";
+import { recordLookup, recordReferrer, topPlaces, counters } from "../src/metrics";
 import type { Env } from "../src/index";
+
+function req(headers: Record<string, string> = {}): Request {
+  return { headers: { get: (k: string) => headers[k.toLowerCase()] ?? null } } as unknown as Request;
+}
 
 // A tiny D1 stand-in that records prepared statements + their bound args.
 function mockDB(rows: Record<string, unknown[]> = {}) {
@@ -53,6 +57,43 @@ test("topPlaces: returns the most-looked-up labelled places", async () => {
   const r = await topPlaces({ METRICS: db } as unknown as Env);
   assert.equal(r[0].label, "Delhi, Delhi");
   assert.equal(r[0].n, 9);
+});
+
+test("recordReferrer: captures the referring host (no www), domain-level", async () => {
+  const { db, calls } = mockDB();
+  await recordReferrer(
+    { METRICS: db } as unknown as Env,
+    "embed",
+    req({ referer: "https://www.example.com/page?x=1" }),
+    new URL("https://mugilu.live/embed/1,2"),
+  );
+  const ins = calls.find((c) => /INSERT INTO referrers/.test(c.sql));
+  assert.deepEqual(ins!.args, ["embed|example.com", "example.com", "embed"]); // host only, no path/www
+});
+
+test("recordReferrer: ?ref= self-identifies server-to-server callers", async () => {
+  const { db, calls } = mockDB();
+  await recordReferrer(
+    { METRICS: db } as unknown as Env,
+    "api",
+    req(),
+    new URL("https://mugilu.live/c/1,2.json?ref=MyApp"),
+  );
+  const ins = calls.find((c) => /referrers/.test(c.sql));
+  assert.deepEqual(ins!.args, ["api|myapp", "myapp", "api"]);
+});
+
+test("recordReferrer: skips our own pages and empty referrers", async () => {
+  const { db, calls } = mockDB();
+  const e = { METRICS: db } as unknown as Env;
+  await recordReferrer(
+    e,
+    "api",
+    req({ referer: "https://mugilu.live/about" }),
+    new URL("https://mugilu.live/c/1,2.json"),
+  );
+  await recordReferrer(e, "api", req(), new URL("https://mugilu.live/c/1,2.json"));
+  assert.equal(calls.length, 0); // nothing written for own-host or no-referrer
 });
 
 test("metrics are best-effort: a D1 failure never throws or surfaces", async () => {

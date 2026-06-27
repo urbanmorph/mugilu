@@ -58,6 +58,63 @@ export async function topPlaces(env: Env, limit = 8): Promise<TopPlace[]> {
   }
 }
 
+/** The referring host (no www, lowercased), or a sanitised ?ref= value. Null if
+ *  there's none, or it's one of our own pages (not external adoption). */
+function referrerHost(req: Request, url: URL): string | null {
+  const ref = url.searchParams.get("ref");
+  if (ref)
+    return (
+      ref
+        .toLowerCase()
+        .replace(/[^a-z0-9.\-]/g, "")
+        .slice(0, 60) || null
+    );
+  const raw = req.headers.get("referer") || req.headers.get("origin");
+  if (!raw) return null;
+  try {
+    const host = new URL(raw).hostname.replace(/^www\./, "").toLowerCase();
+    if (!host || host === "mugilu.live") return null;
+    return host;
+  } catch {
+    return null;
+  }
+}
+
+/** Record who built on us: the referring site/app for an /embed or API hit.
+ *  Domain-level, not user-level; our own pages and empty referrers are skipped. */
+export async function recordReferrer(env: Env, surface: string, req: Request, url: URL): Promise<void> {
+  const host = referrerHost(req, url);
+  if (!host) return;
+  try {
+    await env.METRICS.prepare(
+      "INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,1,unixepoch()) " +
+        "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch()",
+    )
+      .bind(`${surface}|${host}`, host, surface)
+      .run();
+  } catch {
+    // best-effort
+  }
+}
+
+export interface Referrer {
+  host: string;
+  surface: string;
+  n: number;
+}
+
+/** The top adopters (sites/apps building on the embed + API). */
+export async function topReferrers(env: Env, limit = 25): Promise<Referrer[]> {
+  try {
+    const r = await env.METRICS.prepare("SELECT host, surface, n FROM referrers ORDER BY n DESC LIMIT ?")
+      .bind(limit)
+      .all<Referrer>();
+    return r.results ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** Format/embed/api tallies for /api/counts. */
 export async function counters(env: Env): Promise<Record<string, number>> {
   try {
