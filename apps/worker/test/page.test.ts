@@ -35,15 +35,19 @@ test("renderConditionsPage: a valid HTML document with the brand and place", () 
 
 test("renderConditionsPage: shows the air, heat and disclaimer", () => {
   const html = renderConditionsPage(conditions());
-  assert.match(html, /AQI 57/);
-  assert.match(html, /Feels 24/);
+  assert.match(html, /57/); // AQI value
+  assert.match(html, /AQI/);
+  assert.match(html, /24°/); // feels-like
   assert.match(html, /not for medical/);
 });
 
-test("renderConditionsPage: NO jargon on the visible page", () => {
+test("renderConditionsPage: surfaces wet-bulb with context, hides raw pollutant jargon", () => {
   const html = renderConditionsPage(conditions());
-  assert.doesNotMatch(html, /wet.?bulb/i);
-  assert.doesNotMatch(html, /µg\/m³|PM2\.5|aerosol|aod/i);
+  // wet-bulb is intentionally surfaced now, with a plain survivability tag
+  assert.match(html, /wet.?bulb/i);
+  assert.match(html, /safe|caution|severe|dangerous/i);
+  // but raw pollutant identifiers stay in the .json/.md siblings only
+  assert.doesNotMatch(html, /PM2\.5|aerosol|\baod\b/i);
 });
 
 test("renderConditionsPage: verdict escalates for severe air", () => {

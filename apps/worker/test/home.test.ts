@@ -38,8 +38,9 @@ test("renderHome: search box wired to the /suggest typeahead", () => {
   assert.match(html, /id="q"/);
 });
 
-test("renderHome: family footer present", () => {
+test("renderHome: minimal footer (about, terms, commons → PDGI scorecard)", () => {
   const html = renderHome();
-  assert.match(html, /pdgi\.org/);
-  assert.match(html, /urbanmorph/);
+  assert.match(html, /digital commons/i);
+  assert.match(html, /PDGI\.md/); // the commons link points at the scorecard
+  assert.match(html, /\/terms/);
 });

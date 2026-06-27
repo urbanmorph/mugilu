@@ -1,5 +1,7 @@
 import { ImageResponse } from "workers-og";
-import type { NormalizedStation } from "./types";
+import type { NormalizedStation, Conditions } from "./types";
+import { ambientRisk, ambientMeaning } from "./score";
+import type { Persona, RiskBand } from "./score";
 
 const BAND_COLORS: Record<NormalizedStation["band"], string> = {
   good: "#00b050",
@@ -72,5 +74,80 @@ export function renderStationOg(s: NormalizedStation, generatedAt: string): Resp
   const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });
   const headers = new Headers(img.headers);
   headers.set("cache-control", "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400");
+  return new Response(img.body, { status: img.status, headers });
+}
+
+// ── Conditions snapshot image (the timestamped PNG for /c/{lat},{lon}.png) ──
+const RISK_COLOR: Record<RiskBand, string> = {
+  low: "#16a34a",
+  moderate: "#eab308",
+  high: "#f97316",
+  severe: "#ef4444",
+};
+const RISK_LABEL: Record<RiskBand, string> = {
+  low: "Low",
+  moderate: "Moderate",
+  high: "High",
+  severe: "Severe",
+};
+const COND_NOUN: Record<string, string> = {
+  Air: "air",
+  Heat: "heat",
+  UV: "sun",
+  Dust: "dust",
+  Warning: "alert",
+  none: "sky",
+};
+
+/** A shareable, timestamped snapshot image of the conditions at a point. The
+ *  time is rendered prominently because the values change; cache is short. */
+export function renderConditionsOg(c: Conditions, persona: Persona): Response {
+  const risk = ambientRisk(c, persona);
+  const cond = RISK_COLOR[risk.band];
+  const placeRaw = c.place || c.air?.station?.city || `${c.location.lat}, ${c.location.lon}`;
+  const place = placeRaw.length > 30 ? placeRaw.slice(0, 29) + "…" : placeRaw;
+  const head = risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
+  const updated =
+    new Date(c.as_of).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }) + " IST";
+
+  const stats: Array<[string, string]> = [];
+  if (c.air?.aqi != null) stats.push(["AIR", `AQI ${c.air.aqi}`]);
+  if (c.heat?.apparent_c != null) stats.push(["HEAT", `feels ${Math.round(c.heat.apparent_c)}°`]);
+  if (c.heat?.wet_bulb_c != null) stats.push(["WET-BULB", `${Math.round(c.heat.wet_bulb_c)}°`]);
+  if (c.uv?.index != null) stats.push(["SUN", `UV ${Math.round(c.uv.index)}`]);
+  if (c.dust?.dust_ug_m3 != null) stats.push(["DUST", `${Math.round(c.dust.dust_ug_m3)}`]);
+
+  const stat = (label: string, val: string) =>
+    `<div style="display:flex;flex-direction:column;margin-right:56px;">` +
+    `<div style="display:flex;font-size:26px;color:#64748b;letter-spacing:2px;">${esc(label)}</div>` +
+    `<div style="display:flex;font-size:40px;font-weight:700;color:#e2e8f0;margin-top:6px;">${esc(val)}</div>` +
+    `</div>`;
+
+  const html =
+    `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:64px 72px;font-family:sans-serif;">` +
+      `<div style="display:flex;justify-content:space-between;align-items:center;font-size:30px;color:#94a3b8;">` +
+        `<div style="display:flex;">mugilu · the sky over ${esc(place)}</div>` +
+        `<div style="display:flex;color:#cbd5e1;">${esc(updated)}</div>` +
+      `</div>` +
+      `<div style="display:flex;flex-direction:column;flex:1;justify-content:center;">` +
+        `<div style="display:flex;font-size:120px;font-weight:800;line-height:1;color:${cond};">${esc(head)}</div>` +
+        `<div style="display:flex;font-size:38px;color:#cbd5e1;margin-top:22px;">${esc(ambientMeaning(risk))}</div>` +
+      `</div>` +
+      `<div style="display:flex;align-items:flex-end;border-top:1px solid #1f2937;padding-top:30px;">` +
+        stats.map(([l, v]) => stat(l, v)).join("") +
+        `<div style="display:flex;margin-left:auto;font-size:28px;color:#64748b;">mugilu.live</div>` +
+      `</div>` +
+    `</div>`;
+
+  const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });
+  const headers = new Headers(img.headers);
+  headers.set("cache-control", "public, max-age=900, s-maxage=900, stale-while-revalidate=86400");
   return new Response(img.body, { status: img.status, headers });
 }

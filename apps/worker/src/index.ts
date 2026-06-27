@@ -2,11 +2,11 @@ import { refreshLatest } from "./refresh";
 import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
 import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
-import { renderStationOg } from "./og";
+import { renderStationOg, renderConditionsOg } from "./og";
 import { faviconSvg, appleIconPng } from "./icon";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown } from "./conditions";
-import { renderConditionsPage, renderHome, renderAbout, renderTerms, renderNotFound } from "./page";
+import { renderConditionsPage, renderHome, renderAbout, renderTerms, renderNotFound, renderEmbed } from "./page";
 import { robotsTxt, llmsTxt, sitemapXml } from "./meta";
 import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
@@ -172,7 +172,7 @@ export default {
     // Conditions at a coordinate (A4): nearest-station air + Open-Meteo
     // heat/rain/uv/dust, assembled into the normalized schema.
     // /c/{lat},{lon}.{json,md}
-    const condMatch = url.pathname.match(/^\/c\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\.(json|md))?$/);
+    const condMatch = url.pathname.match(/^\/c\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\.(json|md|png))?$/);
     if (condMatch) {
       const [, latStr, lonStr, ext] = condMatch;
       const coords = parseLatLon(latStr, lonStr);
@@ -181,6 +181,9 @@ export default {
       const persona = parsePersona(url.searchParams.get("as"));
       const snap = await loadSnapshot();
       const conditions = await buildConditions(snap, lat, lon);
+      if (ext === "png") {
+        return renderConditionsOg(conditions, persona);
+      }
       if (ext === "json") {
         const body = { ...conditions, ambient: ambientRisk(conditions, persona) };
         return cachedResponse(JSON.stringify(body, null, 2), "application/json; charset=utf-8");
@@ -189,6 +192,20 @@ export default {
         return cachedResponse(renderConditionsMarkdown(conditions, persona), "text/markdown; charset=utf-8");
       }
       return cachedResponse(renderConditionsPage(conditions, persona), "text/html; charset=utf-8");
+    }
+
+    // Embeddable conditions widget (the "build on it" surface): a compact card
+    // others drop into an <iframe>. /embed/{lat},{lon} — framable (no X-Frame
+    // restriction is set), carries a copy-paste snippet and links back.
+    const embedMatch = url.pathname.match(/^\/embed\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/);
+    if (embedMatch) {
+      const [, latStr, lonStr] = embedMatch;
+      const coords = parseLatLon(latStr, lonStr);
+      if (!coords) return badRequest("coordinates out of range");
+      const persona = parsePersona(url.searchParams.get("as"));
+      const snap = await loadSnapshot();
+      const conditions = await buildConditions(snap, coords.lat, coords.lon);
+      return cachedResponse(renderEmbed(conditions, persona, SITE_URL), "text/html; charset=utf-8");
     }
 
     // Per-station OG image: /og/s/{provider}/{raw_id}.png (rendered via workers-og).
