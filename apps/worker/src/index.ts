@@ -8,6 +8,7 @@ import { buildConditions, renderConditionsMarkdown } from "./conditions";
 import { renderConditionsPage, renderHome } from "./page";
 import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
+import { collectConditions } from "./collect";
 import type { Snapshot, NormalizedStation } from "./types";
 
 export interface Env {
@@ -223,6 +224,23 @@ export default {
       }
     }
 
+    // Manual trigger: collect the national conditions grid. /collect?key=OAQ_API_KEY
+    if (url.pathname === "/collect") {
+      const key = url.searchParams.get("key");
+      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      try {
+        const snap = await collectConditions(env);
+        return Response.json({
+          ok: true,
+          generated_at: snap.generated_at,
+          point_count: snap.point_count,
+          sample: snap.points.slice(0, 3),
+        });
+      } catch (e) {
+        return Response.json({ ok: false, error: String(e) }, { status: 500 });
+      }
+    }
+
     // Debug: peek at the current signature without exposing it.
     if (url.pathname === "/sig") {
       const key = url.searchParams.get("key");
@@ -249,6 +267,12 @@ export default {
         refreshLatest(env).then(
           (snap) => console.log(`[refresh] ${snap.station_count} stations`),
           (e) => console.error("[refresh] failed:", e),
+        ),
+      );
+      ctx.waitUntil(
+        collectConditions(env).then(
+          (s) => console.log(`[collect] ${s.point_count} points`),
+          (e) => console.error("[collect] failed:", e),
         ),
       );
     }

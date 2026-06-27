@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getOpenMeteo } from "../src/openmeteo";
+import { getOpenMeteo, getOpenMeteoBulk } from "../src/openmeteo";
 
 // Fixtures mirror the real Open-Meteo responses we probed for Bengaluru.
 const FORECAST = {
@@ -45,6 +45,34 @@ test("getOpenMeteo: a failing endpoint nulls only its own layer", async () => {
     assert.ok(r.heat, "heat should still be present");
     assert.equal(r.uv, null, "uv should be null when air-quality fails");
     assert.equal(r.dust, null);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+// Bulk forecast + air-quality responses (arrays, one entry per coordinate).
+const FC_BULK = [
+  { current: { temperature_2m: 25, apparent_temperature: 28, wet_bulb_temperature_2m: 21, relative_humidity_2m: 70, precipitation: 0 } },
+  { current: { temperature_2m: 37, apparent_temperature: 40, wet_bulb_temperature_2m: 25, relative_humidity_2m: 30, precipitation: 0 } },
+];
+const AQ_BULK = [
+  { current: { uv_index: 6, dust: 12 } },
+  { current: { uv_index: 4, dust: 409 } },
+];
+
+test("getOpenMeteoBulk: maps bulk forecast + air-quality per coordinate, in order", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const body = String(input).includes("air-quality") ? AQ_BULK : FC_BULK;
+    return new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
+  }) as typeof fetch;
+  try {
+    const out = await getOpenMeteoBulk([{ lat: 12.97, lon: 77.59 }, { lat: 28.61, lon: 77.21 }]);
+    assert.equal(out.length, 2);
+    assert.equal(out[0].apparent_c, 28);
+    assert.equal(out[1].apparent_c, 40);
+    assert.equal(out[1].dust_ug_m3, 409);
+    assert.equal(out[0].uv, 6);
   } finally {
     globalThis.fetch = realFetch;
   }

@@ -124,3 +124,40 @@ export interface Conditions {
   /** Always present, always relayed. */
   disclaimer: string;
 }
+
+// ── National conditions grid (the de-bias) ──────────────────────────────────
+// Heat/rain/UV/dust come from a model that covers everywhere, so they're sampled
+// over a tiered admin grid (districts nationally + city wards) — not the air
+// monitors. See data/centroids.json + scripts/build-centroids.mjs.
+
+/** Modelled weather conditions at a point (Open-Meteo). */
+export interface Wx {
+  temp_c?: number;
+  apparent_c?: number; // "feels like"
+  wet_bulb_c?: number;
+  humidity_pct?: number;
+  rain_mm?: number;
+  uv?: number;
+  dust_ug_m3?: number;
+}
+
+/** A sampling point from the admin grid (district or city ward). */
+export interface Centroid {
+  id: string;
+  name: string;
+  level: string; // "district" | "ward"
+  source_layer: string;
+  lat: number;
+  lon: number;
+}
+
+/** A grid point with its current conditions. */
+export interface ConditionsPoint extends Centroid {
+  wx: Wx;
+}
+
+export interface ConditionsSnapshot {
+  generated_at: string;
+  point_count: number;
+  points: ConditionsPoint[];
+}

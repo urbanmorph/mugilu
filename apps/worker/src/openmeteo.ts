@@ -1,4 +1,4 @@
-import type { HeatConditions, RainConditions, UvConditions, DustConditions } from "./types";
+import type { HeatConditions, RainConditions, UvConditions, DustConditions, Wx } from "./types";
 
 // Open-Meteo adapter (A3). One zero-key fetch to each of the forecast and
 // air-quality endpoints fills the heat / rain / uv / dust layers of the
@@ -76,5 +76,58 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     console.error("[open-meteo] air-quality failed:", air.reason);
   }
 
+  return out;
+}
+
+const BULK_BATCH = 100;
+
+async function fetchBulk(url: string): Promise<OmResponse[]> {
+  const res = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+  if (!res.ok) throw new Error(`open-meteo bulk ${res.status}`);
+  const body = (await res.json()) as OmResponse | OmResponse[];
+  // Bulk (multi-coordinate) returns an array; a single coord returns an object.
+  return Array.isArray(body) ? body : [body];
+}
+
+/**
+ * Bulk heat/rain/UV/dust for many points — used to build the national grid.
+ * Open-Meteo accepts ~100 coordinates per call and returns results in input
+ * order, so we batch and stitch. Forecast + air-quality are fetched per batch
+ * with allSettled, so one flaky endpoint only nulls those fields.
+ */
+export async function getOpenMeteoBulk(
+  coords: Array<{ lat: number; lon: number }>,
+  delayMs = 0,
+): Promise<Wx[]> {
+  const out: Wx[] = new Array(coords.length);
+  for (let i = 0; i < coords.length; i += BULK_BATCH) {
+    if (i > 0 && delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
+    const chunk = coords.slice(i, i + BULK_BATCH);
+    const lats = chunk.map((c) => c.lat.toFixed(3)).join(",");
+    const lons = chunk.map((c) => c.lon.toFixed(3)).join(",");
+    const common = `latitude=${lats}&longitude=${lons}&timezone=auto`;
+    const [fc, aq] = await Promise.allSettled([
+      fetchBulk(
+        `${FORECAST_URL}?${common}&current=` +
+          "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation",
+      ),
+      fetchBulk(`${AIR_QUALITY_URL}?${common}&current=uv_index,dust`),
+    ]);
+    const fcArr = fc.status === "fulfilled" ? fc.value : [];
+    const aqArr = aq.status === "fulfilled" ? aq.value : [];
+    for (let j = 0; j < chunk.length; j++) {
+      const f = fcArr[j]?.current ?? {};
+      const a = aqArr[j]?.current ?? {};
+      out[i + j] = {
+        temp_c: num(f.temperature_2m),
+        apparent_c: num(f.apparent_temperature),
+        wet_bulb_c: num(f.wet_bulb_temperature_2m),
+        humidity_pct: num(f.relative_humidity_2m),
+        rain_mm: num(f.precipitation),
+        uv: num(a.uv_index),
+        dust_ug_m3: num(a.dust),
+      };
+    }
+  }
   return out;
 }
