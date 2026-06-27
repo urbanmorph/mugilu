@@ -10,6 +10,7 @@ import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { nationalHighlights } from "./highlights";
+import { ambientRisk, parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
 export interface Env {
@@ -146,15 +147,17 @@ export default {
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest("coordinates out of range");
       const { lat, lon } = coords;
+      const persona = parsePersona(url.searchParams.get("as"));
       const snap = await loadSnapshot();
       const conditions = await buildConditions(snap, lat, lon);
       if (ext === "json") {
-        return cachedResponse(JSON.stringify(conditions, null, 2), "application/json; charset=utf-8");
+        const body = { ...conditions, ambient: ambientRisk(conditions, persona) };
+        return cachedResponse(JSON.stringify(body, null, 2), "application/json; charset=utf-8");
       }
       if (ext === "md") {
-        return cachedResponse(renderConditionsMarkdown(conditions), "text/markdown; charset=utf-8");
+        return cachedResponse(renderConditionsMarkdown(conditions, persona), "text/markdown; charset=utf-8");
       }
-      return cachedResponse(renderConditionsPage(conditions), "text/html; charset=utf-8");
+      return cachedResponse(renderConditionsPage(conditions, persona), "text/html; charset=utf-8");
     }
 
     // Per-station OG image: /og/s/{provider}/{raw_id}.png (rendered via workers-og).

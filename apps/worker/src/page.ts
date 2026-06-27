@@ -1,5 +1,7 @@
 import type { Conditions, Warning } from "./types";
 import type { NationalHighlights } from "./highlights";
+import { ambientRisk, PERSONAS, PERSONA_LABEL } from "./score";
+import type { AmbientRisk, Persona, RiskBand } from "./score";
 
 // The worker-rendered HTML pages (Phase B): the location page and the lookup
 // home page. Layperson-first, mobile-first, self-contained (inline CSS + cloud),
@@ -147,6 +149,14 @@ const CONDITIONS_CSS = `
 .verdict{font-size:1.15rem;line-height:1.35;margin:0 0 1.2rem}
 .warn{border-left:5px solid var(--wc,#64748b);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 1rem;font-weight:600;line-height:1.4}
 .warn .wsrc{display:block;margin-top:3px;color:var(--muted);font-size:.78rem;font-weight:400}
+.ambient{border:1px solid var(--line);border-top:5px solid var(--rc,var(--sky));border-radius:14px;padding:14px 16px;margin:0 0 .7rem;background:var(--card)}
+.ambient .alabel{margin:0;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ambient .aband{margin:.15rem 0 0;font-size:2rem;font-weight:800;letter-spacing:-.02em;color:var(--rc,var(--ink))}
+.ambient .ascore{font-size:.85rem;font-weight:600;color:var(--muted);margin-left:.5rem}
+.ambient .adriver{margin:.1rem 0 0;font-weight:600}
+.personas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 1.2rem;padding:0}
+.personas .pill{font-size:.82rem;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.personas .pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .cards{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:480px){.cards{grid-template-columns:1fr 1fr}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
@@ -182,7 +192,38 @@ function renderWarning(w: Warning): string {
   return `<div class="warn" style="--wc:${warnColor(w.color)}">⚠ <b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div>`;
 }
 
-export function renderConditionsPage(c: Conditions): string {
+const RISK_COLOR: Record<RiskBand, string> = {
+  low: "#16a34a",
+  moderate: "#ca8a04",
+  high: "#f97316",
+  severe: "#dc2626",
+};
+const RISK_LABEL: Record<RiskBand, string> = {
+  low: "Low",
+  moderate: "Moderate",
+  high: "High",
+  severe: "Severe",
+};
+
+/** The Ambient score banner + the zero-JS persona toggle (?as=…). */
+function renderAmbient(c: Conditions, risk: AmbientRisk): string {
+  const base = `/c/${c.location.lat},${c.location.lon}`;
+  const driver = risk.band === "low" ? "All clear" : `Driven by ${esc(risk.driver.toLowerCase())}`;
+  const pills = PERSONAS.map((p) => {
+    const href = p === "everyone" ? base : `${base}?as=${p}`;
+    return `<a class="pill${p === risk.persona ? " on" : ""}" href="${href}">${esc(PERSONA_LABEL[p])}</a>`;
+  }).join("");
+  return `
+  <section class="ambient" style="--rc:${RISK_COLOR[risk.band]}">
+    <p class="alabel">Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</p>
+    <p class="aband">${RISK_LABEL[risk.band]}<span class="ascore">${risk.score}/100</span></p>
+    <p class="adriver">${driver}</p>
+  </section>
+  <nav class="personas" aria-label="Who is this for">${pills}</nav>`;
+}
+
+export function renderConditionsPage(c: Conditions, persona: Persona = "everyone"): string {
+  const risk = ambientRisk(c, persona);
   const coords = `${c.location.lat}, ${c.location.lon}`;
   const slug = coords.replace(", ", ",");
   const place = c.place ? esc(c.place) : c.air?.station.city ? esc(c.air.station.city) : coords;
@@ -217,6 +258,7 @@ export function renderConditionsPage(c: Conditions): string {
   const body = `
   <p class="place">${place}</p>
   <p class="asof">updated just now</p>
+  ${renderAmbient(c, risk)}
   ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
   <p class="verdict">${esc(verdict(c))}</p>
   <div class="cards">${airCard}${heatCard}</div>
@@ -242,7 +284,6 @@ const HOME_CSS = `
 .nearme{font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;margin:0 0 1rem}
 .notice{color:#b45309;font-size:.9rem;margin:.2rem 0 1rem}
 .cities{color:var(--muted);font-size:.9rem;line-height:1.9}.cities a{color:var(--sky);text-decoration:none}
-.browse{margin:1.4rem 0 0;font-size:.85rem}.browse a{color:var(--muted)}
 .hero-now{margin:0 0 1.4rem;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
 .hero-now h2{margin:0 0 .5rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .hero-now .hl{display:block;text-decoration:none;color:var(--ink);padding:5px 0;font-size:.98rem;line-height:1.35}
@@ -265,7 +306,7 @@ export function renderHome(notFound?: string, highlights?: NationalHighlights): 
     : "";
 
   const body = `
-  <h1 class="hero">What's in the air &amp; heat where you are?</h1>
+  <h1 class="hero">What's it like outside, right now?</h1>
   <div class="acwrap">
     <form class="search" action="/go" method="get" role="search">
       <input id="q" name="q" type="search" placeholder="Search a city or place…" autocomplete="off" autofocus aria-label="Search a place">
@@ -277,7 +318,6 @@ export function renderHome(notFound?: string, highlights?: NationalHighlights): 
   ${notice}
   ${highlights ? renderHero(highlights) : ""}
   <p class="cities">Popular: ${cityLinks}</p>
-  <p class="browse"><a href="/index.json">Browse all stations</a></p>
   <script>
   var b=document.getElementById('nearme'),label=b.textContent;
   if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent='Locating…';navigator.geolocation.getCurrentPosition(function(p){location.href='/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent='Location unavailable';});};}

@@ -3,6 +3,8 @@ import { findNearest } from "./near";
 import { getOpenMeteo } from "./openmeteo";
 import { nearestPlace } from "./place";
 import { getLocationAlerts } from "./sachet";
+import { ambientRisk, PERSONA_LABEL } from "./score";
+import type { Persona } from "./score";
 
 // Shared license-passthrough fields for the conditions contract.
 //
@@ -93,9 +95,12 @@ export async function buildConditions(
 }
 
 /** LLM-friendly Markdown rendering of a conditions response. */
-export function renderConditionsMarkdown(c: Conditions): string {
+export function renderConditionsMarkdown(c: Conditions, persona: Persona = "everyone"): string {
+  const risk = ambientRisk(c, persona);
   const out: string[] = [
     `# Conditions at ${c.location.lat}, ${c.location.lon}`,
+    "",
+    `**Ambient: ${risk.band.toUpperCase()}** (${risk.score}/100)${risk.band !== "low" ? ` — driven by ${risk.driver.toLowerCase()}` : ""} · for ${PERSONA_LABEL[persona]}`,
     "",
     `*As of ${c.as_of}.*`,
     "",
