@@ -1,4 +1,13 @@
-import type { HeatConditions, RainConditions, UvConditions, DustConditions, Wx, AirPollutants } from "./types";
+import type {
+  HeatConditions,
+  RainConditions,
+  UvConditions,
+  DustConditions,
+  WindConditions,
+  VisibilityConditions,
+  Wx,
+  AirPollutants,
+} from "./types";
 
 // Open-Meteo adapter (A3). One zero-key fetch to each of the forecast and
 // air-quality endpoints fills the heat / rain / uv / dust layers of the
@@ -12,6 +21,8 @@ export interface OpenMeteoConditions {
   rain: RainConditions | null;
   uv: UvConditions | null;
   dust: DustConditions | null;
+  wind: WindConditions | null;
+  visibility: VisibilityConditions | null;
   /** Modelled air pollutants, the gap-filler when no ground station is near.
    *  co is in mg/m³ (CPCB unit); the rest in µg/m³. */
   airModel: AirPollutants | null;
@@ -55,14 +66,23 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
   const coords = `latitude=${quantize(lat)}&longitude=${quantize(lon)}&timezone=auto`;
   const forecastUrl =
     `${FORECAST_URL}?${coords}&current=` +
-    "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation,precipitation_probability";
+    "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation,precipitation_probability," +
+    "wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility";
   const airUrl =
     `${AIR_QUALITY_URL}?${coords}&current=` +
     "pm2_5,pm10,ozone,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide,ammonia,uv_index,dust,aerosol_optical_depth";
 
   const [forecast, air] = await Promise.allSettled([fetchCurrent(forecastUrl), fetchCurrent(airUrl)]);
 
-  const out: OpenMeteoConditions = { heat: null, rain: null, uv: null, dust: null, airModel: null };
+  const out: OpenMeteoConditions = {
+    heat: null,
+    rain: null,
+    uv: null,
+    dust: null,
+    wind: null,
+    visibility: null,
+    airModel: null,
+  };
 
   if (forecast.status === "fulfilled" && forecast.value.current) {
     const c = forecast.value.current;
@@ -81,6 +101,14 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
       probability_pct: num(c.precipitation_probability),
       source: "open-meteo",
     };
+    out.wind = {
+      speed_kmh: num(c.wind_speed_10m),
+      gust_kmh: num(c.wind_gusts_10m),
+      direction_deg: num(c.wind_direction_10m),
+      source: "open-meteo",
+    };
+    const vis = num(c.visibility);
+    out.visibility = vis != null ? { meters: vis, source: "open-meteo" } : null;
   } else if (forecast.status === "rejected") {
     console.error("[open-meteo] forecast failed:", forecast.reason);
   }

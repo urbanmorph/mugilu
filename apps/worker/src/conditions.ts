@@ -137,6 +137,8 @@ export async function buildConditions(
     rain: om.rain,
     uv: om.uv,
     dust: om.dust,
+    wind: om.wind,
+    visibility: om.visibility,
     smoke,
     warnings: warnings.length ? warnings : undefined,
     attribution: buildAttribution([
@@ -213,6 +215,16 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (c.dust.dust_ug_m3 != null) out.push(`- Dust: ${c.dust.dust_ug_m3} µg/m³`);
     if (c.dust.aod != null) out.push(`- Aerosol optical depth: ${c.dust.aod}`);
     out.push("");
+  }
+  if (c.wind && (c.wind.speed_kmh != null || c.wind.gust_kmh != null)) {
+    out.push("## Wind");
+    if (c.wind.speed_kmh != null) out.push(`- Speed: ${c.wind.speed_kmh} km/h`);
+    if (c.wind.gust_kmh != null) out.push(`- Gusts: ${c.wind.gust_kmh} km/h`);
+    if (c.wind.direction_deg != null) out.push(`- Direction: ${c.wind.direction_deg}° (from)`);
+    out.push("");
+  }
+  if (c.visibility?.meters != null) {
+    out.push("## Visibility", `- Visibility: ${c.visibility.meters} m`, "");
   }
   if (c.smoke && smokeLevel(c.smoke) != null) {
     out.push("## Smoke", `- Active fires within ${c.smoke.radius_km} km: **${c.smoke.count}** (last 24h)`);

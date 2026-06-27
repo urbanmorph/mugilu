@@ -118,6 +118,22 @@ function dustLevel(c: Conditions): number | null {
   return d >= 500 ? 3 : d >= 150 ? 2 : d >= 80 ? 1 : 0;
 }
 
+/** Wind hazard from gusts (km/h): strong / gale-squall / storm-cyclonic, aligned
+ *  to IMD squall + high-wind thresholds. Drives dust storms and falling hazards. */
+function windLevel(c: Conditions): number | null {
+  const g = c.wind?.gust_kmh ?? c.wind?.speed_kmh;
+  if (g == null) return null;
+  return g >= 88 ? 3 : g >= 62 ? 2 : g >= 40 ? 1 : 0;
+}
+
+/** Fog / low-visibility hazard (metres): dense fog is a major driving + health
+ *  hazard in north-India winters. */
+function fogLevel(c: Conditions): number | null {
+  const v = c.visibility?.meters;
+  if (v == null) return null;
+  return v < 200 ? 3 : v < 500 ? 2 : v < 1000 ? 1 : 0;
+}
+
 // Fire/crop-burn smoke: active FIRMS detections (VIIRS) within 100km, last 24h.
 // Bands benchmarked against multi-season India archive data — local density at
 // populated points: peak-Nov Punjab belt 72-93, pre-monsoon-Apr central forest
@@ -150,6 +166,8 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
     thermalRisk(c) ?? ["Heat", null],
     ["UV", uvLevel(c)],
     ["Dust", dustLevel(c)],
+    ["Wind", windLevel(c)],
+    ["Fog", fogLevel(c)],
     ["Smoke", smokeLevel(c.smoke)],
     ["Warning", warnLevel(c)],
   ];
@@ -195,6 +213,16 @@ const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
     moderate: "Some dust in the air.",
     high: "Dusty. Mask up if you're sensitive.",
     severe: "Heavy dust. Limit time outdoors.",
+  },
+  Wind: {
+    moderate: "It's windy. Secure loose items.",
+    high: "Strong winds. Take care outdoors, expect blowing dust.",
+    severe: "Damaging winds. Stay indoors, away from trees and hoardings.",
+  },
+  Fog: {
+    moderate: "Patchy low visibility. Drive with care.",
+    high: "Dense fog. Slow down, use low beams, allow extra time.",
+    severe: "Very dense fog. Avoid driving if you can.",
   },
   Smoke: {
     moderate: "Fires burning nearby. Sensitive groups, watch the air.",

@@ -60,6 +60,28 @@ function dustWord(ug: number | undefined): string {
   return "high";
 }
 
+function windWord(gust: number): string {
+  if (gust >= 88) return "storm-force";
+  if (gust >= 62) return "gale";
+  if (gust >= 40) return "strong";
+  if (gust >= 20) return "breezy";
+  return "calm";
+}
+
+/** 8-point compass label for the direction wind blows FROM. */
+function compassDir(deg: number): string {
+  return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(deg / 45) % 8];
+}
+
+function visWord(meters: number): string {
+  if (meters < 200) return "dense fog";
+  if (meters < 500) return "thick fog";
+  if (meters < 1000) return "fog";
+  if (meters < 2000) return "misty";
+  if (meters < 5000) return "hazy";
+  return "clear";
+}
+
 /** Compact pollutant breakdown for the air row (values only, rounded; precise
  *  units in the .json/.md siblings). Order/labels from the shared pollutantParts. */
 function pollutantLine(p: AirPollutants): string {
@@ -303,6 +325,8 @@ const ICON: Record<string, string> = {
   rain: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
   warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
   compass: '<circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>',
+  wind: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/>',
+  fog: '<path d="M4 8h16M6 12h14M4 16h12M8 20h10"/>',
   users:
     '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
@@ -326,6 +350,8 @@ const DRIVER_KEY: Record<string, string> = {
   Cold: "cold",
   UV: "sun",
   Dust: "dust",
+  Wind: "wind",
+  Fog: "fog",
   Smoke: "smoke",
   Warning: "warn",
   none: "clear",
@@ -336,6 +362,8 @@ const COND_NOUN: Record<string, string> = {
   Cold: "cold",
   UV: "sun",
   Dust: "dust",
+  Wind: "wind",
+  Fog: "fog",
   Smoke: "smoke",
   Warning: "alert",
   none: "sky",
@@ -455,6 +483,39 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
         `<span class="qa nu">µg/m³</span> <b>${dustWord(c.dust.dust_ug_m3)}</b>`,
         "",
         scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500),
+      ),
+    );
+  }
+  if (c.wind && (c.wind.gust_kmh != null || c.wind.speed_kmh != null)) {
+    const gust = c.wind.gust_kmh ?? c.wind.speed_kmh!;
+    const dirParts: string[] = [];
+    if (c.wind.direction_deg != null) dirParts.push(`from ${compassDir(c.wind.direction_deg)}`);
+    if (c.wind.speed_kmh != null) dirParts.push(`${Math.round(c.wind.speed_kmh)} km/h steady`);
+    strata.push(
+      lyr(
+        "wind",
+        "Wind",
+        risk.driver === "Wind",
+        String(Math.round(gust)),
+        `<span class="qa nu">km/h gusts</span> <b>${windWord(gust)}</b>`,
+        dirParts.join(" · "),
+        scaleBar(Math.min(gust, 100) / 100),
+      ),
+    );
+  }
+  // Visibility only surfaces when reduced (hazy/fog); clear skies aren't news.
+  if (c.visibility?.meters != null && c.visibility.meters < 5000) {
+    const m = c.visibility.meters;
+    const val = m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
+    strata.push(
+      lyr(
+        "fog",
+        "Visibility",
+        risk.driver === "Fog",
+        val,
+        `<b>${visWord(m)}</b>`,
+        "",
+        scaleBar(1 - Math.min(m, 5000) / 5000),
       ),
     );
   }

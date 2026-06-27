@@ -96,6 +96,8 @@ const COND_NOUN: Record<string, string> = {
   Cold: "cold",
   UV: "sun",
   Dust: "dust",
+  Wind: "wind",
+  Fog: "fog",
   Warning: "alert",
   none: "sky",
 };

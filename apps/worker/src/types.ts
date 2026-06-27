@@ -116,6 +116,20 @@ export interface DustConditions {
   source: string;
 }
 
+/** Wind, modelled. Gusts drive dust-storm onset, fire spread, cyclone exposure. */
+export interface WindConditions {
+  speed_kmh?: number;
+  gust_kmh?: number;
+  direction_deg?: number; // meteorological: the direction wind blows FROM
+  source: string;
+}
+
+/** Horizontal visibility (metres). Low values = fog/haze, a driving + health hazard. */
+export interface VisibilityConditions {
+  meters?: number;
+  source: string;
+}
+
 /** Fire / crop-burn smoke pressure at a point, from NASA FIRMS detections. */
 export interface SmokeConditions {
   count: number; // active fire detections within the radius, last 24h
@@ -152,6 +166,8 @@ export interface Conditions {
   rain: RainConditions | null;
   uv: UvConditions | null;
   dust: DustConditions | null;
+  wind: WindConditions | null;
+  visibility: VisibilityConditions | null;
   /** Fire / crop-burn smoke (NASA FIRMS); null when not collected yet. */
   smoke: SmokeConditions | null;
   /** Official NDMA/SACHET warnings active at this point. */

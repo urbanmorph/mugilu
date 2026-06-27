@@ -32,6 +32,18 @@ test("ambientRisk: sub-zero feels-like reads as a Cold driver, not Heat (directi
   assert.match(ambientMeaning(r), /cold/i);
 });
 
+test("ambientRisk: damaging gusts read as a Wind hazard", () => {
+  const r = ambientRisk(cond({ wind: { gust_kmh: 95, speed_kmh: 60, source: "open-meteo" } }), "everyone");
+  assert.equal(r.driver, "Wind");
+  assert.equal(r.band, "severe");
+});
+
+test("ambientRisk: dense fog reads as a Fog hazard", () => {
+  const r = ambientRisk(cond({ visibility: { meters: 150, source: "open-meteo" } }), "everyone");
+  assert.equal(r.driver, "Fog");
+  assert.equal(r.band, "severe");
+});
+
 function cond(partial: Partial<Conditions>): Conditions {
   return {
     location: { lat: 0, lon: 0 },
