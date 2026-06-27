@@ -110,15 +110,15 @@ export function renderHome(snap: Snapshot, siteUrl: string): string {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "India air quality — worst 20 stations",
-    "dateModified": snap.generated_at,
-    "numberOfItems": worst.length,
-    "itemListElement": worst.map((s, i) => ({
+    name: "India air quality — worst 20 stations",
+    dateModified: snap.generated_at,
+    numberOfItems: worst.length,
+    itemListElement: worst.map((s, i) => ({
       "@type": "ListItem",
-      "position": i + 1,
-      "name": `${s.name}, ${s.city}`,
-      "url": `${siteUrl}/s/${s.provider}/${s.raw_id}`,
-      "description": `AQI ${s.aqi} (${BAND_LABELS[s.band]}) · PM2.5 ${s.pollutants.pm25 ?? "—"} µg/m³`,
+      position: i + 1,
+      name: `${s.name}, ${s.city}`,
+      url: `${siteUrl}/s/${s.provider}/${s.raw_id}`,
+      description: `AQI ${s.aqi} (${BAND_LABELS[s.band]}) · PM2.5 ${s.pollutants.pm25 ?? "—"} µg/m³`,
     })),
   };
 
@@ -147,20 +147,12 @@ export function renderHome(snap: Snapshot, siteUrl: string): string {
 
 <section id="worst">
   <h2>Worst 20</h2>
-  ${table(
-    HEAD_NUMBERED,
-    worst.map((s, i) => rowNumbered(i + 1, s)).join("\n"),
-    COLGROUP_NUMBERED,
-  )}
+  ${table(HEAD_NUMBERED, worst.map((s, i) => rowNumbered(i + 1, s)).join("\n"), COLGROUP_NUMBERED)}
 </section>
 
 <section id="best">
   <h2>Best 20</h2>
-  ${table(
-    HEAD_NUMBERED,
-    best.map((s, i) => rowNumbered(i + 1, s)).join("\n"),
-    COLGROUP_NUMBERED,
-  )}
+  ${table(HEAD_NUMBERED, best.map((s, i) => rowNumbered(i + 1, s)).join("\n"), COLGROUP_NUMBERED)}
 </section>
 
 <section id="all">

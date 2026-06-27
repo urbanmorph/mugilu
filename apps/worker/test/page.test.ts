@@ -41,13 +41,15 @@ test("renderConditionsPage: shows the air, heat and disclaimer", () => {
   assert.match(html, /not for medical/);
 });
 
-test("renderConditionsPage: surfaces wet-bulb with context, hides raw pollutant jargon", () => {
+test("renderConditionsPage: surfaces wet-bulb and the pollutant breakdown", () => {
   const html = renderConditionsPage(conditions());
-  // wet-bulb is intentionally surfaced now, with a plain survivability tag
+  // wet-bulb is surfaced with a plain survivability tag
   assert.match(html, /wet.?bulb/i);
   assert.match(html, /safe|caution|severe|dangerous/i);
-  // but raw pollutant identifiers stay in the .json/.md siblings only
-  assert.doesNotMatch(html, /PM2\.5|aerosol|\baod\b/i);
+  // the pollutant breakdown is now shown on the air row (gases surfaced)
+  assert.match(html, /PM2\.5/);
+  // ...but the dust internals stay in the .json/.md siblings only
+  assert.doesNotMatch(html, /aerosol|\baod\b/i);
 });
 
 test("renderConditionsPage: verdict escalates for severe air", () => {

@@ -34,6 +34,7 @@ export function llmsTxt(siteUrl: string): string {
 - Nearest air stations: ${siteUrl}/near?lat={lat}&lon={lon}
 - Place search / typeahead: ${siteUrl}/suggest?q={name}
 - Air leaderboard: ${siteUrl}/index.json  and  ${siteUrl}/index.md
+- Active warnings (national): ${siteUrl}/warnings  (also .json and .md)
 - Per-station: ${siteUrl}/s/{provider}/{id}.json  and  .md
 - About: ${siteUrl}/about
 - Terms and attribution: ${siteUrl}/terms
@@ -55,7 +56,7 @@ Health impact: AQLI methodology (U Chicago EPIC). Code: MIT.
 
 /** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite). */
 export function sitemapXml(siteUrl: string): string {
-  const paths = ["/", "/about", "/terms", ...CITIES.map((c) => `/c/${c.lat},${c.lon}`)];
+  const paths = ["/", "/about", "/terms", "/warnings", ...CITIES.map((c) => `/c/${c.lat},${c.lon}`)];
   const urls = paths.map((p) => `  <url><loc>${siteUrl}${p}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

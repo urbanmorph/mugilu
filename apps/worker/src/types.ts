@@ -3,9 +3,9 @@ export type ProviderId = "cpcb" | "airnet" | "aurassure";
 export const PROVIDERS: ProviderId[] = ["cpcb", "airnet", "aurassure"];
 
 export interface Signature {
-  baseUrl: string;   // "https://oaq.notf.in/v1/"
+  baseUrl: string; // "https://oaq.notf.in/v1/"
   signature: string; // "URLPrefix=…&Expires=…&KeyName=…&Signature=…"
-  expires: number;   // unix seconds
+  expires: number; // unix seconds
 }
 
 // Shape of OAQ's upstream all_stations_latest.json (best-effort; fields are
@@ -28,8 +28,8 @@ export interface UpstreamStation {
 }
 
 export interface NormalizedStation {
-  id: string;            // "{provider}-{raw_id}", globally unique
-  raw_id: string;        // upstream id, as-is (may contain hyphens)
+  id: string; // "{provider}-{raw_id}", globally unique
+  raw_id: string; // upstream id, as-is (may contain hyphens)
   provider: ProviderId;
   name: string;
   city: string;
@@ -52,6 +52,9 @@ export interface NormalizedStation {
    *  the annual average. max(0, pm25 − 5) × 0.098. Null if no pm25. */
   yll?: number | null;
 }
+
+/** The pollutant set carried by a station or a modelled air reading. */
+export type AirPollutants = NormalizedStation["pollutants"];
 
 export interface Snapshot {
   generated_at: string;
@@ -92,6 +95,7 @@ export interface HeatConditions {
   humidity_pct?: number;
   apparent_c?: number; // "feels like"
   wet_bulb_c?: number; // survivability metric
+  wbgt_c?: number; // WBGT heat-stress index (°C), simplified shade estimate
   source: string;
 }
 

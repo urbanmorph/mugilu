@@ -1,6 +1,28 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getLocationAlerts, parseSachetRss } from "../src/sachet";
+import { getLocationAlerts, parseSachetRss, renderWarningsMarkdown } from "../src/sachet";
+
+test("renderWarningsMarkdown: lists active alerts, empty state when none", () => {
+  const md = renderWarningsMarkdown({
+    generated_at: "2026-06-27T10:00:00Z",
+    count: 1,
+    alerts: [
+      {
+        identifier: "1",
+        headline: "Heatwave warning",
+        category: "Met",
+        issuer: "IMD",
+        link: "https://x/cap",
+        sent: "Fri 27 Jun",
+      },
+    ],
+  });
+  assert.match(md, /# Active warnings across India/);
+  assert.match(md, /## Heatwave warning/);
+  assert.match(md, /Issuer: IMD/);
+  assert.match(md, /CAP: https:\/\/x\/cap/);
+  assert.match(renderWarningsMarkdown(null), /No active national alerts right now\./);
+});
 
 // Mirrors a real FetchLocationWiseAlerts alert (Dehradun, live).
 const RESP = {

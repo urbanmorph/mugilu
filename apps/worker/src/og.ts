@@ -1,6 +1,6 @@
 import { ImageResponse } from "workers-og";
 import type { NormalizedStation, Conditions } from "./types";
-import { ambientRisk, ambientMeaning } from "./score";
+import { ambientRisk, ambientMeaning, smokeLevel } from "./score";
 import type { Persona, RiskBand } from "./score";
 
 const BAND_COLORS: Record<NormalizedStation["band"], string> = {
@@ -48,25 +48,25 @@ export function renderStationOg(s: NormalizedStation, generatedAt: string): Resp
   //   - text nodes count as children, so we keep multi-child divs compact with flex
   const html =
     `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b0b0c;color:#ededed;padding:60px 72px;font-family:sans-serif;">` +
-      `<div style="display:flex;justify-content:space-between;font-size:26px;color:#a1a1aa;">` +
-        `<div style="display:flex;">mugilu · India air quality</div>` +
-        `<div style="display:flex;">${esc(updated)}</div>` +
-      `</div>` +
-      `<div style="display:flex;flex:1;align-items:center;margin-top:32px;">` +
-        `<div style="display:flex;flex-direction:column;margin-right:64px;">` +
-          `<div style="display:flex;font-size:220px;font-weight:800;line-height:0.9;color:#fafafa;font-family:monospace;">${esc(aqi)}</div>` +
-          `<div style="display:flex;font-size:32px;color:#a1a1aa;margin-top:12px;">AQI (${esc(bandLabel)})</div>` +
-        `</div>` +
-        `<div style="display:flex;flex-direction:column;flex:1;">` +
-          `<div style="display:flex;font-size:56px;font-weight:700;line-height:1.1;color:#fafafa;">${esc(name)}</div>` +
-          `<div style="display:flex;font-size:36px;color:#a1a1aa;margin-top:8px;">${esc(city)}</div>` +
-          `<div style="display:flex;width:120px;height:18px;background:${band};border-radius:4px;margin-top:32px;"></div>` +
-        `</div>` +
-      `</div>` +
-      `<div style="display:flex;justify-content:space-between;font-size:22px;color:#71717a;margin-top:32px;">` +
-        `<div style="display:flex;">${esc(s.provider.toUpperCase())} via oaq.notf.in</div>` +
-        `<div style="display:flex;">urbanmorph/mugilu</div>` +
-      `</div>` +
+    `<div style="display:flex;justify-content:space-between;font-size:26px;color:#a1a1aa;">` +
+    `<div style="display:flex;">mugilu · India air quality</div>` +
+    `<div style="display:flex;">${esc(updated)}</div>` +
+    `</div>` +
+    `<div style="display:flex;flex:1;align-items:center;margin-top:32px;">` +
+    `<div style="display:flex;flex-direction:column;margin-right:64px;">` +
+    `<div style="display:flex;font-size:220px;font-weight:800;line-height:0.9;color:#fafafa;font-family:monospace;">${esc(aqi)}</div>` +
+    `<div style="display:flex;font-size:32px;color:#a1a1aa;margin-top:12px;">AQI (${esc(bandLabel)})</div>` +
+    `</div>` +
+    `<div style="display:flex;flex-direction:column;flex:1;">` +
+    `<div style="display:flex;font-size:56px;font-weight:700;line-height:1.1;color:#fafafa;">${esc(name)}</div>` +
+    `<div style="display:flex;font-size:36px;color:#a1a1aa;margin-top:8px;">${esc(city)}</div>` +
+    `<div style="display:flex;width:120px;height:18px;background:${band};border-radius:4px;margin-top:32px;"></div>` +
+    `</div>` +
+    `</div>` +
+    `<div style="display:flex;justify-content:space-between;font-size:22px;color:#71717a;margin-top:32px;">` +
+    `<div style="display:flex;">${esc(s.provider.toUpperCase())} via oaq.notf.in</div>` +
+    `<div style="display:flex;">urbanmorph/mugilu</div>` +
+    `</div>` +
     `</div>`;
 
   // workers-og adds its own immutable cache-control. We wrap the response to
@@ -123,7 +123,7 @@ export function renderConditionsOg(c: Conditions, persona: Persona): Response {
   if (c.heat?.wet_bulb_c != null) stats.push(["WET-BULB", `${Math.round(c.heat.wet_bulb_c)}°`]);
   if (c.uv?.index != null) stats.push(["SUN", `UV ${Math.round(c.uv.index)}`]);
   if (c.dust?.dust_ug_m3 != null) stats.push(["DUST", `${Math.round(c.dust.dust_ug_m3)}`]);
-  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20)) stats.push(["SMOKE", `${c.smoke.count} fires`]);
+  if (c.smoke && smokeLevel(c.smoke) != null) stats.push(["SMOKE", `${c.smoke.count} fires`]);
 
   const stat = (label: string, val: string) =>
     `<div style="display:flex;flex-direction:column;margin-right:56px;">` +
@@ -133,18 +133,18 @@ export function renderConditionsOg(c: Conditions, persona: Persona): Response {
 
   const html =
     `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:64px 72px;font-family:sans-serif;">` +
-      `<div style="display:flex;justify-content:space-between;align-items:center;font-size:30px;color:#94a3b8;">` +
-        `<div style="display:flex;">mugilu · the sky over ${esc(place)}</div>` +
-        `<div style="display:flex;color:#cbd5e1;">${esc(updated)}</div>` +
-      `</div>` +
-      `<div style="display:flex;flex-direction:column;flex:1;justify-content:center;">` +
-        `<div style="display:flex;font-size:120px;font-weight:800;line-height:1;color:${cond};">${esc(head)}</div>` +
-        `<div style="display:flex;font-size:38px;color:#cbd5e1;margin-top:22px;">${esc(ambientMeaning(risk))}</div>` +
-      `</div>` +
-      `<div style="display:flex;align-items:flex-end;border-top:1px solid #1f2937;padding-top:30px;">` +
-        stats.map(([l, v]) => stat(l, v)).join("") +
-        `<div style="display:flex;margin-left:auto;font-size:28px;color:#64748b;">mugilu.live</div>` +
-      `</div>` +
+    `<div style="display:flex;justify-content:space-between;align-items:center;font-size:30px;color:#94a3b8;">` +
+    `<div style="display:flex;">mugilu · the sky over ${esc(place)}</div>` +
+    `<div style="display:flex;color:#cbd5e1;">${esc(updated)}</div>` +
+    `</div>` +
+    `<div style="display:flex;flex-direction:column;flex:1;justify-content:center;">` +
+    `<div style="display:flex;font-size:120px;font-weight:800;line-height:1;color:${cond};">${esc(head)}</div>` +
+    `<div style="display:flex;font-size:38px;color:#cbd5e1;margin-top:22px;">${esc(ambientMeaning(risk))}</div>` +
+    `</div>` +
+    `<div style="display:flex;align-items:flex-end;border-top:1px solid #1f2937;padding-top:30px;">` +
+    stats.map(([l, v]) => stat(l, v)).join("") +
+    `<div style="display:flex;margin-left:auto;font-size:28px;color:#64748b;">mugilu.live</div>` +
+    `</div>` +
     `</div>`;
 
   const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });

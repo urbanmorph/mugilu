@@ -120,9 +120,7 @@ export async function buildSuggestions(
   if (stationHits.length > 0) return stationHits;
 
   const geo = await geocodeList(query, 5);
-  const ranked = [...geo].sort(
-    (a, b) => (b.country_code === "IN" ? 1 : 0) - (a.country_code === "IN" ? 1 : 0),
-  );
+  const ranked = [...geo].sort((a, b) => (b.country_code === "IN" ? 1 : 0) - (a.country_code === "IN" ? 1 : 0));
   return ranked.slice(0, limit).map((r) => ({
     label: r.name,
     sublabel: [r.admin1, r.country_code].filter(Boolean).join(", ") || undefined,

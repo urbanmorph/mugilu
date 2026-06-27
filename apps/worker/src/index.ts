@@ -6,12 +6,21 @@ import { renderStationOg, renderConditionsOg } from "./og";
 import { faviconSvg, appleIconPng } from "./icon";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown } from "./conditions";
-import { renderConditionsPage, renderHome, renderAbout, renderTerms, renderNotFound, renderEmbed } from "./page";
+import {
+  renderConditionsPage,
+  renderHome,
+  renderAbout,
+  renderTerms,
+  renderNotFound,
+  renderEmbed,
+  renderWarningsPage,
+} from "./page";
 import { robotsTxt, llmsTxt, sitemapXml } from "./meta";
 import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions, applyAlias } from "./suggest";
 import { collectConditions } from "./collect";
-import { collectWarnings } from "./sachet";
+import { collectWarnings, renderWarningsMarkdown } from "./sachet";
+import type { WarningsSnapshot } from "./sachet";
 import { collectFires, loadFires } from "./firms";
 import { nationalHighlights } from "./highlights";
 import { ambientRisk, parsePersona } from "./score";
@@ -40,10 +49,7 @@ function cachedResponse(body: string, contentType: string): Response {
 
 /** 400 with a JSON `{ error }` body (CORS-open), matching the API error shape. */
 function badRequest(message: string): Response {
-  return Response.json(
-    { error: message },
-    { status: 400, headers: { "access-control-allow-origin": "*" } },
-  );
+  return Response.json({ error: message }, { status: 400, headers: { "access-control-allow-origin": "*" } });
 }
 
 export default {
@@ -87,9 +93,7 @@ export default {
     // Lookup-first home page.
     if (url.pathname === "/") {
       const obj = await env.OAQ_R2.get("data/conditions.json");
-      const highlights = obj
-        ? nationalHighlights(((await obj.json()) as ConditionsSnapshot).points)
-        : undefined;
+      const highlights = obj ? nationalHighlights(((await obj.json()) as ConditionsSnapshot).points) : undefined;
       return cachedResponse(
         renderHome(url.searchParams.get("notfound") ?? undefined, highlights),
         "text/html; charset=utf-8",
@@ -154,6 +158,22 @@ export default {
       });
     }
 
+    // National active warnings — the SACHET archive made readable, not just
+    // point-queried on /c. /warnings (HTML) · /warnings.json · /warnings.md
+    if (url.pathname === "/warnings" || url.pathname === "/warnings.json" || url.pathname === "/warnings.md") {
+      const obj = await env.OAQ_R2.get("data/warnings.json");
+      // .json returns the stored payload verbatim (no parse + re-serialize).
+      if (url.pathname === "/warnings.json") {
+        if (!obj) return new Response("no warnings snapshot yet", { status: 503 });
+        return cachedResponse(await obj.text(), "application/json; charset=utf-8");
+      }
+      const snap = obj ? ((await obj.json()) as WarningsSnapshot) : null;
+      if (url.pathname === "/warnings.md") {
+        return cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8");
+      }
+      return cachedResponse(renderWarningsPage(snap), "text/html; charset=utf-8");
+    }
+
     // Nearest air-quality stations to a point, haversine over the snapshot
     // already in memory. The lat/lng entry point for the air layer (A2).
     if (url.pathname === "/near") {
@@ -185,8 +205,7 @@ export default {
       if (!coords) return badRequest("coordinates out of range");
       const { lat, lon } = coords;
       const persona = parsePersona(url.searchParams.get("as"));
-      const snap = await loadSnapshot();
-      const fires = await loadFires(env);
+      const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
       const conditions = await buildConditions(snap, lat, lon, fires);
       if (ext === "png") {
         return renderConditionsOg(conditions, persona);
@@ -210,8 +229,7 @@ export default {
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest("coordinates out of range");
       const persona = parsePersona(url.searchParams.get("as"));
-      const snap = await loadSnapshot();
-      const fires = await loadFires(env);
+      const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
       const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
       return cachedResponse(renderEmbed(conditions, persona, SITE_URL), "text/html; charset=utf-8");
     }
@@ -222,9 +240,7 @@ export default {
       const [, provider, rawId] = ogMatch;
       const snap = await loadSnapshot();
       if (!snap) return new Response("no snapshot yet", { status: 503 });
-      const station = snap.stations.find(
-        (s: NormalizedStation) => s.provider === provider && s.raw_id === rawId,
-      );
+      const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
       if (!station) return new Response("station not found", { status: 404 });
       return renderStationOg(station, snap.generated_at);
     }
@@ -235,21 +251,16 @@ export default {
       const [, provider, rawId, ext] = stationMatch;
       const snap = await loadSnapshot();
       if (!snap) return new Response("no snapshot yet", { status: 503 });
-      const station = snap.stations.find(
-        (s: NormalizedStation) => s.provider === provider && s.raw_id === rawId,
-      );
+      const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
       if (!station) return new Response("station not found", { status: 404 });
       if (ext === "json") {
-        return new Response(
-          JSON.stringify({ generated_at: snap.generated_at, station }),
-          {
-            headers: {
-              "content-type": "application/json; charset=utf-8",
-              "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
-              "access-control-allow-origin": "*",
-            },
+        return new Response(JSON.stringify({ generated_at: snap.generated_at, station }), {
+          headers: {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
+            "access-control-allow-origin": "*",
           },
-        );
+        });
       }
       return new Response(renderStationMarkdown(station, snap.generated_at, SITE_URL), {
         headers: {
@@ -365,8 +376,7 @@ export default {
       );
       ctx.waitUntil(
         collectWarnings(env).then(
-          (r) =>
-            console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
+          (r) => console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
           (e) => console.error("[warnings] failed:", e),
         ),
       );

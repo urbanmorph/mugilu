@@ -4,9 +4,7 @@ import { geocode } from "../src/geocode";
 
 // Mirrors the real Open-Meteo geocoding response for Bengaluru.
 const BENGALURU = {
-  results: [
-    { name: "Bengaluru", admin1: "Karnataka", country_code: "IN", latitude: 12.97194, longitude: 77.59369 },
-  ],
+  results: [{ name: "Bengaluru", admin1: "Karnataka", country_code: "IN", latitude: 12.97194, longitude: 77.59369 }],
 };
 const NO_RESULTS = {}; // Open-Meteo omits `results` entirely when nothing matches
 

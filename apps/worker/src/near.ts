@@ -10,9 +10,7 @@ function toRad(deg: number): number {
 export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -22,12 +20,7 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
  * the ~658 stations already held in the snapshot, no upstream call. This is
  * what makes the air layer lat/lng-addressable.
  */
-export function findNearest(
-  stations: NormalizedStation[],
-  lat: number,
-  lon: number,
-  n: number,
-): NearStation[] {
+export function findNearest(stations: NormalizedStation[], lat: number, lon: number, n: number): NearStation[] {
   const withDist: NearStation[] = [];
   for (const s of stations) {
     if (s.lat == null || s.lon == null) continue;
@@ -42,10 +35,7 @@ export function findNearest(
  * missing/empty or the pair is out of geographic range. Callers turn null into
  * a 400. Guards against `Number(null) === 0` silently passing as a valid point.
  */
-export function parseLatLon(
-  latParam: string | null,
-  lonParam: string | null,
-): { lat: number; lon: number } | null {
+export function parseLatLon(latParam: string | null, lonParam: string | null): { lat: number; lon: number } | null {
   if (!latParam || !lonParam) return null;
   const lat = Number(latParam);
   const lon = Number(lonParam);

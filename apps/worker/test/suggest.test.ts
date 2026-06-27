@@ -6,8 +6,18 @@ import type { GeoResult } from "../src/geocode";
 
 function station(name: string, city: string, lat: number, lon: number): NormalizedStation {
   return {
-    id: name, raw_id: name, provider: "cpcb", name, city, state: "",
-    lat, lon, pollutants: {}, aqi: null, band: "unknown", ts: null,
+    id: name,
+    raw_id: name,
+    provider: "cpcb",
+    name,
+    city,
+    state: "",
+    lat,
+    lon,
+    pollutants: {},
+    aqi: null,
+    band: "unknown",
+    ts: null,
   };
 }
 

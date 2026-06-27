@@ -1,12 +1,13 @@
-import type { AirConditions, Conditions, NearStation, Snapshot } from "./types";
+import type { AirConditions, AirPollutants, Conditions, NearStation, Snapshot } from "./types";
 import { findNearest } from "./near";
 import { getOpenMeteo } from "./openmeteo";
 import { computeAqi, aqiBand } from "./aqi";
+import { pollutantParts } from "./formats";
 import { nearestPlace } from "./place";
 import { getLocationAlerts } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
-import { ambientRisk, ambientMeaning, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientMeaning, smokeLevel, PERSONA_LABEL } from "./score";
 import type { Persona } from "./score";
 
 // Beyond this, a ground station is too far to represent the query point, so we
@@ -32,13 +33,12 @@ function lifeYearsLost(pm25: number | undefined): number | null {
 }
 
 /** Air modelled by Open-Meteo when no station is near; CPCB AQI computed in-app. */
-function modelledAir(m: { pm25?: number; pm10?: number; o3?: number }): AirConditions {
-  const pollutants = { pm25: m.pm25, pm10: m.pm10, o3: m.o3 };
-  const aqi = computeAqi(pollutants);
+function modelledAir(m: AirPollutants): AirConditions {
+  const aqi = computeAqi(m);
   return {
     aqi,
     band: aqiBand(aqi),
-    pollutants,
+    pollutants: m,
     yll: lifeYearsLost(m.pm25),
     station: null,
     source: "open-meteo",
@@ -164,9 +164,7 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
   if (c.warnings?.length) {
     out.push("## ⚠ Official warnings");
     for (const w of c.warnings) {
-      out.push(
-        `- **${w.event}** (${w.severity}${w.until ? `, until ${w.until}` : ""}): ${w.area} · ${w.issuer}`,
-      );
+      out.push(`- **${w.event}** (${w.severity}${w.until ? `, until ${w.until}` : ""}): ${w.area} · ${w.issuer}`);
     }
     out.push("");
   }
@@ -174,11 +172,11 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
   if (c.air) {
     out.push("## Air", `- AQI **${c.air.aqi ?? "n/a"}** (${c.air.band})`);
     const p = c.air.pollutants;
-    const parts: string[] = [];
-    if (p.pm25 != null) parts.push(`PM2.5 ${p.pm25}`);
-    if (p.pm10 != null) parts.push(`PM10 ${p.pm10}`);
-    if (p.o3 != null) parts.push(`O₃ ${p.o3}`);
-    if (parts.length) out.push(`- ${parts.join(" · ")} µg/m³`);
+    const pp = pollutantParts(p);
+    const ug = pp.filter((x) => x.unit === "µg/m³").map((x) => `${x.label} ${x.value}`);
+    if (ug.length) out.push(`- ${ug.join(" · ")} µg/m³`);
+    const coPart = pp.find((x) => x.key === "co");
+    if (coPart) out.push(`- CO ${coPart.value} mg/m³`);
     if (c.air.yll != null) out.push(`- Est. life-expectancy impact: ${c.air.yll} yrs (AQLI)`);
     if (c.air.station) {
       out.push(
@@ -195,6 +193,7 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (c.heat.apparent_c != null) out.push(`- Feels like: ${c.heat.apparent_c} °C`);
     if (c.heat.humidity_pct != null) out.push(`- Humidity: ${c.heat.humidity_pct}%`);
     if (c.heat.wet_bulb_c != null) out.push(`- Wet-bulb: ${c.heat.wet_bulb_c} °C`);
+    if (c.heat.wbgt_c != null) out.push(`- Heat stress (WBGT): ${c.heat.wbgt_c} °C`);
     out.push("");
   }
   if (c.rain && (c.rain.precipitation_mm != null || c.rain.probability_pct != null)) {
@@ -212,7 +211,7 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (c.dust.aod != null) out.push(`- Aerosol optical depth: ${c.dust.aod}`);
     out.push("");
   }
-  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20)) {
+  if (c.smoke && smokeLevel(c.smoke) != null) {
     out.push("## Smoke", `- Active fires within ${c.smoke.radius_km} km: **${c.smoke.count}** (last 24h)`);
     if (c.smoke.frp_sum) out.push(`- Total fire power nearby: ${c.smoke.frp_sum} MW`);
     if (c.smoke.nearest_km != null) out.push(`- Nearest fire: ${c.smoke.nearest_km} km`);

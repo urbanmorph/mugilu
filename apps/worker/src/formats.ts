@@ -1,4 +1,4 @@
-import type { NormalizedStation, Snapshot, ProviderId } from "./types";
+import type { NormalizedStation, Snapshot, ProviderId, AirPollutants } from "./types";
 
 const PROVIDER_NAMES: Record<ProviderId, string> = {
   cpcb: "Central Pollution Control Board, Government of India",
@@ -47,6 +47,20 @@ const POLLUTANT_LABELS: Record<string, string> = {
   o3: "O₃",
   nh3: "NH₃",
 };
+const POLLUTANT_ORDER = ["pm25", "pm10", "no2", "so2", "o3", "nh3", "co"] as const;
+
+/** Ordered, labelled pollutant readings present in `p` — the one source of the
+ *  label spelling, ordering, and the "CO is mg/m³, the rest µg/m³" unit rule,
+ *  reused by every renderer (station md, conditions md, the /c air row). */
+export function pollutantParts(p: AirPollutants): Array<{ key: string; label: string; value: number; unit: string }> {
+  const out: Array<{ key: string; label: string; value: number; unit: string }> = [];
+  for (const k of POLLUTANT_ORDER) {
+    const v = p[k];
+    if (v == null) continue;
+    out.push({ key: k, label: POLLUTANT_LABELS[k], value: v, unit: k === "co" ? "mg/m³" : "µg/m³" });
+  }
+  return out;
+}
 
 function row(s: NormalizedStation, rank: number): string {
   const c = [
@@ -68,7 +82,7 @@ function row(s: NormalizedStation, rank: number): string {
 export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string {
   const withAqi = snap.stations.filter((s) => s.aqi !== null);
   const worst = withAqi.slice(0, 50);
-  const best = [...withAqi].sort((a, b) => (a.aqi! - b.aqi!)).slice(0, 50);
+  const best = [...withAqi].sort((a, b) => a.aqi! - b.aqi!).slice(0, 50);
 
   const byCity = new Map<string, NormalizedStation[]>();
   for (const s of snap.stations) {
@@ -80,9 +94,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
   const cities = [...byCity.entries()]
     .map(([name, arr]) => {
       const valid = arr.filter((s) => s.aqi !== null);
-      const avg = valid.length
-        ? Math.round(valid.reduce((a, s) => a + (s.aqi as number), 0) / valid.length)
-        : null;
+      const avg = valid.length ? Math.round(valid.reduce((a, s) => a + (s.aqi as number), 0) / valid.length) : null;
       return { name, arr, avg };
     })
     .sort((a, b) => {
@@ -155,11 +167,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
 /**
  * Render a single station page as Markdown with YAML frontmatter.
  */
-export function renderStationMarkdown(
-  s: NormalizedStation,
-  generatedAt: string,
-  siteUrl: string,
-): string {
+export function renderStationMarkdown(s: NormalizedStation, generatedAt: string, siteUrl: string): string {
   const bandLabel = BAND_LABELS[s.band];
   const lines = [
     "---",
@@ -194,13 +202,7 @@ export function renderStationMarkdown(
     "",
     "| Pollutant | Value | Unit |",
     "|---|---|---|",
-    ...Object.entries(s.pollutants)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => {
-        const unit = k === "co" ? "mg/m³" : "µg/m³";
-        const label = POLLUTANT_LABELS[k] ?? k.toUpperCase();
-        return `| ${label} | ${v} | ${unit} |`;
-      }),
+    ...pollutantParts(s.pollutants).map((x) => `| ${x.label} | ${x.value} | ${x.unit} |`),
     "",
     ...(s.yll !== null && s.yll !== undefined && s.yll > 0
       ? [

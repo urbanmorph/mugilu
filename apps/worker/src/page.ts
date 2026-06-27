@@ -1,6 +1,8 @@
-import type { Conditions, Warning } from "./types";
+import type { Conditions, Warning, AirPollutants } from "./types";
 import type { NationalHighlights } from "./highlights";
-import { ambientRisk, ambientMeaning, PERSONAS, PERSONA_LABEL } from "./score";
+import type { WarningsSnapshot } from "./sachet";
+import { pollutantParts } from "./formats";
+import { ambientRisk, ambientMeaning, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
@@ -56,6 +58,14 @@ function dustWord(ug: number | undefined): string {
   if (ug < 20) return "low";
   if (ug < 50) return "moderate";
   return "high";
+}
+
+/** Compact pollutant breakdown for the air row (values only, rounded; precise
+ *  units in the .json/.md siblings). Order/labels from the shared pollutantParts. */
+function pollutantLine(p: AirPollutants): string {
+  return pollutantParts(p)
+    .map((x) => `${x.label} ${x.key === "co" ? x.value : Math.round(x.value)}`)
+    .join(" · ");
 }
 
 function heatPhrase(apparent: number, wetBulb?: number): string {
@@ -169,6 +179,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .lyr .q .qa{color:var(--muted);text-transform:uppercase;font-size:.72rem;letter-spacing:.05em}
 .lyr .q .qa.nu{text-transform:none;letter-spacing:.01em}
 .lyr .sub{color:var(--muted);font-size:.82rem;line-height:1.5}
+.lyr .sub .poll{display:inline-block;margin-top:.15rem;font-size:.78rem;opacity:.82;font-variant-numeric:tabular-nums}
 .lyr .scale{position:relative;height:5px;border-radius:3px;margin:.55rem 0 .15rem;max-width:14rem;background:linear-gradient(90deg,#16a34a,#84cc16 22%,#eab308 45%,#f97316 70%,#dc2626);opacity:.85}
 .lyr .scale.calm{background:color-mix(in srgb,var(--sky) 50%,var(--line));opacity:1}
 .lyr .scale i{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2.5px var(--bg);transform:translate(-50%,-50%)}
@@ -222,14 +233,18 @@ const ICON: Record<string, string> = {
   heat: '<path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
   dust: '<path d="M5.2 6.2 6.6 7.6M2 13h2M20 13h2M17.4 7.6l1.4-1.4M22 17H2M22 21H2"/><path d="M16 13a4 4 0 0 0-8 0"/>',
-  smoke: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  smoke:
+    '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
   rain: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
   warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
   compass: '<circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>',
-  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  users:
+    '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
-  layers: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
-  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>',
+  layers:
+    '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  heart:
+    '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>',
   pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
 };
@@ -240,8 +255,24 @@ function icon(name: string): string {
 }
 
 // Ambient driver -> icon key, and the noun for the headline ("High heat.").
-const DRIVER_KEY: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Smoke: "smoke", Warning: "warn", none: "clear" };
-const COND_NOUN: Record<string, string> = { Air: "air", Heat: "heat", UV: "sun", Dust: "dust", Smoke: "smoke", Warning: "alert", none: "sky" };
+const DRIVER_KEY: Record<string, string> = {
+  Air: "air",
+  Heat: "heat",
+  UV: "sun",
+  Dust: "dust",
+  Smoke: "smoke",
+  Warning: "warn",
+  none: "clear",
+};
+const COND_NOUN: Record<string, string> = {
+  Air: "air",
+  Heat: "heat",
+  UV: "sun",
+  Dust: "dust",
+  Smoke: "smoke",
+  Warning: "alert",
+  none: "sky",
+};
 
 /** Wet-bulb survivability read: ~31 is the theoretical limit, >=28 is severe. */
 function wetBulb(wb: number): [string, string] {
@@ -301,6 +332,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
       ? `<i class="dot meas"></i>measured · ${c.air.station.distance_km} km`
       : '<i class="dot mod"></i>modelled here';
     const aqli = c.air.yll != null ? ` · ~${c.air.yll} yrs life lost` : "";
+    const poll = pollutantLine(c.air.pollutants);
     strata.push(
       lyr(
         "air",
@@ -308,7 +340,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
         risk.driver === "Air",
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
         `<span class="qa">AQI</span> <b style="color:${bandColor}">${bandLabel}</b>`,
-        `${marker}${aqli}`,
+        `${marker}${aqli}${poll ? `<br><span class="poll">${poll}</span>` : ""}`,
         c.air.aqi != null ? scaleBar(Math.min(c.air.aqi, 400) / 400) : "",
       ),
     );
@@ -319,6 +351,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
       const [wn, wc] = wetBulb(c.heat.wet_bulb_c);
       sub += ` · wet-bulb ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${wn}</b>`;
     }
+    if (c.heat.wbgt_c != null) sub += ` · WBGT ${round(c.heat.wbgt_c)}°`;
     strata.push(
       lyr(
         "heat",
@@ -333,28 +366,61 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   }
   if (c.uv?.index != null) {
     strata.push(
-      lyr("sun", "Sun", risk.driver === "UV", String(Math.round(c.uv.index)), `<span class="qa">UV index</span> <b>${uvWord(c.uv.index)}</b>`, "", scaleBar(Math.min(c.uv.index, 11) / 11)),
+      lyr(
+        "sun",
+        "Sun",
+        risk.driver === "UV",
+        String(Math.round(c.uv.index)),
+        `<span class="qa">UV index</span> <b>${uvWord(c.uv.index)}</b>`,
+        "",
+        scaleBar(Math.min(c.uv.index, 11) / 11),
+      ),
     );
   }
   if (c.dust?.dust_ug_m3 != null) {
     strata.push(
-      lyr("dust", "Dust", risk.driver === "Dust", String(Math.round(c.dust.dust_ug_m3)), `<span class="qa nu">µg/m³</span> <b>${dustWord(c.dust.dust_ug_m3)}</b>`, "", scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500)),
+      lyr(
+        "dust",
+        "Dust",
+        risk.driver === "Dust",
+        String(Math.round(c.dust.dust_ug_m3)),
+        `<span class="qa nu">µg/m³</span> <b>${dustWord(c.dust.dust_ug_m3)}</b>`,
+        "",
+        scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500),
+      ),
     );
   }
-  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20)) {
-    const word =
-      c.smoke.count >= 60 || c.smoke.frp_sum >= 350 ? "heavy" : c.smoke.count >= 25 || c.smoke.frp_sum >= 120 ? "notable" : "some";
+  const smokeLvl = smokeLevel(c.smoke);
+  if (c.smoke && smokeLvl != null) {
     const sub =
-      c.smoke.nearest_km != null ? `nearest ${c.smoke.nearest_km} km · ${c.smoke.frp_sum} MW total` : `${c.smoke.frp_sum} MW`;
+      c.smoke.nearest_km != null
+        ? `nearest ${c.smoke.nearest_km} km · ${c.smoke.frp_sum} MW total`
+        : `${c.smoke.frp_sum} MW`;
     strata.push(
-      lyr("smoke", "Smoke", risk.driver === "Smoke", String(c.smoke.count), `<span class="qa nu">fires &lt;100 km</span> <b>${word} burning</b>`, sub, scaleBar(Math.min(c.smoke.count, 100) / 100)),
+      lyr(
+        "smoke",
+        "Smoke",
+        risk.driver === "Smoke",
+        String(c.smoke.count),
+        `<span class="qa nu">fires &lt;100 km</span> <b>${SMOKE_WORD[smokeLvl]} burning</b>`,
+        sub,
+        scaleBar(Math.min(c.smoke.count, 100) / 100),
+      ),
     );
   }
   if (c.rain && (c.rain.probability_pct != null || c.rain.precipitation_mm != null)) {
     const mm = c.rain.precipitation_mm;
     if (c.rain.probability_pct != null) {
       strata.push(
-        lyr("rain", "Rain", false, `${c.rain.probability_pct}%`, '<span class="qa">chance of rain</span>', mm ? `${mm} mm falling now` : "", scaleBar(c.rain.probability_pct / 100, true)),
+        lyr(
+          "rain",
+          "Rain",
+          false,
+          `${c.rain.probability_pct}%`,
+          '<span class="qa">chance of rain</span>',
+          mm ? `${mm} mm falling now` : "",
+          scaleBar(c.rain.probability_pct / 100, true),
+        ),
       );
     } else {
       strata.push(lyr("rain", "Rain", false, String(mm), '<span class="qa nu">mm</span> <b>now</b>', ""));
@@ -433,8 +499,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): s
   const slug = `${c.location.lat},${c.location.lon}`;
   const stationCity = c.air?.station?.city;
   const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
-  const head =
-    risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
+  const head = risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
 
   const reads: string[] = [];
   if (c.air?.aqi != null)
@@ -446,8 +511,10 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): s
   if (c.uv?.index != null)
     reads.push(`<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${uvWord(c.uv.index)}</span></div>`);
   if (c.dust?.dust_ug_m3 != null)
-    reads.push(`<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>dust ${dustWord(c.dust.dust_ug_m3)}</span></div>`);
-  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20))
+    reads.push(
+      `<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>dust ${dustWord(c.dust.dust_ug_m3)}</span></div>`,
+    );
+  if (c.smoke && smokeLevel(c.smoke) != null)
     reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>fires &lt;100km</span></div>`);
 
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu — conditions at ${place}" loading="lazy"></iframe>`;
@@ -575,6 +642,40 @@ export function renderNotFound(): string {
   return shell("Not found: mugilu", body, ABOUT_CSS);
 }
 
+const WLIST_CSS = `
+.wgen{font:500 .78rem var(--mono);color:var(--muted);margin:.3rem 0 1.5rem}
+.wlist{list-style:none;margin:0;padding:0}
+.wlist li{border-top:1px solid var(--hair);padding:1rem 0}
+.wcat{display:inline-block;font:600 .7rem var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--sky);margin:0 0 .25rem}
+.whead{font-size:1.02rem;line-height:1.4;font-weight:600;margin:0 0 .3rem}
+.wmeta{color:var(--muted);font-size:.82rem}.wmeta a{color:var(--sky)}
+.wempty{color:var(--muted);font-size:1.05rem;margin:1.2rem 0}
+`;
+
+/** The national active-warnings list — surfaces the SACHET feed mugilu polls
+ *  and archives, so the warning "moat" is readable, not just point-queried on /c. */
+export function renderWarningsPage(snap: WarningsSnapshot | null): string {
+  const items =
+    snap && snap.alerts.length
+      ? `<ul class="wlist">${snap.alerts
+          .map(
+            (a) =>
+              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${a.link ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
+          )
+          .join("")}</ul>`
+      : `<p class="wempty">No active national alerts right now.</p>`;
+  const body = `
+  <article class="ax">
+    <h1 class="ahero">Active warnings</h1>
+    <p class="alead">${snap ? snap.count : 0} official NDMA / IMD alerts across India, right now.</p>
+    <p class="wgen">${snap ? `as of ${esc(istTime(snap.generated_at))} · via SACHET` : ""}</p>
+    ${items}
+    <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD directly. mugilu mirrors the SACHET feed and keeps an archive of every alert.</p>
+    <p class="aback"><a href="/">← back to mugilu</a></p>
+  </article>`;
+  return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS);
+}
+
 const HOME_CSS = `
 body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg)),var(--bg) 44%) var(--bg) no-repeat}
 .hero{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8vw,2.7rem);letter-spacing:-.02em;line-height:1.05;margin:1.4rem 0 .5rem}
@@ -613,9 +714,7 @@ export const CITIES = [
 
 export function renderHome(notFound?: string, highlights?: NationalHighlights): string {
   const cityLinks = CITIES.map((c) => `<a href="/c/${c.lat},${c.lon}">${c.name}</a>`).join(" · ");
-  const notice = notFound
-    ? `<p class="notice">Couldn't find "${esc(notFound)}". Try a city or place name.</p>`
-    : "";
+  const notice = notFound ? `<p class="notice">Couldn't find "${esc(notFound)}". Try a city or place name.</p>` : "";
 
   const body = `
   <h1 class="hero">What's it like outside, right now?</h1>

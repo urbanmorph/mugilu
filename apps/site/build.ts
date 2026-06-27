@@ -4,13 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { Snapshot, NormalizedStation } from "./src/types";
 import { renderHome } from "./src/templates/home";
 import { renderStation } from "./src/templates/station";
-import {
-  renderDocsIndex,
-  renderApiDocs,
-  renderAiAgents,
-  renderDataSources,
-  renderAbout,
-} from "./src/templates/docs";
+import { renderDocsIndex, renderApiDocs, renderAiAgents, renderDataSources, renderAbout } from "./src/templates/docs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, "dist");

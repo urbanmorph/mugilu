@@ -43,5 +43,10 @@ export async function refreshHierarchy(env: Env): Promise<{ providers: number; h
     httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=86400" },
   });
 
-  return { providers: Array.isArray((providersJson as { providers?: unknown[] }).providers) ? (providersJson as { providers: unknown[] }).providers.length : 0, hierarchies: Object.keys(hierarchies).length };
+  return {
+    providers: Array.isArray((providersJson as { providers?: unknown[] }).providers)
+      ? (providersJson as { providers: unknown[] }).providers.length
+      : 0,
+    hierarchies: Object.keys(hierarchies).length,
+  };
 }

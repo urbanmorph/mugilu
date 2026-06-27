@@ -1,4 +1,4 @@
-import type { Conditions, Warning } from "./types";
+import type { Conditions, SmokeConditions, Warning } from "./types";
 
 // The Ambient risk, mugilu's signature read. The WORST active hazard, never an
 // average (so it can't be diluted and isn't air-biased), with the dominant
@@ -70,10 +70,15 @@ function airLevel(c: Conditions): number | null {
 function heatLevel(c: Conditions): number | null {
   const wb = c.heat?.wet_bulb_c;
   const ap = c.heat?.apparent_c;
-  if (wb == null && ap == null) return null;
+  const wbgt = c.heat?.wbgt_c;
+  if (wb == null && ap == null && wbgt == null) return null;
   let lvl = 0;
   if (wb != null) lvl = Math.max(lvl, wb >= 31 ? 3 : wb >= 28 ? 2 : wb >= 26 ? 1 : 0);
   if (ap != null) lvl = Math.max(lvl, ap >= 45 ? 3 : ap >= 40 ? 2 : ap >= 35 ? 1 : 0);
+  // WBGT (simplified shade estimate; runs hot in dry heat) — aligned to BoM's
+  // categories (35+ extreme, 32-34 very high, 30-31 high) so it contributes
+  // without over-escalating past the wet-bulb survivability read.
+  if (wbgt != null) lvl = Math.max(lvl, wbgt >= 35 ? 3 : wbgt >= 32 ? 2 : wbgt >= 30 ? 1 : 0);
   return lvl;
 }
 
@@ -98,13 +103,16 @@ function dustLevel(c: Conditions): number | null {
 // populated points: peak-Nov Punjab belt 72-93, pre-monsoon-Apr central forest
 // ~90, max land-grid 147-385; shoulder/off-peak 25-60; metros single digits.
 // Severe is reserved for the genuine burning belt; below 3 fires is negligible.
-function smokeLevel(c: Conditions): number | null {
-  const s = c.smoke;
+// Exported as the single source for both "worth showing" (null) and the band,
+// so the renderers don't re-encode these literals.
+export function smokeLevel(s: SmokeConditions | null | undefined): number | null {
   if (!s || (s.count < 3 && s.frp_sum < 20)) return null;
   if (s.count >= 60 || s.frp_sum >= 350) return 3;
   if (s.count >= 25 || s.frp_sum >= 120) return 2;
   return 1;
 }
+/** Plain word for a smoke level (1/2/3); index 0 is unused. */
+export const SMOKE_WORD = ["", "some", "notable", "heavy"];
 
 function warnLevel(c: Conditions): number | null {
   if (!c.warnings?.length) return null;
@@ -122,7 +130,7 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
     ["Heat", heatLevel(c)],
     ["UV", uvLevel(c)],
     ["Dust", dustLevel(c)],
-    ["Smoke", smokeLevel(c)],
+    ["Smoke", smokeLevel(c.smoke)],
     ["Warning", warnLevel(c)],
   ];
 

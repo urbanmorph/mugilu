@@ -27,38 +27,40 @@ export function renderStation(s: NormalizedStation, generatedAt: string, siteUrl
     )
     .join("\n");
 
-  const description = s.aqi !== null
-    ? `${s.name}, ${s.city} — AQI ${s.aqi} (${bandLabel}), PM2.5 ${fmtNum(s.pollutants.pm25, 0)} µg/m³ as of ${updated.absolute}. Live air quality from ${s.provider.toUpperCase()} via OAQ.`
-    : `${s.name}, ${s.city} — air quality readings from ${s.provider.toUpperCase()} via OAQ. Updated ${updated.absolute}.`;
+  const description =
+    s.aqi !== null
+      ? `${s.name}, ${s.city} — AQI ${s.aqi} (${bandLabel}), PM2.5 ${fmtNum(s.pollutants.pm25, 0)} µg/m³ as of ${updated.absolute}. Live air quality from ${s.provider.toUpperCase()} via OAQ.`
+      : `${s.name}, ${s.city} — air quality readings from ${s.provider.toUpperCase()} via OAQ. Updated ${updated.absolute}.`;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    "name": `${s.name}, ${s.city} — live air quality`,
-    "description": description,
-    "creator": {
+    name: `${s.name}, ${s.city} — live air quality`,
+    description: description,
+    creator: {
       "@type": "Organization",
-      "name":
+      name:
         s.provider === "cpcb"
           ? "Central Pollution Control Board, Government of India"
           : s.provider === "airnet"
-          ? "Center for Study of Science, Technology and Policy (CSTEP)"
-          : "Aurassure University Clean Air Network",
+            ? "Center for Study of Science, Technology and Policy (CSTEP)"
+            : "Aurassure University Clean Air Network",
     },
-    "spatialCoverage": s.lat !== null && s.lon !== null
-      ? {
-          "@type": "Place",
-          "geo": { "@type": "GeoCoordinates", "latitude": s.lat, "longitude": s.lon },
-          "name": `${s.name}, ${s.city}`,
-        }
-      : undefined,
-    "dateModified": generatedAt,
-    "distribution": [
-      { "@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": `${canonical}.json` },
-      { "@type": "DataDownload", "encodingFormat": "text/markdown", "contentUrl": `${canonical}.md` },
+    spatialCoverage:
+      s.lat !== null && s.lon !== null
+        ? {
+            "@type": "Place",
+            geo: { "@type": "GeoCoordinates", latitude: s.lat, longitude: s.lon },
+            name: `${s.name}, ${s.city}`,
+          }
+        : undefined,
+    dateModified: generatedAt,
+    distribution: [
+      { "@type": "DataDownload", encodingFormat: "application/json", contentUrl: `${canonical}.json` },
+      { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${canonical}.md` },
     ],
-    "license": "https://creativecommons.org/licenses/by/4.0/",
-    "isBasedOn": "https://oaq.notf.in",
+    license: "https://creativecommons.org/licenses/by/4.0/",
+    isBasedOn: "https://oaq.notf.in",
   };
 
   const body = `

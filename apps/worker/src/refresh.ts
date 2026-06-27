@@ -193,7 +193,7 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
       "data/best-top-50.json",
       JSON.stringify({
         ...snapshot,
-        stations: [...all.filter((s) => s.aqi !== null)].sort((a, b) => (a.aqi! - b.aqi!)).slice(0, 50),
+        stations: [...all.filter((s) => s.aqi !== null)].sort((a, b) => a.aqi! - b.aqi!).slice(0, 50),
       }),
       { httpMetadata: { contentType: "application/json" } },
     ),

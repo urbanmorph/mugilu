@@ -5,19 +5,10 @@ import { cleanStationName } from "../src/refresh";
 test("cleanStationName with known city strips ', {city} …'", () => {
   assert.equal(cleanStationName("Ashok Vihar, Delhi - DPCC", "Delhi"), "Ashok Vihar");
   assert.equal(cleanStationName("FTI Kidwai Nagar, Kanpur - UPPCB", "Kanpur"), "FTI Kidwai Nagar");
-  assert.equal(
-    cleanStationName("Sadanand Nagar, Mehsana - Nexteng Enviro", "Mehsana"),
-    "Sadanand Nagar",
-  );
+  assert.equal(cleanStationName("Sadanand Nagar, Mehsana - Nexteng Enviro", "Mehsana"), "Sadanand Nagar");
   assert.equal(cleanStationName("Worli, Mumbai -MPCB", "Mumbai"), "Worli");
-  assert.equal(
-    cleanStationName("Polayathode, Kollam - Kerala PCB", "Kollam"),
-    "Polayathode",
-  );
-  assert.equal(
-    cleanStationName("Bandhavgar Colony, Satna - Birla Cement", "Satna"),
-    "Bandhavgar Colony",
-  );
+  assert.equal(cleanStationName("Polayathode, Kollam - Kerala PCB", "Kollam"), "Polayathode");
+  assert.equal(cleanStationName("Bandhavgar Colony, Satna - Birla Cement", "Satna"), "Bandhavgar Colony");
 });
 
 test("cleanStationName is case-insensitive on city match", () => {

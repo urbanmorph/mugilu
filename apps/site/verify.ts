@@ -8,9 +8,16 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, "dist");
 
 let failed = 0;
-function ok(msg: string) { console.log(`[verify] ✓ ${msg}`); }
-function warn(msg: string) { console.warn(`[verify] ⚠ ${msg}`); }
-function fail(msg: string) { console.error(`[verify] ✘ ${msg}`); failed++; }
+function ok(msg: string) {
+  console.log(`[verify] ✓ ${msg}`);
+}
+function warn(msg: string) {
+  console.warn(`[verify] ⚠ ${msg}`);
+}
+function fail(msg: string) {
+  console.error(`[verify] ✘ ${msg}`);
+  failed++;
+}
 
 if (!existsSync(join(dist, "index.html"))) {
   console.error("[verify] dist/index.html missing — run build first");
@@ -59,7 +66,7 @@ else ok(`all ${links.size} home station links resolve to files`);
 
 // ----- 4. Sitemap parity -----
 const sitemap = readFileSync(join(dist, "sitemap.xml"), "utf8");
-if (!sitemap.startsWith('<?xml')) fail("sitemap.xml missing XML prolog");
+if (!sitemap.startsWith("<?xml")) fail("sitemap.xml missing XML prolog");
 if (!sitemap.includes('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"')) fail("sitemap.xml missing xmlns");
 const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((x) => x[1]);
 const stationSitemap = sitemapUrls.filter((u) => u.includes("/s/"));
@@ -140,8 +147,14 @@ if (stationsNoColorScheme) fail(`${stationsNoColorScheme}/${stationFiles.length}
 if (stationsNoOgImage) fail(`${stationsNoOgImage}/${stationFiles.length} missing og:image`);
 if (stationsBadLd) fail(`${stationsBadLd}/${stationFiles.length} have invalid JSON-LD`);
 if (stationsBadBand) fail(`${stationsBadBand}/${stationFiles.length} have unknown band class`);
-if (stationsWithUndefined) warn(`${stationsWithUndefined}/${stationFiles.length} contain literal "undefined" text (may be legit in a station name)`);
-if (stationsNoH1 + stationsNoCanonical + stationsNoColorScheme + stationsNoOgImage + stationsBadLd + stationsBadBand === 0) {
+if (stationsWithUndefined)
+  warn(
+    `${stationsWithUndefined}/${stationFiles.length} contain literal "undefined" text (may be legit in a station name)`,
+  );
+if (
+  stationsNoH1 + stationsNoCanonical + stationsNoColorScheme + stationsNoOgImage + stationsBadLd + stationsBadBand ===
+  0
+) {
   ok(`all ${stationFiles.length} station pages pass structural + JSON-LD checks`);
 }
 
@@ -155,7 +168,10 @@ const docsPages = [
 ];
 for (const p of docsPages) {
   const full = join(dist, p);
-  if (!existsSync(full)) { fail(`missing ${p}`); continue; }
+  if (!existsSync(full)) {
+    fail(`missing ${p}`);
+    continue;
+  }
   const html = readFileSync(full, "utf8");
   if (!html.includes('<meta name="color-scheme"')) fail(`${p} missing color-scheme`);
   if (!html.includes('<link rel="canonical"')) fail(`${p} missing canonical`);

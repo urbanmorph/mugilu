@@ -67,12 +67,7 @@ export interface FireRisk {
 
 /** Smoke/fire pressure at a point: active detections within `radiusKm`, with the
  *  total FRP and the nearest fire. Distance via the shared haversine. */
-export function fireRiskAt(
-  fires: FireDetection[],
-  lat: number,
-  lon: number,
-  radiusKm = 100,
-): FireRisk {
+export function fireRiskAt(fires: FireDetection[], lat: number, lon: number, radiusKm = 100): FireRisk {
   let count = 0;
   let frp = 0;
   let nearest: number | null = null;

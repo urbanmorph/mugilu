@@ -40,9 +40,9 @@ Direction: ship the MCP server with the licence terms in its instructions, and a
 mugilu is informational, not a service that replaces anything: for official warnings and any safety-critical decision it points to NDMA and IMD — the authoritative channels — in every single response. The pages are plain HTML, readable without JavaScript and printable.
 Direction: keep the disclaimer and the official-source signpost on every reading; never make a health-relevant answer digital-only.
 
-### Grassroots and reaching the divide-affected — ⛳
-Today mugilu is English-only, and the audience that finds it skews connected and literate. Vernacular and low-bandwidth access are not built.
-Direction: conversational access in Indian languages through the planned AI/MCP layer (ask in any language, answer from the canonical data), and Indian-language place search.
+### Grassroots and reaching the divide-affected — 🟡
+Place search now works in Indian scripts — typing बेंगलुरु / ಬೆಂಗಳೂರು / சென்னை finds your spot — so the front door is no longer English-only. But the interface itself (labels, the Ambient read) is still English; full vernacular access is not built.
+Direction: localise the UI (path-prefixed /hi, /kn… with a shared string table and hreflang), and conversational access in any Indian language through the planned AI/MCP layer (ask in any language, answer from the canonical data).
 
 ### Algorithmic transparency — 🟡
 Unlike a pure catalog, mugilu runs one algorithm that interprets *for* a person: the Ambient read, which names the single worst hazard and weights it by a chosen vulnerability (asthma, older adults, children, outdoor workers, heart condition). It is deliberately glass-box — the thresholds are public and come from CPCB, NDMA, WHO and AQLI; the persona is a toggle the user picks (never inferred or tracked); and the output is labelled informational, not advice. No profiling, no ranking of people.

@@ -102,9 +102,7 @@ export function parseSachetRss(xml: string): FeedAlert[] {
  * archive any alert we haven't seen before. Dedup is tracked in KV so an
  * unchanged feed costs one 304 and steady state costs near-zero writes.
  */
-export async function collectWarnings(
-  env: Env,
-): Promise<{ changed: boolean; count: number; archived: number }> {
+export async function collectWarnings(env: Env): Promise<{ changed: boolean; count: number; archived: number }> {
   const etag = await env.OAQ_KV.get("sachet:etag");
   const res = await fetch(FEED_URL, {
     headers: etag ? { "If-None-Match": etag } : {},
@@ -142,4 +140,24 @@ export async function collectWarnings(
   if (archived) await env.OAQ_KV.put("sachet:seen", JSON.stringify([...seen]));
 
   return { changed: true, count: alerts.length, archived };
+}
+
+/** Markdown of the national active-warnings list (the /warnings.md sibling). */
+export function renderWarningsMarkdown(snap: WarningsSnapshot | null): string {
+  const out: string[] = ["# Active warnings across India", ""];
+  if (!snap || !snap.alerts.length) {
+    out.push("No active national alerts right now.");
+    return out.join("\n");
+  }
+  out.push(`*${snap.count} official NDMA / IMD alerts, as of ${snap.generated_at}.*`, "");
+  for (const a of snap.alerts) {
+    out.push(`## ${a.headline || "Warning"}`);
+    out.push(`- Category: ${a.category || "Alert"}`);
+    if (a.issuer) out.push(`- Issuer: ${a.issuer}`);
+    if (a.sent) out.push(`- Sent: ${a.sent}`);
+    if (a.link) out.push(`- CAP: ${a.link}`);
+    out.push("");
+  }
+  out.push("---", "Source: NDMA / IMD via SACHET, mirrored by mugilu.");
+  return out.join("\n");
 }

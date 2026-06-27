@@ -3,8 +3,7 @@ import { layout } from "./layout";
 export function renderDocsIndex(siteUrl: string): string {
   return layout({
     title: "Documentation | mugilu",
-    description:
-      "Documentation for mugilu — API reference, AI agent guide, data sources, and attribution.",
+    description: "Documentation for mugilu — API reference, AI agent guide, data sources, and attribution.",
     canonical: `${siteUrl}/docs`,
     siteUrl,
     body: `
@@ -266,8 +265,7 @@ ${HEALTH_IMPACT_SECTION}
 export function renderAbout(siteUrl: string): string {
   return layout({
     title: "About | mugilu",
-    description:
-      "About mugilu — why it exists, how it's built, and how it differs from oaq.notf.in.",
+    description: "About mugilu — why it exists, how it's built, and how it differs from oaq.notf.in.",
     canonical: `${siteUrl}/about`,
     siteUrl,
     body: `

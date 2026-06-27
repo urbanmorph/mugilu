@@ -1,4 +1,4 @@
-import type { HeatConditions, RainConditions, UvConditions, DustConditions, Wx } from "./types";
+import type { HeatConditions, RainConditions, UvConditions, DustConditions, Wx, AirPollutants } from "./types";
 
 // Open-Meteo adapter (A3). One zero-key fetch to each of the forecast and
 // air-quality endpoints fills the heat / rain / uv / dust layers of the
@@ -12,8 +12,18 @@ export interface OpenMeteoConditions {
   rain: RainConditions | null;
   uv: UvConditions | null;
   dust: DustConditions | null;
-  /** Modelled air pollutants, the gap-filler when no ground station is near. */
-  airModel: { pm25?: number; pm10?: number; o3?: number } | null;
+  /** Modelled air pollutants, the gap-filler when no ground station is near.
+   *  co is in mg/m³ (CPCB unit); the rest in µg/m³. */
+  airModel: AirPollutants | null;
+}
+
+/** Simplified WBGT (shade) from temperature + humidity (Australian BoM):
+ *  e = (RH/100)·6.105·exp(17.27·T/(237.7+T)); WBGT = 0.567·T + 0.393·e + 3.94.
+ *  An explicit heat-stress index; runs slightly hot in very dry heat. */
+function wbgt(t?: number, rh?: number): number | undefined {
+  if (t == null || rh == null) return undefined;
+  const e = (rh / 100) * 6.105 * Math.exp((17.27 * t) / (237.7 + t));
+  return +(0.567 * t + 0.393 * e + 3.94).toFixed(1);
 }
 
 interface OmResponse {
@@ -46,7 +56,9 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
   const forecastUrl =
     `${FORECAST_URL}?${coords}&current=` +
     "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation,precipitation_probability";
-  const airUrl = `${AIR_QUALITY_URL}?${coords}&current=pm2_5,pm10,ozone,uv_index,dust,aerosol_optical_depth`;
+  const airUrl =
+    `${AIR_QUALITY_URL}?${coords}&current=` +
+    "pm2_5,pm10,ozone,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide,ammonia,uv_index,dust,aerosol_optical_depth";
 
   const [forecast, air] = await Promise.allSettled([fetchCurrent(forecastUrl), fetchCurrent(airUrl)]);
 
@@ -54,11 +66,14 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
 
   if (forecast.status === "fulfilled" && forecast.value.current) {
     const c = forecast.value.current;
+    const t = num(c.temperature_2m);
+    const rh = num(c.relative_humidity_2m);
     out.heat = {
-      temp_c: num(c.temperature_2m),
-      humidity_pct: num(c.relative_humidity_2m),
+      temp_c: t,
+      humidity_pct: rh,
       apparent_c: num(c.apparent_temperature),
       wet_bulb_c: num(c.wet_bulb_temperature_2m),
+      wbgt_c: wbgt(t, rh),
       source: "open-meteo",
     };
     out.rain = {
@@ -81,8 +96,13 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     const pm25 = num(c.pm2_5);
     const pm10 = num(c.pm10);
     const o3 = num(c.ozone);
+    const no2 = num(c.nitrogen_dioxide);
+    const so2 = num(c.sulphur_dioxide);
+    const coUg = num(c.carbon_monoxide);
+    const co = coUg != null ? +(coUg / 1000).toFixed(2) : undefined; // µg/m³ → mg/m³ (CPCB CO unit)
+    const nh3 = num(c.ammonia);
     // Only offer a model fill when at least one PM value is present (PM drives AQI).
-    out.airModel = pm25 != null || pm10 != null ? { pm25, pm10, o3 } : null;
+    out.airModel = pm25 != null || pm10 != null ? { pm25, pm10, o3, no2, so2, co, nh3 } : null;
   } else if (air.status === "rejected") {
     console.error("[open-meteo] air-quality failed:", air.reason);
   }
@@ -106,10 +126,7 @@ async function fetchBulk(url: string): Promise<OmResponse[]> {
  * order, so we batch and stitch. Forecast + air-quality are fetched per batch
  * with allSettled, so one flaky endpoint only nulls those fields.
  */
-export async function getOpenMeteoBulk(
-  coords: Array<{ lat: number; lon: number }>,
-  delayMs = 0,
-): Promise<Wx[]> {
+export async function getOpenMeteoBulk(coords: Array<{ lat: number; lon: number }>, delayMs = 0): Promise<Wx[]> {
   const out: Wx[] = new Array(coords.length);
   for (let i = 0; i < coords.length; i += BULK_BATCH) {
     if (i > 0 && delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));

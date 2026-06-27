@@ -52,13 +52,26 @@ test("getOpenMeteo: a failing endpoint nulls only its own layer", async () => {
 
 // Bulk forecast + air-quality responses (arrays, one entry per coordinate).
 const FC_BULK = [
-  { current: { temperature_2m: 25, apparent_temperature: 28, wet_bulb_temperature_2m: 21, relative_humidity_2m: 70, precipitation: 0 } },
-  { current: { temperature_2m: 37, apparent_temperature: 40, wet_bulb_temperature_2m: 25, relative_humidity_2m: 30, precipitation: 0 } },
+  {
+    current: {
+      temperature_2m: 25,
+      apparent_temperature: 28,
+      wet_bulb_temperature_2m: 21,
+      relative_humidity_2m: 70,
+      precipitation: 0,
+    },
+  },
+  {
+    current: {
+      temperature_2m: 37,
+      apparent_temperature: 40,
+      wet_bulb_temperature_2m: 25,
+      relative_humidity_2m: 30,
+      precipitation: 0,
+    },
+  },
 ];
-const AQ_BULK = [
-  { current: { uv_index: 6, dust: 12 } },
-  { current: { uv_index: 4, dust: 409 } },
-];
+const AQ_BULK = [{ current: { uv_index: 6, dust: 12 } }, { current: { uv_index: 4, dust: 409 } }];
 
 test("getOpenMeteoBulk: maps bulk forecast + air-quality per coordinate, in order", async () => {
   const realFetch = globalThis.fetch;
@@ -67,7 +80,10 @@ test("getOpenMeteoBulk: maps bulk forecast + air-quality per coordinate, in orde
     return new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
   }) as typeof fetch;
   try {
-    const out = await getOpenMeteoBulk([{ lat: 12.97, lon: 77.59 }, { lat: 28.61, lon: 77.21 }]);
+    const out = await getOpenMeteoBulk([
+      { lat: 12.97, lon: 77.59 },
+      { lat: 28.61, lon: 77.21 },
+    ]);
     assert.equal(out.length, 2);
     assert.equal(out[0].apparent_c, 28);
     assert.equal(out[1].apparent_c, 40);

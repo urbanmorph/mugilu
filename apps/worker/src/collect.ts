@@ -16,7 +16,10 @@ const GRID = (centroids as Centroid[]).filter((c) => c.level === "district");
  */
 export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
   // Throttle ~12s/batch to keep any 60s window under Open-Meteo's minute limit.
-  const wx = await getOpenMeteoBulk(GRID.map((c) => ({ lat: c.lat, lon: c.lon })), 12_000);
+  const wx = await getOpenMeteoBulk(
+    GRID.map((c) => ({ lat: c.lat, lon: c.lon })),
+    12_000,
+  );
   const points: ConditionsPoint[] = GRID.map((c, i) => ({ ...c, wx: wx[i] ?? {} }));
 
   const snapshot: ConditionsSnapshot = {

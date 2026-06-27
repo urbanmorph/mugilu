@@ -58,15 +58,16 @@ export function groupByCity(stations: NormalizedStation[]): CityGroup[] {
 
 export function formatUpdated(iso: string): { absolute: string; relative: string } {
   const d = new Date(iso);
-  const absolute = d.toLocaleString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }) + " IST";
+  const absolute =
+    d.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }) + " IST";
   const mins = Math.floor((Date.now() - d.getTime()) / 60000);
   let relative: string;
   if (mins < 1) relative = "just now";
