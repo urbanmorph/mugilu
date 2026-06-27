@@ -123,7 +123,7 @@ function shell(title: string, body: string, css: string): string {
 <body>
 <header class="bar"><a class="brand" href="/">${CLOUD} mugilu</a></header>
 <main>${body}</main>
-<footer class="foot"><a href="/about">about</a> · <a href="https://github.com/urbanmorph/mugilu">code</a> · made by <a href="https://urbanmorph.com">urbanmorph</a> · a digital commons · <a href="https://pdgi.org">pdgi.org</a></footer>
+<footer class="foot"><a href="/about">about</a> · <a href="/terms">terms</a> · <a href="https://github.com/urbanmorph/mugilu">code</a> · made by <a href="https://urbanmorph.com">urbanmorph</a> · a digital commons · <a href="https://pdgi.org">pdgi.org</a></footer>
 </body>
 </html>`;
 }
@@ -328,6 +328,43 @@ export function renderAbout(): string {
   return shell("About: mugilu", body, ABOUT_CSS);
 }
 
+/** Terms & attribution: the disclaimer in full, plus per-source credit/licence.
+ *  The disclaimer that ships in every API response points here. */
+export function renderTerms(): string {
+  const body = `
+  <h1 class="ahero">Terms &amp; attribution</h1>
+  <p class="alead">mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.</p>
+
+  <h2 class="ah">No warranty</h2>
+  <p class="amuted"><b>Informational and educational only, not for medical, emergency, or safety-critical decisions.</b> Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult <b>NDMA</b> and <b>IMD</b> directly.</p>
+
+  <h2 class="ah">Licence</h2>
+  <p class="alead2">The mugilu <b>code is MIT</b> (see the <a href="https://github.com/urbanmorph/mugilu">repository</a>). The <b>data is not relicensed</b>: each upstream source keeps its own licence and attribution. mugilu is <b>non-commercial, for individuals</b>, and is not affiliated with any data provider.</p>
+
+  <h2 class="ah">Sources &amp; credit</h2>
+  <ul class="alist on">
+    <li><span>💨</span> <b>Air</b> - CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</li>
+    <li><span>🌡️</span> <b>Heat, rain, UV, dust</b> - <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</li>
+    <li><span>⚠️</span> <b>Official warnings</b> - NDMA / IMD via SACHET.</li>
+    <li><span>🗺️</span> <b>Geography &amp; place names</b> - <a href="https://bharatlas.com">bharatlas</a>.</li>
+    <li><span>❤️</span> <b>Health impact</b> - years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</li>
+  </ul>
+  <p class="alead2">Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.</p>
+
+  <p class="adisc">A digital commons by <a href="https://urbanmorph.com">urbanmorph</a>, alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
+  <p class="aback"><a href="/">← back to mugilu</a></p>`;
+  return shell("Terms & attribution: mugilu", body, ABOUT_CSS);
+}
+
+/** A real 404 page (the catch-all used to return 200 with a debug string). */
+export function renderNotFound(): string {
+  const body = `
+  <h1 class="ahero">Not here.</h1>
+  <p class="alead">That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate like <a href="/c/12.97,77.59">/c/12.97,77.59</a>.</p>
+  <p class="aback"><a href="/">← back to mugilu</a></p>`;
+  return shell("Not found: mugilu", body, ABOUT_CSS);
+}
+
 const HOME_CSS = `
 .hero{font-size:1.7rem;font-weight:800;letter-spacing:-.03em;line-height:1.2;margin:1.4rem 0 .5rem}
 .tagline{font-size:1.05rem;margin:0 0 .7rem;font-weight:500}
@@ -350,7 +387,7 @@ const HOME_CSS = `
 .hero-now .hl b{font-weight:700}.hero-now .hl span{margin-right:8px;font-size:1.2rem}
 `;
 
-const CITIES = [
+export const CITIES = [
   { name: "Delhi", lat: 28.61, lon: 77.21 },
   { name: "Mumbai", lat: 19.07, lon: 72.88 },
   { name: "Bengaluru", lat: 12.97, lon: 77.59 },

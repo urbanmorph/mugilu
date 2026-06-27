@@ -3,9 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2026-01-01"
 account_id = "6ba72cdd965276a57d19bf0aadc4d551"
 
-# Custom domain. Requires mugilu.live to be a zone in this Cloudflare account.
+# Custom domains. Requires mugilu.live to be a zone in this Cloudflare account.
+# www is attached too so the worker can 301 it to the apex (see index.ts).
 routes = [
   { pattern = "mugilu.live", custom_domain = true },
+  { pattern = "www.mugilu.live", custom_domain = true },
 ]
 
 # Crons (UTC): ":05 hourly" = air refresh + SACHET warnings poll;

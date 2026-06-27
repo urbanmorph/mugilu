@@ -6,7 +6,8 @@ import { renderStationOg } from "./og";
 import { faviconSvg, appleIconPng } from "./icon";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown } from "./conditions";
-import { renderConditionsPage, renderHome, renderAbout } from "./page";
+import { renderConditionsPage, renderHome, renderAbout, renderTerms, renderNotFound } from "./page";
+import { robotsTxt, llmsTxt, sitemapXml } from "./meta";
 import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
@@ -48,12 +49,33 @@ export default {
 
     const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 
+    // Canonical host: send www → apex (301), preserving path + query.
+    if (url.hostname === "www.mugilu.live") {
+      return Response.redirect(`${SITE_URL}${url.pathname}${url.search}`, 301);
+    }
+
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
     }
 
     if (url.pathname === "/about") {
       return cachedResponse(renderAbout(), "text/html; charset=utf-8");
+    }
+
+    // Terms & attribution (the disclaimer in every API response points here).
+    if (url.pathname === "/terms") {
+      return cachedResponse(renderTerms(), "text/html; charset=utf-8");
+    }
+
+    // Crawler + agent front-door files, built from the live route set.
+    if (url.pathname === "/robots.txt") {
+      return cachedResponse(robotsTxt(SITE_URL), "text/plain; charset=utf-8");
+    }
+    if (url.pathname === "/llms.txt") {
+      return cachedResponse(llmsTxt(SITE_URL), "text/plain; charset=utf-8");
+    }
+    if (url.pathname === "/sitemap.xml") {
+      return cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8");
     }
 
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
@@ -285,8 +307,13 @@ export default {
       });
     }
 
-    return new Response("mugilu: /health, /refresh, /sig", {
-      headers: { "content-type": "text/plain" },
+    // Unknown path: a real 404 (this used to return 200 with a debug string).
+    return new Response(renderNotFound(), {
+      status: 404,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "access-control-allow-origin": "*",
+      },
     });
   },
 
