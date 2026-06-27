@@ -212,7 +212,7 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (c.dust.aod != null) out.push(`- Aerosol optical depth: ${c.dust.aod}`);
     out.push("");
   }
-  if (c.smoke && c.smoke.count > 0) {
+  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20)) {
     out.push("## Smoke", `- Active fires within ${c.smoke.radius_km} km: **${c.smoke.count}** (last 24h)`);
     if (c.smoke.frp_sum) out.push(`- Total fire power nearby: ${c.smoke.frp_sum} MW`);
     if (c.smoke.nearest_km != null) out.push(`- Nearest fire: ${c.smoke.nearest_km} km`);

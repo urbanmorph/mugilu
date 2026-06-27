@@ -93,14 +93,16 @@ function dustLevel(c: Conditions): number | null {
   return d >= 500 ? 3 : d >= 150 ? 2 : d >= 80 ? 1 : 0;
 }
 
-// Fire/crop-burn smoke: active FIRMS detections within 100km, last 24h. Bands
-// calibrated against real India fire data (off-peak: Delhi ~3, Chennai ~13, the
-// NW burning belt 50+; dense clusters 100-250). Null when no fires nearby.
+// Fire/crop-burn smoke: active FIRMS detections (VIIRS) within 100km, last 24h.
+// Bands benchmarked against multi-season India archive data — local density at
+// populated points: peak-Nov Punjab belt 72-93, pre-monsoon-Apr central forest
+// ~90, max land-grid 147-385; shoulder/off-peak 25-60; metros single digits.
+// Severe is reserved for the genuine burning belt; below 3 fires is negligible.
 function smokeLevel(c: Conditions): number | null {
   const s = c.smoke;
-  if (!s || s.count <= 0) return null;
-  if (s.count >= 30 || s.frp_sum >= 250) return 3;
-  if (s.count >= 10 || s.frp_sum >= 80) return 2;
+  if (!s || (s.count < 3 && s.frp_sum < 20)) return null;
+  if (s.count >= 60 || s.frp_sum >= 350) return 3;
+  if (s.count >= 25 || s.frp_sum >= 120) return 2;
   return 1;
 }
 

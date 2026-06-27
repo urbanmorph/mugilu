@@ -341,13 +341,13 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
       lyr("dust", "Dust", risk.driver === "Dust", String(Math.round(c.dust.dust_ug_m3)), `<span class="qa nu">µg/m³</span> <b>${dustWord(c.dust.dust_ug_m3)}</b>`, "", scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500)),
     );
   }
-  if (c.smoke && c.smoke.count > 0) {
+  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20)) {
     const word =
-      c.smoke.count >= 30 || c.smoke.frp_sum >= 250 ? "heavy" : c.smoke.count >= 10 || c.smoke.frp_sum >= 80 ? "notable" : "some";
+      c.smoke.count >= 60 || c.smoke.frp_sum >= 350 ? "heavy" : c.smoke.count >= 25 || c.smoke.frp_sum >= 120 ? "notable" : "some";
     const sub =
       c.smoke.nearest_km != null ? `nearest ${c.smoke.nearest_km} km · ${c.smoke.frp_sum} MW total` : `${c.smoke.frp_sum} MW`;
     strata.push(
-      lyr("smoke", "Smoke", risk.driver === "Smoke", String(c.smoke.count), `<span class="qa nu">fires &lt;100 km</span> <b>${word} burning</b>`, sub, scaleBar(Math.min(c.smoke.count, 60) / 60)),
+      lyr("smoke", "Smoke", risk.driver === "Smoke", String(c.smoke.count), `<span class="qa nu">fires &lt;100 km</span> <b>${word} burning</b>`, sub, scaleBar(Math.min(c.smoke.count, 100) / 100)),
     );
   }
   if (c.rain && (c.rain.probability_pct != null || c.rain.precipitation_mm != null)) {
@@ -447,7 +447,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): s
     reads.push(`<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${uvWord(c.uv.index)}</span></div>`);
   if (c.dust?.dust_ug_m3 != null)
     reads.push(`<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>dust ${dustWord(c.dust.dust_ug_m3)}</span></div>`);
-  if (c.smoke && c.smoke.count > 0)
+  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20))
     reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>fires &lt;100km</span></div>`);
 
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu — conditions at ${place}" loading="lazy"></iframe>`;

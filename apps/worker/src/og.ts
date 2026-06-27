@@ -123,7 +123,7 @@ export function renderConditionsOg(c: Conditions, persona: Persona): Response {
   if (c.heat?.wet_bulb_c != null) stats.push(["WET-BULB", `${Math.round(c.heat.wet_bulb_c)}°`]);
   if (c.uv?.index != null) stats.push(["SUN", `UV ${Math.round(c.uv.index)}`]);
   if (c.dust?.dust_ug_m3 != null) stats.push(["DUST", `${Math.round(c.dust.dust_ug_m3)}`]);
-  if (c.smoke && c.smoke.count > 0) stats.push(["SMOKE", `${c.smoke.count} fires`]);
+  if (c.smoke && (c.smoke.count >= 3 || c.smoke.frp_sum >= 20)) stats.push(["SMOKE", `${c.smoke.count} fires`]);
 
   const stat = (label: string, val: string) =>
     `<div style="display:flex;flex-direction:column;margin-right:56px;">` +
