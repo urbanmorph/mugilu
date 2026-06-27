@@ -128,15 +128,19 @@ export default {
       );
     }
 
-    // First-party usage counts: top looked-up places + format tallies. Aggregate,
-    // privacy-preserving (rounded coords, no IP). The bharatlas-style read endpoint.
+    // Internal usage metrics for our own improvement — NOT public. Key-gated and
+    // never cached. Aggregate, privacy-preserving (rounded coords, no IP). The
+    // public only ever sees these via the server-rendered home "Popular".
     if (url.pathname === "/api/counts") {
+      if (url.searchParams.get("key") !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
       const [places, formats, referrers] = await Promise.all([
-        topPlaces(env, 20),
+        topPlaces(env, 50),
         counters(env),
-        topReferrers(env, 25),
+        topReferrers(env, 50),
       ]);
-      return cachedResponse(JSON.stringify({ places, formats, referrers }, null, 2), "application/json; charset=utf-8");
+      return new Response(JSON.stringify({ places, formats, referrers }, null, 2), {
+        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+      });
     }
 
     // Resolve a place name to coordinates and redirect to its conditions page.

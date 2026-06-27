@@ -36,7 +36,6 @@ export function llmsTxt(siteUrl: string): string {
 - Air leaderboard: ${siteUrl}/index.json  and  ${siteUrl}/index.md
 - Active warnings (national): ${siteUrl}/warnings  (also .json and .md)
 - Per-station: ${siteUrl}/s/{provider}/{id}.json  and  .md
-- Usage counts: ${siteUrl}/api/counts  (top looked-up places, format tallies, adopters)
 - Attribution: add ?ref=your-app to any API or /embed URL to identify your app or site (aggregate, domain-level; helps us see who builds on mugilu)
 - About: ${siteUrl}/about
 - Terms and attribution: ${siteUrl}/terms
