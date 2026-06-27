@@ -319,7 +319,7 @@ export function renderAbout(): string {
   </ul>
 
   <h2 class="ah">Where it comes from</h2>
-  <p class="alead2">mugilu doesn't own sensors or run its own forecasts. It stands on others' work, and credits them: <b>CPCB</b> &amp; <b>OpenAQ</b> (air), <b>IMD</b> &amp; <b>Open-Meteo</b> (weather), <b>NDMA / SACHET</b> (warnings), <b>bharatlas</b> (geography). The code is <b>MIT</b>; the data keeps each source's own terms.</p>
+  <p class="alead2">mugilu doesn't own sensors or run its own forecasts. It stands on others' work, and credits them: <b>CPCB</b> &amp; <b>OpenAQ</b> (air), <b>Open-Meteo</b> (weather), <b>NDMA / IMD</b> via SACHET (warnings), <b>bharatlas</b> (geography). The code is <b>MIT</b>; the data keeps each source's own terms.</p>
 
   <h2 class="ah">Why it exists</h2>
   <p class="alead2">Because the sky over you is a commons. Knowing it shouldn't cost money or sit locked in someone's app. mugilu is <b>non-commercial, forever</b>, the third in a series with <a href="https://bharatlas.com">bharatlas.com</a> and <a href="https://mdshare.live">mdshare.live</a>.</p>
