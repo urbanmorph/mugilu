@@ -137,10 +137,12 @@ const CONDITIONS_CSS = `
 .verdict{font-size:1.15rem;line-height:1.35;margin:0 0 1.2rem}
 .warn{border-left:5px solid var(--wc,#64748b);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 1rem;font-weight:600;line-height:1.4}
 .warn .wsrc{display:block;margin-top:3px;color:var(--muted);font-size:.78rem;font-weight:400}
-.ambient{border:1px solid var(--line);border-top:5px solid var(--rc,var(--sky));border-radius:14px;padding:14px 16px;margin:0 0 .7rem;background:var(--card)}
+.ambient{display:flex;gap:14px;align-items:flex-start;border:1px solid color-mix(in srgb,var(--rc,var(--sky)) 32%,var(--line));border-radius:16px;padding:18px;margin:0 0 .7rem;background:linear-gradient(140deg,color-mix(in srgb,var(--rc,var(--sky)) 22%,var(--card)),var(--card) 72%)}
+.ambient .aicon{font-size:2.6rem;line-height:1;flex:none}
+.ambient .abody{min-width:0}
 .ambient .alabel{margin:0;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.ambient .aband{margin:.15rem 0 0;font-size:2rem;font-weight:800;letter-spacing:-.02em;color:var(--rc,var(--ink))}
-.ambient .adriver{margin:.1rem 0 0;font-weight:600}
+.ambient .aband{margin:.12rem 0 .2rem;font-size:2.2rem;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--rc,var(--ink))}
+.ambient .adriver{margin:0;font-weight:600;line-height:1.35}
 .personas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 1.2rem;padding:0}
 .personas .pill{font-size:.82rem;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .personas .pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -148,6 +150,7 @@ const CONDITIONS_CSS = `
 @media(min-width:480px){.cards{grid-template-columns:1fr 1fr}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
 .card h2{margin:0;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.card h2 .ci{font-size:1.05rem;margin-right:.1rem}
 .card.air{border-left:5px solid var(--band,var(--sky))}
 .big{font-size:1.8rem;font-weight:700;margin:.3rem 0 .1rem;letter-spacing:-.02em}
 .tag{margin:0;font-weight:600}
@@ -192,7 +195,16 @@ const RISK_LABEL: Record<RiskBand, string> = {
   severe: "Severe",
 };
 
-/** The Ambient score banner + the zero-JS persona toggle (?as=…). */
+const DRIVER_ICON: Record<string, string> = {
+  Air: "💨",
+  Heat: "🔥",
+  UV: "☀️",
+  Dust: "🌫️",
+  Warning: "⚠️",
+  none: "🌤️",
+};
+
+/** The Ambient read: state first (big icon + band in the live condition colour) + persona toggle. */
 function renderAmbient(c: Conditions, risk: AmbientRisk): string {
   const base = `/c/${c.location.lat},${c.location.lon}`;
   const pills = PERSONAS.map((p) => {
@@ -201,9 +213,12 @@ function renderAmbient(c: Conditions, risk: AmbientRisk): string {
   }).join("");
   return `
   <section class="ambient" style="--rc:${RISK_COLOR[risk.band]}">
-    <p class="alabel">Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</p>
-    <p class="aband">${RISK_LABEL[risk.band]}</p>
-    <p class="adriver">${esc(ambientMeaning(risk))}</p>
+    <span class="aicon" aria-hidden="true">${DRIVER_ICON[risk.driver] ?? "🌤️"}</span>
+    <div class="abody">
+      <p class="alabel">Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</p>
+      <p class="aband">${RISK_LABEL[risk.band]}</p>
+      <p class="adriver">${esc(ambientMeaning(risk))}</p>
+    </div>
   </section>
   <nav class="personas" aria-label="Who is this for">${pills}</nav>`;
 }
@@ -219,16 +234,16 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
 
   const airCard = c.air
     ? `<section class="card air" style="--band:${bandColor}">
-        <h2>Air</h2>
+        <h2><span class="ci" aria-hidden="true">💨</span> Air</h2>
         <p class="big">AQI ${c.air.aqi ?? "n/a"}</p>
         <p class="tag">${bandLabel}</p>
         <p class="src">measured nearby · ${c.air.station.distance_km} km</p>
       </section>`
-    : `<section class="card air"><h2>Air</h2><p class="big">n/a</p><p class="src">no station nearby</p></section>`;
+    : `<section class="card air"><h2><span class="ci" aria-hidden="true">💨</span> Air</h2><p class="big">n/a</p><p class="src">no station nearby</p></section>`;
 
   const heatCard = c.heat
     ? `<section class="card heat">
-        <h2>Heat</h2>
+        <h2><span class="ci" aria-hidden="true">🔥</span> Heat</h2>
         <p class="big">Feels ${round(c.heat.apparent_c)}°</p>
         <p class="tag">${round(c.heat.temp_c)}° · ${round(c.heat.humidity_pct)}% humidity</p>
         ${heatNote(c.heat) ? `<p class="note">${heatNote(c.heat)}</p>` : ""}
@@ -237,9 +252,9 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     : "";
 
   const also: string[] = [];
-  if (c.uv?.index != null) also.push(`Sun ${uvWord(c.uv.index)}`);
-  if (c.dust?.dust_ug_m3 != null) also.push(`Dust ${dustWord(c.dust.dust_ug_m3)}`);
-  if (c.rain?.precipitation_mm) also.push(`Rain ${c.rain.precipitation_mm} mm`);
+  if (c.uv?.index != null) also.push(`☀️ Sun ${uvWord(c.uv.index)}`);
+  if (c.dust?.dust_ug_m3 != null) also.push(`🌫️ Dust ${dustWord(c.dust.dust_ug_m3)}`);
+  if (c.rain?.precipitation_mm) also.push(`🌧️ Rain ${c.rain.precipitation_mm} mm`);
 
   const body = `
   <nav class="crumbs"><a href="/">mugilu</a> <span>/</span> ${place}</nav>
@@ -312,7 +327,9 @@ export function renderAbout(): string {
 }
 
 const HOME_CSS = `
-.hero{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;line-height:1.25;margin:1.4rem 0 1.2rem}
+.hero{font-size:1.7rem;font-weight:800;letter-spacing:-.03em;line-height:1.2;margin:1.4rem 0 .5rem}
+.tagline{font-size:1.05rem;margin:0 0 .7rem;font-weight:500}
+.covers{margin:0 0 1.3rem;color:var(--muted);font-size:.92rem;line-height:1.8}
 .search{display:flex;gap:8px;margin:0 0 .8rem}
 .search input{flex:1;font-size:1rem;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 .search button{font-size:1rem;font-weight:600;padding:12px 18px;border:0;border-radius:12px;background:var(--sky);color:#fff;cursor:pointer}
@@ -328,7 +345,7 @@ const HOME_CSS = `
 .hero-now{margin:0 0 1.4rem;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
 .hero-now h2{margin:0 0 .5rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .hero-now .hl{display:block;text-decoration:none;color:var(--ink);padding:5px 0;font-size:.98rem;line-height:1.35}
-.hero-now .hl b{font-weight:700}.hero-now .hl span{margin-right:6px}
+.hero-now .hl b{font-weight:700}.hero-now .hl span{margin-right:8px;font-size:1.2rem}
 `;
 
 const CITIES = [
@@ -348,6 +365,8 @@ export function renderHome(notFound?: string, highlights?: NationalHighlights): 
 
   const body = `
   <h1 class="hero">What's it like outside, right now?</h1>
+  <p class="tagline">The open sky of India, one coordinate at a time.</p>
+  <p class="covers">💨 air · 🔥 heat · 🌧️ rain · ☀️ UV · 🌫️ dust · ⚠️ warnings</p>
   <div class="acwrap">
     <form class="search" action="/go" method="get" role="search">
       <input id="q" name="q" type="search" placeholder="Search a city or place…" autocomplete="off" autofocus aria-label="Search a place">

@@ -52,7 +52,12 @@ export async function buildConditions(
 ): Promise<Conditions> {
   let air: Conditions["air"] = null;
   if (snapshot) {
-    const [nearest] = findNearest(snapshot.stations, lat, lon, 1);
+    // Nearest station that actually has a reading, from ANY provider (CPCB,
+    // Airnet, Aurassure via OAQ). The very closest is often null, so don't stop
+    // there; fall back to overall nearest only if nothing has a reading.
+    const withReading = snapshot.stations.filter((s) => s.aqi != null);
+    const pool = withReading.length ? withReading : snapshot.stations;
+    const [nearest] = findNearest(pool, lat, lon, 1);
     if (nearest) {
       air = {
         aqi: nearest.aqi,
