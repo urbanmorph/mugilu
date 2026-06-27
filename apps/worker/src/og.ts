@@ -93,6 +93,7 @@ const RISK_LABEL: Record<RiskBand, string> = {
 const COND_NOUN: Record<string, string> = {
   Air: "air",
   Heat: "heat",
+  Cold: "cold",
   UV: "sun",
   Dust: "dust",
   Warning: "alert",

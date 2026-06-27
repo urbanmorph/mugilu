@@ -28,13 +28,15 @@ const BANDS: RiskBand[] = ["low", "moderate", "high", "severe"];
 const SCORE: Record<number, number> = { 0: 15, 1: 45, 2: 72, 3: 95 };
 
 // Hazards each persona is extra-sensitive to (bumped one level if already risky).
+// Heat and Cold are separate identities: cold, dry air is an asthma trigger, but
+// asthma isn't heat-sensitive; the elderly/very young/exposed feel both extremes.
 const SENSITIVE: Record<Persona, string[]> = {
   everyone: [],
-  asthma: ["Air", "Dust", "Smoke"],
-  elderly: ["Heat", "Air", "Smoke"],
-  child: ["UV", "Air", "Heat", "Smoke"],
-  outdoor: ["Heat", "UV", "Smoke"],
-  heart: ["Heat", "Air", "Smoke"],
+  asthma: ["Air", "Dust", "Smoke", "Cold"],
+  elderly: ["Heat", "Cold", "Air", "Smoke"],
+  child: ["UV", "Air", "Heat", "Cold", "Smoke"],
+  outdoor: ["Heat", "Cold", "UV", "Smoke"],
+  heart: ["Heat", "Cold", "Air", "Smoke"],
 };
 
 export interface HazardRisk {
@@ -67,11 +69,11 @@ function airLevel(c: Conditions): number | null {
   }
 }
 
-function heatLevel(c: Conditions): number | null {
+/** Hot-side thermal stress (0-3) from wet-bulb, feels-like and WBGT. */
+function heatLevel(c: Conditions): number {
   const wb = c.heat?.wet_bulb_c;
   const ap = c.heat?.apparent_c;
   const wbgt = c.heat?.wbgt_c;
-  if (wb == null && ap == null && wbgt == null) return null;
   let lvl = 0;
   if (wb != null) lvl = Math.max(lvl, wb >= 31 ? 3 : wb >= 28 ? 2 : wb >= 26 ? 1 : 0);
   if (ap != null) lvl = Math.max(lvl, ap >= 45 ? 3 : ap >= 40 ? 2 : ap >= 35 ? 1 : 0);
@@ -80,6 +82,24 @@ function heatLevel(c: Conditions): number | null {
   // without over-escalating past the wet-bulb survivability read.
   if (wbgt != null) lvl = Math.max(lvl, wbgt >= 35 ? 3 : wbgt >= 32 ? 2 : wbgt >= 30 ? 1 : 0);
   return lvl;
+}
+
+/** Cold-side stress (0-3) from feels-like (wind chill is already in apparent_c).
+ *  Calibrated to IMD cold-wave territory for the plains; severe at sub-zero. */
+function coldLevel(c: Conditions): number {
+  const ap = c.heat?.apparent_c;
+  if (ap == null) return 0;
+  return ap <= 0 ? 3 : ap <= 5 ? 2 : ap <= 10 ? 1 : 0;
+}
+
+/** Thermal stress as ONE directional hazard. A point right now is either too hot
+ *  or too cold, never both, so heat and cold share a slot but report distinct
+ *  drivers ("Heat" / "Cold") — with their own persona-sensitivity and advice. */
+function thermalRisk(c: Conditions): [string, number] | null {
+  if (c.heat?.wet_bulb_c == null && c.heat?.apparent_c == null && c.heat?.wbgt_c == null) return null;
+  const hot = heatLevel(c);
+  const cold = coldLevel(c);
+  return cold > hot ? ["Cold", cold] : ["Heat", hot];
 }
 
 function uvLevel(c: Conditions): number | null {
@@ -127,7 +147,7 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
   const sensitive = SENSITIVE[persona] ?? [];
   const checks: Array<[string, number | null]> = [
     ["Air", airLevel(c)],
-    ["Heat", heatLevel(c)],
+    thermalRisk(c) ?? ["Heat", null],
     ["UV", uvLevel(c)],
     ["Dust", dustLevel(c)],
     ["Smoke", smokeLevel(c.smoke)],
@@ -160,6 +180,11 @@ const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
     moderate: "It's warm, so keep water handy.",
     high: "Heat is high. Slow down, hydrate, find shade.",
     severe: "Dangerous heat. Avoid being outdoors.",
+  },
+  Cold: {
+    moderate: "It's cold out. Layer up.",
+    high: "Cold conditions. Cover up and limit time outside.",
+    severe: "Dangerous cold. Stay warm indoors if you can.",
   },
   UV: {
     moderate: "Strong sun, a hat or sunscreen helps.",

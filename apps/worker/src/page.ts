@@ -73,6 +73,9 @@ function heatPhrase(apparent: number, wetBulb?: number): string {
   if (apparent >= 45) return "extreme heat";
   if (apparent >= 40) return "severe heat";
   if (apparent >= 35) return "very hot";
+  if (apparent <= 0) return "dangerous cold";
+  if (apparent <= 5) return "very cold";
+  if (apparent <= 10) return "cold";
   return "warm";
 }
 
@@ -292,6 +295,7 @@ const RISK_LABEL: Record<RiskBand, string> = {
 const ICON: Record<string, string> = {
   air: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>',
   heat: '<path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+  cold: '<path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
   dust: '<path d="M5.2 6.2 6.6 7.6M2 13h2M20 13h2M17.4 7.6l1.4-1.4M22 17H2M22 21H2"/><path d="M16 13a4 4 0 0 0-8 0"/>',
   smoke:
@@ -319,6 +323,7 @@ function icon(name: string): string {
 const DRIVER_KEY: Record<string, string> = {
   Air: "air",
   Heat: "heat",
+  Cold: "cold",
   UV: "sun",
   Dust: "dust",
   Smoke: "smoke",
@@ -328,6 +333,7 @@ const DRIVER_KEY: Record<string, string> = {
 const COND_NOUN: Record<string, string> = {
   Air: "air",
   Heat: "heat",
+  Cold: "cold",
   UV: "sun",
   Dust: "dust",
   Smoke: "smoke",

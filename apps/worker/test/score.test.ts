@@ -24,6 +24,14 @@ test("personaAlso: surfaces an asthmatic's air trigger under a heat headline (op
   assert.match(personaAlso(asthma) ?? "", /air/i); // ...but the air trigger is surfaced
 });
 
+test("ambientRisk: sub-zero feels-like reads as a Cold driver, not Heat (directional thermal)", () => {
+  const c = cond({ heat: { temp_c: 2, apparent_c: -1, humidity_pct: 70, source: "open-meteo" } });
+  const r = ambientRisk(c, "everyone");
+  assert.equal(r.driver, "Cold");
+  assert.equal(r.band, "severe");
+  assert.match(ambientMeaning(r), /cold/i);
+});
+
 function cond(partial: Partial<Conditions>): Conditions {
   return {
     location: { lat: 0, lon: 0 },

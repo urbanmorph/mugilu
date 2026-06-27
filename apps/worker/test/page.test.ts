@@ -33,6 +33,13 @@ test("renderConditionsPage: a valid HTML document with the brand and place", () 
   assert.match(html, /Bengaluru/);
 });
 
+test("renderConditionsPage: a sub-zero reading renders as Cold (directional thermal)", () => {
+  const c = conditions({ heat: { temp_c: 2, apparent_c: -1, humidity_pct: 70, source: "open-meteo" }, air: null });
+  const html = renderConditionsPage(c);
+  assert.match(html, /cold/i); // headline + advice are cold, not "warm"/"heat"
+  assert.doesNotMatch(html, /Severe heat|dangerous heat/i);
+});
+
 test("renderConditionsPage: has a meta description (SEO) naming the place", () => {
   const html = renderConditionsPage(conditions());
   assert.match(html, /<meta name="description" content="[^"]+">/);
