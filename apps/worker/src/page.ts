@@ -900,19 +900,25 @@ export function renderHome(
   highlights?: NationalHighlights,
   meta?: { gridAsOf?: string; airAsOf?: string; popular?: { label: string; lat: number; lon: number }[] },
 ): string {
-  // "Popular" = real top-lookups (D1) when we have them, else the seed cities.
-  const popular = meta?.popular ?? [];
-  // Short, recognisable label: the district/city, or the metro city if the first
-  // segment is a long ward name ("Dharmaraya Swamy Temple Ward, Bengaluru").
+  // "Popular" = real top-lookups (D1) first, then seed cities to fill (deduped),
+  // so it's useful from day one and grows into real data. Short, recognisable
+  // label: the district/city, or the metro city when the first segment is a long
+  // ward name ("Dharmaraya Swamy Temple Ward, Bengaluru").
   const shortPlace = (label: string) => {
     const seg = label.split(",").map((s) => s.trim());
     return seg[0].length > 14 && seg.length > 1 ? seg[seg.length - 1] : seg[0];
   };
-  const cityLinks = (
-    popular.length
-      ? popular.map((p) => `<a href="/c/${p.lat},${p.lon}">${esc(shortPlace(p.label))}</a>`)
-      : CITIES.map((c) => `<a href="/c/${c.lat},${c.lon}">${c.name}</a>`)
-  ).join(" · ");
+  const seen = new Set<string>();
+  const links: string[] = [];
+  const addPlace = (name: string, lat: number, lon: number) => {
+    const k = name.toLowerCase();
+    if (seen.has(k) || links.length >= 8) return;
+    seen.add(k);
+    links.push(`<a href="/c/${lat},${lon}">${esc(name)}</a>`);
+  };
+  for (const p of meta?.popular ?? []) addPlace(shortPlace(p.label), p.lat, p.lon);
+  for (const c of CITIES) addPlace(c.name, c.lat, c.lon);
+  const cityLinks = links.join(" · ");
   const notice = notFound ? `<p class="notice">Couldn't find "${esc(notFound)}". Try a city or place name.</p>` : "";
 
   const body = `

@@ -16,6 +16,13 @@ test("nearestPlace: never leaks an id-like ward name (falls back to the city)", 
   assert.doesNotMatch(label!, /wards?_/i); // not "wards_bengaluru-0, Bengaluru"
 });
 
+test("nearestPlace: numeric ward names fall back to the city", () => {
+  const label = nearestPlace(13.08, 80.27); // Chennai — wards are numbered ("62")
+  assert.ok(label);
+  assert.doesNotMatch(label!, /^\d/); // not "62, Chennai"
+  assert.match(label!, /Chennai/);
+});
+
 test("nearestPlace: labels a non-metro point with its district", () => {
   const label = nearestPlace(26.85, 80.95); // Lucknow area — no ward grid
   assert.ok(label);

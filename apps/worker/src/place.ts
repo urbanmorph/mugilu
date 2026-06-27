@@ -33,9 +33,10 @@ export function nearestPlace(lat: number, lon: number): string | null {
   if (!best) return null;
   if (best.level === "ward") {
     const city = cityOf(best.source_layer);
-    // Some ward centroids carry an id-like name ("wards_bengaluru-0"); fall back
-    // to the city alone rather than show the raw id.
-    const human = /^wards?_/i.test(best.name) ? null : best.name;
+    // Some ward centroids carry an id-like ("wards_bengaluru-0") or bare-number
+    // ("62") name; fall back to the city alone rather than show a meaningless id.
+    const idLike = /^wards?_/i.test(best.name) || /^\d+$/.test(best.name);
+    const human = idLike ? null : best.name;
     return [human, city].filter(Boolean).join(", ") || best.name;
   }
   return best.state ? `${best.name}, ${best.state}` : best.name;
