@@ -44,13 +44,19 @@ export interface TopPlace {
   n: number;
 }
 
-/** The most-looked-up places (drives the home "Popular" + /api/counts). */
-export async function topPlaces(env: Env, limit = 8): Promise<TopPlace[]> {
+/** Minimum cumulative lookups before a place is shown PUBLICLY as "popular".
+ *  Below this it's noise (or our own testing); the home falls back to seed cities.
+ *  The private /api/counts ignores it (minN=0) so the team sees everything. */
+export const POPULAR_MIN = 25;
+
+/** The most-looked-up places. `minN` gates the public "Popular" by a decent
+ *  cumulative threshold; the private read passes 0 to see the full picture. */
+export async function topPlaces(env: Env, limit = 8, minN = 0): Promise<TopPlace[]> {
   try {
     const r = await env.METRICS.prepare(
-      "SELECT label, lat, lon, n FROM lookups WHERE label IS NOT NULL ORDER BY n DESC LIMIT ?",
+      "SELECT label, lat, lon, n FROM lookups WHERE label IS NOT NULL AND n >= ? ORDER BY n DESC LIMIT ?",
     )
-      .bind(limit)
+      .bind(minN, limit)
       .all<TopPlace>();
     return r.results ?? [];
   } catch {

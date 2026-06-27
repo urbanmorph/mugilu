@@ -25,7 +25,7 @@ import { collectFires, loadFires } from "./firms";
 import { nationalHighlights, worstAirStation } from "./highlights";
 import type { NationalHighlights } from "./highlights";
 import { stateAt } from "./place";
-import { recordLookup, recordReferrer, topPlaces, topReferrers, counters } from "./metrics";
+import { recordLookup, recordReferrer, topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
@@ -102,7 +102,7 @@ export default {
       const [gridObj, airSnap, popular] = await Promise.all([
         env.OAQ_R2.get("data/conditions.json"),
         loadSnapshot(),
-        topPlaces(env, 8),
+        topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
       ]);
       let highlights: NationalHighlights | undefined;
       let gridAsOf: string | undefined;

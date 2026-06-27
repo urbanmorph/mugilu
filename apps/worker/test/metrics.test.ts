@@ -52,11 +52,14 @@ test("recordLookup: rounds coordinates to a ~11km grid (privacy) and tallies the
   assert.deepEqual(fmt!.args, ["fmt:html"]);
 });
 
-test("topPlaces: returns the most-looked-up labelled places", async () => {
-  const { db } = mockDB({ lookups: [{ label: "Delhi, Delhi", lat: 28.6, lon: 77.2, n: 9 }] });
-  const r = await topPlaces({ METRICS: db } as unknown as Env);
+test("topPlaces: returns most-looked-up places, gated by a cumulative threshold", async () => {
+  const { db, calls } = mockDB({ lookups: [{ label: "Delhi, Delhi", lat: 28.6, lon: 77.2, n: 9 }] });
+  const r = await topPlaces({ METRICS: db } as unknown as Env, 5, 25);
   assert.equal(r[0].label, "Delhi, Delhi");
   assert.equal(r[0].n, 9);
+  const q = calls.find((c) => /FROM lookups/.test(c.sql));
+  assert.match(q!.sql, /n >= \?/); // a minimum-count threshold is applied in SQL
+  assert.deepEqual(q!.args, [25, 5]); // minN, limit
 });
 
 test("recordReferrer: captures the referring host (no www), domain-level", async () => {
