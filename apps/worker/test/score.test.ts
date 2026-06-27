@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ambientRisk } from "../src/score";
+import { ambientRisk, ambientMeaning } from "../src/score";
 import type { Conditions } from "../src/types";
 
 function cond(partial: Partial<Conditions>): Conditions {
@@ -69,4 +69,20 @@ test("ambientRisk: no data → low, with empty hazard list", () => {
   const r = ambientRisk(cond({}), "everyone");
   assert.equal(r.band, "low");
   assert.equal(r.hazards.length, 0);
+});
+
+test("ambientRisk: very-high UV is only moderate for everyone (not over-weighted)", () => {
+  const r = ambientRisk(cond({ uv: { index: 9, source: "om" } }), "everyone");
+  assert.equal(r.band, "moderate");
+  assert.equal(r.driver, "UV");
+  // ...but escalates for the sun-exposed
+  assert.equal(ambientRisk(cond({ uv: { index: 9, source: "om" } }), "outdoor").band, "high");
+});
+
+test("ambientMeaning: a plain sentence that explains the band", () => {
+  assert.match(ambientMeaning(ambientRisk(cond({}), "everyone")), /good/i);
+  assert.match(
+    ambientMeaning(ambientRisk(cond({ heat: { apparent_c: 47, source: "om" } }), "everyone")),
+    /heat/i,
+  );
 });

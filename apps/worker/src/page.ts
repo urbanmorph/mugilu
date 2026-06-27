@@ -1,6 +1,6 @@
 import type { Conditions, Warning } from "./types";
 import type { NationalHighlights } from "./highlights";
-import { ambientRisk, PERSONAS, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientMeaning, PERSONAS, PERSONA_LABEL } from "./score";
 import type { AmbientRisk, Persona, RiskBand } from "./score";
 
 // The worker-rendered HTML pages (Phase B): the location page and the lookup
@@ -34,23 +34,6 @@ function esc(s: string): string {
 
 function round(n: number | undefined): string {
   return n == null ? "—" : String(Math.round(n));
-}
-
-/** Plain one-line verdict from the data (no persona weighting yet — that's later). */
-function verdict(c: Conditions): string {
-  const band = c.air?.band;
-  const feels = c.heat?.apparent_c;
-  const airBad = band === "poor" || band === "vpoor" || band === "severe";
-  const airSevere = band === "vpoor" || band === "severe";
-  const hot = feels != null && feels >= 40;
-  const warm = feels != null && feels >= 35;
-  if (airSevere) return "Air is unhealthy — avoid being outside if you can.";
-  if (airBad && (hot || warm)) return "Both the air and the heat need care today.";
-  if (airBad) return "The air needs care today.";
-  if (hot) return "It's dangerously hot — limit time outdoors.";
-  if (warm) return "It's hot — take it easy outdoors.";
-  if (band === "moderate") return "Air is so-so today; the heat is fine.";
-  return "Conditions are mild right now.";
 }
 
 function uvWord(index: number | undefined): string {
@@ -144,7 +127,12 @@ function shell(title: string, body: string, css: string): string {
 }
 
 const CONDITIONS_CSS = `
+.crumbs{font-size:.8rem;color:var(--muted);margin:.2rem 0 .5rem}
+.crumbs a{color:var(--muted);text-decoration:none}
+.crumbs a:hover{color:var(--sky)}
+.crumbs span{margin:0 .3rem;opacity:.5}
 .place{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin:.2rem 0 0}
+.also{margin:.9rem 0 0;color:var(--muted);font-size:.92rem}
 .asof{color:var(--muted);font-size:.85rem;margin:.1rem 0 1rem}
 .verdict{font-size:1.15rem;line-height:1.35;margin:0 0 1.2rem}
 .warn{border-left:5px solid var(--wc,#64748b);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:0 0 1rem;font-weight:600;line-height:1.4}
@@ -152,7 +140,6 @@ const CONDITIONS_CSS = `
 .ambient{border:1px solid var(--line);border-top:5px solid var(--rc,var(--sky));border-radius:14px;padding:14px 16px;margin:0 0 .7rem;background:var(--card)}
 .ambient .alabel{margin:0;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .ambient .aband{margin:.15rem 0 0;font-size:2rem;font-weight:800;letter-spacing:-.02em;color:var(--rc,var(--ink))}
-.ambient .ascore{font-size:.85rem;font-weight:600;color:var(--muted);margin-left:.5rem}
 .ambient .adriver{margin:.1rem 0 0;font-weight:600}
 .personas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 1.2rem;padding:0}
 .personas .pill{font-size:.82rem;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
@@ -208,7 +195,6 @@ const RISK_LABEL: Record<RiskBand, string> = {
 /** The Ambient score banner + the zero-JS persona toggle (?as=…). */
 function renderAmbient(c: Conditions, risk: AmbientRisk): string {
   const base = `/c/${c.location.lat},${c.location.lon}`;
-  const driver = risk.band === "low" ? "All clear" : `Driven by ${esc(risk.driver.toLowerCase())}`;
   const pills = PERSONAS.map((p) => {
     const href = p === "everyone" ? base : `${base}?as=${p}`;
     return `<a class="pill${p === risk.persona ? " on" : ""}" href="${href}">${esc(PERSONA_LABEL[p])}</a>`;
@@ -216,8 +202,8 @@ function renderAmbient(c: Conditions, risk: AmbientRisk): string {
   return `
   <section class="ambient" style="--rc:${RISK_COLOR[risk.band]}">
     <p class="alabel">Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</p>
-    <p class="aband">${RISK_LABEL[risk.band]}<span class="ascore">${risk.score}/100</span></p>
-    <p class="adriver">${driver}</p>
+    <p class="aband">${RISK_LABEL[risk.band]}</p>
+    <p class="adriver">${esc(ambientMeaning(risk))}</p>
   </section>
   <nav class="personas" aria-label="Who is this for">${pills}</nav>`;
 }
@@ -250,19 +236,19 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
       </section>`
     : "";
 
-  const more: string[] = [];
-  if (c.rain?.precipitation_mm != null) more.push(`Rain: ${c.rain.precipitation_mm} mm`);
-  if (c.uv?.index != null) more.push(`Sun: ${uvWord(c.uv.index)}`);
-  if (c.dust?.dust_ug_m3 != null) more.push(`Dust: ${dustWord(c.dust.dust_ug_m3)}`);
+  const also: string[] = [];
+  if (c.uv?.index != null) also.push(`Sun ${uvWord(c.uv.index)}`);
+  if (c.dust?.dust_ug_m3 != null) also.push(`Dust ${dustWord(c.dust.dust_ug_m3)}`);
+  if (c.rain?.precipitation_mm) also.push(`Rain ${c.rain.precipitation_mm} mm`);
 
   const body = `
+  <nav class="crumbs"><a href="/">mugilu</a> <span>/</span> ${place}</nav>
   <p class="place">${place}</p>
   <p class="asof">updated just now</p>
   ${renderAmbient(c, risk)}
   ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
-  <p class="verdict">${esc(verdict(c))}</p>
   <div class="cards">${airCard}${heatCard}</div>
-  ${more.length ? `<details class="more"><summary>more</summary><ul>${more.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></details>` : ""}
+  ${also.length ? `<p class="also">${also.map((a) => esc(a)).join(" · ")}</p>` : ""}
   <p class="attr">${esc(c.attribution)}</p>
   <p class="disclaimer">${esc(c.disclaimer)}</p>
   <p class="data"><a href="/c/${slug}.json">data (JSON)</a> · <a href="/c/${slug}.md">markdown</a></p>`;
