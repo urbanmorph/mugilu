@@ -5,7 +5,7 @@ import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
 import { renderStationOg } from "./og";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown } from "./conditions";
-import { renderConditionsPage, renderHome } from "./page";
+import { renderConditionsPage, renderHome, renderAbout } from "./page";
 import { geocode, geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
@@ -49,6 +49,10 @@ export default {
 
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
+    }
+
+    if (url.pathname === "/about") {
+      return cachedResponse(renderAbout(), "text/html; charset=utf-8");
     }
 
     // Lookup-first home page.

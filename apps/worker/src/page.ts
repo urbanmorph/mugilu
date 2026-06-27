@@ -121,7 +121,7 @@ function shell(title: string, body: string, css: string): string {
 <body>
 <header class="bar"><a class="brand" href="/">${CLOUD} mugilu</a></header>
 <main>${body}</main>
-<footer class="foot">privacy · terms · <a href="https://github.com/urbanmorph/mugilu">code</a> · made by <a href="https://urbanmorph.com">urbanmorph</a> · a digital commons · <a href="https://pdgi.org">pdgi.org</a></footer>
+<footer class="foot"><a href="/about">about</a> · <a href="https://github.com/urbanmorph/mugilu">code</a> · made by <a href="https://urbanmorph.com">urbanmorph</a> · a digital commons · <a href="https://pdgi.org">pdgi.org</a></footer>
 </body>
 </html>`;
 }
@@ -254,6 +254,61 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   <p class="data"><a href="/c/${slug}.json">data (JSON)</a> · <a href="/c/${slug}.md">markdown</a></p>`;
 
   return shell(`${place} — mugilu`, body, CONDITIONS_CSS);
+}
+
+const ABOUT_CSS = `
+.ahero{font-size:1.9rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin:1.2rem 0 .8rem}
+.alead{font-size:1.1rem;line-height:1.45;margin:0 0 1.4rem}
+.alead2{line-height:1.5;margin:0 0 1rem}.alead2 a{color:var(--sky)}
+.ah{font-size:.8rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:1.9rem 0 .5rem}
+.amuted{color:var(--muted);margin:0 0 .6rem}
+.alist{list-style:none;margin:0 0 1rem;padding:0}
+.alist li{display:flex;gap:11px;align-items:flex-start;padding:7px 0;line-height:1.4}
+.alist li span{font-size:1.35rem;flex:none;width:1.7rem;text-align:center;line-height:1.2}
+.alist.on{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 14px}
+.adisc{color:var(--muted);font-size:.82rem;line-height:1.45;border-top:1px solid var(--line);padding-top:1rem;margin-top:1.9rem}
+.aback{margin:1.1rem 0 0}.aback a{color:var(--sky);text-decoration:none;font-weight:600}
+`;
+
+/** The About page — person/health-led positioning, the differentiation made plain. */
+export function renderAbout(): string {
+  const body = `
+  <h1 class="ahero">The open sky of India,<br>one coordinate at a time.</h1>
+  <p class="alead">mugilu tells you what the air, heat, rain, UV and dust are doing at any point in India — and whether there's an official warning over it — <b>right now</b>. Free, open, no sign-up.</p>
+
+  <h2 class="ah">Why mugilu</h2>
+  <p class="amuted">Everywhere else, the sky is split up and locked away:</p>
+  <ul class="alist">
+    <li><span>🌬️</span> Air apps show air. Weather apps show weather. Neither shows both.</li>
+    <li><span>🏛️</span> Government data is real and trustworthy — but scattered across separate apps (CPCB for air, IMD for weather, SACHET for warnings) that don't talk to each other.</li>
+    <li><span>💳</span> The tools that <i>do</i> combine things are paywalled, closed, and modelled — not real measurements, and not built for India.</li>
+    <li><span>🧍</span> None of them tell you what it means for <b>you</b>.</li>
+  </ul>
+  <p class="amuted">mugilu stitches it back together:</p>
+  <ul class="alist on">
+    <li><span>🌡️</span> <b>One read, every hazard</b> — air + heat (with wet-bulb, the number that decides whether heat is survivable) + rain + UV + dust.</li>
+    <li><span>⚠️</span> <b>Fused with the official warning</b> — the NDMA/IMD alert over your spot, right beside the conditions.</li>
+    <li><span>📍</span> <b>For any point</b> — not just monitored cities. Give it a coordinate.</li>
+    <li><span>❤️</span> <b>For you</b> — tuned to who's asking: asthma, older adults, children, outdoor workers.</li>
+  </ul>
+
+  <h2 class="ah">For people first — and anything built on top</h2>
+  <ul class="alist">
+    <li><span>👤</span> <b>People</b> → a plain page you read at a glance.</li>
+    <li><span>🧑‍💻</span> <b>Developers</b> → the same data as JSON. No key, no sign-up.</li>
+    <li><span>✍️</span> <b>Writers &amp; researchers</b> → clean Markdown.</li>
+    <li><span>🤖</span> <b>AI agents</b> → an MCP server. The icing: your assistant can actually check "is it safe to run outside in Lucknow right now?"</li>
+  </ul>
+
+  <h2 class="ah">Where it comes from</h2>
+  <p class="alead2">mugilu doesn't own sensors or run its own forecasts — it stands on others' work, and credits them: <b>CPCB</b> &amp; <b>OpenAQ</b> (air), <b>IMD</b> &amp; <b>Open-Meteo</b> (weather), <b>NDMA / SACHET</b> (warnings), <b>bharatlas</b> (geography). The code is <b>MIT</b>; the data keeps each source's own terms.</p>
+
+  <h2 class="ah">Why it exists</h2>
+  <p class="alead2">Because the sky over you is a commons — knowing it shouldn't cost money or sit locked in someone's app. mugilu is <b>non-commercial, forever</b> — the third in a series with <a href="https://bharatlas.com">bharatlas.com</a> and <a href="https://mdshare.live">mdshare.live</a>.</p>
+
+  <p class="adisc">Informational only — not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
+  <p class="aback"><a href="/">← back to mugilu</a></p>`;
+  return shell("About — mugilu", body, ABOUT_CSS);
 }
 
 const HOME_CSS = `
