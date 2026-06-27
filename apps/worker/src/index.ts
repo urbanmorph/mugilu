@@ -25,6 +25,7 @@ import { collectFires, loadFires } from "./firms";
 import { nationalHighlights, worstAirStation } from "./highlights";
 import type { NationalHighlights } from "./highlights";
 import { stateAt } from "./place";
+import { recordLookup, topPlaces, counters } from "./metrics";
 import { parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
@@ -36,6 +37,8 @@ export interface Env {
   OAQ_BASE_URL: string;
   /** NASA FIRMS map key for the fire/crop-burn smoke layer (optional). */
   FIRMS_MAP_KEY?: string;
+  /** First-party, aggregate usage counters (D1). No IP, no per-user data. */
+  METRICS: D1Database;
 }
 
 /** Standard cached, CORS-open API response for a given body + content-type. */
@@ -55,7 +58,7 @@ function badRequest(message: string): Response {
 }
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
 
     const SITE_URL = "https://mugilu.live"; // TODO: wire via env
@@ -96,7 +99,11 @@ export default {
     // the worst-air row from the hourly snapshot (fresher) — each stamped with
     // its own age, and the air point's state resolved from the grid.
     if (url.pathname === "/") {
-      const [gridObj, airSnap] = await Promise.all([env.OAQ_R2.get("data/conditions.json"), loadSnapshot()]);
+      const [gridObj, airSnap, popular] = await Promise.all([
+        env.OAQ_R2.get("data/conditions.json"),
+        loadSnapshot(),
+        topPlaces(env, 8),
+      ]);
       let highlights: NationalHighlights | undefined;
       let gridAsOf: string | undefined;
       if (gridObj) {
@@ -115,9 +122,17 @@ export default {
         renderHome(url.searchParams.get("notfound") ?? undefined, highlights, {
           gridAsOf,
           airAsOf: airSnap?.generated_at,
+          popular,
         }),
         "text/html; charset=utf-8",
       );
+    }
+
+    // First-party usage counts: top looked-up places + format tallies. Aggregate,
+    // privacy-preserving (rounded coords, no IP). The bharatlas-style read endpoint.
+    if (url.pathname === "/api/counts") {
+      const [places, formats] = await Promise.all([topPlaces(env, 20), counters(env)]);
+      return cachedResponse(JSON.stringify({ places, formats }, null, 2), "application/json; charset=utf-8");
     }
 
     // Resolve a place name to coordinates and redirect to its conditions page.
@@ -227,6 +242,7 @@ export default {
       const persona = parsePersona(url.searchParams.get("as"));
       const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
       const conditions = await buildConditions(snap, lat, lon, fires);
+      ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html"));
       if (ext === "png") {
         return renderConditionsOg(conditions, persona);
       }
@@ -251,6 +267,7 @@ export default {
       const persona = parsePersona(url.searchParams.get("as"));
       const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
       const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
+      ctx.waitUntil(recordLookup(env, coords.lat, coords.lon, conditions.place, "embed"));
       return cachedResponse(renderEmbed(conditions, persona, SITE_URL), "text/html; charset=utf-8");
     }
 

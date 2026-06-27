@@ -898,9 +898,21 @@ export const CITIES = [
 export function renderHome(
   notFound?: string,
   highlights?: NationalHighlights,
-  meta?: { gridAsOf?: string; airAsOf?: string },
+  meta?: { gridAsOf?: string; airAsOf?: string; popular?: { label: string; lat: number; lon: number }[] },
 ): string {
-  const cityLinks = CITIES.map((c) => `<a href="/c/${c.lat},${c.lon}">${c.name}</a>`).join(" · ");
+  // "Popular" = real top-lookups (D1) when we have them, else the seed cities.
+  const popular = meta?.popular ?? [];
+  // Short, recognisable label: the district/city, or the metro city if the first
+  // segment is a long ward name ("Dharmaraya Swamy Temple Ward, Bengaluru").
+  const shortPlace = (label: string) => {
+    const seg = label.split(",").map((s) => s.trim());
+    return seg[0].length > 14 && seg.length > 1 ? seg[seg.length - 1] : seg[0];
+  };
+  const cityLinks = (
+    popular.length
+      ? popular.map((p) => `<a href="/c/${p.lat},${p.lon}">${esc(shortPlace(p.label))}</a>`)
+      : CITIES.map((c) => `<a href="/c/${c.lat},${c.lon}">${c.name}</a>`)
+  ).join(" · ");
   const notice = notFound ? `<p class="notice">Couldn't find "${esc(notFound)}". Try a city or place name.</p>` : "";
 
   const body = `

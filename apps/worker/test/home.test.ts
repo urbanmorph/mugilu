@@ -18,6 +18,15 @@ test("renderHome: includes city quick-links to /c", () => {
   assert.match(html, /Delhi/);
 });
 
+test("renderHome: 'Popular' uses real top-lookups (D1) when present, else seed cities", () => {
+  const html = renderHome(undefined, undefined, {
+    popular: [{ label: "Ludhiana, Punjab", lat: 30.9, lon: 75.85 }],
+  });
+  assert.match(html, /Popular:.*<a href="\/c\/30\.9,75\.85">Ludhiana<\/a>/); // first segment, real lookup
+  assert.doesNotMatch(html, /Mumbai/); // seed cities replaced by real data
+  assert.match(renderHome(), /Mumbai/); // ...but present as the fallback
+});
+
 test("renderHome: hero shows state-qualified places, the worst-air row, and per-row ages", () => {
   const html = renderHome(
     undefined,

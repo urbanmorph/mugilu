@@ -24,6 +24,13 @@ id = "2279644a57474d1ebabcc94d09137c5c"
 binding = "OAQ_R2"
 bucket_name = "oaq-data"
 
+# First-party, aggregate usage counters (no IP, no per-user data). Powers the
+# home's "Popular" from real top-lookups and the /api/counts read endpoint.
+[[d1_databases]]
+binding = "METRICS"
+database_name = "mugilu_metrics"
+database_id = "fac62f6c-2641-4ba1-a1d1-39494ce5dee7"
+
 [vars]
 OAQ_BROKER_URL = "https://us-central1-oaqdms.cloudfunctions.net/brokerData"
 OAQ_BASE_URL = "https://oaq.notf.in/v1"
