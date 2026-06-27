@@ -18,7 +18,7 @@ const BAND_LABELS: Record<NormalizedStation["band"], string> = {
   poor: "Poor",
   vpoor: "Very Poor",
   severe: "Severe",
-  unknown: "—",
+  unknown: "n/a",
 };
 
 function esc(s: string): string {
@@ -28,7 +28,7 @@ function esc(s: string): string {
 export function renderStationOg(s: NormalizedStation, generatedAt: string): Response {
   const band = BAND_COLORS[s.band];
   const bandLabel = BAND_LABELS[s.band];
-  const aqi = s.aqi !== null ? String(s.aqi) : "—";
+  const aqi = s.aqi !== null ? String(s.aqi) : "n/a";
   const name = s.name.length > 34 ? s.name.slice(0, 32) + "…" : s.name;
   const city = s.city || "India";
   const updated =

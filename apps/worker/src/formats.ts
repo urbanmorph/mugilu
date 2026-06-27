@@ -13,11 +13,11 @@ const BAND_LABELS: Record<NormalizedStation["band"], string> = {
   poor: "Poor",
   vpoor: "Very Poor",
   severe: "Severe",
-  unknown: "—",
+  unknown: "n/a",
 };
 
 function n(v: number | undefined | null): string {
-  return v === undefined || v === null || !Number.isFinite(v) ? "—" : String(v);
+  return v === undefined || v === null || !Number.isFinite(v) ? "n/a" : String(v);
 }
 
 function formatIst(iso: string): string {
@@ -63,7 +63,7 @@ function row(s: NormalizedStation, rank: number): string {
 
 /**
  * Render the full leaderboard snapshot as Markdown. Designed to be read by
- * LLM crawlers — short frontmatter, three clearly-labeled sections, pipe tables.
+ * LLM crawlers: short frontmatter, three clearly-labeled sections, pipe tables.
  */
 export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string {
   const withAqi = snap.stations.filter((s) => s.aqi !== null);
@@ -125,7 +125,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
   const cityBlocks = cities
     .map(({ name, arr, avg }) => {
       return [
-        `### ${name} — ${plural(arr.length, "station")}${avg !== null ? `, avg AQI ${avg}` : ""}`,
+        `### ${name}: ${plural(arr.length, "station")}${avg !== null ? `, avg AQI ${avg}` : ""}`,
         "",
         "| Station | Provider | PM2.5 | AQI | Band |",
         "|---|---|---|---|---|",
@@ -145,7 +145,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
     "",
     `Data from CPCB, Airnet (CSTEP), and Aurassure via the OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
     "",
-    `This document is an open-source mirror — see ${siteUrl}/about.`,
+    `This document is an open-source mirror. See ${siteUrl}/about.`,
     "",
   ].join("\n");
 
@@ -182,13 +182,13 @@ export function renderStationMarkdown(
     `mirror: ${siteUrl}/s/${s.provider}/${s.raw_id}`,
     "---",
     "",
-    `# ${s.name} — Air Quality`,
+    `# ${s.name}: Air Quality`,
     "",
     s.aqi !== null
       ? `Current AQI: **${s.aqi} (${bandLabel})** as of ${formatIst(generatedAt)}.`
       : `No AQI available as of ${formatIst(generatedAt)}.`,
     "",
-    `Located in ${s.city || "—"}${s.state ? `, ${s.state}` : ""}, India. Source: **${PROVIDER_NAMES[s.provider]}** via OAQ.`,
+    `Located in ${s.city || "n/a"}${s.state ? `, ${s.state}` : ""}, India. Source: **${PROVIDER_NAMES[s.provider]}** via OAQ.`,
     "",
     "## Pollutants",
     "",
@@ -208,7 +208,7 @@ export function renderStationMarkdown(
           "",
           `If this PM2.5 level (${s.pollutants.pm25} µg/m³) persisted as the annual average, the Air Quality Life Index estimates **${s.yll.toFixed(2)} years** of life expectancy lost vs. the WHO 5 µg/m³ guideline.`,
           "",
-          `Formula: \`max(0, PM2.5 − 5) × 0.098 years\`. From Ebenstein et al. 2017 PNAS and Greenstone & Fan 2018 (U Chicago EPIC, [aqli.epic.uchicago.edu](https://aqli.epic.uchicago.edu)). This is a long-term exposure model applied to a live snapshot — treat as an order-of-magnitude indication.`,
+          `Formula: \`max(0, PM2.5 − 5) × 0.098 years\`. From Ebenstein et al. 2017 PNAS and Greenstone & Fan 2018 (U Chicago EPIC, [aqli.epic.uchicago.edu](https://aqli.epic.uchicago.edu)). This is a long-term exposure model applied to a live snapshot. Treat as an order-of-magnitude indication.`,
           "",
         ]
       : []),
@@ -222,7 +222,7 @@ export function renderStationMarkdown(
     "",
     `Data from ${PROVIDER_NAMES[s.provider]} via OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
     "",
-    `Part of an open-source mirror — see ${siteUrl}/about.`,
+    `Part of an open-source mirror. See ${siteUrl}/about.`,
     "",
   ];
   return lines.join("\n");

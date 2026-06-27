@@ -42,7 +42,7 @@ export function parseCoordQuery(q: string): { lat: number; lon: number } | null 
 
 /**
  * Gazetteer: match the query against the station names + cities we already
- * hold (prefix first, then substring). Instant, no upstream call — and uniquely
+ * hold (prefix first, then substring). Instant, no upstream call, and uniquely
  * ours, since these are India's actual air-monitoring points.
  */
 export function matchStations(stations: NormalizedStation[], q: string, limit: number): Suggestion[] {
@@ -71,7 +71,7 @@ export function matchStations(stations: NormalizedStation[], q: string, limit: n
 
 /**
  * Build typeahead suggestions: a coord query short-circuits; otherwise apply the
- * alias, match our gazetteer (stations first — our unique value), and merge
+ * alias, match our gazetteer (stations first, our unique value), and merge
  * India-ranked geocoded places. Geocoding is injected for testability.
  */
 export async function buildSuggestions(
@@ -90,7 +90,7 @@ export async function buildSuggestions(
   const query = applyAlias(q);
   const stationHits = matchStations(stations, query, limit);
 
-  // The gazetteer is instant and uniquely ours — only pay for a geocoding
+  // The gazetteer is instant and uniquely ours. Only pay for a geocoding
   // network call (~700ms) when it finds nothing. This keeps the typeahead snappy
   // for the common case (most Indian queries are near a station we already hold).
   if (stationHits.length > 0) return stationHits;

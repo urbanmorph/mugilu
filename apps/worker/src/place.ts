@@ -2,7 +2,7 @@ import centroids from "../data/centroids.json";
 import { haversineKm } from "./near";
 import type { Centroid } from "./types";
 
-// Reverse-geocode a point to a human label using the bundled bharatlas grid —
+// Reverse-geocode a point to a human label using the bundled bharatlas grid,
 // a city ward in the 16 metros, a district elsewhere. Self-contained (no
 // per-request API call); nearest-centroid is approximate near borders but fast.
 const GRID = centroids as Centroid[];
@@ -14,7 +14,7 @@ function cityOf(sourceLayer: string): string | null {
   return m[1].charAt(0).toUpperCase() + m[1].slice(1);
 }
 
-/** Nearest admin label for a point — "Ward, City" in metros, a district name elsewhere. */
+/** Nearest admin label for a point: "Ward, City" in metros, a district name elsewhere. */
 export function nearestPlace(lat: number, lon: number): string | null {
   let best: Centroid | null = null;
   let bestD = Infinity;

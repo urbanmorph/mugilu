@@ -1,4 +1,4 @@
-// Geocoding adapter — place name → coordinates, via Open-Meteo's free, key-free
+// Geocoding adapter: place name → coordinates, via Open-Meteo's free, key-free
 // geocoding API (on-brand; we already use Open-Meteo). City/town/neighbourhood
 // level; pincodes don't resolve here (a later source can fill that gap).
 

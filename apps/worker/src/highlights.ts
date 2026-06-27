@@ -1,6 +1,6 @@
 import type { ConditionsPoint } from "./types";
 
-// The national multi-hazard "right now" picture — drives the landing hero.
+// The national multi-hazard "right now" picture, drives the landing hero.
 // Deliberately NOT air-led: heat and dust first (per the whole-sky framing).
 
 export interface NationalHighlights {

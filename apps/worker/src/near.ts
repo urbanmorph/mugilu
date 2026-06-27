@@ -19,7 +19,7 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
 /**
  * The `n` stations nearest to (lat, lon), nearest first. Stations without
  * coordinates are skipped. Cheap by design: a single linear pass + sort over
- * the ~658 stations already held in the snapshot — no upstream call. This is
+ * the ~658 stations already held in the snapshot, no upstream call. This is
  * what makes the air layer lat/lng-addressable.
  */
 export function findNearest(
@@ -39,7 +39,7 @@ export function findNearest(
 
 /**
  * Parse + validate `lat`/`lon` request params. Returns null when either is
- * missing/empty or the pair is out of geographic range — callers turn null into
+ * missing/empty or the pair is out of geographic range. Callers turn null into
  * a 400. Guards against `Number(null) === 0` silently passing as a valid point.
  */
 export function parseLatLon(

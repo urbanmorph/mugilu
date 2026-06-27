@@ -26,7 +26,7 @@ function pickCoords(s: UpstreamStation): { lat: number | null; lon: number | nul
 }
 
 // Pull pollutant values from whichever shape the upstream uses. The OAQ feed is
-// undocumented and shapes vary across providers — we try several keys.
+// undocumented and shapes vary across providers. We try several keys.
 function pickPollutants(raw: UpstreamStation): NormalizedStation["pollutants"] {
   const src: Record<string, unknown> = {
     ...(raw.pollutants ?? {}),
@@ -89,7 +89,7 @@ export function cleanStationName(name: string, city?: string): string {
     }
   }
 
-  // Step 2: generic agency suffix — ", <anything up to 60 chars> - <agency>"
+  // Step 2: generic agency suffix: ", <anything up to 60 chars> - <agency>"
   // where <agency> is a short uppercase token OR a word that looks like an
   // agency name (2+ words, or contains "PCB", "Lab", "Cement", "Ltd").
   // Done after the city step so "Mundka, Delhi - DPCC" gets ", Delhi - DPCC"

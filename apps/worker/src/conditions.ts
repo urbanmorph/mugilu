@@ -10,13 +10,13 @@ import type { Persona } from "./score";
 //
 // MIT covers our code; the DATA keeps each upstream's terms. So attribution and
 // the disclaimer ride WITH every response (not just the MCP init instructions,
-// which consumers routinely drop). Keep these one line each — the full terms
+// which consumers routinely drop). Keep these one line each, the full terms
 // live at /terms.
 
-// Relayed in EVERY response (decided) — the one liability worth repeating for a
+// Relayed in EVERY response (decided), the one liability worth repeating for a
 // health-relevant tool.
 export const DISCLAIMER =
-  "Informational only — not for medical, emergency, or safety-critical decisions. " +
+  "Informational only, not for medical, emergency, or safety-critical decisions. " +
   "For official hazard warnings consult NDMA / IMD.";
 
 // Per-source credit lines. CPCB/Airnet/Aurassure reach us via the OAQ broker;
@@ -36,13 +36,13 @@ export function buildAttribution(sources: Array<string | undefined | null>): str
     if (s) credits.add(SOURCE_CREDIT[s] ?? s);
   }
   if (credits.size === 0) return "via mugilu";
-  return `Sources: ${[...credits].join(" · ")} — via mugilu`;
+  return `Sources: ${[...credits].join(" · ")}, via mugilu`;
 }
 
 /**
  * Assemble the full conditions for a coordinate (A4): nearest-station air +
  * Open-Meteo heat/rain/uv/dust, with attribution and the disclaimer attached.
- * Resilient by design — a missing snapshot only nulls `air`, and Open-Meteo's
+ * Resilient by design: a missing snapshot only nulls `air`, and Open-Meteo's
  * adapter already nulls any layer whose upstream fails.
  */
 export async function buildConditions(
@@ -100,7 +100,7 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
   const out: string[] = [
     `# Conditions at ${c.location.lat}, ${c.location.lon}`,
     "",
-    `**Ambient — ${PERSONA_LABEL[persona]}: ${risk.band}.** ${ambientMeaning(risk)}`,
+    `**Ambient for ${PERSONA_LABEL[persona]}: ${risk.band}.** ${ambientMeaning(risk)}`,
     "",
     `*As of ${c.as_of}.*`,
     "",
@@ -110,14 +110,14 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     out.push("## ⚠ Official warnings");
     for (const w of c.warnings) {
       out.push(
-        `- **${w.event}** (${w.severity}${w.until ? `, until ${w.until}` : ""}) — ${w.area} · ${w.issuer}`,
+        `- **${w.event}** (${w.severity}${w.until ? `, until ${w.until}` : ""}): ${w.area} · ${w.issuer}`,
       );
     }
     out.push("");
   }
 
   if (c.air) {
-    out.push("## Air", `- AQI **${c.air.aqi ?? "—"}** (${c.air.band})`);
+    out.push("## Air", `- AQI **${c.air.aqi ?? "n/a"}** (${c.air.band})`);
     const p = c.air.pollutants;
     const parts: string[] = [];
     if (p.pm25 != null) parts.push(`PM2.5 ${p.pm25}`);

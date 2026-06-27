@@ -28,7 +28,7 @@ function num(x: unknown): number | undefined {
 }
 
 async function fetchCurrent(url: string): Promise<OmResponse> {
-  // Cache the upstream at the edge — these values only change ~hourly.
+  // Cache the upstream at the edge. These values only change ~hourly.
   const res = await fetch(url, { cf: { cacheTtl: 900, cacheEverything: true } });
   if (!res.ok) throw new Error(`open-meteo ${res.status}: ${url}`);
   return (await res.json()) as OmResponse;
@@ -36,7 +36,7 @@ async function fetchCurrent(url: string): Promise<OmResponse> {
 
 /**
  * Heat (incl. wet-bulb), rain, UV and dust for a point. Each upstream is
- * fetched independently — if one fails, the others still return (the failed
+ * fetched independently. If one fails, the others still return (the failed
  * layer is null), so a flaky endpoint never blanks the whole response.
  */
 export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoConditions> {
@@ -90,7 +90,7 @@ async function fetchBulk(url: string): Promise<OmResponse[]> {
 }
 
 /**
- * Bulk heat/rain/UV/dust for many points — used to build the national grid.
+ * Bulk heat/rain/UV/dust for many points, used to build the national grid.
  * Open-Meteo accepts ~100 coordinates per call and returns results in input
  * order, so we batch and stitch. Forecast + air-quality are fetched per batch
  * with allSettled, so one flaky endpoint only nulls those fields.

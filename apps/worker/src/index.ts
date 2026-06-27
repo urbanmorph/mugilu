@@ -68,7 +68,7 @@ export default {
     }
 
     // Resolve a place name to coordinates and redirect to its conditions page.
-    // Keeps search zero-JS — a plain form GET. /go?q=Bengaluru → 302 /c/{lat},{lon}
+    // Keeps search zero-JS. A plain form GET. /go?q=Bengaluru → 302 /c/{lat},{lon}
     if (url.pathname === "/go") {
       const q = (url.searchParams.get("q") ?? "").trim();
       const hit = await geocode(q);
@@ -80,7 +80,7 @@ export default {
       return Response.redirect(`${url.origin}/c/${lat},${lon}`, 302);
     }
 
-    // Typeahead suggestions — gazetteer (our stations) + alias + coord-parse +
+    // Typeahead suggestions: gazetteer (our stations) + alias + coord-parse +
     // India-ranked geocoding. Powers the intelligent search box. /suggest?q=…
     if (url.pathname === "/suggest") {
       const q = url.searchParams.get("q") ?? "";
@@ -89,7 +89,7 @@ export default {
       return cachedResponse(JSON.stringify({ q, suggestions }), "application/json; charset=utf-8");
     }
 
-    // Cached snapshot loader — used by /index.{json,md} and /s/*.json|.md.
+    // Cached snapshot loader, used by /index.{json,md} and /s/*.json|.md.
     async function loadSnapshot(): Promise<Snapshot | null> {
       const obj = await env.OAQ_R2.get("data/latest.json");
       if (!obj) return null;
@@ -122,7 +122,7 @@ export default {
       });
     }
 
-    // Nearest air-quality stations to a point — haversine over the snapshot
+    // Nearest air-quality stations to a point, haversine over the snapshot
     // already in memory. The lat/lng entry point for the air layer (A2).
     if (url.pathname === "/near") {
       const coords = parseLatLon(url.searchParams.get("lat"), url.searchParams.get("lon"));
@@ -281,7 +281,7 @@ export default {
       });
     }
 
-    return new Response("mugilu — /health, /refresh, /sig", {
+    return new Response("mugilu: /health, /refresh, /sig", {
       headers: { "content-type": "text/plain" },
     });
   },
@@ -304,7 +304,7 @@ export default {
         ),
       );
     }
-    // National conditions grid every 4h — ~6 collects/day fits Open-Meteo's free quota.
+    // National conditions grid every 4h, ~6 collects/day fits Open-Meteo's free quota.
     if (event.cron === "5 */4 * * *") {
       ctx.waitUntil(
         collectConditions(env).then(

@@ -1,7 +1,7 @@
 import type { Warning } from "./types";
 import type { Env } from "./index";
 
-// NDMA SACHET — official disaster warnings (the IMD-replacement layer). The
+// NDMA SACHET: official disaster warnings (the IMD-replacement layer). The
 // location-wise endpoint does the point→alert spatial match for us, so /c
 // warnings need no feed parsing or point-in-polygon. SACHET is .gov.in (edge
 // geo-firewall risk), so this is time-boxed and failure-tolerant: a slow or
@@ -55,7 +55,7 @@ export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40)
 
 // ── National warning feed: poll → serve current → archive history (the moat) ──
 // SACHET only ever exposes *currently active* alerts; once one expires it's gone.
-// So we capture every alert as we see it and keep it forever — building a warning
+// So we capture every alert as we see it and keep it forever, building a warning
 // history nobody else holds. Polling is ETag-cheap (304 when nothing changed).
 
 const FEED_URL = "https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml";

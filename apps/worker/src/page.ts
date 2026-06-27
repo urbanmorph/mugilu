@@ -5,7 +5,7 @@ import type { AmbientRisk, Persona, RiskBand } from "./score";
 
 // The worker-rendered HTML pages (Phase B): the location page and the lookup
 // home page. Layperson-first, mobile-first, self-contained (inline CSS + cloud),
-// jargon-free — raw pollutant/wet-bulb numbers live in the .json/.md siblings.
+// jargon-free. Raw pollutant/wet-bulb numbers live in the .json/.md siblings.
 // Both pages share chrome via shell().
 
 const BAND_LABEL: Record<string, string> = {
@@ -15,7 +15,7 @@ const BAND_LABEL: Record<string, string> = {
   poor: "Poor",
   vpoor: "Very poor",
   severe: "Severe",
-  unknown: "—",
+  unknown: "n/a",
 };
 
 const BAND_COLOR: Record<string, string> = {
@@ -33,11 +33,11 @@ function esc(s: string): string {
 }
 
 function round(n: number | undefined): string {
-  return n == null ? "—" : String(Math.round(n));
+  return n == null ? "n/a" : String(Math.round(n));
 }
 
 function uvWord(index: number | undefined): string {
-  if (index == null) return "—";
+  if (index == null) return "n/a";
   if (index < 1) return "none";
   if (index < 3) return "low";
   if (index < 6) return "moderate";
@@ -47,7 +47,7 @@ function uvWord(index: number | undefined): string {
 }
 
 function dustWord(ug: number | undefined): string {
-  if (ug == null) return "—";
+  if (ug == null) return "n/a";
   if (ug < 20) return "low";
   if (ug < 50) return "moderate";
   return "high";
@@ -55,7 +55,7 @@ function dustWord(ug: number | undefined): string {
 
 function heatNote(h: Conditions["heat"]): string {
   if (!h) return "";
-  if ((h.humidity_pct ?? 0) >= 70 && (h.apparent_c ?? 0) >= 30) return "Humid — drink water.";
+  if ((h.humidity_pct ?? 0) >= 70 && (h.apparent_c ?? 0) >= 30) return "Humid. Drink water.";
   if ((h.apparent_c ?? 0) >= 40) return "Stay in the shade.";
   return "";
 }
@@ -75,17 +75,17 @@ function dustPhrase(d: number): string {
   return "light dust";
 }
 
-/** The "right now in India" hero — heat- and dust-led (never air-led). */
+/** The "right now in India" hero, heat- and dust-led (never air-led). */
 function renderHero(h: NationalHighlights): string {
   const rows: string[] = [];
   if (h.hottest) {
     rows.push(
-      `<a class="hl" href="/c/${h.hottest.lat},${h.hottest.lon}"><span>🔥</span> Hottest: <b>${esc(h.hottest.name)}</b> — feels ${Math.round(h.hottest.apparent_c)}°, ${heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c)}</a>`,
+      `<a class="hl" href="/c/${h.hottest.lat},${h.hottest.lon}"><span>🔥</span> Hottest: <b>${esc(h.hottest.name)}</b>, feels ${Math.round(h.hottest.apparent_c)}°, ${heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c)}</a>`,
     );
   }
   if (h.dustiest) {
     rows.push(
-      `<a class="hl" href="/c/${h.dustiest.lat},${h.dustiest.lon}"><span>🌫️</span> Dustiest: <b>${esc(h.dustiest.name)}</b> — ${dustPhrase(h.dustiest.dust_ug_m3)}</a>`,
+      `<a class="hl" href="/c/${h.dustiest.lat},${h.dustiest.lon}"><span>🌫️</span> Dustiest: <b>${esc(h.dustiest.name)}</b>, ${dustPhrase(h.dustiest.dust_ug_m3)}</a>`,
     );
   }
   return rows.length ? `<section class="hero-now"><h2>Right now in India</h2>${rows.join("")}</section>` : "";
@@ -173,7 +173,7 @@ function warnColor(color: string): string {
   }
 }
 
-/** A pinned official-warning banner — the most urgent thing on the page. */
+/** A pinned official-warning banner, the most urgent thing on the page. */
 function renderWarning(w: Warning): string {
   const meta = [w.severity, w.until ? `until ${w.until}` : ""].filter(Boolean).join(" · ");
   return `<div class="warn" style="--wc:${warnColor(w.color)}">⚠ <b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div>`;
@@ -215,16 +215,16 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   const place = c.place ? esc(c.place) : c.air?.station.city ? esc(c.air.station.city) : coords;
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
-  const bandLabel = BAND_LABEL[band] ?? "—";
+  const bandLabel = BAND_LABEL[band] ?? "n/a";
 
   const airCard = c.air
     ? `<section class="card air" style="--band:${bandColor}">
         <h2>Air</h2>
-        <p class="big">AQI ${c.air.aqi ?? "—"}</p>
+        <p class="big">AQI ${c.air.aqi ?? "n/a"}</p>
         <p class="tag">${bandLabel}</p>
         <p class="src">measured nearby · ${c.air.station.distance_km} km</p>
       </section>`
-    : `<section class="card air"><h2>Air</h2><p class="big">—</p><p class="src">no station nearby</p></section>`;
+    : `<section class="card air"><h2>Air</h2><p class="big">n/a</p><p class="src">no station nearby</p></section>`;
 
   const heatCard = c.heat
     ? `<section class="card heat">
@@ -253,7 +253,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   <p class="disclaimer">${esc(c.disclaimer)}</p>
   <p class="data"><a href="/c/${slug}.json">data (JSON)</a> · <a href="/c/${slug}.md">markdown</a></p>`;
 
-  return shell(`${place} — mugilu`, body, CONDITIONS_CSS);
+  return shell(`${place}: mugilu`, body, CONDITIONS_CSS);
 }
 
 const ABOUT_CSS = `
@@ -270,29 +270,29 @@ const ABOUT_CSS = `
 .aback{margin:1.1rem 0 0}.aback a{color:var(--sky);text-decoration:none;font-weight:600}
 `;
 
-/** The About page — person/health-led positioning, the differentiation made plain. */
+/** The About page: person/health-led positioning, the differentiation made plain. */
 export function renderAbout(): string {
   const body = `
   <h1 class="ahero">The open sky of India,<br>one coordinate at a time.</h1>
-  <p class="alead">mugilu tells you what the air, heat, rain, UV and dust are doing at any point in India — and whether there's an official warning over it — <b>right now</b>. Free, open, no sign-up.</p>
+  <p class="alead">mugilu tells you what the air, heat, rain, UV and dust are doing at any point in India, and whether there's an official warning over it, <b>right now</b>. Free, open, no sign-up.</p>
 
   <h2 class="ah">Why mugilu</h2>
   <p class="amuted">Everywhere else, the sky is split up and locked away:</p>
   <ul class="alist">
     <li><span>🌬️</span> Air apps show air. Weather apps show weather. Neither shows both.</li>
-    <li><span>🏛️</span> Government data is real and trustworthy — but scattered across separate apps (CPCB for air, IMD for weather, SACHET for warnings) that don't talk to each other.</li>
-    <li><span>💳</span> The tools that <i>do</i> combine things are paywalled, closed, and modelled — not real measurements, and not built for India.</li>
+    <li><span>🏛️</span> Government data is real and trustworthy, but scattered across separate apps (CPCB for air, IMD for weather, SACHET for warnings) that don't talk to each other.</li>
+    <li><span>💳</span> The tools that <i>do</i> combine things are paywalled, closed, and modelled. Not real measurements, and not built for India.</li>
     <li><span>🧍</span> None of them tell you what it means for <b>you</b>.</li>
   </ul>
   <p class="amuted">mugilu stitches it back together:</p>
   <ul class="alist on">
-    <li><span>🌡️</span> <b>One read, every hazard</b> — air + heat (with wet-bulb, the number that decides whether heat is survivable) + rain + UV + dust.</li>
-    <li><span>⚠️</span> <b>Fused with the official warning</b> — the NDMA/IMD alert over your spot, right beside the conditions.</li>
-    <li><span>📍</span> <b>For any point</b> — not just monitored cities. Give it a coordinate.</li>
-    <li><span>❤️</span> <b>For you</b> — tuned to who's asking: asthma, older adults, children, outdoor workers.</li>
+    <li><span>🌡️</span> <b>One read, every hazard</b>: air + heat (with wet-bulb, the number that decides whether heat is survivable) + rain + UV + dust.</li>
+    <li><span>⚠️</span> <b>Fused with the official warning</b>: the NDMA/IMD alert over your spot, right beside the conditions.</li>
+    <li><span>📍</span> <b>For any point</b>: not just monitored cities. Give it a coordinate.</li>
+    <li><span>❤️</span> <b>For you</b>, tuned to who's asking: asthma, older adults, children, outdoor workers.</li>
   </ul>
 
-  <h2 class="ah">For people first — and anything built on top</h2>
+  <h2 class="ah">For people first, and anything built on top</h2>
   <ul class="alist">
     <li><span>👤</span> <b>People</b> → a plain page you read at a glance.</li>
     <li><span>🧑‍💻</span> <b>Developers</b> → the same data as JSON. No key, no sign-up.</li>
@@ -301,14 +301,14 @@ export function renderAbout(): string {
   </ul>
 
   <h2 class="ah">Where it comes from</h2>
-  <p class="alead2">mugilu doesn't own sensors or run its own forecasts — it stands on others' work, and credits them: <b>CPCB</b> &amp; <b>OpenAQ</b> (air), <b>IMD</b> &amp; <b>Open-Meteo</b> (weather), <b>NDMA / SACHET</b> (warnings), <b>bharatlas</b> (geography). The code is <b>MIT</b>; the data keeps each source's own terms.</p>
+  <p class="alead2">mugilu doesn't own sensors or run its own forecasts. It stands on others' work, and credits them: <b>CPCB</b> &amp; <b>OpenAQ</b> (air), <b>IMD</b> &amp; <b>Open-Meteo</b> (weather), <b>NDMA / SACHET</b> (warnings), <b>bharatlas</b> (geography). The code is <b>MIT</b>; the data keeps each source's own terms.</p>
 
   <h2 class="ah">Why it exists</h2>
-  <p class="alead2">Because the sky over you is a commons — knowing it shouldn't cost money or sit locked in someone's app. mugilu is <b>non-commercial, forever</b> — the third in a series with <a href="https://bharatlas.com">bharatlas.com</a> and <a href="https://mdshare.live">mdshare.live</a>.</p>
+  <p class="alead2">Because the sky over you is a commons. Knowing it shouldn't cost money or sit locked in someone's app. mugilu is <b>non-commercial, forever</b>, the third in a series with <a href="https://bharatlas.com">bharatlas.com</a> and <a href="https://mdshare.live">mdshare.live</a>.</p>
 
-  <p class="adisc">Informational only — not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
+  <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
   <p class="aback"><a href="/">← back to mugilu</a></p>`;
-  return shell("About — mugilu", body, ABOUT_CSS);
+  return shell("About: mugilu", body, ABOUT_CSS);
 }
 
 const HOME_CSS = `
@@ -343,7 +343,7 @@ const CITIES = [
 export function renderHome(notFound?: string, highlights?: NationalHighlights): string {
   const cityLinks = CITIES.map((c) => `<a href="/c/${c.lat},${c.lon}">${c.name}</a>`).join(" · ");
   const notice = notFound
-    ? `<p class="notice">Couldn't find "${esc(notFound)}" — try a city or place name.</p>`
+    ? `<p class="notice">Couldn't find "${esc(notFound)}". Try a city or place name.</p>`
     : "";
 
   const body = `
@@ -374,5 +374,5 @@ export function renderHome(notFound?: string, highlights?: NationalHighlights): 
   q.addEventListener('blur',function(){setTimeout(hide,150);});
   </script>`;
 
-  return shell("mugilu — India's open sky", body, HOME_CSS);
+  return shell("mugilu: India's open sky", body, HOME_CSS);
 }

@@ -2,7 +2,7 @@
 // Reference: https://cpcb.nic.in/National-Air-Quality-Index/
 // Sub-index per pollutant using breakpoints; overall AQI = max of sub-indices.
 // Pollutants: PM2.5 (24h), PM10 (24h), NO2 (24h), SO2 (24h), CO (8h, mg/m³), O3 (8h), NH3 (24h).
-// We treat the live reading as a proxy for the averaging window — imperfect but consistent with how
+// We treat the live reading as a proxy for the averaging window, imperfect but consistent with how
 // most dashboards (including oaq.notf.in) display "current AQI".
 
 import type { NormalizedStation } from "./types";

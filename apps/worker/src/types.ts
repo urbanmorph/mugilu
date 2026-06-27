@@ -28,7 +28,7 @@ export interface UpstreamStation {
 }
 
 export interface NormalizedStation {
-  id: string;            // "{provider}-{raw_id}" — globally unique
+  id: string;            // "{provider}-{raw_id}", globally unique
   raw_id: string;        // upstream id, as-is (may contain hyphens)
   provider: ProviderId;
   name: string;
@@ -48,7 +48,7 @@ export interface NormalizedStation {
   aqi: number | null;
   band: "good" | "satisfactory" | "moderate" | "poor" | "vpoor" | "severe" | "unknown";
   ts: string | null;
-  /** AQLI — years of life expectancy lost if this PM2.5 level persisted as
+  /** AQLI: years of life expectancy lost if this PM2.5 level persisted as
    *  the annual average. max(0, pm25 − 5) × 0.098. Null if no pm25. */
   yll?: number | null;
 }
@@ -71,7 +71,7 @@ export interface NearStation extends NormalizedStation {
   distance_km: number;
 }
 
-/** Air quality at a point — taken from the nearest ground station. */
+/** Air quality at a point, taken from the nearest ground station. */
 export interface AirConditions {
   aqi: number | null;
   band: NormalizedStation["band"];
@@ -84,7 +84,7 @@ export interface AirConditions {
   source: ProviderId;
 }
 
-/** Heat / humid-heat — modelled. Filled by the Open-Meteo adapter (A3). */
+/** Heat / humid-heat, modelled. Filled by the Open-Meteo adapter (A3). */
 export interface HeatConditions {
   temp_c?: number;
   humidity_pct?: number;
@@ -144,7 +144,7 @@ export interface Conditions {
 
 // ── National conditions grid (the de-bias) ──────────────────────────────────
 // Heat/rain/UV/dust come from a model that covers everywhere, so they're sampled
-// over a tiered admin grid (districts nationally + city wards) — not the air
+// over a tiered admin grid (districts nationally + city wards), not the air
 // monitors. See data/centroids.json + scripts/build-centroids.mjs.
 
 /** Modelled weather conditions at a point (Open-Meteo). */

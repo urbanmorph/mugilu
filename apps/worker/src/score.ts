@@ -1,9 +1,9 @@
 import type { Conditions, Warning } from "./types";
 
-// The Ambient risk — mugilu's signature read. The WORST active hazard, never an
+// The Ambient risk, mugilu's signature read. The WORST active hazard, never an
 // average (so it can't be diluted and isn't air-biased), with the dominant
 // hazard named. Personas bump the hazards they're sensitive to up one level.
-// Informational only — the disclaimer rides with every response.
+// Informational only. The disclaimer rides with every response.
 
 export type Persona = "everyone" | "asthma" | "elderly" | "child" | "outdoor" | "heart";
 export const PERSONAS: Persona[] = ["everyone", "asthma", "elderly", "child", "outdoor", "heart"];
@@ -13,7 +13,7 @@ export function parsePersona(s: string | null | undefined): Persona {
   return s && (PERSONAS as string[]).includes(s) ? (s as Persona) : "everyone";
 }
 
-/** Plain-language persona labels — no jargon on the visible site. */
+/** Plain-language persona labels, no jargon on the visible site. */
 export const PERSONA_LABEL: Record<Persona, string> = {
   everyone: "Everyone",
   asthma: "Asthma & lungs",
@@ -82,7 +82,7 @@ function uvLevel(c: Conditions): number | null {
   if (u == null) return null;
   // UV is real but mitigable (shade/sunscreen/timing) and chronic, not acute-
   // fatal. So for the general population it caps at "high" only when extreme
-  // (11+); very-high 6–10 is "moderate" — a sun-care nudge, not an emergency.
+  // (11+); very-high 6–10 is "moderate", a sun-care nudge, not an emergency.
   // Persona amplification escalates it for children / outdoor workers.
   return u >= 11 ? 2 : u >= 6 ? 1 : 0;
 }
@@ -126,33 +126,33 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
   return { band: worst.band, score: SCORE[worst.level], driver: worst.hazard, persona, hazards };
 }
 
-// What each band means in plain language, per dominant hazard — so the score
+// What each band means in plain language, per dominant hazard, so the score
 // explains itself and never just says "High" with no context.
 const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
   Air: {
-    moderate: "Air is so-so — fine for most people.",
-    high: "Air is poor — sensitive groups, take it easy.",
-    severe: "Air is dangerous — stay indoors if you can.",
+    moderate: "Air is so-so, fine for most people.",
+    high: "Air is poor. Sensitive groups, take it easy.",
+    severe: "Air is dangerous. Stay indoors if you can.",
   },
   Heat: {
-    moderate: "It's warm — keep water handy.",
-    high: "Heat is high — slow down, hydrate, find shade.",
-    severe: "Dangerous heat — avoid being outdoors.",
+    moderate: "It's warm, so keep water handy.",
+    high: "Heat is high. Slow down, hydrate, find shade.",
+    severe: "Dangerous heat. Avoid being outdoors.",
   },
   UV: {
-    moderate: "Strong sun — a hat or sunscreen helps.",
-    high: "The sun is very strong — limit midday hours.",
-    severe: "Extreme sun — cover up and skip the midday hours.",
+    moderate: "Strong sun, a hat or sunscreen helps.",
+    high: "The sun is very strong. Limit midday hours.",
+    severe: "Extreme sun. Cover up and skip the midday hours.",
   },
   Dust: {
     moderate: "Some dust in the air.",
-    high: "Dusty — mask up if you're sensitive.",
-    severe: "Heavy dust — limit time outdoors.",
+    high: "Dusty. Mask up if you're sensitive.",
+    severe: "Heavy dust. Limit time outdoors.",
   },
   Warning: {
     moderate: "An official advisory is in effect.",
-    high: "An official warning is active — stay alert.",
-    severe: "A serious warning is active — follow official guidance.",
+    high: "An official warning is active. Stay alert.",
+    severe: "A serious warning is active. Follow official guidance.",
   },
 };
 
