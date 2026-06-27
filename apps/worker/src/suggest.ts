@@ -9,7 +9,10 @@ export interface Suggestion {
   kind: "coord" | "station" | "place";
 }
 
-// Well-known Indian city renames / colloquial names → canonical form.
+// Well-known Indian city renames / colloquial names → canonical form, plus
+// native-script names for the major station cities so an Indian-script query
+// reaches our (English-named) station gazetteer directly. Keys are matched
+// case-folded; native scripts are caseless, so the literal form is the key.
 const ALIASES: Record<string, string> = {
   bangalore: "Bengaluru",
   bombay: "Mumbai",
@@ -22,6 +25,27 @@ const ALIASES: Record<string, string> = {
   baroda: "Vadodara",
   mysore: "Mysuru",
   mangalore: "Mangaluru",
+  // Native-script aliases (Hindi + the city's own script) for station cities.
+  बेंगलुरु: "Bengaluru",
+  ಬೆಂಗಳೂರು: "Bengaluru",
+  பெங்களூரு: "Bengaluru",
+  मुंबई: "Mumbai",
+  મુંબઈ: "Mumbai",
+  दिल्ली: "Delhi",
+  "नई दिल्ली": "Delhi",
+  चेन्नई: "Chennai",
+  சென்னை: "Chennai",
+  कोलकाता: "Kolkata",
+  কলকাতা: "Kolkata",
+  हैदराबाद: "Hyderabad",
+  హైదరాబాద్: "Hyderabad",
+  पुणे: "Pune",
+  अहमदाबाद: "Ahmedabad",
+  અમદાવાદ: "Ahmedabad",
+  जयपुर: "Jaipur",
+  लखनऊ: "Lucknow",
+  कानपुर: "Kanpur",
+  कोच्चि: "Kochi",
 };
 
 /** Rewrite a known old/colloquial city name to its canonical form. */

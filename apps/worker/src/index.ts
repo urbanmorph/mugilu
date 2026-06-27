@@ -9,7 +9,7 @@ import { buildConditions, renderConditionsMarkdown } from "./conditions";
 import { renderConditionsPage, renderHome, renderAbout, renderTerms, renderNotFound, renderEmbed } from "./page";
 import { robotsTxt, llmsTxt, sitemapXml } from "./meta";
 import { geocode, geocodeList } from "./geocode";
-import { buildSuggestions } from "./suggest";
+import { buildSuggestions, applyAlias } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings } from "./sachet";
 import { nationalHighlights } from "./highlights";
@@ -97,7 +97,10 @@ export default {
     // Keeps search zero-JS. A plain form GET. /go?q=Bengaluru → 302 /c/{lat},{lon}
     if (url.pathname === "/go") {
       const q = (url.searchParams.get("q") ?? "").trim();
-      const hit = await geocode(q);
+      // Apply the alias (old names + native-script city names) so e.g. बेंगलुरु or
+      // சென்னை resolves via the canonical English name to the city centre, not the
+      // airport the geocoder sometimes returns for a native-script query.
+      const hit = await geocode(applyAlias(q));
       if (!hit) {
         return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
       }
