@@ -388,8 +388,15 @@ function renderWarning(w: Warning): string {
 const PLACE_RECORDER = `<script>
 (function(){try{
 var pp=location.pathname.split('/');
-if(pp[1]!=='c'||!pp[2]||pp[2].indexOf(',')<0)return;
-var id=pp[2],c=id.split(','),el=document.querySelector('h1.loc'),label=el?el.textContent.trim():id;
+if(pp[1]!=='c'||!pp[2])return;
+var id=decodeURIComponent(pp[2]),el=document.querySelector('h1.loc');
+// Coordinate comes from the URL (/c/lat,lon) or the page (named /c/slug pages).
+var ll=(el&&el.getAttribute('data-ll'))||id,c=ll.split(',');
+if(c.length<2||isNaN(+c[0]))return;
+var label=el?el.textContent.trim():id;
+// If they searched in a native script, remember it in that script (passed via #q=).
+var h=location.hash.match(/[#&]q=([^&]+)/);
+if(h){var q=decodeURIComponent(h[1]);if(/[^\\x00-\\x7F]/.test(q))label=q;}
 var K='mugilu:places',L;try{L=JSON.parse(localStorage.getItem(K))||[]}catch(e){L=[]}
 var p=L.filter(function(x){return x.id===id})[0];
 if(p){p.n=(p.n||0)+1;p.t=Date.now();if(!p.name)p.label=label}
@@ -397,6 +404,7 @@ else{L.push({id:id,lat:c[0],lon:c[1],label:label,n:1,t:Date.now(),fav:false})}
 L.sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});
 var f=L.filter(function(x){return x.fav}),r=L.filter(function(x){return !x.fav}).slice(0,Math.max(0,12-f.length));
 localStorage.setItem(K,JSON.stringify(f.concat(r)));
+if(location.hash)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
 }catch(e){}})();
 </script>`;
 
@@ -563,7 +571,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   const body = `
   <article class="cx">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
-    <h1 class="loc">${place}</h1>
+    <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
     <p class="when">the sky over this spot · updated ${relTime(c.air_as_of ?? c.as_of)}</p>
     ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
     <section class="amb">

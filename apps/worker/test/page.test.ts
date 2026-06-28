@@ -50,6 +50,10 @@ test("renderConditionsPage: records the visit into the browser 'Your places' sto
   const html = renderConditionsPage(conditions());
   assert.match(html, /mugilu:places/); // localStorage recorder present
   assert.match(html, /h1\.loc/); // reads the reverse-geocoded label off the page
+  // the coordinate is exposed so NAMED slug pages (/c/bengaluru, no comma) record too
+  assert.match(html, /data-ll="12\.97,77\.59"/);
+  // a native-script search term (passed via #q=) is honoured as the recents label
+  assert.match(html, /\[#&\]q=/);
 });
 
 test("renderConditionsPage: emits a canonical link when given one (named-URL SEO)", () => {

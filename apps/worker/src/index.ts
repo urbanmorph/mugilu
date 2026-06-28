@@ -161,16 +161,19 @@ export default {
       // சென்னை resolves via the canonical English name to the city centre, not the
       // airport the geocoder sometimes returns for a native-script query.
       const aliased = applyAlias(q);
+      // Carry the typed term in the fragment (client-only, no cache impact) so a
+      // native-script search ("ಬೆಂಗಳೂರು") is remembered in its own script in recents.
+      const frag = q ? `#q=${encodeURIComponent(q)}` : "";
       // If it names a known place, prefer the canonical /c/{slug} (keyword URL).
       const slug = slugForName(aliased) ?? slugForName(q);
-      if (slug) return Response.redirect(`${url.origin}/c/${slug}`, 302);
+      if (slug) return Response.redirect(`${url.origin}/c/${slug}${frag}`, 302);
       const hit = await geocode(aliased);
       if (!hit) {
         return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
       }
       const lat = +hit.lat.toFixed(4);
       const lon = +hit.lon.toFixed(4);
-      return Response.redirect(`${url.origin}/c/${lat},${lon}`, 302);
+      return Response.redirect(`${url.origin}/c/${lat},${lon}${frag}`, 302);
     }
 
     // Typeahead suggestions: gazetteer (our stations) + alias + coord-parse +
