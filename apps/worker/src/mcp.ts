@@ -1,5 +1,6 @@
 import type { Env } from "./index";
 import { recordMcpClient } from "./metrics";
+import { TOOLS, callTool } from "./mcptools";
 
 // mugilu's MCP server — a hand-rolled JSON-RPC 2.0 endpoint over Streamable HTTP
 // (MCP 2025-06-18), stateless (fits Workers). Phase 1: the skeleton — initialize,
@@ -29,6 +30,7 @@ Composing with geography: mugilu tells you what the sky is doing — it does not
 const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
 const METHOD_NOT_FOUND = -32601;
+const INVALID_PARAMS = -32602;
 const INTERNAL_ERROR = -32603;
 
 const CORS = {
@@ -74,7 +76,14 @@ export async function handleMcp(req: Request, env: Env, ctx: ExecutionContext): 
       case "ping":
         return ok(id, {});
       case "tools/list":
-        return ok(id, { tools: [] }); // Phase 2
+        return ok(id, { tools: TOOLS });
+      case "tools/call": {
+        const name = typeof params.name === "string" ? params.name : "";
+        const args = (params.arguments as Record<string, unknown>) ?? {};
+        const result = await callTool(name, args, env, ctx, req.headers.get("user-agent"));
+        if (!result) return err(id, INVALID_PARAMS, `Unknown tool: ${name}`);
+        return ok(id, result);
+      }
       case "resources/list":
         return ok(id, { resources: [] }); // Phase 3
       case "prompts/list":

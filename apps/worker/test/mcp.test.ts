@@ -74,13 +74,64 @@ test("mcp OPTIONS: CORS preflight ok", async () => {
   assert.equal(res.headers.get("access-control-allow-origin"), "*");
 });
 
-test("mcp skeleton: tools/resources/prompts lists are present but empty (filled in later phases)", async () => {
+test("mcp resources/prompts lists are present but empty (Phase 3 fills them)", async () => {
   for (const [m, key] of [
-    ["tools/list", "tools"],
     ["resources/list", "resources"],
     ["prompts/list", "prompts"],
   ]) {
     const j = (await (await call({ jsonrpc: "2.0", id: 9, method: m })).json()) as any;
     assert.deepEqual(j.result[key], []);
   }
+});
+
+function callEnv(body: unknown, mockEnv: Env): Promise<Response> {
+  const req = new Request("https://mugilu.live/mcp", {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "content-type": "application/json" },
+  });
+  return handleMcp(req, mockEnv, ctx);
+}
+
+test("mcp tools/list: the five tools, with schemas + annotations", async () => {
+  const j = (await (await call({ jsonrpc: "2.0", id: 10, method: "tools/list" })).json()) as any;
+  const names = j.result.tools.map((t: any) => t.name).sort();
+  assert.deepEqual(names, ["active_warnings", "conditions_at", "national_now", "nearest_stations", "search_place"]);
+  const c = j.result.tools.find((t: any) => t.name === "conditions_at");
+  assert.deepEqual(c.inputSchema.required, ["place"]);
+  assert.equal(c.annotations.readOnlyHint, true);
+  assert.match(c.description, /not a forecast/i);
+});
+
+test("mcp tools/call: unknown tool → invalid params (-32602)", async () => {
+  const j = (await (
+    await call({ jsonrpc: "2.0", id: 11, method: "tools/call", params: { name: "nope", arguments: {} } })
+  ).json()) as any;
+  assert.equal(j.error.code, -32602);
+});
+
+test("mcp tools/call: conditions_at without place → isError result (graceful, not a crash)", async () => {
+  const j = (await (
+    await call({ jsonrpc: "2.0", id: 12, method: "tools/call", params: { name: "conditions_at", arguments: {} } })
+  ).json()) as any;
+  assert.equal(j.result.isError, true);
+  assert.match(j.result.content[0].text, /place/i);
+});
+
+test("mcp tools/call: search_place with a coordinate resolves with no network", async () => {
+  const mockEnv = { OAQ_R2: { get: async () => null } } as unknown as Env;
+  const j = (await (
+    await callEnv(
+      {
+        jsonrpc: "2.0",
+        id: 13,
+        method: "tools/call",
+        params: { name: "search_place", arguments: { query: "12.97,77.59" } },
+      },
+      mockEnv,
+    )
+  ).json()) as any;
+  assert.notEqual(j.result.isError, true);
+  assert.equal(j.result.structuredContent.places[0].lat, 12.97);
+  assert.match(j.result.content[0].text, /12\.97/);
 });
