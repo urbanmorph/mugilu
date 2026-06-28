@@ -41,7 +41,61 @@ export function clientClass(ua: string | null | undefined): ClientClass {
   return "human";
 }
 
-/** Record one conditions lookup: bump the rounded place + format + client-class. */
+// Named agents we recognise — LLM/AI first, then search/SEO/other. Longer tokens
+// before their substrings (applebot-extended before applebot).
+const KNOWN_AGENTS = [
+  "gptbot",
+  "oai-searchbot",
+  "chatgpt-user",
+  "claudebot",
+  "claude-user",
+  "claude-web",
+  "anthropic-ai",
+  "perplexitybot",
+  "perplexity-user",
+  "google-extended",
+  "bytespider",
+  "amazonbot",
+  "applebot-extended",
+  "meta-externalagent",
+  "meta-externalfetcher",
+  "cohere-ai",
+  "youbot",
+  "ccbot",
+  "diffbot",
+  "timpibot",
+  "omgilibot",
+  "imagesiftbot",
+  "googlebot",
+  "bingbot",
+  "applebot",
+  "yandexbot",
+  "duckduckbot",
+  "baiduspider",
+  "ahrefsbot",
+  "semrushbot",
+  "mj12bot",
+  "dotbot",
+  "petalbot",
+  "facebookexternalhit",
+];
+
+/** The specific named agent behind a hit ("gptbot", "claudebot", …) so the LLM
+ *  bucket can be broken down by who exactly is crawling. Falls back to capturing
+ *  an unrecognised *bot/crawler/-user token; "" for humans and unknown browsers. */
+export function agentName(ua: string | null | undefined): string {
+  const s = (ua ?? "").toLowerCase();
+  if (!s) return "";
+  for (const a of KNOWN_AGENTS) if (s.includes(a)) return a;
+  const m = s.match(/([a-z][a-z0-9._-]*(?:bot|crawler|spider|-user|-agent|-fetcher))/);
+  return m ? m[1].slice(0, 40) : "";
+}
+
+/** Record one conditions lookup. Always bump the human/llm/bot class counter; the
+ *  full per-place + per-format detail is written ONLY for humans, so the demand
+ *  heatmap reflects real people (not crawlers walking the sitemap) and a burst of
+ *  bot/LLM traffic can't burn the D1 write budget. Bot/LLM detail (format, agent,
+ *  region) lives in Analytics Engine instead — cheap and built for the volume. */
 export async function recordLookup(
   env: Env,
   lat: number,
@@ -50,17 +104,21 @@ export async function recordLookup(
   fmt: string,
   ua: string | null,
 ): Promise<void> {
-  const { key, rlat, rlon } = gridKey(lat, lon);
+  const cls = clientClass(ua);
   const bump = "INSERT INTO counters (name,n) VALUES (?,1) ON CONFLICT(name) DO UPDATE SET n=n+1";
   try {
-    await env.METRICS.batch([
-      env.METRICS.prepare(
-        "INSERT INTO lookups (key,label,lat,lon,n,last) VALUES (?,?,?,?,1,unixepoch()) " +
-          "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch(), label=COALESCE(excluded.label,label)",
-      ).bind(key, label ?? null, rlat, rlon),
-      env.METRICS.prepare(bump).bind(`fmt:${fmt}`),
-      env.METRICS.prepare(bump).bind(`class:${clientClass(ua)}`),
-    ]);
+    const stmts = [env.METRICS.prepare(bump).bind(`class:${cls}`)];
+    if (cls === "human") {
+      const { key, rlat, rlon } = gridKey(lat, lon);
+      stmts.push(
+        env.METRICS.prepare(
+          "INSERT INTO lookups (key,label,lat,lon,n,last) VALUES (?,?,?,?,1,unixepoch()) " +
+            "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch(), label=COALESCE(excluded.label,label)",
+        ).bind(key, label ?? null, rlat, rlon),
+        env.METRICS.prepare(bump).bind(`fmt:${fmt}`),
+      );
+    }
+    await env.METRICS.batch(stmts);
   } catch {
     // best-effort: a metrics failure must never surface to the visitor
   }
@@ -161,7 +219,7 @@ export function recordEvent(env: Env, c: Conditions, persona: Persona, format: s
     const state = stateAt(c.location.lat, c.location.lon) ?? "";
     const airKind = c.air ? (c.air.station ? "measured" : "modelled") : "none";
     env.EVENTS.writeDataPoint({
-      blobs: [format, persona, risk.driver.toLowerCase(), risk.band, state, airKind, clientClass(ua)],
+      blobs: [format, persona, risk.driver.toLowerCase(), risk.band, state, airKind, clientClass(ua), agentName(ua)],
       doubles: [risk.level, c.air?.aqi ?? -1, c.heat?.apparent_c ?? -999],
       indexes: [format],
     });

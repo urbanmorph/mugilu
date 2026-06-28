@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { recordLookup, recordReferrer, recordEvent, topPlaces, counters, clientClass } from "../src/metrics";
+import { recordLookup, recordReferrer, recordEvent, topPlaces, counters, clientClass, agentName } from "../src/metrics";
 import type { Env } from "../src/index";
 import type { Conditions } from "../src/types";
 
@@ -44,6 +44,15 @@ test("clientClass: a missing/empty User-Agent is a bot, never a human", () => {
   assert.equal(clientClass(""), "bot");
 });
 
+test("agentName: names the specific crawler, falls back for unknowns, empty for humans", () => {
+  assert.equal(agentName("Mozilla/5.0 (compatible; GPTBot/1.1; +https://openai.com/gptbot)"), "gptbot");
+  assert.equal(agentName("ClaudeBot/1.0 (+claudebot@anthropic.com)"), "claudebot");
+  assert.equal(agentName("PerplexityBot/1.0"), "perplexitybot");
+  assert.equal(agentName("Mozilla/5.0 (compatible; SomeNewBot/2.0)"), "somenewbot"); // fallback
+  assert.equal(agentName(CHROME), ""); // a human has no named agent
+  assert.equal(agentName(null), "");
+});
+
 // Minimal conditions at a real coord (Ludhiana → state Punjab via stateAt).
 function cond(): Conditions {
   return {
@@ -77,6 +86,7 @@ test("recordEvent: writes anonymous dimensions to Analytics Engine (format/perso
   assert.equal(captured!.blobs![1], "asthma"); // persona
   assert.equal(captured!.blobs![4], "Punjab"); // region from stateAt — no precise coord, no IP
   assert.equal(captured!.blobs![6], "llm"); // client class (human / llm / bot)
+  assert.equal(captured!.blobs![7], "gptbot"); // the specific named agent
   assert.equal(captured!.indexes![0], "json");
 });
 
@@ -130,7 +140,7 @@ function mockDB(rows: Record<string, unknown[]> = {}) {
   };
 }
 
-test("recordLookup: rounds coords to a ~11km grid (privacy), tallies the format + client class", async () => {
+test("recordLookup: a HUMAN gets full detail — rounded place row, format + class", async () => {
   const { db, calls } = mockDB();
   await recordLookup({ METRICS: db } as unknown as Env, 30.94, 75.86, "Ludhiana, Punjab", "html", CHROME);
   const lookup = calls.find((c) => /INSERT INTO lookups/.test(c.sql));
@@ -140,6 +150,14 @@ test("recordLookup: rounds coords to a ~11km grid (privacy), tallies the format 
   const tallies = calls.filter((c) => /INSERT INTO counters/.test(c.sql)).map((c) => c.args[0]);
   assert.ok(tallies.includes("fmt:html"), "tallies the format");
   assert.ok(tallies.includes("class:human"), "tallies the client class");
+});
+
+test("recordLookup: a bot/LLM writes ONLY the class counter — no place row, no format (D1 budget + clean heatmap)", async () => {
+  const { db, calls } = mockDB();
+  await recordLookup({ METRICS: db } as unknown as Env, 28.6, 77.2, "Delhi", "html", "GPTBot/1.1");
+  assert.ok(!calls.some((c) => /INSERT INTO lookups/.test(c.sql)), "a crawler never lands in the demand heatmap");
+  const tallies = calls.filter((c) => /INSERT INTO counters/.test(c.sql)).map((c) => c.args[0]);
+  assert.deepEqual(tallies, ["class:llm"]); // exactly one write: the class counter
 });
 
 test("topPlaces: returns most-looked-up places, gated by a cumulative threshold", async () => {
