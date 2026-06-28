@@ -8,6 +8,8 @@ import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
 import {
   renderConditionsPage,
+  renderKioskPage,
+  renderDisplayBuilder,
   renderHome,
   renderAbout,
   renderTerms,
@@ -16,6 +18,7 @@ import {
   renderWarningsPage,
   renderMethodology,
 } from "./page";
+import { qrSvg } from "./qr";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
 import { geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
@@ -92,6 +95,11 @@ export default {
       return cachedResponse(renderMethodology(), "text/html; charset=utf-8");
     }
 
+    // "Put it on a screen" builder: pick a place, open the self-refreshing kiosk view.
+    if (url.pathname === "/display") {
+      return cachedResponse(renderDisplayBuilder(parsePersona(url.searchParams.get("as"))), "text/html; charset=utf-8");
+    }
+
     // Terms & attribution (the disclaimer in every API response points here).
     if (url.pathname === "/terms") {
       return cachedResponse(renderTerms(), "text/html; charset=utf-8");
@@ -164,7 +172,10 @@ export default {
       if (!r) return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
       // A known place keeps its canonical /c/{slug} keyword URL; else the coordinate.
       const dest = r.slug ? `/c/${r.slug}` : `/c/${r.lat},${r.lon}`;
-      return Response.redirect(`${url.origin}${dest}${frag}`, 302);
+      // The display builder routes its search through here: carry ?kiosk (+ persona).
+      const asP = parsePersona(url.searchParams.get("as"));
+      const qs = url.searchParams.has("kiosk") ? `?kiosk${asP !== "everyone" ? `&as=${asP}` : ""}` : "";
+      return Response.redirect(`${url.origin}${dest}${qs}${frag}`, 302);
     }
 
     // Typeahead suggestions: gazetteer (our stations) + alias + coord-parse +
@@ -266,10 +277,15 @@ export default {
         if (s) canonical = `${SITE_URL}/c/${s}`;
       }
       const ua = req.headers.get("user-agent");
-      ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html", ua));
+      const kiosk = !ext && url.searchParams.has("kiosk");
+      const fmt = kiosk ? "kiosk" : (ext ?? "html");
+      // A kiosk is one persistent display refreshing itself, not demand: keep it out
+      // of the D1 place heatmap (and its write budget). Analytics Engine still counts
+      // it via fmt, so display adoption stays visible.
+      if (!kiosk) ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html", ua));
       // API formats (.json/.md/.png) are a "build on it" surface. Capture who.
       if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
-      recordEvent(env, conditions, persona, ext ?? "html", ua); // anonymous behaviour event
+      recordEvent(env, conditions, persona, fmt, ua); // anonymous behaviour event
       if (ext === "png") return renderConditionsOg(conditions, persona);
       if (ext === "json")
         return cachedResponse(
@@ -278,6 +294,13 @@ export default {
         );
       if (ext === "md")
         return cachedResponse(renderConditionsMarkdown(conditions, persona), "text/markdown; charset=utf-8");
+      if (kiosk) {
+        const qrTarget = persona === "everyone" ? canonical : `${canonical}?as=${persona}`;
+        return cachedResponse(
+          renderKioskPage(conditions, persona, canonical, qrSvg(qrTarget)),
+          "text/html; charset=utf-8",
+        );
+      }
       return cachedResponse(renderConditionsPage(conditions, persona, canonical), "text/html; charset=utf-8");
     }
 

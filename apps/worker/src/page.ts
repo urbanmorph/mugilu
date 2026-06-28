@@ -612,7 +612,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     <footer>
       <p class="attr">${esc(c.attribution)}</p>
       <p class="disc">${esc(c.disclaimer)}</p>
-      <p class="raw"><a href="/c/${slug}.json">JSON</a> · <a href="/c/${slug}.md">Markdown</a> · <a href="/c/${slug}.png">PNG</a> · <a href="/embed/${slug}">Embed</a></p>
+      <p class="raw"><a href="/c/${slug}.json">JSON</a> · <a href="/c/${slug}.md">Markdown</a> · <a href="/c/${slug}.png">PNG</a> · <a href="/embed/${slug}">Embed</a> · <a href="/c/${slug}?kiosk">Display</a></p>
       <p class="cxback"><a href="/">← Look up another place</a></p>
     </footer>
   </article>`;
@@ -714,6 +714,210 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;padding:8
 .ecode pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:.72rem;white-space:pre-wrap;word-break:break-all}
 .framed .ecode{display:none}
 `;
+
+// ── Wall-display / kiosk view ──────────────────────────────────────────────
+// Full-bleed, glanceable, self-refreshing. `?kiosk` on any /c URL renders this
+// instead of the normal page, reusing the same Ambient + layer data. One fluid
+// layout (vmin-sized, no color-mix so older TV browsers cope) scales 720p to 4K
+// in both landscape and portrait. A venue just opens the URL on a screen and
+// full-screens it; a corner QR sends passers-by to the same place on their phone.
+const KIOSK_CSS = `
+.bar,.foot{display:none}
+html,body{height:100%;overflow:hidden;background:#080d18}
+.k{position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;padding:4.4vmin 4.8vmin;color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
+.k::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,var(--cond),transparent 62%);opacity:.16;pointer-events:none}
+.k>*{position:relative;z-index:1}
+.ktop{display:flex;justify-content:space-between;align-items:flex-start;gap:3vmin}
+.kname{display:block;font-family:var(--serif),Georgia,serif;font-weight:700;font-size:6.2vmin;line-height:1.02}
+.kcoord{display:block;margin-top:.7vmin;font-size:2.1vmin;letter-spacing:.06em;color:#7c899c}
+.kclock{text-align:right;flex:none}
+.kclock #clk{display:block;font-size:5.4vmin;font-weight:700;line-height:1}
+.kago{display:block;margin-top:.7vmin;font-size:2.1vmin;color:#7c899c}
+.kwarn{display:flex;align-items:center;gap:1.4vmin;padding:1.6vmin 2.2vmin;border-radius:1.4vmin;background:#3a0f12;color:#fecaca;font-size:2.6vmin;font-weight:600}
+.kwarn svg{width:3.2vmin;height:3.2vmin;flex:none}
+.kamb{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;overflow:hidden}
+.keye{display:flex;align-items:center;gap:1.2vmin;font-size:2.4vmin;letter-spacing:.12em;text-transform:uppercase;color:#8b97a8}
+.keye svg{width:3vmin;height:3vmin}
+.khead{font-family:var(--serif),Georgia,serif;font-weight:700;font-size:13vmin;line-height:.98;letter-spacing:-.01em;margin:1.6vmin 0 1vmin}
+.khead .b{color:var(--cond)}
+.ksay{font-size:4.4vmin;line-height:1.2;color:#cfd7e2;max-width:26ch}
+.kalso{display:flex;align-items:center;gap:1.2vmin;margin-top:1.8vmin;font-size:2.8vmin;color:var(--cond)}
+.kalso svg{width:3vmin;height:3vmin;flex:none}
+.ktiles{display:flex;gap:2vmin}
+.kt{flex:1;display:flex;flex-direction:column;gap:.5vmin;padding:2.2vmin 2.4vmin;border-radius:1.6vmin;background:#0f1626;border:.3vmin solid #1c2740}
+.kt.on{border-color:var(--cond)}
+.kt.on .kt-n{color:var(--cond)}
+.kt-l{font-size:2vmin;letter-spacing:.1em;text-transform:uppercase;color:#8b97a8}
+.kt-n{font-size:7vmin;font-weight:700;line-height:1}
+.kt-w{font-size:2.4vmin;color:#aeb9c8}
+.kfoot{display:flex;justify-content:space-between;align-items:flex-end;gap:2vmin}
+.kbrand{font-size:3vmin;font-weight:700;color:#38bdf8}
+.kqr{display:flex;align-items:center;gap:1.6vmin}
+.kqr svg{width:11vmin;height:11vmin;background:#fff;border-radius:1vmin;padding:.7vmin}
+.kqrl{font-size:1.9vmin;line-height:1.2;color:#8b97a8;text-align:right}
+@media (orientation:portrait){
+  .k{gap:2.6vmin;padding:5.5vmin 5vmin}
+  .kname{font-size:7vmin}.kclock #clk{font-size:6vmin}
+  .khead{font-size:12vmin}.ksay{font-size:4.6vmin;max-width:24ch}
+  .ktiles{flex-wrap:wrap;gap:1.6vmin}.kt{flex:1 1 42%;padding:1.8vmin 2vmin}.kt-n{font-size:6vmin}
+  .kqr svg{width:15vmin;height:15vmin}
+}`;
+
+const KIOSK_JS = `(function(){
+function p(n){return n<10?'0'+n:''+n}
+var clk=document.getElementById('clk'),ag=document.getElementById('ago');
+function tick(){var d=new Date();if(clk)clk.textContent=p(d.getHours())+':'+p(d.getMinutes())}
+function ago(){if(!ag)return;var t=ag.getAttribute('data-t');if(!t)return;var s=Math.max(0,(Date.now()-new Date(t).getTime())/1000);ag.textContent=s<90?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago'}
+tick();ago();setInterval(tick,15000);setInterval(ago,30000);
+var wl=null;function lock(){try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').then(function(s){wl=s}).catch(function(){})}catch(e){}}
+lock();document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')lock()});
+function loop(ms){setTimeout(function(){fetch('/health',{method:'HEAD',cache:'no-store'}).then(function(r){if(r.ok)location.reload();else loop(60000)}).catch(function(){loop(60000)})},ms)}
+loop(840000);
+})();`;
+
+export function renderKioskPage(c: Conditions, persona: Persona, canonical: string, qr: string): string {
+  const risk = ambientRisk(c, persona);
+  const slug = `${c.location.lat},${c.location.lon}`;
+  const place = c.place ? esc(c.place) : c.air?.station?.city ? esc(c.air.station.city) : slug;
+  const condColor = RISK_COLOR[risk.band];
+  const head =
+    risk.band === "low"
+      ? '<span class="b">All clear.</span>'
+      : `<span class="b">${RISK_LABEL[risk.band]}</span> ${COND_NOUN[risk.driver] ?? "sky"}.`;
+
+  const tile = (label: string, value: string, word: string, on: boolean, color = "") =>
+    `<div class="kt${on ? " on" : ""}"><span class="kt-l">${label}</span><span class="kt-n">${value}</span><span class="kt-w"${color ? ` style="color:${color}"` : ""}>${esc(word)}</span></div>`;
+  const tiles: string[] = [];
+  if (c.air?.aqi != null)
+    tiles.push(
+      tile(
+        "Air",
+        String(c.air.aqi),
+        BAND_LABEL[c.air.band ?? "unknown"] ?? "n/a",
+        risk.driver === "Air",
+        BAND_COLOR[c.air.band ?? "unknown"] ?? BAND_COLOR.unknown,
+      ),
+    );
+  if (c.heat?.apparent_c != null)
+    tiles.push(
+      tile(
+        "Heat",
+        `${round(c.heat.apparent_c)}°`,
+        heatPhrase(c.heat.apparent_c, c.heat.wet_bulb_c),
+        risk.driver === "Heat",
+      ),
+    );
+  if (c.uv?.index != null)
+    tiles.push(tile("UV", String(Math.round(c.uv.index)), uvWord(c.uv.index), risk.driver === "UV"));
+  if (c.dust?.dust_ug_m3 != null)
+    tiles.push(
+      tile("Dust", String(Math.round(c.dust.dust_ug_m3)), dustWord(c.dust.dust_ug_m3), risk.driver === "Dust"),
+    );
+  if (c.rain?.probability_pct != null)
+    tiles.push(tile("Rain", `${Math.round(c.rain.probability_pct)}%`, "rain chance", risk.driver === "Rain"));
+
+  const w0 = c.warnings?.[0];
+  const warn = w0
+    ? `<div class="kwarn">${icon("warn")}<span><b>${esc(w0.event)}</b>${w0.until ? ` · until ${esc(w0.until)}` : ""} · ${esc(w0.issuer)}${c.warnings!.length > 1 ? ` · +${c.warnings!.length - 1} more` : ""}</span></div>`
+    : "";
+
+  const body = `
+  <div class="k">
+    <header class="ktop">
+      <div><span class="kname">${place}</span><span class="kcoord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</span></div>
+      <div class="kclock"><span id="clk">--:--</span><span class="kago">updated <span id="ago" data-t="${c.air_as_of ?? c.as_of}">just now</span></span></div>
+    </header>
+    ${warn}
+    <main class="kamb">
+      <p class="keye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</span></p>
+      <p class="khead">${head}</p>
+      <p class="ksay">${esc(ambientMeaning(risk))}</p>
+    </main>
+    <section class="ktiles">${tiles.join("")}</section>
+    <footer class="kfoot">
+      <span class="kbrand">mugilu.live</span>
+      <div class="kqr">${qr}<span class="kqrl">scan for this<br>on your phone</span></div>
+    </footer>
+  </div>
+  <script>${KIOSK_JS}</script>`;
+
+  const css = KIOSK_CSS + `\n:root{--cond:${condColor}}`;
+  const desc = `${c.place ?? slug}: a live wall-display of the whole sky over this spot, self-refreshing.`;
+  return shell(`${place} on a screen: mugilu`, body, css, desc, canonical, undefined, `${canonical}.png`);
+}
+
+const DISPLAY_CSS = `
+.dpers{display:flex;flex-wrap:wrap;gap:.5rem;margin:.1rem 0 .2rem}
+.dpers a{padding:.34rem .8rem;border:1px solid var(--line);border-radius:999px;color:var(--muted);text-decoration:none;font-size:.92rem}
+.dpers a.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+.dsearch{display:flex;gap:.5rem;margin:.2rem 0 .7rem;flex-wrap:wrap}
+.dsearch input[name=q]{flex:1;min-width:12rem;padding:.6rem .8rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);font-size:1rem}
+.dsearch button{padding:.6rem 1.1rem;border:0;border-radius:.6rem;background:var(--ink);color:var(--bg);font-weight:600;font-size:1rem;cursor:pointer}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(8rem,1fr));gap:.55rem;margin:.1rem 0 .3rem}
+.dtile{padding:.7rem .9rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);text-decoration:none;font-weight:600;text-align:center}
+.dtile:hover{border-color:var(--ink)}
+.dhow{margin:.1rem 0 .5rem 1.1rem}.dhow li{margin:.35rem 0;line-height:1.5}`;
+
+// The "put it on a screen" builder: pick a place (+ who it's for), open the
+// self-refreshing kiosk view. Search routes through /go?kiosk=1 (zero JS).
+export function renderDisplayBuilder(persona: Persona = "everyone"): string {
+  const popular: [string, string][] = [
+    ["bengaluru", "Bengaluru"],
+    ["delhi", "Delhi"],
+    ["mumbai", "Mumbai"],
+    ["chennai", "Chennai"],
+    ["kolkata", "Kolkata"],
+    ["hyderabad", "Hyderabad"],
+    ["pune", "Pune"],
+    ["ahmedabad", "Ahmedabad"],
+    ["lucknow", "Lucknow"],
+    ["jaipur", "Jaipur"],
+    ["patna", "Patna"],
+    ["guwahati", "Guwahati"],
+  ];
+  const asQ = persona !== "everyone" ? `&as=${persona}` : "";
+  const pills = PERSONAS.map((p) => {
+    const href = p === "everyone" ? "/display" : `/display?as=${p}`;
+    return `<a${p === persona ? ' class="on"' : ""} href="${href}">${esc(PERSONA_LABEL[p])}</a>`;
+  }).join("");
+  const tiles = popular.map(([s, n]) => `<a class="dtile" href="/c/${s}?kiosk${asQ}">${esc(n)}</a>`).join("");
+  const body = `
+  <article class="ax">
+    <h1 class="ahero">Put mugilu<br>on a screen.</h1>
+    <p class="alead">Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.</p>
+
+    <p class="ah">${icon("users")}<span>Weight it for who is nearby</span></p>
+    <nav class="dpers" aria-label="Persona">${pills}</nav>
+
+    <p class="ah">${icon("pin")}<span>Pick a place</span></p>
+    <form class="dsearch" action="/go" method="get">
+      <input type="hidden" name="kiosk" value="1">
+      ${persona !== "everyone" ? `<input type="hidden" name="as" value="${persona}">` : ""}
+      <input name="q" placeholder="Any place in India" autocomplete="off" autocapitalize="off">
+      <button type="submit">Open display</button>
+    </form>
+    <div class="dgrid">${tiles}</div>
+
+    <p class="ah">${icon("layers")}<span>How it runs</span></p>
+    <ol class="dhow">
+      <li>Open the display link in the screen's browser: a smart TV, a cheap streaming stick, or an old tablet in a stand.</li>
+      <li>Press full-screen (F11 with a keyboard, or the browser's full-screen control).</li>
+      <li>Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.</li>
+      <li>For an always-on unattended screen, point a kiosk-browser app (for example Fully Kiosk on Android) at the same link so it auto-starts.</li>
+    </ol>
+    <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
+    <p class="aback"><a href="/">← back to mugilu</a></p>
+  </article>`;
+  return shell(
+    "Put mugilu on a screen: mugilu",
+    body,
+    ABOUT_CSS + DISPLAY_CSS,
+    "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
+    `${SITE}/display`,
+    undefined,
+    HOME_OG,
+  );
+}
 
 export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): string {
   const risk = ambientRisk(c, persona);
@@ -833,6 +1037,7 @@ export function renderAbout(): string {
     <li>${icon("code")}<span class="t"><b>For AI agents</b>: an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
     <li>${icon("layers")}<span class="t"><b>For developers</b>: a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
     <li>${icon("pin")}<span class="t"><b>Embed it</b>: a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
+    <li>${icon("sun")}<span class="t"><b>Put it on a screen</b>: a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at <a href="/display">/display</a>.</span></li>
   </ul>
   <p class="abuild">Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.</p>
 
