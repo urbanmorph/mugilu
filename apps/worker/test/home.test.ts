@@ -62,6 +62,13 @@ test("renderHome: schema.org WebSite + SearchAction JSON-LD", () => {
   assert.match(html, /go\?q=\{search_term_string\}/);
 });
 
+test("renderHome: social share card (Open Graph + Twitter, large image)", () => {
+  const html = renderHome();
+  assert.match(html, /property="og:image" content="https:\/\/mugilu\.live\/og\.png"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /property="og:title"/);
+});
+
 test("renderHome: has the 'Your places' list (localStorage recents/favourites) + prefetch", () => {
   const html = renderHome();
   assert.match(html, /id="yp"/); // the Your-places mount

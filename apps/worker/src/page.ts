@@ -194,6 +194,8 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 
 const DEFAULT_DESC =
   "mugilu — the open sky of India, one coordinate at a time. Air, heat, rain, UV, dust and official warnings for any point, with the single worst hazard named for you.";
+const SITE = "https://mugilu.live";
+const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
 /** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
  *  otherwise break out of the tag). */
@@ -208,6 +210,7 @@ function shell(
   desc: string = DEFAULT_DESC,
   canonical?: string,
   jsonLd?: string,
+  ogImage?: string,
 ): string {
   return `<!doctype html>
 <html lang="en">
@@ -220,6 +223,16 @@ function shell(
 <title>${title}</title>
 <meta name="description" content="${esc(desc)}">
 ${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ""}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mugilu">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+${canonical ? `<meta property="og:url" content="${esc(canonical)}">` : ""}
+${ogImage ? `<meta property="og:image" content="${esc(ogImage)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">` : ""}
+<meta name="twitter:card" content="${ogImage ? "summary_large_image" : "summary"}">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(desc)}">
+${ogImage ? `<meta name="twitter:image" content="${esc(ogImage)}">` : ""}
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 <style>${BASE_CSS}${css}</style>
 </head>
@@ -631,7 +644,15 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
         ],
       })
     : undefined;
-  return shell(`${place}: mugilu`, body + PLACE_RECORDER, css, desc, canonical, dataset);
+  return shell(
+    `${place}: mugilu`,
+    body + PLACE_RECORDER,
+    css,
+    desc,
+    canonical,
+    dataset,
+    canonical ? `${canonical}.png` : HOME_OG,
+  );
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun" — the time travels on embeds/PNGs. */
@@ -802,6 +823,9 @@ export function renderAbout(): string {
     body,
     ABOUT_CSS,
     "Why mugilu exists: one whole-sky view for any point in India, built as open infrastructure others can build on. The origin story, the sources, and how to use the data.",
+    `${SITE}/about`,
+    undefined,
+    HOME_OG,
   );
 }
 
@@ -836,6 +860,9 @@ export function renderTerms(): string {
     body,
     ABOUT_CSS,
     "mugilu's sources, licences and attribution — open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
+    `${SITE}/terms`,
+    undefined,
+    HOME_OG,
   );
 }
 
@@ -845,7 +872,7 @@ export function renderNotFound(): string {
   <h1 class="ahero">Not here.</h1>
   <p class="alead">That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate like <a href="/c/12.97,77.59">/c/12.97,77.59</a>.</p>
   <p class="aback"><a href="/">← back to mugilu</a></p>`;
-  return shell("Not found: mugilu", body, ABOUT_CSS);
+  return shell("Not found: mugilu", body, ABOUT_CSS, DEFAULT_DESC, undefined, undefined, HOME_OG);
 }
 
 const METHOD_CSS = `
@@ -901,6 +928,9 @@ export function renderMethodology(): string {
     body,
     ABOUT_CSS + METHOD_CSS,
     "How mugilu's Ambient read is computed — the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
+    `${SITE}/methodology`,
+    undefined,
+    HOME_OG,
   );
 }
 
@@ -940,6 +970,9 @@ export function renderWarningsPage(snap: WarningsSnapshot | null): string {
     body,
     ABOUT_CSS + WLIST_CSS,
     "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed — available as HTML, JSON and Markdown.",
+    `${SITE}/warnings`,
+    undefined,
+    HOME_OG,
   );
 }
 
@@ -1090,5 +1123,5 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell("mugilu: India's open sky", body, HOME_CSS, DEFAULT_DESC, undefined, site);
+  return shell("mugilu: India's open sky", body, HOME_CSS, DEFAULT_DESC, SITE, site, HOME_OG);
 }

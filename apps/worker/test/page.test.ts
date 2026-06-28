@@ -69,6 +69,12 @@ test("renderConditionsPage: schema.org Dataset JSON-LD (credits + machine-readab
   assert.match(html, /mugilu\.live\/terms/); // licence
 });
 
+test("renderConditionsPage: og:image is the page's own share snapshot", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru");
+  assert.match(html, /property="og:image" content="https:\/\/mugilu\.live\/c\/bengaluru\.png"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+});
+
 test("renderConditionsPage: has a meta description (SEO) naming the place", () => {
   const html = renderConditionsPage(conditions());
   assert.match(html, /<meta name="description" content="[^"]+">/);

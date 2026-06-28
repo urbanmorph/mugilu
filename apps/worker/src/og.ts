@@ -141,3 +141,23 @@ export function renderConditionsOg(c: Conditions, persona: Persona): Response {
   headers.set("cache-control", "public, max-age=900, s-maxage=900, stale-while-revalidate=86400");
   return new Response(img.body, { status: img.status, headers });
 }
+
+// ── Branded card for the home + content pages (the social-share image) ──
+export function renderHomeOg(): Response {
+  const html =
+    `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:72px 80px;font-family:sans-serif;">` +
+    `<div style="display:flex;flex:1;flex-direction:column;justify-content:center;">` +
+    `<div style="display:flex;font-size:128px;font-weight:800;line-height:1;color:#e2e8f0;">mugilu</div>` +
+    `<div style="display:flex;font-size:46px;color:#cbd5e1;margin-top:26px;">The open sky of India, one coordinate at a time.</div>` +
+    `<div style="display:flex;font-size:30px;color:#94a3b8;margin-top:40px;">air · heat · rain · dust · UV · official warnings — for any point, right now</div>` +
+    `</div>` +
+    `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #1f2937;padding-top:28px;">` +
+    `<div style="display:flex;font-size:28px;color:#94a3b8;">open · free · built to be built on</div>` +
+    `<div style="display:flex;font-size:28px;color:#38bdf8;">mugilu.live</div>` +
+    `</div>` +
+    `</div>`;
+  const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });
+  const headers = new Headers(img.headers);
+  headers.set("cache-control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800");
+  return new Response(img.body, { status: img.status, headers });
+}

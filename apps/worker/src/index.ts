@@ -2,7 +2,7 @@ import { refreshLatest } from "./refresh";
 import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
 import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
-import { renderStationOg, renderConditionsOg } from "./og";
+import { renderStationOg, renderConditionsOg, renderHomeOg } from "./og";
 import { faviconSvg, appleIconPng } from "./icon";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
@@ -114,6 +114,8 @@ export default {
 
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return appleIconPng();
+    // Branded social-share card for the home + content pages.
+    if (url.pathname === "/og.png") return renderHomeOg();
 
     // Lookup-first home page. Heat/dust highlights come from the 4-hourly grid;
     // the worst-air row from the hourly snapshot (fresher) — each stamped with
