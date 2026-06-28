@@ -27,6 +27,8 @@ export function llmsTxt(siteUrl: string): string {
 > Informational only, not for medical, emergency, or safety-critical decisions.
 
 ## Entry points
+- MCP server (for AI agents): ${siteUrl}/mcp  (JSON-RPC 2.0 over Streamable HTTP, MCP 2025-06-18; tools: conditions_at, search_place, nearest_stations, active_warnings, national_now; plus resources and prompts)
+- OpenAPI spec (REST): ${siteUrl}/openapi.json
 - Conditions (HTML): ${siteUrl}/c/{lat},{lon}  e.g. ${siteUrl}/c/12.97,77.59
 - Conditions (JSON): ${siteUrl}/c/{lat},{lon}.json
 - Conditions (Markdown): ${siteUrl}/c/{lat},{lon}.md
@@ -57,6 +59,104 @@ Weather / heat / UV / dust: Open-Meteo (CC-BY 4.0).
 Official warnings: NDMA / IMD (SACHET). Geography: bharatlas.
 Health impact: AQLI methodology (U Chicago EPIC). Code: MIT.
 `;
+}
+
+/** OpenAPI 3.1 spec for the read API — doubles as ChatGPT Custom-GPT Actions and
+ *  developer docs. Covers the conditions + search + nearest + leaderboard + warnings
+ *  endpoints; the conditions body is the self-describing mugilu/conditions v1. */
+export function openApiSpec(siteUrl: string): object {
+  const persona = {
+    name: "as",
+    in: "query",
+    required: false,
+    description: "Weight the Ambient read for a vulnerability.",
+    schema: { type: "string", enum: ["asthma", "elderly", "child", "outdoor", "heart"] },
+  };
+  const ref = {
+    name: "ref",
+    in: "query",
+    required: false,
+    description: "Identify your app/site (aggregate attribution).",
+    schema: { type: "string" },
+  };
+  const ok = (description: string) => ({
+    "200": { description, content: { "application/json": { schema: { type: "object" } } } },
+  });
+  return {
+    openapi: "3.1.0",
+    info: {
+      title: "mugilu — India's open sky",
+      version: "1.0.0",
+      description:
+        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb), rain, UV, dust, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read. Informational only — not for medical, emergency, or safety-critical use.",
+      license: { name: "Sources keep their own licence; see /terms", url: `${siteUrl}/terms` },
+      contact: { url: siteUrl },
+    },
+    servers: [{ url: siteUrl }],
+    paths: {
+      "/c/{coord}.json": {
+        get: {
+          operationId: "conditionsAt",
+          summary: "Sky conditions at a coordinate, right now (mugilu/conditions v1).",
+          parameters: [
+            {
+              name: "coord",
+              in: "path",
+              required: true,
+              description: 'lat,lon — e.g. "12.97,77.59".',
+              schema: { type: "string" },
+              example: "12.97,77.59",
+            },
+            persona,
+            ref,
+          ],
+          responses: ok(
+            "A versioned conditions object: air, heat, rain, uv, dust, wind, visibility, smoke, warnings, and an ambient read.",
+          ),
+        },
+      },
+      "/near": {
+        get: {
+          operationId: "nearestStations",
+          summary: "Nearest measured air-quality stations to a point.",
+          parameters: [
+            { name: "lat", in: "query", required: true, schema: { type: "number" } },
+            { name: "lon", in: "query", required: true, schema: { type: "number" } },
+            {
+              name: "n",
+              in: "query",
+              required: false,
+              description: "How many (1-50, default 5).",
+              schema: { type: "integer" },
+            },
+          ],
+          responses: ok("The nearest stations with distance and current AQI."),
+        },
+      },
+      "/suggest": {
+        get: {
+          operationId: "searchPlace",
+          summary: "Resolve an Indian place name to candidates (name, coordinate).",
+          parameters: [{ name: "q", in: "query", required: true, schema: { type: "string" } }],
+          responses: ok("Candidate places."),
+        },
+      },
+      "/index.json": {
+        get: {
+          operationId: "airLeaderboard",
+          summary: "National air leaderboard (all reporting stations).",
+          responses: ok("The current air snapshot."),
+        },
+      },
+      "/warnings.json": {
+        get: {
+          operationId: "activeWarnings",
+          summary: "Active official NDMA/IMD warnings across India.",
+          responses: ok("The current warnings snapshot."),
+        },
+      },
+    },
+  };
 }
 
 /** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite). */

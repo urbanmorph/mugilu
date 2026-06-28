@@ -195,7 +195,20 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 const DEFAULT_DESC =
   "mugilu — the open sky of India, one coordinate at a time. Air, heat, rain, UV, dust and official warnings for any point, with the single worst hazard named for you.";
 
-function shell(title: string, body: string, css: string, desc: string = DEFAULT_DESC, canonical?: string): string {
+/** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
+ *  otherwise break out of the tag). */
+function ld(obj: object): string {
+  return JSON.stringify(obj).replace(/</g, "\\u003c");
+}
+
+function shell(
+  title: string,
+  body: string,
+  css: string,
+  desc: string = DEFAULT_DESC,
+  canonical?: string,
+  jsonLd?: string,
+): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -207,6 +220,7 @@ function shell(title: string, body: string, css: string, desc: string = DEFAULT_
 <title>${title}</title>
 <meta name="description" content="${esc(desc)}">
 ${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ""}
+${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 <style>${BASE_CSS}${css}</style>
 </head>
 <body>
@@ -592,7 +606,32 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
   const desc = `${c.place ?? stationCity ?? slug}: ${ambientMeaning(risk)} Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.`;
-  return shell(`${place}: mugilu`, body + PLACE_RECORDER, css, desc, canonical);
+  // schema.org Dataset — credits mugilu + the licence, points at the machine-readable
+  // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
+  const placeName = c.place ?? stationCity ?? slug;
+  const dataset = canonical
+    ? ld({
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        name: `Sky conditions at ${placeName}`,
+        description: `Air, heat, rain, dust, UV and official warnings at ${placeName}, India — right now.`,
+        url: canonical,
+        isAccessibleForFree: true,
+        creator: { "@type": "Organization", name: "mugilu", url: "https://mugilu.live" },
+        license: "https://mugilu.live/terms",
+        temporalCoverage: c.as_of,
+        spatialCoverage: {
+          "@type": "Place",
+          name: c.place ?? undefined,
+          geo: { "@type": "GeoCoordinates", latitude: c.location.lat, longitude: c.location.lon },
+        },
+        distribution: [
+          { "@type": "DataDownload", encodingFormat: "application/json", contentUrl: `${canonical}.json` },
+          { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${canonical}.md` },
+        ],
+      })
+    : undefined;
+  return shell(`${place}: mugilu`, body + PLACE_RECORDER, css, desc, canonical, dataset);
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun" — the time travels on embeds/PNGs. */
@@ -1031,5 +1070,20 @@ export function renderHome(
   })();
   </script>`;
 
-  return shell("mugilu: India's open sky", body, HOME_CSS);
+  // schema.org WebSite + SearchAction (enables a search box in results; credits the publisher).
+  const site = ld({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "mugilu",
+    alternateName: "mugilu — the open sky of India",
+    url: "https://mugilu.live",
+    description: DEFAULT_DESC,
+    publisher: { "@type": "Organization", name: "urbanmorph", url: "https://urbanmorph.com" },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: "https://mugilu.live/go?q={search_term_string}" },
+      "query-input": "required name=search_term_string",
+    },
+  });
+  return shell("mugilu: India's open sky", body, HOME_CSS, DEFAULT_DESC, undefined, site);
 }

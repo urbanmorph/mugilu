@@ -61,6 +61,14 @@ test("renderConditionsPage: emits a canonical link when given one (named-URL SEO
   assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live\/c\/bengaluru">/);
 });
 
+test("renderConditionsPage: schema.org Dataset JSON-LD (credits + machine-readable distributions)", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru");
+  assert.match(html, /application\/ld\+json/);
+  assert.match(html, /"Dataset"/);
+  assert.match(html, /c\/bengaluru\.json/); // distribution points at the JSON sibling
+  assert.match(html, /mugilu\.live\/terms/); // licence
+});
+
 test("renderConditionsPage: has a meta description (SEO) naming the place", () => {
   const html = renderConditionsPage(conditions());
   assert.match(html, /<meta name="description" content="[^"]+">/);

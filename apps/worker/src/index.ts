@@ -16,7 +16,7 @@ import {
   renderWarningsPage,
   renderMethodology,
 } from "./page";
-import { robotsTxt, llmsTxt, sitemapXml } from "./meta";
+import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
 import { geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
@@ -106,6 +106,10 @@ export default {
     }
     if (url.pathname === "/sitemap.xml") {
       return cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8");
+    }
+    // OpenAPI spec for the REST API (also serves as ChatGPT Custom-GPT Actions).
+    if (url.pathname === "/openapi.json") {
+      return cachedResponse(JSON.stringify(openApiSpec(SITE_URL), null, 2), "application/json; charset=utf-8");
     }
 
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();

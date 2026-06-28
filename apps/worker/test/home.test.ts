@@ -55,6 +55,13 @@ test("renderHome: search sets expectations (a sky lookup, not a map) + multiling
   assert.match(html, /[ಀ-೿]/); // a Kannada example is shown (ಬೆಂಗಳೂರು)
 });
 
+test("renderHome: schema.org WebSite + SearchAction JSON-LD", () => {
+  const html = renderHome();
+  assert.match(html, /application\/ld\+json/);
+  assert.match(html, /"SearchAction"/);
+  assert.match(html, /go\?q=\{search_term_string\}/);
+});
+
 test("renderHome: has the 'Your places' list (localStorage recents/favourites) + prefetch", () => {
   const html = renderHome();
   assert.match(html, /id="yp"/); // the Your-places mount
