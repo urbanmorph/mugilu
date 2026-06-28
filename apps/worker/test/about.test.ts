@@ -34,3 +34,13 @@ test("renderAbout: origin story + dual nature (people + infrastructure), credite
   // disclaimer always present
   assert.match(html, /not for medical/i);
 });
+
+test("renderAbout: FAQPage structured data, mirrored by visible Q&A (AEO)", () => {
+  const html = renderAbout();
+  assert.match(html, /"@type":"FAQPage"/);
+  assert.match(html, /"Question"/);
+  assert.match(html, /"acceptedAnswer"/);
+  assert.match(html, /Common questions/); // the visible section so schema matches content
+  assert.match(html, /wet-bulb/i); // a real answer renders (visible + in schema)
+  assert.match(html, /Is mugilu free/);
+});

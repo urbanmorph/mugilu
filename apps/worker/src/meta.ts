@@ -159,11 +159,19 @@ export function openApiSpec(siteUrl: string): object {
   };
 }
 
-/** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite). */
+/** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite).
+ *  lastmod tells crawlers when to recrawl: the live pages (home, warnings, every
+ *  conditions slug) refresh daily, so they carry today's date; the explainer pages
+ *  change rarely, so they carry a fixed date (bump STATIC when they materially change). */
 export function sitemapXml(siteUrl: string): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const STATIC = "2026-06-28";
+  const stable = new Set(["/about", "/methodology", "/terms"]);
   // Static pages + a named /c/{slug} page per district (keyword URLs that index).
   const paths = ["/", "/about", "/methodology", "/terms", "/warnings", ...allSlugPlaces().map((p) => `/c/${p.slug}`)];
-  const urls = paths.map((p) => `  <url><loc>${siteUrl}${p}</loc></url>`).join("\n");
+  const urls = paths
+    .map((p) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${stable.has(p) ? STATIC : today}</lastmod></url>`)
+    .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}

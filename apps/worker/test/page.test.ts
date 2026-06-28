@@ -67,6 +67,10 @@ test("renderConditionsPage: schema.org Dataset JSON-LD (credits + machine-readab
   assert.match(html, /"Dataset"/);
   assert.match(html, /c\/bengaluru\.json/); // distribution points at the JSON sibling
   assert.match(html, /mugilu\.live\/terms/); // licence
+  // a BreadcrumbList rides in the same @graph (mugilu -> place)
+  assert.match(html, /"BreadcrumbList"/);
+  assert.match(html, /"ListItem"/);
+  assert.match(html, /"position":2/);
 });
 
 test("renderConditionsPage: og:image is the page's own share snapshot", () => {

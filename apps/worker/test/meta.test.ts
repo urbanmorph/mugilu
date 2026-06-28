@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { openApiSpec, llmsTxt } from "../src/meta";
+import { openApiSpec, llmsTxt, sitemapXml } from "../src/meta";
 
 test("openApiSpec: a valid 3.1 spec covering the read endpoints", () => {
   const s = openApiSpec("https://mugilu.live") as any;
@@ -16,4 +16,14 @@ test("llms.txt: advertises the MCP server + the OpenAPI spec", () => {
   const t = llmsTxt("https://mugilu.live");
   assert.match(t, /MCP server.*\/mcp/);
   assert.match(t, /openapi\.json/);
+});
+
+test("sitemap.xml: every URL carries a <lastmod> (crawl-freshness signal)", () => {
+  const xml = sitemapXml("https://mugilu.live");
+  const locs = (xml.match(/<loc>/g) || []).length;
+  const mods = (xml.match(/<lastmod>/g) || []).length;
+  assert.ok(locs > 100, "has the slug pages");
+  assert.equal(mods, locs, "every <url> has a <lastmod>");
+  // explainer pages get the fixed date; live pages get a fresh (YYYY-MM-DD) date
+  assert.match(xml, /<loc>https:\/\/mugilu\.live\/about<\/loc><lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
 });

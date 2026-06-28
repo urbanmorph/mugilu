@@ -60,6 +60,9 @@ test("renderHome: schema.org WebSite + SearchAction JSON-LD", () => {
   assert.match(html, /application\/ld\+json/);
   assert.match(html, /"SearchAction"/);
   assert.match(html, /go\?q=\{search_term_string\}/);
+  // publisher entity is grounded with sameAs + logo (AEO / knowledge-graph)
+  assert.match(html, /"sameAs":\["https:\/\/github\.com\/urbanmorph"\]/);
+  assert.match(html, /"logo":"https:\/\/mugilu\.live\/apple-touch-icon\.png"/);
 });
 
 test("renderHome: social share card (Open Graph + Twitter, large image)", () => {

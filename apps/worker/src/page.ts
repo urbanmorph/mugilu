@@ -193,7 +193,7 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 `;
 
 const DEFAULT_DESC =
-  "mugilu: the open sky of India, one coordinate at a time. Air, heat, rain, UV, dust and official warnings for any point, with the single worst hazard named for you.";
+  "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.";
 const SITE = "https://mugilu.live";
 const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
@@ -625,22 +625,33 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   const dataset = canonical
     ? ld({
         "@context": "https://schema.org",
-        "@type": "Dataset",
-        name: `Sky conditions at ${placeName}`,
-        description: `Air, heat, rain, dust, UV and official warnings at ${placeName}, India - right now.`,
-        url: canonical,
-        isAccessibleForFree: true,
-        creator: { "@type": "Organization", name: "mugilu", url: "https://mugilu.live" },
-        license: "https://mugilu.live/terms",
-        temporalCoverage: c.as_of,
-        spatialCoverage: {
-          "@type": "Place",
-          name: c.place ?? undefined,
-          geo: { "@type": "GeoCoordinates", latitude: c.location.lat, longitude: c.location.lon },
-        },
-        distribution: [
-          { "@type": "DataDownload", encodingFormat: "application/json", contentUrl: `${canonical}.json` },
-          { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${canonical}.md` },
+        "@graph": [
+          {
+            "@type": "Dataset",
+            name: `Sky conditions at ${placeName}`,
+            description: `Air, heat, rain, dust, UV and official warnings at ${placeName}, India - right now.`,
+            url: canonical,
+            isAccessibleForFree: true,
+            creator: { "@type": "Organization", name: "mugilu", url: "https://mugilu.live" },
+            license: "https://mugilu.live/terms",
+            temporalCoverage: c.as_of,
+            spatialCoverage: {
+              "@type": "Place",
+              name: c.place ?? undefined,
+              geo: { "@type": "GeoCoordinates", latitude: c.location.lat, longitude: c.location.lon },
+            },
+            distribution: [
+              { "@type": "DataDownload", encodingFormat: "application/json", contentUrl: `${canonical}.json` },
+              { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${canonical}.md` },
+            ],
+          },
+          {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "mugilu", item: "https://mugilu.live" },
+              { "@type": "ListItem", position: 2, name: placeName, item: canonical },
+            ],
+          },
         ],
       })
     : undefined;
@@ -779,6 +790,30 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
  *  infrastructure). Person-first, jargon-free. The "Build on it" section is a
  *  stub that grows as the API / MCP land. */
 export function renderAbout(): string {
+  // Q&A that ALSO ships as FAQPage structured data (answer-engine + SERP pickup);
+  // the visible copy below and the schema are generated from this one list.
+  const faqs = [
+    {
+      q: "Is it safe to go outside right now?",
+      a: "mugilu names the single worst hazard over your exact location and says plainly what to do, weighted for who you are: asthma, older adults, children, outdoor workers, or a heart condition. It is informational, not medical or safety advice; for official warnings, consult NDMA and IMD.",
+    },
+    {
+      q: "What is wet-bulb temperature, and why does mugilu show it?",
+      a: "Wet-bulb is the temperature a wet thermometer settles at: it folds heat and humidity into the one number that decides whether your body can still cool itself. Above about 32°C wet-bulb, even resting in shade turns dangerous. Ordinary feels-like numbers hide this, so mugilu surfaces it.",
+    },
+    {
+      q: "Where does mugilu's data come from?",
+      a: "Air from CPCB, Airnet (CSTEP) and Aurassure via the Open Air Quality broker and OpenAQ; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; geography from bharatlas. Each source keeps its own licence, and mugilu credits all of them.",
+    },
+    {
+      q: "Is mugilu free?",
+      a: "Yes. It is free, open source (MIT) and non-commercial, with no sign-up. Every reading is also available as JSON, Markdown, an embeddable card, an OpenAPI spec, and an MCP server for AI agents.",
+    },
+    {
+      q: "How current are the readings?",
+      a: "Air refreshes hourly, the national heat, rain, UV and dust grid every few hours, and official warnings hourly. Every reading is timestamped with how long ago it was measured.",
+    },
+  ];
   const body = `
   <article class="ax">
   <h1 class="ahero">The open sky of India,<br>one coordinate at a time.</h1>
@@ -807,6 +842,9 @@ export function renderAbout(): string {
   <p class="ah">${icon("heart")}<span>Why it's free</span></p>
   <p class="atext">The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
 
+  <p class="ah">${icon("compass")}<span>Common questions</span></p>
+  ${faqs.map((f) => `<p class="atext"><b>${f.q}</b><br>${f.a}</p>`).join("\n  ")}
+
   <div class="builtby">
     <a href="https://urbanmorph.com" aria-label="Urban Morph"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"></a>
     <div>
@@ -824,7 +862,15 @@ export function renderAbout(): string {
     ABOUT_CSS,
     "Why mugilu exists: one whole-sky view for any point in India, built as open infrastructure others can build on. The origin story, the sources, and how to use the data.",
     `${SITE}/about`,
-    undefined,
+    ld({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    }),
     HOME_OG,
   );
 }
@@ -1116,7 +1162,13 @@ export function renderHome(
     alternateName: "mugilu: the open sky of India",
     url: "https://mugilu.live",
     description: DEFAULT_DESC,
-    publisher: { "@type": "Organization", name: "urbanmorph", url: "https://urbanmorph.com" },
+    publisher: {
+      "@type": "Organization",
+      name: "urbanmorph",
+      url: "https://urbanmorph.com",
+      logo: "https://mugilu.live/apple-touch-icon.png",
+      sameAs: ["https://github.com/urbanmorph"],
+    },
     potentialAction: {
       "@type": "SearchAction",
       target: { "@type": "EntryPoint", urlTemplate: "https://mugilu.live/go?q={search_term_string}" },
