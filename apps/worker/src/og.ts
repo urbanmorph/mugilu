@@ -149,7 +149,7 @@ export function renderHomeOg(): Response {
     `<div style="display:flex;flex:1;flex-direction:column;justify-content:center;">` +
     `<div style="display:flex;font-size:128px;font-weight:800;line-height:1;color:#e2e8f0;">mugilu</div>` +
     `<div style="display:flex;font-size:46px;color:#cbd5e1;margin-top:26px;">The open sky of India, one coordinate at a time.</div>` +
-    `<div style="display:flex;font-size:30px;color:#94a3b8;margin-top:40px;">air · heat · rain · dust · UV · official warnings — for any point, right now</div>` +
+    `<div style="display:flex;font-size:30px;color:#94a3b8;margin-top:40px;">air · heat · rain · dust · UV · official warnings - for any point, right now</div>` +
     `</div>` +
     `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #1f2937;padding-top:28px;">` +
     `<div style="display:flex;font-size:28px;color:#94a3b8;">open · free · built to be built on</div>` +

@@ -13,7 +13,7 @@ import { RISK_COLOR, BAND_COLOR } from "./palette";
 // Editorial serif display (--serif) for headlines/leads; system sans (--sans)
 // for data and labels; mono (--mono) for coordinate/format stamps; hairline
 // rules (--hair); a condition- or sky-tinted atmospheric backdrop; and the
-// inline Lucide-style line icons in ICON/icon() — never emoji. Tokens live in
+// inline Lucide-style line icons in ICON/icon(), never emoji. Tokens live in
 // BASE_CSS :root and reach home, /c, about, terms and 404 alike.
 
 const BAND_LABEL: Record<string, string> = {
@@ -117,7 +117,7 @@ function airBand(b: string): RiskBand {
 }
 
 /** The "right now in India" hero. Heat- and dust-led from the 4-hourly grid,
- *  plus a worst-air row from the hourly snapshot — each row state-qualified (so
+ *  plus a worst-air row from the hourly snapshot, each row state-qualified (so
  *  the place is recognisable), stamped with its own freshness, and coloured by
  *  its severity; the whole card takes the tint of the worst extreme, like /c. */
 function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?: string }): string {
@@ -193,7 +193,7 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 `;
 
 const DEFAULT_DESC =
-  "mugilu — the open sky of India, one coordinate at a time. Air, heat, rain, UV, dust and official warnings for any point, with the single worst hazard named for you.";
+  "mugilu: the open sky of India, one coordinate at a time. Air, heat, rain, UV, dust and official warnings for any point, with the single worst hazard named for you.";
 const SITE = "https://mugilu.live";
 const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
@@ -619,7 +619,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
   const desc = `${c.place ?? stationCity ?? slug}: ${ambientMeaning(risk)} Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.`;
-  // schema.org Dataset — credits mugilu + the licence, points at the machine-readable
+  // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
   const placeName = c.place ?? stationCity ?? slug;
   const dataset = canonical
@@ -627,7 +627,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
         "@context": "https://schema.org",
         "@type": "Dataset",
         name: `Sky conditions at ${placeName}`,
-        description: `Air, heat, rain, dust, UV and official warnings at ${placeName}, India — right now.`,
+        description: `Air, heat, rain, dust, UV and official warnings at ${placeName}, India - right now.`,
         url: canonical,
         isAccessibleForFree: true,
         creator: { "@type": "Organization", name: "mugilu", url: "https://mugilu.live" },
@@ -655,7 +655,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   );
 }
 
-/** Short IST stamp, e.g. "14:32 IST · 27 Jun" — the time travels on embeds/PNGs. */
+/** Short IST stamp, e.g. "14:32 IST · 27 Jun". The time travels on embeds/PNGs. */
 function istTime(iso: string): string {
   return (
     new Date(iso).toLocaleString("en-IN", {
@@ -728,10 +728,10 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): s
   if (c.smoke && smokeLevel(c.smoke) != null)
     reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>fires &lt;100km</span></div>`);
 
-  const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu — conditions at ${place}" loading="lazy"></iframe>`;
-  const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu — conditions at ${place}" width="600">`;
+  const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
+  const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
 
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${place} — mugilu</title><style>${EMBED_CSS}\n:root{--cond:${condColor}}</style></head><body>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{--cond:${condColor}}</style></head><body>
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>
@@ -795,9 +795,9 @@ export function renderAbout(): string {
   <p class="ah" id="build">${icon("code")}<span>Build on it</span></p>
   <p class="atext">mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.</p>
   <ul class="alist">
-    <li>${icon("code")}<span class="t"><b>For AI agents</b> — an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
-    <li>${icon("layers")}<span class="t"><b>For developers</b> — a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
-    <li>${icon("pin")}<span class="t"><b>Embed it</b> — a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
+    <li>${icon("code")}<span class="t"><b>For AI agents</b>: an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
+    <li>${icon("layers")}<span class="t"><b>For developers</b>: a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
+    <li>${icon("pin")}<span class="t"><b>Embed it</b>: a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
   </ul>
   <p class="abuild">Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.</p>
 
@@ -811,7 +811,7 @@ export function renderAbout(): string {
     <a href="https://urbanmorph.com" aria-label="Urban Morph"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"></a>
     <div>
       <p class="bb-by">Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.</p>
-      <a class="star" href="https://github.com/urbanmorph/mugilu">${GH_MARK} Source on GitHub — drop a star if it's useful</a>
+      <a class="star" href="https://github.com/urbanmorph/mugilu">${GH_MARK} Source on GitHub, drop a star if it's useful</a>
     </div>
   </div>
 
@@ -844,12 +844,12 @@ export function renderTerms(): string {
 
   <h2 class="ah">Sources &amp; credit</h2>
   <ul class="alist on">
-    <li>${icon("air")}<span class="t"><b>Air</b> — CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</span></li>
-    <li>${icon("heat")}<span class="t"><b>Heat, rain, UV, dust, wind</b> — <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
-    <li>${icon("warn")}<span class="t"><b>Official warnings</b> — NDMA / IMD via SACHET.</span></li>
-    <li>${icon("smoke")}<span class="t"><b>Fire / crop-burn smoke</b> — NASA FIRMS (VIIRS).</span></li>
-    <li>${icon("pin")}<span class="t"><b>Geography &amp; place names</b> — <a href="https://bharatlas.com">bharatlas</a>.</span></li>
-    <li>${icon("heart")}<span class="t"><b>Health impact</b> — years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
+    <li>${icon("air")}<span class="t"><b>Air</b>: CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</span></li>
+    <li>${icon("heat")}<span class="t"><b>Heat, rain, UV, dust, wind</b>: <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
+    <li>${icon("warn")}<span class="t"><b>Official warnings</b>: NDMA / IMD via SACHET.</span></li>
+    <li>${icon("smoke")}<span class="t"><b>Fire / crop-burn smoke</b>: NASA FIRMS (VIIRS).</span></li>
+    <li>${icon("pin")}<span class="t"><b>Geography &amp; place names</b>: <a href="https://bharatlas.com">bharatlas</a>.</span></li>
+    <li>${icon("heart")}<span class="t"><b>Health impact</b>: years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
   </ul>
   <p class="alead2">Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.</p>
 
@@ -859,7 +859,7 @@ export function renderTerms(): string {
     "Terms & attribution: mugilu",
     body,
     ABOUT_CSS,
-    "mugilu's sources, licences and attribution — open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
+    "mugilu's sources, licences and attribution: open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
     `${SITE}/terms`,
     undefined,
     HOME_OG,
@@ -892,13 +892,13 @@ export function renderMethodology(): string {
   const body = `
   <article class="ax">
   <h1 class="ahero">How the Ambient read works</h1>
-  <p class="alead">mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box — the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.</p>
+  <p class="alead">mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.</p>
 
   <h2 class="ah">One read, never an average</h2>
   <p class="atext">Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.</p>
 
   <h2 class="ah">For who you are</h2>
-  <p class="atext">Pick a vulnerability — asthma, older adults, children, outdoor workers, heart — and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.</p>
+  <p class="atext">Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.</p>
 
   <h2 class="ah">The thresholds</h2>
   <div class="mtab-wrap">
@@ -913,7 +913,7 @@ export function renderMethodology(): string {
   ${row("Wind (gusts, km/h)", "40", "62", "88")}
   ${row("Fog (visibility, m)", "&lt;1000", "&lt;500", "&lt;200")}
   ${row("Smoke (fires &lt;100 km)", "3+", "25+", "60+")}
-  ${row("UV (index)", "6–10", "—", "11+")}
+  ${row("UV (index)", "6–10", "-", "11+")}
   ${row("Dust (µg/m³)", "80", "150", "500")}
   </tbody>
   </table>
@@ -927,7 +927,7 @@ export function renderMethodology(): string {
     "How it works: mugilu",
     body,
     ABOUT_CSS + METHOD_CSS,
-    "How mugilu's Ambient read is computed — the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
+    "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
     `${SITE}/methodology`,
     undefined,
     HOME_OG,
@@ -944,7 +944,7 @@ const WLIST_CSS = `
 .wempty{color:var(--muted);font-size:1.05rem;margin:1.2rem 0}
 `;
 
-/** The national active-warnings list — surfaces the SACHET feed mugilu polls
+/** The national active-warnings list: surfaces the SACHET feed mugilu polls
  *  and archives, so the warning "moat" is readable, not just point-queried on /c. */
 export function renderWarningsPage(snap: WarningsSnapshot | null): string {
   const items =
@@ -969,7 +969,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null): string {
     "Active warnings: mugilu",
     body,
     ABOUT_CSS + WLIST_CSS,
-    "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed — available as HTML, JSON and Markdown.",
+    "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
     `${SITE}/warnings`,
     undefined,
     HOME_OG,
@@ -1060,7 +1060,7 @@ export function renderHome(
     </form>
     <ul id="ac" class="ac" role="listbox"></ul>
   </div>
-  <p class="shint">Type any place in India — in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>) — to see <b>its sky</b>: air, heat, rain, dust. Not a map.</p>
+  <p class="shint">Type any place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>), to see <b>its sky</b>: air, heat, rain, dust. Not a map.</p>
   <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} Use my location</button>
   ${notice}
   ${highlights ? renderHero(highlights, meta) : ""}
@@ -1113,7 +1113,7 @@ export function renderHome(
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "mugilu",
-    alternateName: "mugilu — the open sky of India",
+    alternateName: "mugilu: the open sky of India",
     url: "https://mugilu.live",
     description: DEFAULT_DESC,
     publisher: { "@type": "Organization", name: "urbanmorph", url: "https://urbanmorph.com" },

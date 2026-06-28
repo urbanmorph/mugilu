@@ -237,7 +237,7 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
   return out.join("\n");
 }
 
-// Units are not otherwise discoverable from the bare numbers — notably CO is
+// Units are not otherwise discoverable from the bare numbers: notably CO is
 // mg/m³ while the other pollutants are µg/m³. This map ships in every response.
 const UNITS = {
   pollutants: { co: "mg/m3", default: "ug/m3" },
@@ -259,7 +259,7 @@ const UNITS = {
  *  contract: a `schema` + `version` handle, a `units` map, machine-readable
  *  provenance (`kind`) and freshness (`as_of`) on every layer, consistent
  *  naming (`yll_years`, ambient `risk_band`, lowercase driver ids) and one null
- *  convention (`place: null`, `warnings: []`) — so a stranger can build on it
+ *  convention (`place: null`, `warnings: []`), so a stranger can build on it
  *  without reading source. The HTML/MD/PNG renderers keep the internal model. */
 export function serializeConditionsV1(c: Conditions, persona: Persona) {
   const risk = ambientRisk(c, persona);

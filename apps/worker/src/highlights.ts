@@ -9,7 +9,7 @@ import { stateAt } from "./place";
 export interface NationalHighlights {
   hottest?: { name: string; state?: string; lat: number; lon: number; apparent_c: number; wet_bulb_c?: number };
   dustiest?: { name: string; state?: string; lat: number; lon: number; dust_ug_m3: number };
-  /** Worst-AQI station from the hourly air snapshot — fresher than the grid. */
+  /** Worst-AQI station from the hourly air snapshot, fresher than the grid. */
   worstAir?: { name: string; state?: string; lat: number; lon: number; aqi: number; band: NormalizedStation["band"] };
 }
 

@@ -78,7 +78,7 @@ function heatLevel(c: Conditions): number {
   let lvl = 0;
   if (wb != null) lvl = Math.max(lvl, wb >= 31 ? 3 : wb >= 28 ? 2 : wb >= 26 ? 1 : 0);
   if (ap != null) lvl = Math.max(lvl, ap >= 45 ? 3 : ap >= 40 ? 2 : ap >= 35 ? 1 : 0);
-  // WBGT (simplified shade estimate; runs hot in dry heat) — aligned to BoM's
+  // WBGT (simplified shade estimate; runs hot in dry heat), aligned to BoM's
   // categories (35+ extreme, 32-34 very high, 30-31 high) so it contributes
   // without over-escalating past the wet-bulb survivability read.
   if (wbgt != null) lvl = Math.max(lvl, wbgt >= 35 ? 3 : wbgt >= 32 ? 2 : wbgt >= 30 ? 1 : 0);
@@ -95,7 +95,7 @@ function coldLevel(c: Conditions): number {
 
 /** Thermal stress as ONE directional hazard. A point right now is either too hot
  *  or too cold, never both, so heat and cold share a slot but report distinct
- *  drivers ("Heat" / "Cold") — with their own persona-sensitivity and advice. */
+ *  drivers ("Heat" / "Cold"), with their own persona-sensitivity and advice. */
 function thermalRisk(c: Conditions): [string, number] | null {
   if (c.heat?.wet_bulb_c == null && c.heat?.apparent_c == null && c.heat?.wbgt_c == null) return null;
   const hot = heatLevel(c);
@@ -136,7 +136,7 @@ function fogLevel(c: Conditions): number | null {
 }
 
 // Fire/crop-burn smoke: active FIRMS detections (VIIRS) within 100km, last 24h.
-// Bands benchmarked against multi-season India archive data — local density at
+// Bands benchmarked against multi-season India archive data: local density at
 // populated points: peak-Nov Punjab belt 72-93, pre-monsoon-Apr central forest
 // ~90, max land-grid 147-385; shoulder/off-peak 25-60; metros single digits.
 // Severe is reserved for the genuine burning belt; below 3 fires is negligible.
@@ -253,7 +253,7 @@ const HAZARD_NOUN: Record<string, string> = {
 };
 
 /** The persona callout (option A): surface the persona's OWN top trigger when
- *  it's elevated (high+) but isn't the headline driver — so an asthmatic on a
+ *  it's elevated (high+) but isn't the headline driver, so an asthmatic on a
  *  severe-heat day still hears the air is bad, without the heat being buried.
  *  Returns null for "everyone" or when the driver already is their concern. */
 export function personaAlso(risk: AmbientRisk): string | null {

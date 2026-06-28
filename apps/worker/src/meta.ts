@@ -61,7 +61,7 @@ Health impact: AQLI methodology (U Chicago EPIC). Code: MIT.
 `;
 }
 
-/** OpenAPI 3.1 spec for the read API — doubles as ChatGPT Custom-GPT Actions and
+/** OpenAPI 3.1 spec for the read API. Doubles as ChatGPT Custom-GPT Actions and
  *  developer docs. Covers the conditions + search + nearest + leaderboard + warnings
  *  endpoints; the conditions body is the self-describing mugilu/conditions v1. */
 export function openApiSpec(siteUrl: string): object {
@@ -85,10 +85,10 @@ export function openApiSpec(siteUrl: string): object {
   return {
     openapi: "3.1.0",
     info: {
-      title: "mugilu — India's open sky",
+      title: "mugilu: India's open sky",
       version: "1.0.0",
       description:
-        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb), rain, UV, dust, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read. Informational only — not for medical, emergency, or safety-critical use.",
+        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb), rain, UV, dust, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read. Informational only, not for medical, emergency, or safety-critical use.",
       license: { name: "Sources keep their own licence; see /terms", url: `${siteUrl}/terms` },
       contact: { url: siteUrl },
     },
@@ -103,7 +103,7 @@ export function openApiSpec(siteUrl: string): object {
               name: "coord",
               in: "path",
               required: true,
-              description: 'lat,lon — e.g. "12.97,77.59".',
+              description: 'lat,lon (e.g. "12.97,77.59").',
               schema: { type: "string" },
               example: "12.97,77.59",
             },

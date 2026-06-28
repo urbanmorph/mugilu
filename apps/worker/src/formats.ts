@@ -49,7 +49,7 @@ const POLLUTANT_LABELS: Record<string, string> = {
 };
 const POLLUTANT_ORDER = ["pm25", "pm10", "no2", "so2", "o3", "nh3", "co"] as const;
 
-/** Ordered, labelled pollutant readings present in `p` — the one source of the
+/** Ordered, labelled pollutant readings present in `p`, the one source of the
  *  label spelling, ordering, and the "CO is mg/m³, the rest µg/m³" unit rule,
  *  reused by every renderer (station md, conditions md, the /c air row). */
 export function pollutantParts(p: AirPollutants): Array<{ key: string; label: string; value: number; unit: string }> {

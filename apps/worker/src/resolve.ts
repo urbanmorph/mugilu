@@ -2,14 +2,14 @@ import { parseCoordQuery, applyAlias } from "./suggest";
 import { slugForName, placeBySlug } from "./slugs";
 import { geocode } from "./geocode";
 
-// Canonical "what place does this query mean?" — used by /go, the MCP tools, and
+// Canonical "what place does this query mean?", used by /go, the MCP tools, and
 // anywhere a name/coordinate must become a point. One resolver so the web and the
 // agent front doors never disagree on the alias rules, the coordinate, or the label.
 
 export interface ResolvedPlace {
   lat: number;
   lon: number;
-  /** Set when the query named a known district/city — its canonical /c/{slug}. */
+  /** Set when the query named a known district/city: its canonical /c/{slug}. */
   slug?: string;
   /** The canonical place label for a named place (so MCP reads "Bengaluru", not a ward). */
   label?: string;

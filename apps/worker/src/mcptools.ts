@@ -12,7 +12,7 @@ import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { recordLookup, recordEvent } from "./metrics";
 
 // The MCP tool surface (Phase 2). Each tool is a thin adapter over an existing
-// internal function — no new data logic. Read-only; all live/India-only.
+// internal function, no new data logic. Read-only; all live/India-only.
 
 export interface ToolResult {
   content: Array<{ type: "text"; text: string }>;
@@ -27,7 +27,7 @@ export const TOOLS = [
   {
     name: "conditions_at",
     description:
-      "What the sky is doing at a place in India RIGHT NOW (not a forecast): air quality (CPCB AQI + pollutants + AQLI years-of-life-lost), heat (feels-like, wet-bulb, WBGT), cold, wind, fog/visibility, dust, fire-smoke, UV, and any official NDMA warning over that spot — plus an Ambient read naming the single worst hazard. Pass `persona` to weight it for a vulnerable person. To target a specific ward, hospital, forest, river or boundary, resolve it with a geo source (e.g. the bharatlas MCP) first, then pass the coordinate here. Surface the returned `attribution` and `disclaimer`.",
+      "What the sky is doing at a place in India RIGHT NOW (not a forecast): air quality (CPCB AQI + pollutants + AQLI years-of-life-lost), heat (feels-like, wet-bulb, WBGT), cold, wind, fog/visibility, dust, fire-smoke, UV, and any official NDMA warning over that spot, plus an Ambient read naming the single worst hazard. Pass `persona` to weight it for a vulnerable person. To target a specific ward, hospital, forest, river or boundary, resolve it with a geo source (e.g. the bharatlas MCP) first, then pass the coordinate here. Surface the returned `attribution` and `disclaimer`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -48,7 +48,7 @@ export const TOOLS = [
   {
     name: "search_place",
     description:
-      "Resolve an Indian place name to candidates (name, detail, coordinate) — use to disambiguate before conditions_at. Covers cities, districts and air-monitoring stations. For sub-city wards, hospitals, forests, rivers or boundaries, use a geo source like the bharatlas MCP instead.",
+      "Resolve an Indian place name to candidates (name, detail, coordinate). Use to disambiguate before conditions_at. Covers cities, districts and air-monitoring stations. For sub-city wards, hospitals, forests, rivers or boundaries, use a geo source like the bharatlas MCP instead.",
     inputSchema: {
       type: "object",
       properties: { query: { type: "string", description: "A place name or partial name in India." } },
@@ -59,7 +59,7 @@ export const TOOLS = [
   {
     name: "nearest_stations",
     description:
-      "The nearest real (measured) air-quality monitoring stations to a place, with distance and current AQI. Use to judge how close hard measurement is — conditions can be modelled when no station is near.",
+      "The nearest real (measured) air-quality monitoring stations to a place, with distance and current AQI. Use to judge how close hard measurement is. Conditions can be modelled when no station is near.",
     inputSchema: {
       type: "object",
       properties: {
@@ -134,7 +134,7 @@ async function searchPlace(args: Record<string, unknown>, env: Env): Promise<Too
   const places = hits.map((s) => ({ name: s.label, detail: s.sublabel ?? null, lat: s.lat, lon: s.lon, kind: s.kind }));
   const text = listText(
     places,
-    (p) => `- ${p.name}${p.detail ? ` (${p.detail})` : ""} — ${p.lat},${p.lon}`,
+    (p) => `- ${p.name}${p.detail ? ` (${p.detail})` : ""} - ${p.lat},${p.lon}`,
     `No places found for "${q}".`,
   );
   return { content: [{ type: "text", text }], structuredContent: { places } };
@@ -153,7 +153,7 @@ async function nearestStations(args: Record<string, unknown>, env: Env): Promise
   const text = listText(
     stations,
     (s: NormalizedStation & { distance_km?: number }) => {
-      const d = typeof s.distance_km === "number" ? ` — ${s.distance_km.toFixed(1)} km` : "";
+      const d = typeof s.distance_km === "number" ? ` - ${s.distance_km.toFixed(1)} km` : "";
       return `- ${s.name}${s.city ? `, ${s.city}` : ""}${d}, AQI ${s.aqi ?? "n/a"}`;
     },
     "No stations found nearby.",
@@ -168,7 +168,7 @@ async function activeWarnings(args: Record<string, unknown>, env: Env): Promise<
   if (region) alerts = alerts.filter((a) => `${a.headline} ${a.category} ${a.issuer}`.toLowerCase().includes(region));
   const text = listText(
     alerts,
-    (a) => `- [${a.category}] ${a.headline} — ${a.issuer}`,
+    (a) => `- [${a.category}] ${a.headline} - ${a.issuer}`,
     region ? `No active warnings matching "${region}".` : "No active warnings nationally.",
   );
   return {
@@ -186,15 +186,15 @@ async function nationalNow(args: Record<string, unknown>, env: Env): Promise<Too
   const lines: string[] = [];
   if (want("air") && h.worstAir) {
     out.worstAir = h.worstAir;
-    lines.push(`Worst air: ${place(h.worstAir)} — AQI ${h.worstAir.aqi} (${h.worstAir.band})`);
+    lines.push(`Worst air: ${place(h.worstAir)} - AQI ${h.worstAir.aqi} (${h.worstAir.band})`);
   }
   if (want("heat") && h.hottest) {
     out.hottest = h.hottest;
-    lines.push(`Hottest: ${place(h.hottest)} — feels ${Math.round(h.hottest.apparent_c)}°`);
+    lines.push(`Hottest: ${place(h.hottest)} - feels ${Math.round(h.hottest.apparent_c)}°`);
   }
   if (want("dust") && h.dustiest) {
     out.dustiest = h.dustiest;
-    lines.push(`Dustiest: ${place(h.dustiest)} — ${Math.round(h.dustiest.dust_ug_m3)} µg/m³`);
+    lines.push(`Dustiest: ${place(h.dustiest)} - ${Math.round(h.dustiest.dust_ug_m3)} µg/m³`);
   }
   return { content: [{ type: "text", text: lines.join("\n") || "No national snapshot yet." }], structuredContent: out };
 }

@@ -21,7 +21,7 @@ function scriptLang(q: string): string {
   return "en";
 }
 
-/** Airport feature codes — the geocoder sometimes ranks the airport above the
+/** Airport feature codes: the geocoder sometimes ranks the airport above the
  *  city of the same name (especially for native-script queries). Down-ranked. */
 function isAirport(code?: string): boolean {
   return code === "AIRP" || code === "AIRH" || code === "AIRB" || code === "AIRF";

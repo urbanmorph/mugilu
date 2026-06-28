@@ -1,5 +1,5 @@
 // MCP resources (readable context the agent can ground + cite from) and prompts
-// (user-initiated templated workflows). Static content — no per-request work.
+// (user-initiated templated workflows). Static content, no per-request work.
 
 export const RESOURCES = [
   {
@@ -27,7 +27,7 @@ export const RESOURCES = [
     uri: "mugilu://compose",
     name: "compose",
     title: "Composing with geography (bharatlas)",
-    description: "How to answer questions that need a place/feature AND its sky — pair mugilu with the bharatlas MCP.",
+    description: "How to answer questions that need a place/feature AND its sky: pair mugilu with the bharatlas MCP.",
     mimeType: "text/markdown",
   },
 ];
@@ -38,10 +38,10 @@ const CONTENT: Record<string, string> = {
 mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. Every threshold below is public.
 
 ## One read, never an average
-Each hazard is scored 0-3 (none / caution / high / severe). The worst one becomes the Ambient, named in plain words ("Severe smoke", "High heat"). We never average — averaging hides the thing that matters.
+Each hazard is scored 0-3 (none / caution / high / severe). The worst one becomes the Ambient, named in plain words ("Severe smoke", "High heat"). We never average. Averaging hides the thing that matters.
 
 ## For who you are (persona)
-Pick a vulnerability — asthma, elderly, child, outdoor, heart — and the hazards that group feels more keenly are bumped up one level (an asthmatic sees moderate air as "high"). A second "also watch" line surfaces a secondary trigger.
+Pick a vulnerability (asthma, elderly, child, outdoor, heart) and the hazards that group feels more keenly are bumped up one level (an asthmatic sees moderate air as "high"). A second "also watch" line surfaces a secondary trigger.
 
 ## The thresholds (caution / high / severe)
 - Air (CPCB AQI): 101-200 / 201-300 / 301+
@@ -60,14 +60,14 @@ Heat takes the worst of feels-like, wet-bulb and WBGT.
 ## Sources
 Air: CPCB / Airnet (CSTEP) / Aurassure via the OAQ broker, plus OpenAQ. Weather, heat, UV, dust and wind: Open-Meteo (CC-BY 4.0). Official warnings: NDMA / IMD (SACHET). Fire-smoke: NASA FIRMS. Life-expectancy impact: the AQLI methodology (U Chicago EPIC).
 
-Informational only — not for medical, emergency, or safety-critical decisions. Full page: https://mugilu.live/methodology`,
+Informational only, not for medical, emergency, or safety-critical decisions. Full page: https://mugilu.live/methodology`,
 
-  "mugilu://license": `# mugilu — licence & attribution
+  "mugilu://license": `# mugilu: licence & attribution
 
 Code is MIT (https://github.com/urbanmorph/mugilu). The data is not relicensed: each upstream source keeps its own licence and attribution. mugilu is non-commercial, for individuals, and is not affiliated with any data provider.
 
 ## Please credit
-Every conditions response carries an "attribution" and a "disclaimer" field — surface them. Suggested: "Sky data via mugilu (mugilu.live)", and name the upstream layer's source.
+Every conditions response carries an "attribution" and a "disclaimer" field. Surface them. Suggested: "Sky data via mugilu (mugilu.live)", and name the upstream layer's source.
 
 ## Sources & licences
 - Air: CPCB (Govt. of India), Airnet (CSTEP), Aurassure via the OAQ broker; plus OpenAQ.
@@ -78,7 +78,7 @@ Every conditions response carries an "attribution" and a "disclaimer" field — 
 - Health impact (years of life lost): AQLI methodology (U Chicago EPIC).
 
 ## Disclaimer
-Informational and educational only — not for medical, emergency, or safety-critical decisions. For official hazard warnings, consult NDMA and IMD. Terms: https://mugilu.live/terms`,
+Informational and educational only, not for medical, emergency, or safety-critical decisions. For official hazard warnings, consult NDMA and IMD. Terms: https://mugilu.live/terms`,
 
   "mugilu://schema": `# The v1 conditions contract
 
@@ -98,7 +98,7 @@ A conditions response (the conditions_at structuredContent, or /c/{lat},{lon}.js
 ## ambient (the interpreted read)
 { risk_band: low|moderate|high|severe, level (0-3), driver (the worst hazard), persona, summary (plain words), persona_also, hazards[] }
 
-Plus "attribution" and "disclaimer" strings — always surface them. Live example: https://mugilu.live/c/12.97,77.59.json`,
+Plus "attribution" and "disclaimer" strings. Always surface them. Live example: https://mugilu.live/c/12.97,77.59.json`,
 
   "mugilu://compose": `# Composing mugilu with bharatlas
 
@@ -175,7 +175,7 @@ export function getPrompt(name: string, args: Record<string, unknown>): PromptGe
       return {
         description: `Sky check for ${place || "a place"}`,
         messages: userMsg(
-          `What is the sky doing at ${place} in India right now? Call the conditions_at tool for "${place}", then give a plain-language summary — the Ambient read (the single worst hazard) first, then air, heat and anything notable — and include the attribution and the "informational only" note.`,
+          `What is the sky doing at ${place} in India right now? Call the conditions_at tool for "${place}", then give a plain-language summary: the Ambient read (the single worst hazard) first, then air, heat and anything notable, and include the attribution and the "informational only" note.`,
         ),
       };
     case "safe-to-go-out":

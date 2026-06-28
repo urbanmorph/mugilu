@@ -5,7 +5,7 @@ import type { Persona } from "./score";
 import { stateAt } from "./place";
 
 // First-party, aggregate usage metrics (D1). The whole point is to learn what
-// India looks up and who builds on mugilu — WITHOUT tracking people: no IP, no
+// India looks up and who builds on mugilu, WITHOUT tracking people: no IP, no
 // cookies, no per-user rows. Coordinates are rounded to a ~11km grid, so the
 // `lookups` table is a demand heatmap, never a trail. All writes are fire-and-
 // forget (ctx.waitUntil) and best-effort; metrics never affect a response.
@@ -20,7 +20,7 @@ function gridKey(lat: number, lon: number): { key: string; rlat: number; rlon: n
 /** Classify the caller from its User-Agent: a real person, an AI/LLM agent, or a
  *  plain bot/crawler/script. With the API + MCP live, "who is building on us"
  *  (answer engines, model crawlers, MCP clients) is first-class adoption signal,
- *  distinct from both humans and dumb crawlers — so the LLM bucket stands alone.
+ *  distinct from both humans and dumb crawlers, so the LLM bucket stands alone.
  *  Check LLM patterns first: many AI agents (GPTBot, ClaudeBot) also match /bot/. */
 export type ClientClass = "human" | "llm" | "bot";
 export function clientClass(ua: string | null | undefined): ClientClass {
@@ -41,7 +41,7 @@ export function clientClass(ua: string | null | undefined): ClientClass {
   return "human";
 }
 
-// Named agents we recognise — LLM/AI first, then search/SEO/other. Longer tokens
+// Named agents we recognise: LLM/AI first, then search/SEO/other. Longer tokens
 // before their substrings (applebot-extended before applebot).
 const KNOWN_AGENTS = [
   "gptbot",
@@ -95,7 +95,7 @@ export function agentName(ua: string | null | undefined): string {
  *  full per-place + per-format detail is written ONLY for humans, so the demand
  *  heatmap reflects real people (not crawlers walking the sitemap) and a burst of
  *  bot/LLM traffic can't burn the D1 write budget. Bot/LLM detail (format, agent,
- *  region) lives in Analytics Engine instead — cheap and built for the volume. */
+ *  region) lives in Analytics Engine instead, cheap and built for the volume. */
 export async function recordLookup(
   env: Env,
   lat: number,
@@ -219,7 +219,7 @@ export async function topReferrers(env: Env, limit = 25): Promise<Referrer[]> {
   }
 }
 
-/** One anonymous behaviour event per /c lookup — dimensions only (format, persona,
+/** One anonymous behaviour event per /c lookup: dimensions only (format, persona,
  *  the Ambient driver + band, region/state, air kind), no IP and no user id. Goes
  *  to Analytics Engine for time-series + breakdowns (queried via the AE SQL API).
  *  Synchronous + best-effort; the binding is optional. */

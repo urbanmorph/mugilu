@@ -2,7 +2,7 @@ import { haversineKm } from "./near";
 import type { Env } from "./index";
 
 // NASA FIRMS: near-real-time fire / thermal-anomaly detections (VIIRS 375 m).
-// This is the fire / crop-burn smoke layer — seasonally the dominant air-health
+// This is the fire / crop-burn smoke layer, seasonally the dominant air-health
 // driver across north India (Oct–Nov stubble burning). Needs a free MAP_KEY
 // (FIRMS_MAP_KEY). Following the SACHET pattern: a cron polls India-wide, writes
 // the current set + archives new days (the moat), and /c point-queries it.
@@ -83,7 +83,7 @@ export function fireRiskAt(fires: FireDetection[], lat: number, lon: number, rad
 
 /**
  * Poll FIRMS for India (last 24 h), write the current set to R2, and archive a
- * per-day roll-up so the burning-season record accrues (the moat). ETag-free —
+ * per-day roll-up so the burning-season record accrues (the moat). ETag-free.
  * FIRMS rotates the NRT file, so we just overwrite the current snapshot.
  */
 export async function collectFires(env: Env): Promise<{ count: number; archived: boolean }> {

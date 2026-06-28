@@ -118,7 +118,7 @@ export default {
     if (url.pathname === "/og.png") return renderHomeOg();
 
     // Lookup-first home page. Heat/dust highlights come from the 4-hourly grid;
-    // the worst-air row from the hourly snapshot (fresher) — each stamped with
+    // the worst-air row from the hourly snapshot (fresher), each stamped with
     // its own age, and the air point's state resolved from the grid.
     if (url.pathname === "/") {
       const [hl, popular] = await Promise.all([
@@ -138,7 +138,7 @@ export default {
       );
     }
 
-    // Internal usage metrics for our own improvement — NOT public. Key-gated and
+    // Internal usage metrics for our own improvement, NOT public. Key-gated and
     // never cached. Aggregate, privacy-preserving (rounded coords, no IP). The
     // public only ever sees these via the server-rendered home "Popular".
     if (url.pathname === "/api/counts") {
@@ -204,7 +204,7 @@ export default {
       });
     }
 
-    // National active warnings — the SACHET archive made readable, not just
+    // National active warnings: the SACHET archive made readable, not just
     // point-queried on /c. /warnings (HTML) · /warnings.json · /warnings.md
     if (url.pathname === "/warnings" || url.pathname === "/warnings.json" || url.pathname === "/warnings.md") {
       const obj = await env.OAQ_R2.get("data/warnings.json");
@@ -255,7 +255,7 @@ export default {
       const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
       const conditions = await buildConditions(snap, lat, lon, fires);
       // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
-      // ward the seed coordinate happens to fall in) — drives title/h1/meta/SEO.
+      // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
       if (placeName) conditions.place = placeName;
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
@@ -267,7 +267,7 @@ export default {
       }
       const ua = req.headers.get("user-agent");
       ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html", ua));
-      // API formats (.json/.md/.png) are a "build on it" surface — capture who.
+      // API formats (.json/.md/.png) are a "build on it" surface. Capture who.
       if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
       recordEvent(env, conditions, persona, ext ?? "html", ua); // anonymous behaviour event
       if (ext === "png") return renderConditionsOg(conditions, persona);
@@ -296,7 +296,7 @@ export default {
       );
     }
 
-    // Named place: /c/{slug}.{json,md,png} (e.g. /c/lucknow) — keyword URLs for
+    // Named place: /c/{slug}.{json,md,png} (e.g. /c/lucknow), keyword URLs for
     // search. Resolve the slug to its centroid and serve the same conditions.
     const slugMatch = url.pathname.match(/^\/c\/([a-z][a-z0-9-]*)(?:\.(json|md|png))?$/);
     if (slugMatch) {
@@ -309,7 +309,7 @@ export default {
     }
 
     // Embeddable conditions widget (the "build on it" surface): a compact card
-    // others drop into an <iframe>. /embed/{lat},{lon} — framable (no X-Frame
+    // others drop into an <iframe>. /embed/{lat},{lon}: framable (no X-Frame
     // restriction is set), carries a copy-paste snippet and links back.
     const embedMatch = url.pathname.match(/^\/embed\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/);
     if (embedMatch) {
