@@ -765,21 +765,29 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 @media (orientation:portrait) and (min-aspect-ratio:2/3){
   .kt{padding:1.3vmin 1.7vmin}.kt-n{font-size:4.6vmin}.ktiles{gap:1.3vmin}
   .kqr svg{width:12vmin;height:12vmin}
-}`;
+}
+.kload{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vmin;background:rgba(8,13,24,.5);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;transition:opacity .4s ease;pointer-events:none}
+.kload.on{opacity:1}
+.kspin{width:7vmin;height:7vmin;border:.7vmin solid rgba(148,163,184,.25);border-top-color:#7dd3fc;border-radius:50%;animation:kspin 1s linear infinite}
+.kverb{font-size:3.2vmin;color:#cbd5e1;letter-spacing:.01em}
+@keyframes kspin{to{transform:rotate(360deg)}}`;
 
 const KIOSK_JS = `(function(){
-function p(n){return n<10?'0'+n:''+n}
-var clk=document.getElementById('clk'),ag=document.getElementById('ago');
-function tick(){var d=new Date();if(clk)clk.textContent=p(d.getHours())+':'+p(d.getMinutes())}
-function ago(){if(!ag)return;var t=ag.getAttribute('data-t');if(!t)return;var s=Math.max(0,(Date.now()-new Date(t).getTime())/1000);ag.textContent=s<90?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago'}
-tick();ago();setInterval(tick,15000);setInterval(ago,30000);
-var amb=document.querySelector('.kamb'),hd=amb&&amb.querySelector('.khead');
-function fit(){if(!amb||!hd)return;hd.style.fontSize='';var s=parseFloat(getComputedStyle(hd).fontSize),g=0;while(amb.scrollHeight>amb.clientHeight+1&&s>24&&g++<40){s-=4;hd.style.fontSize=s+'px';}}
-fit();setTimeout(fit,300);window.addEventListener('resize',fit);
-var wl=null;function lock(){try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').then(function(s){wl=s}).catch(function(){})}catch(e){}}
-lock();document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')lock()});
-function loop(ms){setTimeout(function(){fetch('/health',{method:'HEAD',cache:'no-store'}).then(function(r){if(r.ok)location.reload();else loop(60000)}).catch(function(){loop(60000)})},ms)}
-loop(840000);
+var clkI,agoI,refT,vbT,n=0;
+var verbs=['Reading the sky','Checking the air','Gauging the heat','Watching for warnings','Catching the wind','Looking up'];
+function p(x){return x<10?'0'+x:''+x}
+function clock(){var c=document.getElementById('clk');if(c){var d=new Date();c.textContent=p(d.getHours())+':'+p(d.getMinutes());}}
+function ago(){var a=document.getElementById('ago');if(!a)return;var t=a.getAttribute('data-t');if(!t)return;var s=Math.max(0,(Date.now()-new Date(t).getTime())/1000);a.textContent=s<90?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago';}
+function fit(){var amb=document.querySelector('.kamb'),hd=amb&&amb.querySelector('.khead');if(!amb||!hd)return;hd.style.fontSize='';var s=parseFloat(getComputedStyle(hd).fontSize),g=0;while(amb.scrollHeight>amb.clientHeight+1&&s>24&&g++<40){s-=4;hd.style.fontSize=s+'px';}}
+var load=document.querySelector('.kload'),vb=load&&load.querySelector('.kverb');
+function showLoad(){if(!load)return;var i=0;(function nx(){if(vb)vb.textContent=verbs[i++%verbs.length]+'…';vbT=setTimeout(nx,1500);})();load.classList.add('on');}
+function hideLoad(){if(!load)return;load.classList.remove('on');clearTimeout(vbT);}
+function refresh(){showLoad();if(++n%20===0){setTimeout(function(){location.reload();},500);return;}fetch(location.href,{cache:'no-store'}).then(function(r){return r.ok?r.text():Promise.reject();}).then(function(h){var d=new DOMParser().parseFromString(h,'text/html'),nk=d.querySelector('.k'),ck=document.querySelector('.k');if(!nk||!ck)throw 0;ck.parentNode.replaceChild(document.importNode(nk,true),ck);setTimeout(hideLoad,200);start();}).catch(function(){hideLoad();refT=setTimeout(refresh,60000);});}
+function start(){clearInterval(clkI);clearInterval(agoI);clearTimeout(refT);clock();ago();fit();clkI=setInterval(clock,15000);agoI=setInterval(ago,30000);refT=setTimeout(refresh,840000);}
+function lock(){try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(function(){});}catch(e){}}
+lock();document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')lock();});
+window.addEventListener('resize',fit);setTimeout(fit,300);
+start();
 })();`;
 
 export function renderKioskPage(c: Conditions, persona: Persona, canonical: string, qr: string): string {
@@ -829,7 +837,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     : "";
 
   const body = `
-  <div class="k">
+  <div class="k" style="--cond:${condColor}">
     <header class="ktop">
       <div><span class="kname">${place}</span><span class="kcoord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</span></div>
       <div class="kclock"><span id="clk">--:--</span><span class="kago">updated <span id="ago" data-t="${c.air_as_of ?? c.as_of}">just now</span></span></div>
@@ -846,9 +854,10 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
       <div class="kqr">${qr}<span class="kqrl">scan for this<br>on your phone</span></div>
     </footer>
   </div>
+  <div class="kload" aria-hidden="true"><div class="kspin"></div><p class="kverb">Reading the sky…</p></div>
   <script>${KIOSK_JS}</script>`;
 
-  const css = KIOSK_CSS + `\n:root{--cond:${condColor}}`;
+  const css = KIOSK_CSS;
   const desc = `${c.place ?? slug}: a live wall-display of the whole sky over this spot, self-refreshing.`;
   return shell(`${place} on a screen: mugilu`, body, css, desc, canonical, undefined, `${canonical}.png`);
 }
