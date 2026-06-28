@@ -710,8 +710,8 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 .amuted{color:var(--muted);margin:0 0 .6rem}
 .alist{list-style:none;margin:0 0 1rem;padding:0}
 .alist li{display:flex;gap:11px;align-items:flex-start;padding:7px 0;line-height:1.45}
-.alist li span{font-size:1.2rem;flex:none;width:1.6rem;text-align:center;line-height:1.3}
-.alist li .ic{margin-top:2px;color:var(--sky)}
+.alist li .ic{margin-top:2px;color:var(--sky);flex:none}
+.alist li .t{flex:1;min-width:0}
 .alist.on{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 14px}
 .builtby{display:flex;gap:15px;align-items:center;margin:2.3rem 0 0}
 .builtby>a{flex:none}.builtby img{border-radius:10px;display:block}
@@ -784,11 +784,12 @@ export function renderTerms(): string {
 
   <h2 class="ah">Sources &amp; credit</h2>
   <ul class="alist on">
-    <li>${icon("air")} <b>Air</b> - CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</li>
-    <li>${icon("heat")} <b>Heat, rain, UV, dust</b> - <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</li>
-    <li>${icon("warn")} <b>Official warnings</b> - NDMA / IMD via SACHET.</li>
-    <li>${icon("pin")} <b>Geography &amp; place names</b> - <a href="https://bharatlas.com">bharatlas</a>.</li>
-    <li>${icon("heart")} <b>Health impact</b> - years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</li>
+    <li>${icon("air")}<span class="t"><b>Air</b> — CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</span></li>
+    <li>${icon("heat")}<span class="t"><b>Heat, rain, UV, dust, wind</b> — <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
+    <li>${icon("warn")}<span class="t"><b>Official warnings</b> — NDMA / IMD via SACHET.</span></li>
+    <li>${icon("smoke")}<span class="t"><b>Fire / crop-burn smoke</b> — NASA FIRMS (VIIRS).</span></li>
+    <li>${icon("pin")}<span class="t"><b>Geography &amp; place names</b> — <a href="https://bharatlas.com">bharatlas</a>.</span></li>
+    <li>${icon("heart")}<span class="t"><b>Health impact</b> — years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
   </ul>
   <p class="alead2">Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.</p>
 
