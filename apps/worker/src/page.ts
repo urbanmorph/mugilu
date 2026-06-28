@@ -4,6 +4,7 @@ import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
 import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
+import { RISK_COLOR, BAND_COLOR } from "./palette";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().
@@ -23,16 +24,6 @@ const BAND_LABEL: Record<string, string> = {
   vpoor: "Very poor",
   severe: "Severe",
   unknown: "n/a",
-};
-
-const BAND_COLOR: Record<string, string> = {
-  good: "#16a34a",
-  satisfactory: "#84cc16",
-  moderate: "#eab308",
-  poor: "#f97316",
-  vpoor: "#dc2626",
-  severe: "#7f1d1d",
-  unknown: "#9ca3af",
 };
 
 function esc(s: string): string {
@@ -178,7 +169,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
 
 const CLOUD =
   '<svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true" style="vertical-align:-4px">' +
-  '<g fill="#0284c7"><rect x="14" y="35" width="36" height="13" rx="6.5"/>' +
+  '<g fill="var(--sky)"><rect x="14" y="35" width="36" height="13" rx="6.5"/>' +
   '<circle cx="24" cy="33" r="9"/><circle cx="37" cy="30" r="11"/><circle cx="46" cy="37" r="6.5"/></g></svg>';
 
 // GitHub mark for the footer star CTA, and the UrbanMorph brand icon inlined as
@@ -189,10 +180,10 @@ const UM_ICON =
   "data:image/webp;base64,UklGRoQDAABXRUJQVlA4WAoAAAAQAAAAQgAASgAAQUxQSGABAAABkJNtW6U5rwQcLBIQsEk+CSMBCSOBLu0vAQcZCZ+DIIEuZai2fXPiTJkiIiYAAAL/HRD4b8FP/lMx2N1RCwMal3OvzH/u4xPru1yZrXtYZfsWV+F2gd0bRO4XuV/kfp77OR4gHSBwP1sOELmf4QHCCfIBHA8QTqAn4AHsCeQE/gThvzgPfCXg2y4KqSS870KgQsH3xaTmkCoJ+FjAD7lxVxjx9mOetKCWYWsMwNePWaYpVSiINT4GeHufUtAcawpbaiwvC0x52q4aBXcDyeyn+DbTkA20iWGKaUOsMcKkVR50SgM9TFrk6oE20MPoEhnd0kIP3GUB3wdtYTSwcZpioG1iFsDcOseNwN1EqgCAXDIsYKy2kTk4/D0oYbBJHX/rI4OyGQVX+sgwpjiMd2WR4jDTpiWyw1zzLKAG0+8yK2BFq1PUYlHRYSpY2MUyoETB6tcrNaXXhU2deIF4cTg/VlA4IP4BAAAwDwCdASpDAEsAPmEqkEYkIiGhLhLpIIAMCWgAxy4m3X55/Wfx452bgrvdh4X5LpYeJF0gPMB+wHrTehb0AP2K6zf0AP1G9MH9u/go/cT0gMwl/AD9KwRtq39DJthRE7/H373TUAJXNuytPYhPi8MfLHkJV50C4PGrb5fSD4WgzSjQAPh3RT0GeeeTA4yz+jQX+ee18m/jZVpp8lpybn+Tp/c4H/9Dg1zVx+/8YsvIDz27eD4nJgnR/9mGT7GBUr+atMN5idp9vfkv/dxusODKkUfkm7dc9OORlMEkdLOWb95Mv6Sr/FT3ky/pKm868ItysJf5pVPbP2/zTP/+tG4+lPY+QR2MaFA5FKAhAphAgPngo3P448Pg3dlyT5sgQ/DC2XOncFEuTYcuTY8vnDQY0Z4F1AgRwfuAqdKLE6QHZgBK6Xw5g1byAH3cLsY1KMv/d542Q73UdTBEWLf3/Vj9Q4amKbTs1XoUXRzBWE+Atwe+00idWo9294h0q/eZjD5I1GANDkIne1SB0Qb+NiQO8cRp1I4Hxjf4gQaeaqez9KoIlJhW4Bvg1IOxIx0IuWGi3qRnpMMGvfIzDdWPHD0t8m8/yhT42IhbFj3rfFDvvfGNMr/2Mo/BWrIvf9NccHkg6U8jqDPvuT7cTvc7S2vkJcs8etluA1LbC+AAAAA=";
 
 const BASE_CSS = `
-:root{--sky:#0284c7;--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--hair:color-mix(in srgb,var(--ink) 12%,transparent)}
-@media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937}}
+:root{--sky:#0284c7;--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--warn-text:#b45309;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--hair:color-mix(in srgb,var(--ink) 12%,transparent)}
+@media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937;--warn-text:#fbbf24}}
 *{box-sizing:border-box}html,body{margin:0}
-body{font:16px/1.5 ui-sans-serif,-apple-system,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+body{font:16px/1.5 var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
 .bar{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
 .brand{font-weight:700;letter-spacing:-.02em;color:var(--ink);text-decoration:none;font-size:1.1rem}
 main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
@@ -235,7 +226,6 @@ ${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ""}
 // (not cards). Inline-SVG line icons, currentColor so the driver layer glows.
 const CONDITIONS_CSS = `
 body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--bg)),color-mix(in srgb,var(--cond) 7%,var(--bg)) 18%,var(--bg) 50%) var(--bg) no-repeat}
-.ic{width:18px;height:18px}
 .coord{font:500 .78rem/1.4 var(--mono);letter-spacing:.04em;color:var(--muted);margin:.4rem 0 0}
 .loc{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6.5vw,2.15rem);line-height:1.05;letter-spacing:-.01em;margin:.35rem 0 0}
 .when{color:var(--muted);font-size:.9rem;margin:.3rem 0 0}
@@ -301,12 +291,6 @@ function warnColor(color: string): string {
   }
 }
 
-const RISK_COLOR: Record<RiskBand, string> = {
-  low: "#16a34a",
-  moderate: "#ca8a04",
-  high: "#f97316",
-  severe: "#dc2626",
-};
 const RISK_LABEL: Record<RiskBand, string> = {
   low: "Low",
   moderate: "Moderate",
@@ -373,9 +357,9 @@ const COND_NOUN: Record<string, string> = {
 
 /** Wet-bulb survivability read: ~31 is the theoretical limit, >=28 is severe. */
 function wetBulb(wb: number): [string, string] {
-  if (wb >= 31) return ["dangerous", "#dc2626"];
-  if (wb >= 28) return ["severe", "#ea580c"];
-  if (wb >= 26) return ["caution", "#ca8a04"];
+  if (wb >= 31) return ["dangerous", RISK_COLOR.severe];
+  if (wb >= 28) return ["severe", RISK_COLOR.high];
+  if (wb >= 26) return ["caution", RISK_COLOR.moderate];
   return ["safe", "var(--muted)"];
 }
 
@@ -630,15 +614,15 @@ function relTime(iso: string): string {
 // snippet, hidden by a one-liner when the widget is itself being framed.
 const EMBED_CSS = `
 *{box-sizing:border-box}html,body{margin:0}
-:root{--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0}
+:root{--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937}}
-body{font:14px/1.5 ui-sans-serif,-apple-system,system-ui,sans-serif;color:var(--ink);background:transparent;padding:8px}
+body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;padding:8px}
 .card{display:block;text-decoration:none;color:var(--ink);background:linear-gradient(160deg,color-mix(in srgb,var(--cond) 20%,var(--card)),var(--card) 72%);border:1px solid color-mix(in srgb,var(--cond) 30%,var(--line));border-radius:16px;padding:16px 18px;max-width:460px;margin:0 auto}
 .etop{display:flex;justify-content:space-between;align-items:center;margin:0 0 .6rem}
 .eplace{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
 .ebrand{color:var(--muted);font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.3rem}
 .ebrand svg{width:15px;height:15px;vertical-align:-2px}
-.eamb{display:flex;align-items:center;gap:.5rem;font-size:1.3rem;font-weight:800;letter-spacing:-.02em;color:var(--cond);margin:0 0 .15rem}
+.eamb{display:flex;align-items:center;gap:.5rem;font-family:var(--serif);font-size:1.35rem;font-weight:600;letter-spacing:-.01em;color:var(--cond);margin:0 0 .15rem}
 .eamb .dot{width:10px;height:10px;border-radius:50%;background:var(--cond);flex:none}
 .esay{color:var(--ink);font-size:.92rem;margin:0 0 .85rem}
 .ereads{display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:.75rem}
@@ -819,8 +803,6 @@ const METHOD_CSS = `
 .mtab tr:last-child td{border-bottom:0}
 .mtab th{font:600 .74rem var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .mtab td:first-child{font-weight:600}
-.mtab td.src{color:var(--muted);font-size:.85rem}
-.ax h2{font-family:var(--serif);font-size:1.35rem;margin:1.8rem 0 .4rem}
 `;
 
 /** Glass-box methodology: how the Ambient read is computed, with the public
@@ -833,13 +815,13 @@ export function renderMethodology(): string {
   <h1 class="ahero">How the Ambient read works</h1>
   <p class="alead">mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box — the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.</p>
 
-  <h2>One read, never an average</h2>
-  <p>Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.</p>
+  <h2 class="ah">One read, never an average</h2>
+  <p class="atext">Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.</p>
 
-  <h2>For who you are</h2>
-  <p>Pick a vulnerability — asthma, older adults, children, outdoor workers, heart — and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.</p>
+  <h2 class="ah">For who you are</h2>
+  <p class="atext">Pick a vulnerability — asthma, older adults, children, outdoor workers, heart — and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.</p>
 
-  <h2>The thresholds</h2>
+  <h2 class="ah">The thresholds</h2>
   <div class="mtab-wrap">
   <table class="mtab">
   <thead><tr><th>Hazard</th><th>Caution</th><th>High</th><th>Severe</th></tr></thead>
@@ -857,7 +839,7 @@ export function renderMethodology(): string {
   </tbody>
   </table>
   </div>
-  <p class="alead" style="font-size:.95rem">Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open <a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>, and every layer's source and licence is on <a href="/terms">terms &amp; attribution</a>.</p>
+  <p class="atext">Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open <a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>, and every layer's source and licence is on <a href="/terms">terms &amp; attribution</a>.</p>
 
   <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
   <p class="aback"><a href="/">← back to mugilu</a></p>
@@ -928,7 +910,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg
 .shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:42ch}.shint b{color:var(--ink);font-weight:600}
 .nearme{display:inline-flex;align-items:center;gap:.4rem;font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;margin:0 0 1rem}
 .nearme .ic{width:16px;height:16px;color:var(--sky)}
-.notice{color:#b45309;font-size:.9rem;margin:.2rem 0 1rem}
+.notice{color:var(--warn-text);font-size:.9rem;margin:.2rem 0 1rem}
 .cities{color:var(--muted);font-size:.9rem;line-height:1.9}.cities a{color:var(--sky);text-decoration:none}
 .yourplaces{margin:0 0 1.2rem}
 .yourplaces h2{margin:0 0 .4rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
