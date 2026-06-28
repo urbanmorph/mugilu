@@ -226,7 +226,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 <body>
 <header class="bar"><a class="brand" href="/">${CLOUD} mugilu</a></header>
 <main>${body}</main>
-<footer class="foot"><a href="/about">about</a> · <a href="/methodology">how it works</a> · <a href="/about#build">build on it</a> · <a href="/terms">terms</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
+<footer class="foot"><a href="/about">about</a> · <a href="/methodology">how it works</a> · <a href="/about#build">build on it</a> · <a href="/terms">terms</a> · <a href="https://github.com/urbanmorph/mugilu">code</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
 <script>
 (function(){function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
 </script>
