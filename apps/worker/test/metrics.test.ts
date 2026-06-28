@@ -1,7 +1,55 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { recordLookup, recordReferrer, topPlaces, counters } from "../src/metrics";
+import { recordLookup, recordReferrer, recordEvent, topPlaces, counters } from "../src/metrics";
 import type { Env } from "../src/index";
+import type { Conditions } from "../src/types";
+
+// Minimal conditions at a real coord (Ludhiana → state Punjab via stateAt).
+function cond(): Conditions {
+  return {
+    location: { lat: 30.9, lon: 75.85 },
+    as_of: "now",
+    air: {
+      aqi: 104,
+      band: "moderate",
+      pollutants: {},
+      yll: null,
+      station: { id: "x", name: "x", city: "x", distance_km: 1 },
+      source: "cpcb",
+    },
+    heat: { apparent_c: 38, source: "om" },
+    rain: null,
+    uv: null,
+    dust: null,
+    wind: null,
+    visibility: null,
+    smoke: null,
+    attribution: "",
+    disclaimer: "",
+  } as unknown as Conditions;
+}
+
+test("recordEvent: writes anonymous dimensions to Analytics Engine (format/persona/region)", () => {
+  let captured: { blobs?: unknown[]; doubles?: unknown[]; indexes?: unknown[] } | null = null;
+  const env = { EVENTS: { writeDataPoint: (e: typeof captured) => (captured = e) } } as unknown as Env;
+  recordEvent(env, cond(), "asthma", "json");
+  assert.equal(captured!.blobs![0], "json"); // format
+  assert.equal(captured!.blobs![1], "asthma"); // persona
+  assert.equal(captured!.blobs![4], "Punjab"); // region from stateAt — no precise coord, no IP
+  assert.equal(captured!.indexes![0], "json");
+});
+
+test("recordEvent: no-op when the binding is absent, and best-effort on failure", () => {
+  assert.doesNotThrow(() => recordEvent({} as unknown as Env, cond(), "everyone", "html")); // no EVENTS binding
+  const bad = {
+    EVENTS: {
+      writeDataPoint: () => {
+        throw new Error("ae down");
+      },
+    },
+  } as unknown as Env;
+  assert.doesNotThrow(() => recordEvent(bad, cond(), "everyone", "html"));
+});
 
 function req(headers: Record<string, string> = {}): Request {
   return { headers: { get: (k: string) => headers[k.toLowerCase()] ?? null } } as unknown as Request;

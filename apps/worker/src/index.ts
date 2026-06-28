@@ -25,7 +25,7 @@ import { collectFires, loadFires } from "./firms";
 import { nationalHighlights, worstAirStation } from "./highlights";
 import type { NationalHighlights } from "./highlights";
 import { stateAt } from "./place";
-import { recordLookup, recordReferrer, topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
+import { recordLookup, recordReferrer, recordEvent, topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
@@ -39,6 +39,8 @@ export interface Env {
   FIRMS_MAP_KEY?: string;
   /** First-party, aggregate usage counters (D1). No IP, no per-user data. */
   METRICS: D1Database;
+  /** Anonymous behaviour event stream (Analytics Engine). No IP, no user id. */
+  EVENTS?: AnalyticsEngineDataset;
 }
 
 /** Standard cached, CORS-open API response for a given body + content-type. */
@@ -253,6 +255,7 @@ export default {
       ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html"));
       // API formats (.json/.md/.png) are a "build on it" surface — capture who.
       if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
+      recordEvent(env, conditions, persona, ext ?? "html"); // anonymous behaviour event
       if (ext === "png") {
         return renderConditionsOg(conditions, persona);
       }

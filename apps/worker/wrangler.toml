@@ -31,6 +31,13 @@ binding = "METRICS"
 database_name = "mugilu_metrics"
 database_id = "fac62f6c-2641-4ba1-a1d1-39494ce5dee7"
 
+# Behaviour event stream (anonymous, no IP/user): one sampled data point per /c
+# lookup, with format/persona/driver/band/state dimensions. Queried via the AE
+# SQL API (team-side). The dataset auto-creates on first write.
+[[analytics_engine_datasets]]
+binding = "EVENTS"
+dataset = "mugilu_events"
+
 [vars]
 OAQ_BROKER_URL = "https://us-central1-oaqdms.cloudfunctions.net/brokerData"
 OAQ_BASE_URL = "https://oaq.notf.in/v1"

@@ -1,4 +1,8 @@
 import type { Env } from "./index";
+import type { Conditions } from "./types";
+import { ambientRisk } from "./score";
+import type { Persona } from "./score";
+import { stateAt } from "./place";
 
 // First-party, aggregate usage metrics (D1). The whole point is to learn what
 // India looks up and who builds on mugilu — WITHOUT tracking people: no IP, no
@@ -118,6 +122,26 @@ export async function topReferrers(env: Env, limit = 25): Promise<Referrer[]> {
     return r.results ?? [];
   } catch {
     return [];
+  }
+}
+
+/** One anonymous behaviour event per /c lookup — dimensions only (format, persona,
+ *  the Ambient driver + band, region/state, air kind), no IP and no user id. Goes
+ *  to Analytics Engine for time-series + breakdowns (queried via the AE SQL API).
+ *  Synchronous + best-effort; the binding is optional. */
+export function recordEvent(env: Env, c: Conditions, persona: Persona, format: string): void {
+  if (!env.EVENTS) return;
+  try {
+    const risk = ambientRisk(c, persona);
+    const state = stateAt(c.location.lat, c.location.lon) ?? "";
+    const airKind = c.air ? (c.air.station ? "measured" : "modelled") : "none";
+    env.EVENTS.writeDataPoint({
+      blobs: [format, persona, risk.driver.toLowerCase(), risk.band, state, airKind],
+      doubles: [risk.level, c.air?.aqi ?? -1, c.heat?.apparent_c ?? -999],
+      indexes: [format],
+    });
+  } catch {
+    // best-effort: events must never affect a response
   }
 }
 
