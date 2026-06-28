@@ -1,6 +1,7 @@
 import type { Env } from "./index";
 import { recordMcpClient } from "./metrics";
 import { TOOLS, callTool } from "./mcptools";
+import { RESOURCES, readResource, PROMPTS, getPrompt } from "./mcpcontent";
 
 // mugilu's MCP server — a hand-rolled JSON-RPC 2.0 endpoint over Streamable HTTP
 // (MCP 2025-06-18), stateless (fits Workers). Phase 1: the skeleton — initialize,
@@ -93,9 +94,19 @@ export async function handleMcp(req: Request, env: Env, ctx: ExecutionContext): 
         }
       }
       case "resources/list":
-        return ok(id, { resources: [] }); // Phase 3
+        return ok(id, { resources: RESOURCES });
+      case "resources/read": {
+        const uri = typeof params.uri === "string" ? params.uri : "";
+        const res = readResource(uri);
+        return res ? ok(id, res) : err(id, INVALID_PARAMS, `Unknown resource: ${uri}`);
+      }
       case "prompts/list":
-        return ok(id, { prompts: [] }); // Phase 3
+        return ok(id, { prompts: PROMPTS });
+      case "prompts/get": {
+        const name = typeof params.name === "string" ? params.name : "";
+        const got = getPrompt(name, (params.arguments as Record<string, unknown>) ?? {});
+        return got ? ok(id, got) : err(id, INVALID_PARAMS, `Unknown prompt: ${name}`);
+      }
       default:
         return err(id, METHOD_NOT_FOUND, `Method not found: ${method}`);
     }

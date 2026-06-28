@@ -74,14 +74,46 @@ test("mcp OPTIONS: CORS preflight ok", async () => {
   assert.equal(res.headers.get("access-control-allow-origin"), "*");
 });
 
-test("mcp resources/prompts lists are present but empty (Phase 3 fills them)", async () => {
-  for (const [m, key] of [
-    ["resources/list", "resources"],
-    ["prompts/list", "prompts"],
-  ]) {
-    const j = (await (await call({ jsonrpc: "2.0", id: 9, method: m })).json()) as any;
-    assert.deepEqual(j.result[key], []);
-  }
+test("mcp resources/list + read: methodology / license / schema", async () => {
+  const list = (await (await call({ jsonrpc: "2.0", id: 20, method: "resources/list" })).json()) as any;
+  const uris = list.result.resources.map((r: any) => r.uri).sort();
+  assert.deepEqual(uris, ["mugilu://license", "mugilu://methodology", "mugilu://schema"]);
+  const read = (await (
+    await call({ jsonrpc: "2.0", id: 21, method: "resources/read", params: { uri: "mugilu://methodology" } })
+  ).json()) as any;
+  assert.equal(read.result.contents[0].uri, "mugilu://methodology");
+  assert.match(read.result.contents[0].text, /thresholds/i);
+});
+
+test("mcp resources/read: unknown uri → invalid params (-32602)", async () => {
+  const j = (await (
+    await call({ jsonrpc: "2.0", id: 22, method: "resources/read", params: { uri: "mugilu://nope" } })
+  ).json()) as any;
+  assert.equal(j.error.code, -32602);
+});
+
+test("mcp prompts/list + get: the templated workflow guides the tools", async () => {
+  const list = (await (await call({ jsonrpc: "2.0", id: 23, method: "prompts/list" })).json()) as any;
+  const names = list.result.prompts.map((p: any) => p.name).sort();
+  assert.deepEqual(names, ["safe-to-go-out", "sky-check", "warnings-digest", "worst-air-now"]);
+  const got = (await (
+    await call({
+      jsonrpc: "2.0",
+      id: 24,
+      method: "prompts/get",
+      params: { name: "sky-check", arguments: { place: "Delhi" } },
+    })
+  ).json()) as any;
+  assert.equal(got.result.messages[0].role, "user");
+  assert.match(got.result.messages[0].content.text, /Delhi/);
+  assert.match(got.result.messages[0].content.text, /conditions_at/);
+});
+
+test("mcp prompts/get: unknown prompt → invalid params (-32602)", async () => {
+  const j = (await (
+    await call({ jsonrpc: "2.0", id: 25, method: "prompts/get", params: { name: "nope", arguments: {} } })
+  ).json()) as any;
+  assert.equal(j.error.code, -32602);
 });
 
 function callEnv(body: unknown, mockEnv: Env): Promise<Response> {
