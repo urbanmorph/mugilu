@@ -204,7 +204,7 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 const DEFAULT_DESC =
   "mugilu — the open sky of India, one coordinate at a time. Air, heat, rain, UV, dust and official warnings for any point, with the single worst hazard named for you.";
 
-function shell(title: string, body: string, css: string, desc: string = DEFAULT_DESC): string {
+function shell(title: string, body: string, css: string, desc: string = DEFAULT_DESC, canonical?: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -215,6 +215,7 @@ function shell(title: string, body: string, css: string, desc: string = DEFAULT_
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>${title}</title>
 <meta name="description" content="${esc(desc)}">
+${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ""}
 <style>${BASE_CSS}${css}</style>
 </head>
 <body>
@@ -415,7 +416,7 @@ localStorage.setItem(K,JSON.stringify(f.concat(r)));
 }catch(e){}})();
 </script>`;
 
-export function renderConditionsPage(c: Conditions, persona: Persona = "everyone"): string {
+export function renderConditionsPage(c: Conditions, persona: Persona = "everyone", canonical?: string): string {
   const risk = ambientRisk(c, persona);
   const also = personaAlso(risk);
   const slug = `${c.location.lat},${c.location.lon}`;
@@ -599,7 +600,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
   const desc = `${c.place ?? stationCity ?? slug}: ${ambientMeaning(risk)} Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.`;
-  return shell(`${place}: mugilu`, body + PLACE_RECORDER, css, desc);
+  return shell(`${place}: mugilu`, body + PLACE_RECORDER, css, desc, canonical);
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun" — the time travels on embeds/PNGs. */

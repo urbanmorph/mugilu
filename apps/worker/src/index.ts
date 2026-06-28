@@ -27,6 +27,8 @@ import type { NationalHighlights } from "./highlights";
 import { stateAt } from "./place";
 import { recordLookup, recordReferrer, recordEvent, topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
+import type { Persona } from "./score";
+import { placeBySlug, slugForName } from "./slugs";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
 export interface Env {
@@ -152,7 +154,11 @@ export default {
       // Apply the alias (old names + native-script city names) so e.g. बेंगलुरु or
       // சென்னை resolves via the canonical English name to the city centre, not the
       // airport the geocoder sometimes returns for a native-script query.
-      const hit = await geocode(applyAlias(q));
+      const aliased = applyAlias(q);
+      // If it names a known place, prefer the canonical /c/{slug} (keyword URL).
+      const slug = slugForName(aliased) ?? slugForName(q);
+      if (slug) return Response.redirect(`${url.origin}/c/${slug}`, 302);
+      const hit = await geocode(aliased);
       if (!hit) {
         return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
       }
@@ -240,33 +246,65 @@ export default {
       );
     }
 
-    // Conditions at a coordinate (A4): nearest-station air + Open-Meteo
-    // heat/rain/uv/dust, assembled into the normalized schema.
-    // /c/{lat},{lon}.{json,md}
+    // Shared renderer for both /c/{lat},{lon} and the named /c/{slug}. Builds the
+    // conditions, records metrics, and serves the requested format. `canonicalPath`
+    // is the URL this page should be indexed as (the named slug, or the coordinate).
+    async function serveConditions(
+      lat: number,
+      lon: number,
+      ext: string | undefined,
+      persona: Persona,
+      canonicalPath: string,
+      placeName?: string,
+    ): Promise<Response> {
+      const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
+      const conditions = await buildConditions(snap, lat, lon, fires);
+      // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
+      // ward the seed coordinate happens to fall in) — drives title/h1/meta/SEO.
+      if (placeName) conditions.place = placeName;
+      ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html"));
+      // API formats (.json/.md/.png) are a "build on it" surface — capture who.
+      if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
+      recordEvent(env, conditions, persona, ext ?? "html"); // anonymous behaviour event
+      if (ext === "png") return renderConditionsOg(conditions, persona);
+      if (ext === "json")
+        return cachedResponse(
+          JSON.stringify(serializeConditionsV1(conditions, persona), null, 2),
+          "application/json; charset=utf-8",
+        );
+      if (ext === "md")
+        return cachedResponse(renderConditionsMarkdown(conditions, persona), "text/markdown; charset=utf-8");
+      return cachedResponse(
+        renderConditionsPage(conditions, persona, `${SITE_URL}${canonicalPath}`),
+        "text/html; charset=utf-8",
+      );
+    }
+
+    // Conditions at a coordinate: /c/{lat},{lon}.{json,md,png}
     const condMatch = url.pathname.match(/^\/c\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\.(json|md|png))?$/);
     if (condMatch) {
       const [, latStr, lonStr, ext] = condMatch;
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest("coordinates out of range");
-      const { lat, lon } = coords;
-      const persona = parsePersona(url.searchParams.get("as"));
-      const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
-      const conditions = await buildConditions(snap, lat, lon, fires);
-      ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html"));
-      // API formats (.json/.md/.png) are a "build on it" surface — capture who.
-      if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
-      recordEvent(env, conditions, persona, ext ?? "html"); // anonymous behaviour event
-      if (ext === "png") {
-        return renderConditionsOg(conditions, persona);
-      }
-      if (ext === "json") {
-        const body = serializeConditionsV1(conditions, persona);
-        return cachedResponse(JSON.stringify(body, null, 2), "application/json; charset=utf-8");
-      }
-      if (ext === "md") {
-        return cachedResponse(renderConditionsMarkdown(conditions, persona), "text/markdown; charset=utf-8");
-      }
-      return cachedResponse(renderConditionsPage(conditions, persona), "text/html; charset=utf-8");
+      return serveConditions(
+        coords.lat,
+        coords.lon,
+        ext,
+        parsePersona(url.searchParams.get("as")),
+        `/c/${latStr},${lonStr}`,
+      );
+    }
+
+    // Named place: /c/{slug}.{json,md,png} (e.g. /c/lucknow) — keyword URLs for
+    // search. Resolve the slug to its centroid and serve the same conditions.
+    const slugMatch = url.pathname.match(/^\/c\/([a-z][a-z0-9-]*)(?:\.(json|md|png))?$/);
+    if (slugMatch) {
+      const [, slug, ext] = slugMatch;
+      const place = placeBySlug(slug);
+      if (!place)
+        return new Response(renderNotFound(), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
+      const label = place.state ? `${place.name}, ${place.state}` : place.name;
+      return serveConditions(place.lat, place.lon, ext, parsePersona(url.searchParams.get("as")), `/c/${slug}`, label);
     }
 
     // Embeddable conditions widget (the "build on it" surface): a compact card

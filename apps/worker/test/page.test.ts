@@ -52,6 +52,11 @@ test("renderConditionsPage: records the visit into the browser 'Your places' sto
   assert.match(html, /h1\.loc/); // reads the reverse-geocoded label off the page
 });
 
+test("renderConditionsPage: emits a canonical link when given one (named-URL SEO)", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru");
+  assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live\/c\/bengaluru">/);
+});
+
 test("renderConditionsPage: has a meta description (SEO) naming the place", () => {
   const html = renderConditionsPage(conditions());
   assert.match(html, /<meta name="description" content="[^"]+">/);

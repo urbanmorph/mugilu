@@ -1,4 +1,4 @@
-import { CITIES } from "./page";
+import { allSlugPlaces } from "./slugs";
 
 // Discoverability + agent front-door files: plain-text/XML siblings to the HTML
 // pages, so people, search engines, and LLM crawlers all find the same surface.
@@ -60,7 +60,8 @@ Health impact: AQLI methodology (U Chicago EPIC). Code: MIT.
 
 /** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite). */
 export function sitemapXml(siteUrl: string): string {
-  const paths = ["/", "/about", "/terms", "/warnings", ...CITIES.map((c) => `/c/${c.lat},${c.lon}`)];
+  // Static pages + a named /c/{slug} page per district (keyword URLs that index).
+  const paths = ["/", "/about", "/terms", "/warnings", ...allSlugPlaces().map((p) => `/c/${p.slug}`)];
   const urls = paths.map((p) => `  <url><loc>${siteUrl}${p}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
