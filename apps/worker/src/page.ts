@@ -761,6 +761,10 @@ html,body{height:100%;overflow:hidden;background:#080d18}
   .khead{font-size:10vmin}.ksay{font-size:4.6vmin;max-width:24ch}
   .ktiles{flex-wrap:wrap;gap:1.6vmin}.kt{flex:1 1 42%;padding:1.8vmin 2vmin}.kt-n{font-size:6vmin}
   .kqr svg{width:15vmin;height:15vmin}
+}
+@media (orientation:portrait) and (min-aspect-ratio:2/3){
+  .kt{padding:1.3vmin 1.7vmin}.kt-n{font-size:4.6vmin}.ktiles{gap:1.3vmin}
+  .kqr svg{width:12vmin;height:12vmin}
 }`;
 
 const KIOSK_JS = `(function(){
