@@ -23,6 +23,13 @@ export const RESOURCES = [
     description: "The shape of a conditions response: layers, units, kinds, and the ambient object.",
     mimeType: "text/markdown",
   },
+  {
+    uri: "mugilu://compose",
+    name: "compose",
+    title: "Composing with geography (bharatlas)",
+    description: "How to answer questions that need a place/feature AND its sky — pair mugilu with the bharatlas MCP.",
+    mimeType: "text/markdown",
+  },
 ];
 
 const CONTENT: Record<string, string> = {
@@ -92,6 +99,19 @@ A conditions response (the conditions_at structuredContent, or /c/{lat},{lon}.js
 { risk_band: low|moderate|high|severe, level (0-3), driver (the worst hazard), persona, summary (plain words), persona_also, hazards[] }
 
 Plus "attribution" and "disclaimer" strings — always surface them. Live example: https://mugilu.live/c/12.97,77.59.json`,
+
+  "mugilu://compose": `# Composing mugilu with bharatlas
+
+mugilu tells you what the sky is doing over a coordinate. It does NOT resolve sub-city wards, hospitals, forests, rivers, highways, or administrative/zone boundaries. The bharatlas MCP (India's open geo data) does exactly that. Pair them: bharatlas finds the place or feature and its coordinate, mugilu gives the sky over it.
+
+## Examples
+- "Air in Indiranagar ward, Bengaluru" -> bharatlas: the ward centroid -> mugilu conditions_at.
+- "Heat over Bandipur sanctuary now" -> bharatlas: the forest polygon -> mugilu.
+- "Conditions across every district of Punjab" -> bharatlas: enumerate districts -> mugilu per district.
+- "Fog / visibility over NH-44 tonight" -> bharatlas: the highway -> mugilu.
+- "Air near hospitals in Delhi" -> bharatlas: hospital points -> mugilu per point.
+
+mugilu resolves cities, districts and air-monitoring stations itself (search_place); reach for bharatlas for finer or other geography. bharatlas: https://bharatlas.com`,
 };
 
 export interface ResourceRead {

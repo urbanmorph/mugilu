@@ -77,7 +77,7 @@ test("mcp OPTIONS: CORS preflight ok", async () => {
 test("mcp resources/list + read: methodology / license / schema", async () => {
   const list = (await (await call({ jsonrpc: "2.0", id: 20, method: "resources/list" })).json()) as any;
   const uris = list.result.resources.map((r: any) => r.uri).sort();
-  assert.deepEqual(uris, ["mugilu://license", "mugilu://methodology", "mugilu://schema"]);
+  assert.deepEqual(uris, ["mugilu://compose", "mugilu://license", "mugilu://methodology", "mugilu://schema"]);
   const read = (await (
     await call({ jsonrpc: "2.0", id: 21, method: "resources/read", params: { uri: "mugilu://methodology" } })
   ).json()) as any;

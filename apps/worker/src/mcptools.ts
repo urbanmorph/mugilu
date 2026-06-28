@@ -27,7 +27,7 @@ export const TOOLS = [
   {
     name: "conditions_at",
     description:
-      "What the sky is doing at a place in India RIGHT NOW (not a forecast): air quality (CPCB AQI + pollutants + AQLI years-of-life-lost), heat (feels-like, wet-bulb, WBGT), cold, wind, fog/visibility, dust, fire-smoke, UV, and any official NDMA warning over that spot — plus an Ambient read naming the single worst hazard. Pass `persona` to weight it for a vulnerable person. Surface the returned `attribution` and `disclaimer`.",
+      "What the sky is doing at a place in India RIGHT NOW (not a forecast): air quality (CPCB AQI + pollutants + AQLI years-of-life-lost), heat (feels-like, wet-bulb, WBGT), cold, wind, fog/visibility, dust, fire-smoke, UV, and any official NDMA warning over that spot — plus an Ambient read naming the single worst hazard. Pass `persona` to weight it for a vulnerable person. To target a specific ward, hospital, forest, river or boundary, resolve it with a geo source (e.g. the bharatlas MCP) first, then pass the coordinate here. Surface the returned `attribution` and `disclaimer`.",
     inputSchema: {
       type: "object",
       properties: {

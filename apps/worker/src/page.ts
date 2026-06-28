@@ -226,7 +226,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 <body>
 <header class="bar"><a class="brand" href="/">${CLOUD} mugilu</a></header>
 <main>${body}</main>
-<footer class="foot"><a href="/about">about</a> · <a href="/methodology">how it works</a> · <a href="/terms">terms</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
+<footer class="foot"><a href="/about">about</a> · <a href="/methodology">how it works</a> · <a href="/about#build">build on it</a> · <a href="/terms">terms</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
 <script>
 (function(){function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
 </script>
@@ -771,9 +771,14 @@ export function renderAbout(): string {
   <p class="ah">${icon("users")}<span>For people</span></p>
   <p class="atext">Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.</p>
 
-  <p class="ah">${icon("code")}<span>Build on it</span></p>
+  <p class="ah" id="build">${icon("code")}<span>Build on it</span></p>
   <p class="atext">mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.</p>
-  <p class="abuild">Today, every page has a JSON and a Markdown twin. Next: a documented API and an MCP server, so apps and AI assistants can ask "what is the sky doing here?" directly. This section will grow as those land.</p>
+  <ul class="alist">
+    <li>${icon("code")}<span class="t"><b>For AI agents</b> — an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
+    <li>${icon("layers")}<span class="t"><b>For developers</b> — a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
+    <li>${icon("pin")}<span class="t"><b>Embed it</b> — a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
+  </ul>
+  <p class="abuild">Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.</p>
 
   <p class="ah">${icon("layers")}<span>Where it comes from</span></p>
   <p class="atext">mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: <b>CPCB</b> and <b>OpenAQ</b> for air, <b>Open-Meteo</b> for weather, <b>NDMA / IMD</b> (via SACHET) for warnings, and <b>bharatlas</b> for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.</p>
