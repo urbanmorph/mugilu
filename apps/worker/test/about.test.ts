@@ -1,6 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderAbout } from "../src/page";
+import { renderAbout, renderMethodology } from "../src/page";
+
+test("renderMethodology: glass-box thresholds page with named sources", () => {
+  const html = renderMethodology();
+  assert.match(html, /^<!doctype html>/i);
+  assert.match(html, /Ambient/);
+  assert.match(html, /CPCB/); // a source is named
+  assert.match(html, /WBGT/);
+  assert.match(html, /301\+/); // the air severe threshold is public
+  assert.match(html, /not for medical/); // the disclaimer rides along
+  assert.match(html, /How it works: mugilu/); // page title
+});
 
 test("renderAbout: origin story + dual nature (people + infrastructure), credited", () => {
   const html = renderAbout();

@@ -14,6 +14,7 @@ import {
   renderNotFound,
   renderEmbed,
   renderWarningsPage,
+  renderMethodology,
 } from "./page";
 import { robotsTxt, llmsTxt, sitemapXml } from "./meta";
 import { geocode, geocodeList } from "./geocode";
@@ -78,6 +79,11 @@ export default {
 
     if (url.pathname === "/about") {
       return cachedResponse(renderAbout(), "text/html; charset=utf-8");
+    }
+
+    // Glass-box methodology: how the Ambient read + thresholds work.
+    if (url.pathname === "/methodology") {
+      return cachedResponse(renderMethodology(), "text/html; charset=utf-8");
     }
 
     // Terms & attribution (the disclaimer in every API response points here).
@@ -262,6 +268,14 @@ export default {
       // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
       // ward the seed coordinate happens to fall in) — drives title/h1/meta/SEO.
       if (placeName) conditions.place = placeName;
+      // Canonical: the slug for a named page; for a coordinate page that lands on a
+      // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
+      // with /c/lucknow for the same place. Arbitrary points stay self-canonical.
+      let canonical = `${SITE_URL}${canonicalPath}`;
+      if (!placeName && conditions.place) {
+        const s = slugForName(conditions.place.split(",")[0]);
+        if (s) canonical = `${SITE_URL}/c/${s}`;
+      }
       ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html"));
       // API formats (.json/.md/.png) are a "build on it" surface — capture who.
       if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
@@ -274,10 +288,7 @@ export default {
         );
       if (ext === "md")
         return cachedResponse(renderConditionsMarkdown(conditions, persona), "text/markdown; charset=utf-8");
-      return cachedResponse(
-        renderConditionsPage(conditions, persona, `${SITE_URL}${canonicalPath}`),
-        "text/html; charset=utf-8",
-      );
+      return cachedResponse(renderConditionsPage(conditions, persona, canonical), "text/html; charset=utf-8");
     }
 
     // Conditions at a coordinate: /c/{lat},{lon}.{json,md,png}

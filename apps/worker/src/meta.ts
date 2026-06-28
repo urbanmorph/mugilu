@@ -38,6 +38,7 @@ export function llmsTxt(siteUrl: string): string {
 - Per-station: ${siteUrl}/s/{provider}/{id}.json  and  .md
 - Attribution: add ?ref=your-app to any API or /embed URL to identify your app or site (aggregate, domain-level; helps us see who builds on mugilu)
 - About: ${siteUrl}/about
+- Methodology (the Ambient thresholds, glass-box): ${siteUrl}/methodology
 - Terms and attribution: ${siteUrl}/terms
 
 ## What a conditions response carries
@@ -61,7 +62,7 @@ Health impact: AQLI methodology (U Chicago EPIC). Code: MIT.
 /** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite). */
 export function sitemapXml(siteUrl: string): string {
   // Static pages + a named /c/{slug} page per district (keyword URLs that index).
-  const paths = ["/", "/about", "/terms", "/warnings", ...allSlugPlaces().map((p) => `/c/${p.slug}`)];
+  const paths = ["/", "/about", "/methodology", "/terms", "/warnings", ...allSlugPlaces().map((p) => `/c/${p.slug}`)];
   const urls = paths.map((p) => `  <url><loc>${siteUrl}${p}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

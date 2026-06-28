@@ -221,7 +221,7 @@ ${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ""}
 <body>
 <header class="bar"><a class="brand" href="/">${CLOUD} mugilu</a></header>
 <main>${body}</main>
-<footer class="foot"><a href="/about">about</a> · <a href="/terms">terms</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
+<footer class="foot"><a href="/about">about</a> · <a href="/methodology">how it works</a> · <a href="/terms">terms</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
 <script>
 (function(){function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
 </script>
@@ -809,6 +809,64 @@ export function renderNotFound(): string {
   <p class="alead">That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate like <a href="/c/12.97,77.59">/c/12.97,77.59</a>.</p>
   <p class="aback"><a href="/">← back to mugilu</a></p>`;
   return shell("Not found: mugilu", body, ABOUT_CSS);
+}
+
+const METHOD_CSS = `
+.mtab-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.6rem 0 1.2rem;border:1px solid var(--hair);border-radius:8px}
+.mtab{width:100%;border-collapse:collapse;font-size:.9rem}
+.mtab th,.mtab td{text-align:left;padding:.5rem .65rem;border-bottom:1px solid var(--hair);vertical-align:top}
+.mtab tr:last-child td{border-bottom:0}
+.mtab th{font:600 .74rem var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.mtab td:first-child{font-weight:600}
+.mtab td.src{color:var(--muted);font-size:.85rem}
+.ax h2{font-family:var(--serif);font-size:1.35rem;margin:1.8rem 0 .4rem}
+`;
+
+/** Glass-box methodology: how the Ambient read is computed, with the public
+ *  thresholds (the "Algorithmic transparency" PDGI commitment, made auditable). */
+export function renderMethodology(): string {
+  const row = (h: string, c1: string, c2: string, c3: string) =>
+    `<tr><td>${h}</td><td>${c1}</td><td>${c2}</td><td>${c3}</td></tr>`;
+  const body = `
+  <article class="ax">
+  <h1 class="ahero">How the Ambient read works</h1>
+  <p class="alead">mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box — the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.</p>
+
+  <h2>One read, never an average</h2>
+  <p>Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.</p>
+
+  <h2>For who you are</h2>
+  <p>Pick a vulnerability — asthma, older adults, children, outdoor workers, heart — and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.</p>
+
+  <h2>The thresholds</h2>
+  <div class="mtab-wrap">
+  <table class="mtab">
+  <thead><tr><th>Hazard</th><th>Caution</th><th>High</th><th>Severe</th></tr></thead>
+  <tbody>
+  ${row("Air (AQI)", "101–200", "201–300", "301+")}
+  ${row("Heat (feels-like)", "35°", "40°", "45°")}
+  ${row("Heat (wet-bulb)", "26°", "28°", "31°")}
+  ${row("Heat (WBGT)", "30°", "32°", "35°")}
+  ${row("Cold (feels-like)", "≤10°", "≤5°", "≤0°")}
+  ${row("Wind (gusts, km/h)", "40", "62", "88")}
+  ${row("Fog (visibility, m)", "&lt;1000", "&lt;500", "&lt;200")}
+  ${row("Smoke (fires &lt;100 km)", "3+", "25+", "60+")}
+  ${row("UV (index)", "6–10", "—", "11+")}
+  ${row("Dust (µg/m³)", "80", "150", "500")}
+  </tbody>
+  </table>
+  </div>
+  <p class="alead" style="font-size:.95rem">Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open <a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>, and every layer's source and licence is on <a href="/terms">terms &amp; attribution</a>.</p>
+
+  <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
+  <p class="aback"><a href="/">← back to mugilu</a></p>
+  </article>`;
+  return shell(
+    "How it works: mugilu",
+    body,
+    ABOUT_CSS + METHOD_CSS,
+    "How mugilu's Ambient read is computed — the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
+  );
 }
 
 const WLIST_CSS = `

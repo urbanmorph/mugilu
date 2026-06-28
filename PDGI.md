@@ -25,12 +25,12 @@ MIT code, and open data only: mugilu draws solely on free/open upstreams — CPC
 Evidence: [LICENSE](./LICENSE), [/terms](https://mugilu.live/terms), the source list in [/about](https://mugilu.live/about).
 
 ### Privacy — ✅
-No third-party analytics, no tracking, no ad tech, no accounts, no email, no personal data collected. "Use my location" runs entirely in your browser (the W3C Geolocation API) and is never stored or tied to a person; a lookup is just a coordinate in a URL you chose to open.
-Evidence: the pages ship no analytics or third-party scripts; the client-side-only geolocation in the home page source.
+No third-party analytics, no tracking scripts, no ad tech, no accounts, no email, no personal data. The first-party usage metrics we keep — to improve the service, not to sell — are aggregate and privacy-preserving: coordinates rounded to a ~11 km grid (a demand heatmap, never a trail), no IP, no cookies, no per-user records, and no client-side beacon (everything is server-side). "Use my location" runs entirely in your browser (W3C Geolocation) and is never stored or tied to a person; a lookup is just a coordinate in a URL you chose to open.
+Evidence: the pages ship no analytics or third-party scripts; first-party metrics are server-side and rounded (`apps/worker/src/metrics.ts`); client-side-only geolocation in the home page source.
 
 ### Built to be built on (cooperativism for infrastructure) — 🟡
 mugilu's reason to exist is to be infrastructure others build on: the same readings come as open, machine-readable data, an embeddable widget (`/embed/{lat},{lon}`), and a timestamped snapshot image (`/c/{lat},{lon}.png`) — so anyone can put the whole sky behind their own map, story, dashboard or alert, credited, with one line of HTML. It is not a contribution platform in the bharatlas sense (you don't publish your own data here); the cooperativism is in lowering the floor for everyone else's tools.
-Direction: the embed widget and snapshot image ship today; still to come are a documented API and an MCP server so apps and AI agents can query the sky directly. Tracked in [/about](https://mugilu.live/about) ("Build on it").
+Direction: the embed widget, the snapshot image, and a versioned, self-describing JSON contract (v1 — `schema`/`version`, a `units` map, per-layer provenance) ship today, with a `?ref=` attribution hook for callers; still to come is an MCP server so AI agents can query the sky directly, plus a documented OpenAPI spec. Tracked in [/about](https://mugilu.live/about) ("Build on it").
 
 ### Humans in the loop (AI does not cut people out) — 🟡
 The machine-readable rights signals are already here: the source, attribution and disclaimer travel inside every JSON and Markdown response by design, so an agent that drops the wrapper still receives the credit and the limits. What's missing is the formal layer: an MCP server, schema.org `creditText`/`usageInfo` on the pages, and a usage stanza in `robots.txt`.
@@ -44,9 +44,9 @@ Direction: keep the disclaimer and the official-source signpost on every reading
 Place search now works in Indian scripts — typing बेंगलुरु / ಬೆಂಗಳೂರು / சென்னை finds your spot — so the front door is no longer English-only. But the interface itself (labels, the Ambient read) is still English; full vernacular access is not built.
 Direction: localise the UI (path-prefixed /hi, /kn… with a shared string table and hreflang), and conversational access in any Indian language through the planned AI/MCP layer (ask in any language, answer from the canonical data).
 
-### Algorithmic transparency — 🟡
-Unlike a pure catalog, mugilu runs one algorithm that interprets *for* a person: the Ambient read, which names the single worst hazard and weights it by a chosen vulnerability (asthma, older adults, children, outdoor workers, heart condition). It is deliberately glass-box — the thresholds are public and come from CPCB, NDMA, WHO and AQLI; the persona is a toggle the user picks (never inferred or tracked); and the output is labelled informational, not advice. No profiling, no ranking of people.
-Direction: publish a plain-language methodology page for the Ambient thresholds so the judgement is fully auditable, and keep the persona user-selected.
+### Algorithmic transparency — ✅
+Unlike a pure catalog, mugilu runs one algorithm that interprets *for* a person: the Ambient read, which names the single worst hazard and weights it by a chosen vulnerability (asthma, older adults, children, outdoor workers, heart condition). It is deliberately glass-box — every threshold is public, comes from CPCB, IMD/NDMA, WHO, the Australian BoM, NASA and AQLI, and is now published in plain language at [/methodology](https://mugilu.live/methodology); the persona is a toggle the user picks (never inferred or tracked); and the output is labelled informational, not advice. No profiling, no ranking of people.
+Evidence: [/methodology](https://mugilu.live/methodology), the open `score.ts` it links to, the user-selected persona toggle on every `/c` page.
 
 ## Fork this
 
