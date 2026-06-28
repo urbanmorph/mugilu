@@ -151,33 +151,32 @@ export async function topPlaces(env: Env, limit = 8, minN = 0): Promise<TopPlace
   }
 }
 
-/** The referring host (no www, lowercased), or a sanitised ?ref= value. Null if
- *  there's none, or it's one of our own pages (not external adoption). */
+/** Lowercase + strip to a safe host/name token (no www), or "" if nothing's left. */
+function sanitizeHost(s: string): string {
+  return s
+    .replace(/^www\./i, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-]/g, "")
+    .slice(0, 60);
+}
+
+/** The referring host, or a sanitised ?ref= value. Null if there's none, or it's
+ *  one of our own pages (not external adoption). */
 function referrerHost(req: Request, url: URL): string | null {
   const ref = url.searchParams.get("ref");
-  if (ref)
-    return (
-      ref
-        .toLowerCase()
-        .replace(/[^a-z0-9.\-]/g, "")
-        .slice(0, 60) || null
-    );
+  if (ref) return sanitizeHost(ref) || null;
   const raw = req.headers.get("referer") || req.headers.get("origin");
   if (!raw) return null;
   try {
-    const host = new URL(raw).hostname.replace(/^www\./, "").toLowerCase();
-    if (!host || host === "mugilu.live") return null;
-    return host;
+    const host = sanitizeHost(new URL(raw).hostname);
+    return !host || host === "mugilu.live" ? null : host;
   } catch {
     return null;
   }
 }
 
-/** Record who built on us: the referring site/app for an /embed or API hit.
- *  Domain-level, not user-level; our own pages and empty referrers are skipped. */
-export async function recordReferrer(env: Env, surface: string, req: Request, url: URL): Promise<void> {
-  const host = referrerHost(req, url);
-  if (!host) return;
+/** Bump the per-surface, per-host adoption counter (best-effort, domain-level). */
+async function bumpReferrer(env: Env, surface: string, host: string): Promise<void> {
   try {
     await env.METRICS.prepare(
       "INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,1,unixepoch()) " +
@@ -190,24 +189,16 @@ export async function recordReferrer(env: Env, surface: string, req: Request, ur
   }
 }
 
-/** Record which MCP client connected (the adoption metric for the agent door).
- *  Reuses the referrers table with surface "mcp"; name-only, no per-user data. */
+/** Record who built on us: the referring site/app for an /embed or API hit. */
+export async function recordReferrer(env: Env, surface: string, req: Request, url: URL): Promise<void> {
+  const host = referrerHost(req, url);
+  if (host) await bumpReferrer(env, surface, host);
+}
+
+/** Record which MCP client connected (the adoption metric for the agent door). */
 export async function recordMcpClient(env: Env, name: string): Promise<void> {
-  const host = name
-    .toLowerCase()
-    .replace(/[^a-z0-9.\-]/g, "")
-    .slice(0, 60);
-  if (!host) return;
-  try {
-    await env.METRICS.prepare(
-      "INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,1,unixepoch()) " +
-        "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch()",
-    )
-      .bind(`mcp|${host}`, host, "mcp")
-      .run();
-  } catch {
-    // best-effort
-  }
+  const host = sanitizeHost(name);
+  if (host) await bumpReferrer(env, "mcp", host);
 }
 
 export interface Referrer {

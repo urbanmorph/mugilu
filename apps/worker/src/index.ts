@@ -17,21 +17,21 @@ import {
   renderMethodology,
 } from "./page";
 import { robotsTxt, llmsTxt, sitemapXml } from "./meta";
-import { geocode, geocodeList } from "./geocode";
-import { buildSuggestions, applyAlias } from "./suggest";
+import { geocodeList } from "./geocode";
+import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import type { WarningsSnapshot } from "./sachet";
 import { collectFires, loadFires } from "./firms";
-import { nationalHighlights, worstAirStation } from "./highlights";
-import type { NationalHighlights } from "./highlights";
-import { stateAt } from "./place";
+import { composeHighlights } from "./highlights";
 import { recordLookup, recordReferrer, recordEvent, topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
+import { resolveQuery } from "./resolve";
+import { loadSnapshot } from "./snapshot";
 import { handleMcp } from "./mcp";
-import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
+import type { NormalizedStation } from "./types";
 
 export interface Env {
   OAQ_KV: KVNamespace;
@@ -115,29 +115,17 @@ export default {
     // the worst-air row from the hourly snapshot (fresher) — each stamped with
     // its own age, and the air point's state resolved from the grid.
     if (url.pathname === "/") {
-      const [gridObj, airSnap, popular] = await Promise.all([
-        env.OAQ_R2.get("data/conditions.json"),
-        loadSnapshot(),
+      const [hl, popular] = await Promise.all([
+        composeHighlights(env),
         topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
       ]);
-      let highlights: NationalHighlights | undefined;
-      let gridAsOf: string | undefined;
-      if (gridObj) {
-        const grid = (await gridObj.json()) as ConditionsSnapshot;
-        highlights = nationalHighlights(grid.points);
-        gridAsOf = grid.generated_at;
-      }
-      if (airSnap) {
-        const worst = worstAirStation(airSnap.stations);
-        if (worst) {
-          worst.state = stateAt(worst.lat, worst.lon);
-          highlights = { ...(highlights ?? {}), worstAir: worst };
-        }
-      }
+      // Only show the "Right now in India" hero when there's something in it.
+      const highlights =
+        hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
       return cachedResponse(
         renderHome(url.searchParams.get("notfound") ?? undefined, highlights, {
-          gridAsOf,
-          airAsOf: airSnap?.generated_at,
+          gridAsOf: hl.gridAsOf,
+          airAsOf: hl.airAsOf,
           popular,
         }),
         "text/html; charset=utf-8",
@@ -163,44 +151,30 @@ export default {
     // Keeps search zero-JS. A plain form GET. /go?q=Bengaluru → 302 /c/{lat},{lon}
     if (url.pathname === "/go") {
       const q = (url.searchParams.get("q") ?? "").trim();
-      // Apply the alias (old names + native-script city names) so e.g. बेंगलुरु or
-      // சென்னை resolves via the canonical English name to the city centre, not the
-      // airport the geocoder sometimes returns for a native-script query.
-      const aliased = applyAlias(q);
       // Carry the typed term in the fragment (client-only, no cache impact) so a
       // native-script search ("ಬೆಂಗಳೂರು") is remembered in its own script in recents.
       const frag = q ? `#q=${encodeURIComponent(q)}` : "";
-      // If it names a known place, prefer the canonical /c/{slug} (keyword URL).
-      const slug = slugForName(aliased) ?? slugForName(q);
-      if (slug) return Response.redirect(`${url.origin}/c/${slug}${frag}`, 302);
-      const hit = await geocode(aliased);
-      if (!hit) {
-        return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
-      }
-      const lat = +hit.lat.toFixed(4);
-      const lon = +hit.lon.toFixed(4);
-      return Response.redirect(`${url.origin}/c/${lat},${lon}${frag}`, 302);
+      const r = await resolveQuery(q);
+      if (!r) return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
+      // A known place keeps its canonical /c/{slug} keyword URL; else the coordinate.
+      const dest = r.slug ? `/c/${r.slug}` : `/c/${r.lat},${r.lon}`;
+      return Response.redirect(`${url.origin}${dest}${frag}`, 302);
     }
 
     // Typeahead suggestions: gazetteer (our stations) + alias + coord-parse +
     // India-ranked geocoding. Powers the intelligent search box. /suggest?q=…
     if (url.pathname === "/suggest") {
       const q = url.searchParams.get("q") ?? "";
-      const snap = await loadSnapshot();
+      const snap = await loadSnapshot(env);
       const suggestions = await buildSuggestions(snap?.stations ?? [], q, geocodeList);
       return cachedResponse(JSON.stringify({ q, suggestions }), "application/json; charset=utf-8");
     }
 
     // Cached snapshot loader, used by /index.{json,md} and /s/*.json|.md.
-    async function loadSnapshot(): Promise<Snapshot | null> {
-      const obj = await env.OAQ_R2.get("data/latest.json");
-      if (!obj) return null;
-      return (await obj.json()) as Snapshot;
-    }
 
     // Leaderboard JSON.
     if (url.pathname === "/index.json") {
-      const snap = await loadSnapshot();
+      const snap = await loadSnapshot(env);
       if (!snap) return new Response("no snapshot yet", { status: 503 });
       return new Response(JSON.stringify(snap), {
         headers: {
@@ -213,7 +187,7 @@ export default {
 
     // Leaderboard Markdown.
     if (url.pathname === "/index.md") {
-      const snap = await loadSnapshot();
+      const snap = await loadSnapshot(env);
       if (!snap) return new Response("no snapshot yet", { status: 503 });
       return new Response(renderSnapshotMarkdown(snap, SITE_URL), {
         headers: {
@@ -248,7 +222,7 @@ export default {
       const { lat, lon } = coords;
       const nRaw = Number(url.searchParams.get("n") ?? "5");
       const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 50) : 5;
-      const snap = await loadSnapshot();
+      const snap = await loadSnapshot(env);
       if (!snap) return new Response("no snapshot yet", { status: 503 });
       const stations = findNearest(snap.stations, lat, lon, n);
       return cachedResponse(
@@ -272,7 +246,7 @@ export default {
       canonicalPath: string,
       placeName?: string,
     ): Promise<Response> {
-      const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
+      const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
       const conditions = await buildConditions(snap, lat, lon, fires);
       // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
       // ward the seed coordinate happens to fall in) — drives title/h1/meta/SEO.
@@ -337,7 +311,7 @@ export default {
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest("coordinates out of range");
       const persona = parsePersona(url.searchParams.get("as"));
-      const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
+      const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
       const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
       ctx.waitUntil(
         recordLookup(env, coords.lat, coords.lon, conditions.place, "embed", req.headers.get("user-agent")),
@@ -350,7 +324,7 @@ export default {
     const ogMatch = url.pathname.match(/^\/og\/s\/([^/]+)\/([^/.]+)\.png$/);
     if (ogMatch) {
       const [, provider, rawId] = ogMatch;
-      const snap = await loadSnapshot();
+      const snap = await loadSnapshot(env);
       if (!snap) return new Response("no snapshot yet", { status: 503 });
       const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
       if (!station) return new Response("station not found", { status: 404 });
@@ -361,7 +335,7 @@ export default {
     const stationMatch = url.pathname.match(/^\/s\/([^/]+)\/([^/.]+)\.(json|md)$/);
     if (stationMatch) {
       const [, provider, rawId, ext] = stationMatch;
-      const snap = await loadSnapshot();
+      const snap = await loadSnapshot(env);
       if (!snap) return new Response("no snapshot yet", { status: 503 });
       const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
       if (!station) return new Response("station not found", { status: 404 });

@@ -1,4 +1,7 @@
 import type { ConditionsPoint, NormalizedStation } from "./types";
+import type { Env } from "./index";
+import { loadGrid, loadSnapshot } from "./snapshot";
+import { stateAt } from "./place";
 
 // The national multi-hazard "right now" picture, drives the landing hero.
 // Deliberately NOT air-led: heat and dust first (per the whole-sky framing).
@@ -44,4 +47,22 @@ export function worstAirStation(stations: NormalizedStation[]): NationalHighligh
     }
   }
   return worst;
+}
+
+/** The national picture composed from R2: heat/dust from the 4-hourly grid, the
+ *  worst-air row from the fresher hourly snapshot (state-enriched). Shared by the
+ *  home hero and the MCP national_now tool so they can't drift. */
+export async function composeHighlights(
+  env: Env,
+): Promise<{ highlights: NationalHighlights; gridAsOf?: string; airAsOf?: string }> {
+  const [grid, snap] = await Promise.all([loadGrid(env), loadSnapshot(env)]);
+  const highlights: NationalHighlights = grid ? nationalHighlights(grid.points) : {};
+  if (snap) {
+    const worst = worstAirStation(snap.stations);
+    if (worst) {
+      worst.state = stateAt(worst.lat, worst.lon);
+      highlights.worstAir = worst;
+    }
+  }
+  return { highlights, gridAsOf: grid?.generated_at, airAsOf: snap?.generated_at };
 }

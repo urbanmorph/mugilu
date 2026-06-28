@@ -80,9 +80,17 @@ export async function handleMcp(req: Request, env: Env, ctx: ExecutionContext): 
       case "tools/call": {
         const name = typeof params.name === "string" ? params.name : "";
         const args = (params.arguments as Record<string, unknown>) ?? {};
-        const result = await callTool(name, args, env, ctx, req.headers.get("user-agent"));
-        if (!result) return err(id, INVALID_PARAMS, `Unknown tool: ${name}`);
-        return ok(id, result);
+        try {
+          const result = await callTool(name, args, env, ctx, req.headers.get("user-agent"));
+          if (!result) return err(id, INVALID_PARAMS, `Unknown tool: ${name}`);
+          return ok(id, result);
+        } catch {
+          // A tool that ran-and-failed (e.g. a data-source blip) returns a result
+          // with isError so the model sees it and can react — not a protocol error
+          // (which clients surface as a hard transport fault).
+          const text = `The ${name} tool failed — a data source may be temporarily unavailable. Try again shortly.`;
+          return ok(id, { content: [{ type: "text", text }], isError: true });
+        }
       }
       case "resources/list":
         return ok(id, { resources: [] }); // Phase 3

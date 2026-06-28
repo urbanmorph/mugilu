@@ -1,15 +1,14 @@
 import type { Env } from "./index";
-import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
-import type { WarningsSnapshot } from "./sachet";
-import type { NationalHighlights } from "./highlights";
+import type { NormalizedStation } from "./types";
 import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
 import { loadFires } from "./firms";
 import { parsePersona } from "./score";
-import { parseCoordQuery, applyAlias, buildSuggestions } from "./suggest";
-import { geocode, geocodeList } from "./geocode";
-import { slugForName, placeBySlug } from "./slugs";
+import { buildSuggestions } from "./suggest";
+import { geocodeList } from "./geocode";
 import { findNearest } from "./near";
-import { nationalHighlights, worstAirStation } from "./highlights";
+import { composeHighlights } from "./highlights";
+import { resolveQuery } from "./resolve";
+import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { recordLookup, recordEvent } from "./metrics";
 
 // The MCP tool surface (Phase 2). Each tool is a thin adapter over an existing
@@ -22,6 +21,7 @@ export interface ToolResult {
 }
 
 const PERSONA_ENUM = ["everyone", "asthma", "elderly", "child", "outdoor", "heart"];
+const READ_ONLY = { readOnlyHint: true, openWorldHint: true, idempotentHint: true } as const;
 
 export const TOOLS = [
   {
@@ -43,7 +43,7 @@ export const TOOLS = [
       },
       required: ["place"],
     },
-    annotations: { readOnlyHint: true, openWorldHint: true, idempotentHint: true },
+    annotations: READ_ONLY,
   },
   {
     name: "search_place",
@@ -54,7 +54,7 @@ export const TOOLS = [
       properties: { query: { type: "string", description: "A place name or partial name in India." } },
       required: ["query"],
     },
-    annotations: { readOnlyHint: true, openWorldHint: true, idempotentHint: true },
+    annotations: READ_ONLY,
   },
   {
     name: "nearest_stations",
@@ -68,7 +68,7 @@ export const TOOLS = [
       },
       required: ["place"],
     },
-    annotations: { readOnlyHint: true, openWorldHint: true, idempotentHint: true },
+    annotations: READ_ONLY,
   },
   {
     name: "active_warnings",
@@ -78,7 +78,7 @@ export const TOOLS = [
       type: "object",
       properties: { region: { type: "string", description: "Optional state/region name to filter by." } },
     },
-    annotations: { readOnlyHint: true, openWorldHint: true, idempotentHint: true },
+    annotations: READ_ONLY,
   },
   {
     name: "national_now",
@@ -90,7 +90,7 @@ export const TOOLS = [
         kind: { type: "string", enum: ["all", "air", "heat", "dust"], description: "Which leaderboard (default all)." },
       },
     },
-    annotations: { readOnlyHint: true, openWorldHint: true, idempotentHint: true },
+    annotations: READ_ONLY,
   },
 ];
 
@@ -100,24 +100,8 @@ function err(message: string): ToolResult {
 function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
-
-async function loadSnapshot(env: Env): Promise<Snapshot | null> {
-  const obj = await env.OAQ_R2.get("data/latest.json");
-  return obj ? ((await obj.json()) as Snapshot) : null;
-}
-
-/** Resolve a place string (coordinate, known slug, or geocoded name) → lat/lon. */
-async function resolvePlace(place: string): Promise<{ lat: number; lon: number } | null> {
-  const coord = parseCoordQuery(place);
-  if (coord) return coord;
-  const aliased = applyAlias(place);
-  const slug = slugForName(aliased) ?? slugForName(place);
-  if (slug) {
-    const p = placeBySlug(slug);
-    if (p) return { lat: p.lat, lon: p.lon };
-  }
-  const hit = await geocode(aliased);
-  return hit ? { lat: hit.lat, lon: hit.lon } : null;
+function listText<T>(items: T[], fmt: (x: T) => string, empty: string): string {
+  return items.length ? items.map(fmt).join("\n") : empty;
 }
 
 async function conditionsAt(
@@ -128,11 +112,12 @@ async function conditionsAt(
 ): Promise<ToolResult> {
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
-  const persona = parsePersona(typeof args.persona === "string" ? args.persona : null);
-  const loc = await resolvePlace(place);
+  const persona = parsePersona(str(args.persona) || null);
+  const loc = await resolveQuery(place);
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
   const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
   const conditions = await buildConditions(snap, loc.lat, loc.lon, fires);
+  if (loc.label) conditions.place = loc.label; // a named place owns its label (parity with /c/{slug})
   ctx.waitUntil(recordLookup(env, loc.lat, loc.lon, conditions.place, "mcp", ua));
   recordEvent(env, conditions, persona, "mcp", ua);
   return {
@@ -147,43 +132,45 @@ async function searchPlace(args: Record<string, unknown>, env: Env): Promise<Too
   const snap = await loadSnapshot(env);
   const hits = await buildSuggestions(snap?.stations ?? [], q, geocodeList, 8);
   const places = hits.map((s) => ({ name: s.label, detail: s.sublabel ?? null, lat: s.lat, lon: s.lon, kind: s.kind }));
-  const text = places.length
-    ? places.map((p) => `- ${p.name}${p.detail ? ` (${p.detail})` : ""} — ${p.lat},${p.lon}`).join("\n")
-    : `No places found for "${q}".`;
+  const text = listText(
+    places,
+    (p) => `- ${p.name}${p.detail ? ` (${p.detail})` : ""} — ${p.lat},${p.lon}`,
+    `No places found for "${q}".`,
+  );
   return { content: [{ type: "text", text }], structuredContent: { places } };
 }
 
 async function nearestStations(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
-  const loc = await resolvePlace(place);
+  const loc = await resolveQuery(place);
   if (!loc) return err(`Could not resolve "${place}".`);
   const nRaw = Number(args.n ?? 5);
   const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 20) : 5;
   const snap = await loadSnapshot(env);
   if (!snap) return err("No air snapshot available yet.");
   const stations = findNearest(snap.stations, loc.lat, loc.lon, n);
-  const text =
-    stations
-      .map((s: NormalizedStation & { distance_km?: number }) => {
-        const d = typeof s.distance_km === "number" ? `${s.distance_km.toFixed(1)} km` : "";
-        return `- ${s.name}${s.city ? `, ${s.city}` : ""}${d ? ` — ${d}` : ""}, AQI ${s.aqi ?? "n/a"}`;
-      })
-      .join("\n") || "No stations found nearby.";
+  const text = listText(
+    stations,
+    (s: NormalizedStation & { distance_km?: number }) => {
+      const d = typeof s.distance_km === "number" ? ` — ${s.distance_km.toFixed(1)} km` : "";
+      return `- ${s.name}${s.city ? `, ${s.city}` : ""}${d}, AQI ${s.aqi ?? "n/a"}`;
+    },
+    "No stations found nearby.",
+  );
   return { content: [{ type: "text", text }], structuredContent: { query: loc, count: stations.length, stations } };
 }
 
 async function activeWarnings(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const region = str(args.region).toLowerCase();
-  const obj = await env.OAQ_R2.get("data/warnings.json");
-  const snap = obj ? ((await obj.json()) as WarningsSnapshot) : null;
+  const snap = await loadWarningsSnapshot(env);
   let alerts = snap?.alerts ?? [];
   if (region) alerts = alerts.filter((a) => `${a.headline} ${a.category} ${a.issuer}`.toLowerCase().includes(region));
-  const text = alerts.length
-    ? alerts.map((a) => `- [${a.category}] ${a.headline} — ${a.issuer}`).join("\n")
-    : region
-      ? `No active warnings matching "${region}".`
-      : "No active warnings nationally.";
+  const text = listText(
+    alerts,
+    (a) => `- [${a.category}] ${a.headline} — ${a.issuer}`,
+    region ? `No active warnings matching "${region}".` : "No active warnings nationally.",
+  );
   return {
     content: [{ type: "text", text }],
     structuredContent: { generated_at: snap?.generated_at ?? null, count: alerts.length, alerts },
@@ -192,33 +179,22 @@ async function activeWarnings(args: Record<string, unknown>, env: Env): Promise<
 
 async function nationalNow(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const kind = str(args.kind) || "all";
-  const [gridObj, snap] = await Promise.all([env.OAQ_R2.get("data/conditions.json"), loadSnapshot(env)]);
-  const h: NationalHighlights = gridObj
-    ? nationalHighlights(((await gridObj.json()) as ConditionsSnapshot).points)
-    : {};
-  if (snap) {
-    const w = worstAirStation(snap.stations);
-    if (w) h.worstAir = w;
-  }
+  const want = (k: string) => kind === "all" || kind === k;
+  const { highlights: h } = await composeHighlights(env);
+  const place = (p: { name: string; state?: string }) => `${p.name}${p.state ? `, ${p.state}` : ""}`;
   const out: Record<string, unknown> = {};
   const lines: string[] = [];
-  if ((kind === "all" || kind === "air") && h.worstAir) {
+  if (want("air") && h.worstAir) {
     out.worstAir = h.worstAir;
-    lines.push(
-      `Worst air: ${h.worstAir.name}${h.worstAir.state ? `, ${h.worstAir.state}` : ""} — AQI ${h.worstAir.aqi} (${h.worstAir.band})`,
-    );
+    lines.push(`Worst air: ${place(h.worstAir)} — AQI ${h.worstAir.aqi} (${h.worstAir.band})`);
   }
-  if ((kind === "all" || kind === "heat") && h.hottest) {
+  if (want("heat") && h.hottest) {
     out.hottest = h.hottest;
-    lines.push(
-      `Hottest: ${h.hottest.name}${h.hottest.state ? `, ${h.hottest.state}` : ""} — feels ${Math.round(h.hottest.apparent_c)}°`,
-    );
+    lines.push(`Hottest: ${place(h.hottest)} — feels ${Math.round(h.hottest.apparent_c)}°`);
   }
-  if ((kind === "all" || kind === "dust") && h.dustiest) {
+  if (want("dust") && h.dustiest) {
     out.dustiest = h.dustiest;
-    lines.push(
-      `Dustiest: ${h.dustiest.name}${h.dustiest.state ? `, ${h.dustiest.state}` : ""} — ${Math.round(h.dustiest.dust_ug_m3)} µg/m³`,
-    );
+    lines.push(`Dustiest: ${place(h.dustiest)} — ${Math.round(h.dustiest.dust_ug_m3)} µg/m³`);
   }
   return { content: [{ type: "text", text: lines.join("\n") || "No national snapshot yet." }], structuredContent: out };
 }
