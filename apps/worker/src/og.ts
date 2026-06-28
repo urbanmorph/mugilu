@@ -138,7 +138,7 @@ export function renderConditionsOg(c: Conditions, persona: Persona): Response {
 
   const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });
   const headers = new Headers(img.headers);
-  headers.set("cache-control", "public, max-age=900, s-maxage=900, stale-while-revalidate=86400");
+  headers.set("cache-control", "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400");
   return new Response(img.body, { status: img.status, headers });
 }
 

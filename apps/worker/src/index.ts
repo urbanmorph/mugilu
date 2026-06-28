@@ -61,6 +61,25 @@ function cachedResponse(body: string, contentType: string): Response {
   });
 }
 
+/** Serve a deterministic, render-heavy response from the Cloudflare edge cache:
+ *  return the cached copy on a hit (skipping the work), else build it and store it.
+ *  Used for the static front-door files and the OG image renders (workers-og is
+ *  CPU-heavy and these get hammered by social crawlers on launch). NOT used for the
+ *  conditions HTML/JSON/MD, which run per request so the demand, behaviour and
+ *  crawler analytics stay intact (a cache hit would record nothing). */
+async function edgeCache(
+  req: Request,
+  ctx: ExecutionContext,
+  build: () => Response | Promise<Response>,
+): Promise<Response> {
+  const cache = caches.default;
+  const hit = await cache.match(req);
+  if (hit) return hit;
+  const res = await build();
+  if (res.status === 200) ctx.waitUntil(cache.put(req, res.clone()));
+  return res;
+}
+
 /** 400 with a JSON `{ error }` body (CORS-open), matching the API error shape. */
 function badRequest(message: string): Response {
   return Response.json({ error: message }, { status: 400, headers: { "access-control-allow-origin": "*" } });
@@ -105,25 +124,28 @@ export default {
       return cachedResponse(renderTerms(), "text/html; charset=utf-8");
     }
 
-    // Crawler + agent front-door files, built from the live route set.
+    // Crawler + agent front-door files, built from the live route set. Edge-cached:
+    // deterministic, and the sitemap (rebuilt each call) gets walked by crawlers.
     if (url.pathname === "/robots.txt") {
-      return cachedResponse(robotsTxt(SITE_URL), "text/plain; charset=utf-8");
+      return edgeCache(req, ctx, () => cachedResponse(robotsTxt(SITE_URL), "text/plain; charset=utf-8"));
     }
     if (url.pathname === "/llms.txt") {
-      return cachedResponse(llmsTxt(SITE_URL), "text/plain; charset=utf-8");
+      return edgeCache(req, ctx, () => cachedResponse(llmsTxt(SITE_URL), "text/plain; charset=utf-8"));
     }
     if (url.pathname === "/sitemap.xml") {
-      return cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8");
+      return edgeCache(req, ctx, () => cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8"));
     }
     // OpenAPI spec for the REST API (also serves as ChatGPT Custom-GPT Actions).
     if (url.pathname === "/openapi.json") {
-      return cachedResponse(JSON.stringify(openApiSpec(SITE_URL), null, 2), "application/json; charset=utf-8");
+      return edgeCache(req, ctx, () =>
+        cachedResponse(JSON.stringify(openApiSpec(SITE_URL), null, 2), "application/json; charset=utf-8"),
+      );
     }
 
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return appleIconPng();
-    // Branded social-share card for the home + content pages.
-    if (url.pathname === "/og.png") return renderHomeOg();
+    // Branded social-share card for the home + content pages (workers-og render).
+    if (url.pathname === "/og.png") return edgeCache(req, ctx, () => renderHomeOg());
 
     // Lookup-first home page. Heat/dust highlights come from the 4-hourly grid;
     // the worst-air row from the hourly snapshot (fresher), each stamped with
@@ -263,6 +285,12 @@ export default {
       canonicalPath: string,
       placeName?: string,
     ): Promise<Response> {
+      // The share-image render is deterministic and CPU-heavy (workers-og): serve it
+      // from the edge when warm, so social-crawler bursts on launch do not re-render.
+      if (ext === "png") {
+        const hit = await caches.default.match(req);
+        if (hit) return hit;
+      }
       const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
       const conditions = await buildConditions(snap, lat, lon, fires);
       // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
@@ -286,7 +314,11 @@ export default {
       // API formats (.json/.md/.png) are a "build on it" surface. Capture who.
       if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
       recordEvent(env, conditions, persona, fmt, ua); // anonymous behaviour event
-      if (ext === "png") return renderConditionsOg(conditions, persona);
+      if (ext === "png") {
+        const og = renderConditionsOg(conditions, persona);
+        ctx.waitUntil(caches.default.put(req, og.clone()));
+        return og;
+      }
       if (ext === "json")
         return cachedResponse(
           JSON.stringify(serializeConditionsV1(conditions, persona), null, 2),
