@@ -190,6 +190,26 @@ export async function recordReferrer(env: Env, surface: string, req: Request, ur
   }
 }
 
+/** Record which MCP client connected (the adoption metric for the agent door).
+ *  Reuses the referrers table with surface "mcp"; name-only, no per-user data. */
+export async function recordMcpClient(env: Env, name: string): Promise<void> {
+  const host = name
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-]/g, "")
+    .slice(0, 60);
+  if (!host) return;
+  try {
+    await env.METRICS.prepare(
+      "INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,1,unixepoch()) " +
+        "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch()",
+    )
+      .bind(`mcp|${host}`, host, "mcp")
+      .run();
+  } catch {
+    // best-effort
+  }
+}
+
 export interface Referrer {
   host: string;
   surface: string;

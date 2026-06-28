@@ -30,6 +30,7 @@ import { recordLookup, recordReferrer, recordEvent, topPlaces, topReferrers, cou
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
+import { handleMcp } from "./mcp";
 import type { Snapshot, NormalizedStation, ConditionsSnapshot } from "./types";
 
 export interface Env {
@@ -75,6 +76,11 @@ export default {
 
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
+    }
+
+    // MCP server (the agent front-door): JSON-RPC 2.0 over Streamable HTTP.
+    if (url.pathname === "/mcp") {
+      return handleMcp(req, env, ctx);
     }
 
     if (url.pathname === "/about") {
