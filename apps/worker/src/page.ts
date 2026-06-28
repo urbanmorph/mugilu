@@ -915,7 +915,8 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg
 .ac li{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.95rem}
 .ac li span{color:var(--muted);font-size:.85rem}
 .ac li.on,.ac li:hover{background:var(--bg)}
-.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:42ch}.shint b{color:var(--ink);font-weight:600}
+.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:46ch}.shint b{color:var(--ink);font-weight:600}
+.exq{color:var(--ink)}
 .nearme{display:inline-flex;align-items:center;gap:.4rem;font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;margin:0 0 1rem}
 .nearme .ic{width:16px;height:16px;color:var(--sky)}
 .notice{color:var(--warn-text);font-size:.9rem;margin:.2rem 0 1rem}
@@ -982,7 +983,7 @@ export function renderHome(
     </form>
     <ul id="ac" class="ac" role="listbox"></ul>
   </div>
-  <p class="shint">Look up any spot in India to see <b>its sky</b> — air, heat, rain, dust. It's not a map.</p>
+  <p class="shint">Type any place in India — in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>) — to see <b>its sky</b>: air, heat, rain, dust. Not a map.</p>
   <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} Use my location</button>
   ${notice}
   ${highlights ? renderHero(highlights, meta) : ""}

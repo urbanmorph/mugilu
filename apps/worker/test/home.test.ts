@@ -47,10 +47,12 @@ test("renderHome: near-me is progressive enhancement (geolocation)", () => {
   assert.match(renderHome(), /geolocation/);
 });
 
-test("renderHome: search sets expectations (a sky lookup, not a map)", () => {
+test("renderHome: search sets expectations (a sky lookup, not a map) + multilingual", () => {
   const html = renderHome();
   assert.match(html, /not a map/i); // dispels the Google-Maps assumption
   assert.match(html, /lat,lon/); // placeholder signals coordinates work
+  assert.match(html, /any language/i); // invites native-script input
+  assert.match(html, /[ಀ-೿]/); // a Kannada example is shown (ಬೆಂಗಳೂರು)
 });
 
 test("renderHome: has the 'Your places' list (localStorage recents/favourites) + prefetch", () => {
