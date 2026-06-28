@@ -76,8 +76,15 @@ async function edgeCache(
   const hit = await cache.match(req);
   if (hit) return hit;
   const res = await build();
-  if (res.status === 200) ctx.waitUntil(cache.put(req, res.clone()));
-  return res;
+  if (res.status !== 200) return res;
+  // Buffer the body so the served and cached copies are independent. A streaming
+  // response (the workers-og image renders) cannot be cloned into the cache safely;
+  // tee-ing it deadlocks. arrayBuffer() drains the render once, then both copies are
+  // plain bytes.
+  const body = await res.arrayBuffer();
+  const out = new Response(body, { status: res.status, headers: res.headers });
+  ctx.waitUntil(cache.put(req, out.clone()));
+  return out;
 }
 
 /** 400 with a JSON `{ error }` body (CORS-open), matching the API error shape. */
@@ -316,8 +323,12 @@ export default {
       recordEvent(env, conditions, persona, fmt, ua); // anonymous behaviour event
       if (ext === "png") {
         const og = renderConditionsOg(conditions, persona);
-        ctx.waitUntil(caches.default.put(req, og.clone()));
-        return og;
+        // Buffer the image bytes before caching: the streaming render cannot be
+        // safely cloned into the cache (tee-ing it deadlocks).
+        const body = await og.arrayBuffer();
+        const out = new Response(body, { status: og.status, headers: og.headers });
+        ctx.waitUntil(caches.default.put(req, out.clone()));
+        return out;
       }
       if (ext === "json")
         return cachedResponse(
