@@ -17,24 +17,49 @@ function gridKey(lat: number, lon: number): { key: string; rlat: number; rlon: n
   return { key: `${rlat},${rlon}`, rlat, rlon };
 }
 
-/** Record one conditions lookup: bump the rounded place + the format counter. */
+/** Classify the caller from its User-Agent: a real person, an AI/LLM agent, or a
+ *  plain bot/crawler/script. With the API + MCP live, "who is building on us"
+ *  (answer engines, model crawlers, MCP clients) is first-class adoption signal,
+ *  distinct from both humans and dumb crawlers — so the LLM bucket stands alone.
+ *  Check LLM patterns first: many AI agents (GPTBot, ClaudeBot) also match /bot/. */
+export type ClientClass = "human" | "llm" | "bot";
+export function clientClass(ua: string | null | undefined): ClientClass {
+  const s = (ua ?? "").toLowerCase();
+  if (!s) return "bot"; // no User-Agent is almost always a script or scanner
+  if (
+    /gptbot|chatgpt|oai-searchbot|openai|claudebot|claude-user|claude-web|anthropic|perplexity|google-extended|bytespider|amazonbot|applebot-extended|meta-externalagent|meta-externalfetcher|cohere-ai|youbot|ccbot|diffbot|mcp|modelcontextprotocol/.test(
+      s,
+    )
+  )
+    return "llm";
+  if (
+    /bot|crawl|spider|slurp|curl|wget|python|http-client|go-http|java\/|okhttp|libwww|headless|scan|monitor|facebookexternalhit|whatsapp|telegram|embedly|preview/.test(
+      s,
+    )
+  )
+    return "bot";
+  return "human";
+}
+
+/** Record one conditions lookup: bump the rounded place + format + client-class. */
 export async function recordLookup(
   env: Env,
   lat: number,
   lon: number,
   label: string | undefined,
   fmt: string,
+  ua: string | null,
 ): Promise<void> {
   const { key, rlat, rlon } = gridKey(lat, lon);
+  const bump = "INSERT INTO counters (name,n) VALUES (?,1) ON CONFLICT(name) DO UPDATE SET n=n+1";
   try {
     await env.METRICS.batch([
       env.METRICS.prepare(
         "INSERT INTO lookups (key,label,lat,lon,n,last) VALUES (?,?,?,?,1,unixepoch()) " +
           "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch(), label=COALESCE(excluded.label,label)",
       ).bind(key, label ?? null, rlat, rlon),
-      env.METRICS.prepare("INSERT INTO counters (name,n) VALUES (?,1) ON CONFLICT(name) DO UPDATE SET n=n+1").bind(
-        `fmt:${fmt}`,
-      ),
+      env.METRICS.prepare(bump).bind(`fmt:${fmt}`),
+      env.METRICS.prepare(bump).bind(`class:${clientClass(ua)}`),
     ]);
   } catch {
     // best-effort: a metrics failure must never surface to the visitor
@@ -129,14 +154,14 @@ export async function topReferrers(env: Env, limit = 25): Promise<Referrer[]> {
  *  the Ambient driver + band, region/state, air kind), no IP and no user id. Goes
  *  to Analytics Engine for time-series + breakdowns (queried via the AE SQL API).
  *  Synchronous + best-effort; the binding is optional. */
-export function recordEvent(env: Env, c: Conditions, persona: Persona, format: string): void {
+export function recordEvent(env: Env, c: Conditions, persona: Persona, format: string, ua: string | null): void {
   if (!env.EVENTS) return;
   try {
     const risk = ambientRisk(c, persona);
     const state = stateAt(c.location.lat, c.location.lon) ?? "";
     const airKind = c.air ? (c.air.station ? "measured" : "modelled") : "none";
     env.EVENTS.writeDataPoint({
-      blobs: [format, persona, risk.driver.toLowerCase(), risk.band, state, airKind],
+      blobs: [format, persona, risk.driver.toLowerCase(), risk.band, state, airKind, clientClass(ua)],
       doubles: [risk.level, c.air?.aqi ?? -1, c.heat?.apparent_c ?? -999],
       indexes: [format],
     });

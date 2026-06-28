@@ -276,10 +276,11 @@ export default {
         const s = slugForName(conditions.place.split(",")[0]);
         if (s) canonical = `${SITE_URL}/c/${s}`;
       }
-      ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html"));
+      const ua = req.headers.get("user-agent");
+      ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html", ua));
       // API formats (.json/.md/.png) are a "build on it" surface — capture who.
       if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
-      recordEvent(env, conditions, persona, ext ?? "html"); // anonymous behaviour event
+      recordEvent(env, conditions, persona, ext ?? "html", ua); // anonymous behaviour event
       if (ext === "png") return renderConditionsOg(conditions, persona);
       if (ext === "json")
         return cachedResponse(
@@ -329,7 +330,9 @@ export default {
       const persona = parsePersona(url.searchParams.get("as"));
       const [snap, fires] = await Promise.all([loadSnapshot(), loadFires(env)]);
       const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
-      ctx.waitUntil(recordLookup(env, coords.lat, coords.lon, conditions.place, "embed"));
+      ctx.waitUntil(
+        recordLookup(env, coords.lat, coords.lon, conditions.place, "embed", req.headers.get("user-agent")),
+      );
       ctx.waitUntil(recordReferrer(env, "embed", req, url));
       return cachedResponse(renderEmbed(conditions, persona, SITE_URL), "text/html; charset=utf-8");
     }
