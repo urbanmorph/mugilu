@@ -176,7 +176,9 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
     stations: all,
   };
 
-  // Write full + top slices to R2.
+  // Write the full + minified snapshot to R2. The live leaderboard (/index), the
+  // home hero and the MCP national_now tool compute their top slices from this
+  // snapshot; the old pre-computed top-50 files were written but never read (legacy).
   const writes: Promise<unknown>[] = [
     env.OAQ_R2.put("data/latest.json", JSON.stringify(snapshot, null, 2), {
       httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=60" },
@@ -184,19 +186,6 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
     env.OAQ_R2.put("data/latest.min.json", JSON.stringify(snapshot), {
       httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=60" },
     }),
-    env.OAQ_R2.put(
-      "data/worst-top-50.json",
-      JSON.stringify({ ...snapshot, stations: all.filter((s) => s.aqi !== null).slice(0, 50) }),
-      { httpMetadata: { contentType: "application/json" } },
-    ),
-    env.OAQ_R2.put(
-      "data/best-top-50.json",
-      JSON.stringify({
-        ...snapshot,
-        stations: [...all.filter((s) => s.aqi !== null)].sort((a, b) => a.aqi! - b.aqi!).slice(0, 50),
-      }),
-      { httpMetadata: { contentType: "application/json" } },
-    ),
   ];
   await Promise.all(writes);
   return snapshot;
