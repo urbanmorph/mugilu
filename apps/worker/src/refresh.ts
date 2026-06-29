@@ -176,15 +176,28 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
     stations: all,
   };
 
-  // Write the full + minified snapshot to R2. The live leaderboard (/index), the
-  // home hero and the MCP national_now tool compute their top slices from this
-  // snapshot; the old pre-computed top-50 files were written but never read (legacy).
+  // Hourly air archive (gzipped): the lost-forever record. The private Airnet /
+  // Aurassure readings in this blend are not kept anywhere else, so capturing each
+  // hourly snapshot builds an air time-series we can never reconstruct later.
+  // Key: archive/air/{YYYY-MM-DD}/{HH}.json.gz, off the snapshot's UTC hour.
+  const gen = snapshot.generated_at;
+  const airKey = `archive/air/${gen.slice(0, 10)}/${gen.slice(11, 13)}.json.gz`;
+  const airGz = await new Response(
+    new Response(JSON.stringify(snapshot)).body!.pipeThrough(new CompressionStream("gzip")),
+  ).arrayBuffer();
+
+  // Write the full + minified snapshot (for the live site) plus the hourly archive. The
+  // live leaderboard (/index), home hero and MCP national_now compute their slices from
+  // this snapshot; the old pre-computed top-50 files were written but never read (legacy).
   const writes: Promise<unknown>[] = [
     env.OAQ_R2.put("data/latest.json", JSON.stringify(snapshot, null, 2), {
       httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=60" },
     }),
     env.OAQ_R2.put("data/latest.min.json", JSON.stringify(snapshot), {
       httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=60" },
+    }),
+    env.OAQ_R2.put(airKey, airGz, {
+      httpMetadata: { contentType: "application/json", contentEncoding: "gzip" },
     }),
   ];
   await Promise.all(writes);
