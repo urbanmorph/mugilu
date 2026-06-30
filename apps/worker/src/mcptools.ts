@@ -8,6 +8,7 @@ import { geocodeList } from "./geocode";
 import { findNearest } from "./near";
 import { composeHighlights } from "./highlights";
 import { resolveQuery } from "./resolve";
+import { loadGazetteer } from "./gazetteer";
 import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { recordLookup, recordEvent } from "./metrics";
 
@@ -113,7 +114,7 @@ async function conditionsAt(
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
   const persona = parsePersona(str(args.persona) || null);
-  const loc = await resolveQuery(place);
+  const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
   const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
   const conditions = await buildConditions(snap, loc.lat, loc.lon, fires);
@@ -129,8 +130,8 @@ async function conditionsAt(
 async function searchPlace(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const q = str(args.query);
   if (!q) return err("`query` is required.");
-  const snap = await loadSnapshot(env);
-  const hits = await buildSuggestions(snap?.stations ?? [], q, geocodeList, 8);
+  const [snap, gaz] = await Promise.all([loadSnapshot(env), loadGazetteer(env)]);
+  const hits = await buildSuggestions(snap?.stations ?? [], q, geocodeList, 8, gaz);
   const places = hits.map((s) => ({ name: s.label, detail: s.sublabel ?? null, lat: s.lat, lon: s.lon, kind: s.kind }));
   const text = listText(
     places,
@@ -143,7 +144,7 @@ async function searchPlace(args: Record<string, unknown>, env: Env): Promise<Too
 async function nearestStations(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
-  const loc = await resolveQuery(place);
+  const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not resolve "${place}".`);
   const nRaw = Number(args.n ?? 5);
   const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 20) : 5;

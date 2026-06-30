@@ -51,7 +51,17 @@ interface OmGeoResponse {
 export async function geocodeList(query: string, count = 1): Promise<GeoResult[]> {
   const q = query.trim();
   if (!q) return [];
+  // The upstream intermittently returns an empty result (or times out) for valid
+  // queries; one retry smooths that over. This path is now the rare fallback (the
+  // OSM gazetteer handles the common case), so the extra call on a true miss is cheap.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await geocodeAttempt(q, count);
+    if (r.length) return r;
+  }
+  return [];
+}
 
+async function geocodeAttempt(q: string, count: number): Promise<GeoResult[]> {
   const language = scriptLang(q);
   // For native-script queries, fetch a few even when the caller wants one, so a
   // city can be preferred over the airport of the same name before slicing.

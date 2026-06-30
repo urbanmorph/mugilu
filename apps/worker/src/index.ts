@@ -32,6 +32,7 @@ import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
 import { resolveQuery } from "./resolve";
+import { loadGazetteer } from "./gazetteer";
 import { loadSnapshot } from "./snapshot";
 import { handleMcp } from "./mcp";
 import type { NormalizedStation } from "./types";
@@ -197,7 +198,7 @@ export default {
       // Carry the typed term in the fragment (client-only, no cache impact) so a
       // native-script search ("ಬೆಂಗಳೂರು") is remembered in its own script in recents.
       const frag = q ? `#q=${encodeURIComponent(q)}` : "";
-      const r = await resolveQuery(q);
+      const r = await resolveQuery(q, await loadGazetteer(env));
       if (!r) return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
       // A known place keeps its canonical /c/{slug} keyword URL; else the coordinate.
       const dest = r.slug ? `/c/${r.slug}` : `/c/${r.lat},${r.lon}`;
@@ -211,8 +212,8 @@ export default {
     // India-ranked geocoding. Powers the intelligent search box. /suggest?q=…
     if (url.pathname === "/suggest") {
       const q = url.searchParams.get("q") ?? "";
-      const snap = await loadSnapshot(env);
-      const suggestions = await buildSuggestions(snap?.stations ?? [], q, geocodeList);
+      const [snap, gaz] = await Promise.all([loadSnapshot(env), loadGazetteer(env)]);
+      const suggestions = await buildSuggestions(snap?.stations ?? [], q, geocodeList, 6, gaz);
       return cachedResponse(JSON.stringify({ q, suggestions }), "application/json; charset=utf-8");
     }
 

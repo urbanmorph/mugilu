@@ -1,5 +1,6 @@
 import type { NormalizedStation } from "./types";
 import type { GeoResult } from "./geocode";
+import { matchGazetteer, type GazIndex } from "./gazetteer";
 
 export interface Suggestion {
   label: string;
@@ -103,6 +104,7 @@ export async function buildSuggestions(
   q: string,
   geocodeList: (query: string, count: number) => Promise<GeoResult[]>,
   limit = 6,
+  gaz: GazIndex | null = null,
 ): Promise<Suggestion[]> {
   const coord = parseCoordQuery(q);
   if (coord) {
@@ -112,12 +114,28 @@ export async function buildSuggestions(
   }
 
   const query = applyAlias(q);
+  // Stations first (mugilu's unique value: actual measurement points), then the
+  // OSM gazetteer fills remaining slots (every Indian city/town/locality, instant,
+  // no upstream, multilingual + fuzzy). The flaky geocoder is only paid for when
+  // BOTH find nothing (the rare long tail).
   const stationHits = matchStations(stations, query, limit);
-
-  // The gazetteer is instant and uniquely ours. Only pay for a geocoding
-  // network call (~700ms) when it finds nothing. This keeps the typeahead snappy
-  // for the common case (most Indian queries are near a station we already hold).
-  if (stationHits.length > 0) return stationHits;
+  const merged: Suggestion[] = [...stationHits];
+  if (gaz && merged.length < limit) {
+    const seen = new Set(merged.map((s) => s.label.toLowerCase()));
+    for (const g of matchGazetteer(gaz, query, limit)) {
+      if (seen.has(g.name.toLowerCase())) continue;
+      seen.add(g.name.toLowerCase());
+      merged.push({
+        label: g.name,
+        sublabel: [g.state, "IN"].filter(Boolean).join(", ") || undefined,
+        lat: g.lat,
+        lon: g.lon,
+        kind: "place",
+      });
+      if (merged.length >= limit) break;
+    }
+  }
+  if (merged.length > 0) return merged.slice(0, limit);
 
   const geo = await geocodeList(query, 5);
   const ranked = [...geo].sort((a, b) => (b.country_code === "IN" ? 1 : 0) - (a.country_code === "IN" ? 1 : 0));
