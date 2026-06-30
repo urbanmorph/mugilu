@@ -207,7 +207,7 @@ function ld(obj: object): string {
 // HTML), so it is safe to commit. Cookieless, no PII, no cross-site tracking, no
 // fingerprinting; complements the first-party D1/AE pipeline with real referrers,
 // unique visitors and Core Web Vitals. Empty = beacon off (renders nothing).
-const CF_BEACON_TOKEN = "";
+const CF_BEACON_TOKEN = "f2e28ec9892741889c2fb81ec96ff4dd";
 
 function shell(
   title: string,
