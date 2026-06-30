@@ -25,6 +25,8 @@ const ALIASES: Record<string, string> = {
   baroda: "Vadodara",
   mysore: "Mysuru",
   mangalore: "Mangaluru",
+  // Spelling variants the Open-Meteo geocoder does not index under the common form.
+  paradeep: "Paradip", // the Odisha port is widely spelled Paradeep; geocoder only knows Paradip
   // Native-script aliases (Hindi + the city's own script) for station cities.
   बेंगलुरु: "Bengaluru",
   ಬೆಂಗಳೂರು: "Bengaluru",
