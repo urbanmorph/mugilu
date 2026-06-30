@@ -33,6 +33,12 @@ test("applyAlias: rewrites known old/colloquial city names", () => {
   assert.equal(applyAlias("Indiranagar"), "Indiranagar"); // unknown → unchanged
 });
 
+test("applyAlias: maps spelling variants the geocoder misses to the indexed form", () => {
+  // The Odisha port is commonly spelled "Paradeep" but the geocoder only knows "Paradip".
+  assert.equal(applyAlias("Paradeep"), "Paradip");
+  assert.equal(applyAlias("paradeep"), "Paradip");
+});
+
 test("parseCoordQuery: detects a lat,lon pair", () => {
   assert.deepEqual(parseCoordQuery("12.97,77.59"), { lat: 12.97, lon: 77.59 });
   assert.deepEqual(parseCoordQuery("12.97, 77.59"), { lat: 12.97, lon: 77.59 });
