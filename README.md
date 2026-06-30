@@ -1,6 +1,6 @@
 # mugilu
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-0284c7.svg)](./LICENSE) [![Live](https://img.shields.io/badge/live-mugilu.live-0284c7)](https://mugilu.live) [![MCP](https://img.shields.io/badge/MCP-2025--06--18-7c3aed)](https://mugilu.live/mcp) [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
+[![CI](https://github.com/urbanmorph/mugilu/actions/workflows/ci.yml/badge.svg)](https://github.com/urbanmorph/mugilu/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-0284c7.svg)](./LICENSE) [![Live](https://img.shields.io/badge/live-mugilu.live-0284c7)](https://mugilu.live) [![MCP](https://img.shields.io/badge/MCP-2025--06--18-7c3aed)](https://mugilu.live/mcp) [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
 
 **The open sky of India, one coordinate at a time.** Give a point anywhere in India and get what the sky is doing to you right now: air, heat (with wet-bulb), rain, UV, dust, and the official government warning over that spot. Open, free, and built to be read by people, apps, and AI agents alike.
 
