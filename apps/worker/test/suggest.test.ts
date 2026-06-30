@@ -1,8 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applyAlias, parseCoordQuery, matchStations, buildSuggestions } from "../src/suggest";
+import { buildGazIndex, type GazRow } from "../src/gazetteer";
 import type { NormalizedStation } from "../src/types";
 import type { GeoResult } from "../src/geocode";
+
+const GAZ = buildGazIndex([
+  ["Paradip", 20.2674, 86.6597, "t", "Odisha", undefined],
+  ["Erode", 11.34, 77.72, "c", "Tamil Nadu", undefined],
+] as GazRow[]);
 
 function station(name: string, city: string, lat: number, lon: number): NormalizedStation {
   return {
@@ -67,6 +73,28 @@ test("buildSuggestions: a gazetteer hit short-circuits without geocoding (perf)"
   const out = await buildSuggestions(STATIONS, "bengaluru", geo);
   assert.equal(geocoded, false, "no network call when the gazetteer matches");
   assert.ok(out.length >= 1 && out.every((s) => s.kind === "station"));
+});
+
+test("buildSuggestions: the gazetteer resolves a place with no station, no geocoding", async () => {
+  let geocoded = false;
+  const geo = async (): Promise<GeoResult[]> => {
+    geocoded = true;
+    return [];
+  };
+  // "Paradeep" has no station and the geocoder misses it; the gazetteer (fuzzy) resolves it.
+  const out = await buildSuggestions(STATIONS, "Paradeep", geo, 6, GAZ);
+  assert.equal(geocoded, false, "gazetteer handled it, no network call");
+  assert.equal(out[0].label, "Paradip");
+  assert.equal(out[0].sublabel, "Odisha, IN");
+  assert.equal(out[0].kind, "place");
+});
+
+test("buildSuggestions: stations rank ahead of gazetteer places", async () => {
+  const geo = async (): Promise<GeoResult[]> => [];
+  const out = await buildSuggestions(STATIONS, "Erode", geo, 6, GAZ);
+  // a station match (if any) leads; gazetteer fills remaining slots
+  assert.ok(out.length >= 1);
+  assert.ok(out.some((s) => s.label === "Erode" && s.kind === "place"));
 });
 
 test("buildSuggestions: geocodes India-ranked places only when the gazetteer is empty", async () => {

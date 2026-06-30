@@ -1125,7 +1125,7 @@ export function renderTerms(): string {
     <li>${icon("heat")}<span class="t"><b>Heat, rain, UV, dust, wind</b>: <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
     <li>${icon("warn")}<span class="t"><b>Official warnings</b>: NDMA / IMD via SACHET.</span></li>
     <li>${icon("smoke")}<span class="t"><b>Fire / crop-burn smoke</b>: NASA FIRMS (VIIRS).</span></li>
-    <li>${icon("pin")}<span class="t"><b>Geography &amp; place names</b>: <a href="https://bharatlas.com">bharatlas</a>.</span></li>
+    <li>${icon("pin")}<span class="t"><b>Geography &amp; place names</b>: place search from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL); admin boundaries from <a href="https://bharatlas.com">bharatlas</a>.</span></li>
     <li>${icon("heart")}<span class="t"><b>Health impact</b>: years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
   </ul>
   <p class="alead2">Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.</p>
