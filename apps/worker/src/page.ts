@@ -5,6 +5,8 @@ import { pollutantParts } from "./formats";
 import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
+import type { Lang } from "./i18n";
+import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().
@@ -120,14 +122,18 @@ function airBand(b: string): RiskBand {
  *  plus a worst-air row from the hourly snapshot, each row state-qualified (so
  *  the place is recognisable), stamped with its own freshness, and coloured by
  *  its severity; the whole card takes the tint of the worst extreme, like /c. */
-function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?: string }): string {
+function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?: string }, lang: Lang = "en"): string {
   const rows: string[] = [];
   let worst: RiskBand = "low";
+  // Place + state names are proper nouns from the gazetteer: kept as-is (English)
+  // in every language; transliterating them would be unreliable.
   const place = (name: string, state?: string) => esc(state ? `${name}, ${state}` : name);
   const age = (iso?: string) => (iso ? ` <span class="age">· ${relTime(iso)}</span>` : "");
+  // "feels 41°": in Kannada/Hindi the verb follows the number ("41° ಅನಿಸುತ್ತದೆ").
+  const feels = (c: number) => (lang === "en" ? `feels ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`);
   const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
     if (RISK_RANK[band] > RISK_RANK[worst]) worst = band;
-    return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="/c/${lat},${lon}">${body}${age(iso)}</a>`;
+    return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
   };
   if (h.hottest) {
     rows.push(
@@ -135,7 +141,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
         heatBand(h.hottest.apparent_c, h.hottest.wet_bulb_c),
         h.hottest.lat,
         h.hottest.lon,
-        `${icon("heat")}Hottest: <b>${place(h.hottest.name, h.hottest.state)}</b>, feels ${Math.round(h.hottest.apparent_c)}°, ${heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c)}`,
+        `${icon("heat")}${t("Hottest", lang)}: <b>${place(h.hottest.name, h.hottest.state)}</b>, ${feels(h.hottest.apparent_c)}, ${t(heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c), lang)}`,
         meta?.gridAsOf,
       ),
     );
@@ -146,7 +152,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
         dustBand(h.dustiest.dust_ug_m3),
         h.dustiest.lat,
         h.dustiest.lon,
-        `${icon("dust")}Dustiest: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${dustPhrase(h.dustiest.dust_ug_m3)}`,
+        `${icon("dust")}${t("Dustiest", lang)}: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${t(dustPhrase(h.dustiest.dust_ug_m3), lang)}`,
         meta?.gridAsOf,
       ),
     );
@@ -157,13 +163,13 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
         airBand(h.worstAir.band),
         h.worstAir.lat,
         h.worstAir.lon,
-        `${icon("air")}Worst air: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${BAND_LABEL[h.worstAir.band] ?? ""}`,
+        `${icon("air")}${t("Worst air", lang)}: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
         meta?.airAsOf,
       ),
     );
   }
   return rows.length
-    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>Right now in India</h2>${rows.join("")}</section>`
+    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("Right now in India", lang)}</h2>${rows.join("")}</section>`
     : "";
 }
 
@@ -189,6 +195,10 @@ body{font:16px/1.5 var(--sans);color:var(--ink);background:var(--bg);-webkit-fon
 main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .foot{max-width:560px;margin:0 auto;padding:18px;color:var(--muted);font-size:.78rem;border-top:1px solid var(--line)}
 .foot a{color:var(--muted)}
+.langsw{max-width:560px;margin:0 auto;padding:0 18px 22px;font-size:.82rem;color:var(--muted)}
+.langsw a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent}
+.langsw a:hover{border-color:var(--muted)}
+.langsw b{color:var(--ink);font-weight:600}
 .ic{width:18px;height:18px;flex:none;vertical-align:-.18em}
 `;
 
@@ -209,6 +219,31 @@ function ld(obj: object): string {
 // unique visitors and Core Web Vitals. Empty = beacon off (renders nothing).
 const CF_BEACON_TOKEN = "f2e28ec9892741889c2fb81ec96ff4dd";
 
+// Footer nav: localized labels, language-prefixed internal links. The two GitHub
+// links stay external (labels localized). "a digital commons" is a single phrase
+// in hi/kn, so it renders as one localized link.
+function footerNav(lang: Lang): string {
+  const nav = (path: string, en: string) => `<a href="${lp(path, lang)}">${t(en, lang)}</a>`;
+  return (
+    `${nav("/about", "about")} · ${nav("/methodology", "how it works")} · ` +
+    `${nav("/about#build", "build on it")} · ${nav("/terms", "terms")} · ` +
+    `<a href="https://github.com/urbanmorph/mugilu">${t("code", lang)}</a> · ` +
+    `<a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">${t("a digital commons", lang)}</a>`
+  );
+}
+
+// Footer language switcher: each language named in its own script, current one
+// bold (not a link). Links are RELATIVE (path-only) so they work on any host,
+// localhost in dev and the apex in prod; the absolute hreflang/canonical/og
+// above stay absolute for SEO. `canonical` carries the language-agnostic path.
+function langSwitcher(canonical: string, lang: Lang): string {
+  const path = new URL(canonical).pathname;
+  const items = LANGS.map((L) =>
+    L === lang ? `<b>${LANG_NAME[L]}</b>` : `<a href="${esc(lp(path, L))}" hreflang="${L}">${LANG_NAME[L]}</a>`,
+  ).join(" · ");
+  return `<nav class="langsw" aria-label="Language">${items}</nav>`;
+}
+
 function shell(
   title: string,
   body: string,
@@ -218,9 +253,24 @@ function shell(
   jsonLd?: string,
   ogImage?: string,
   noBeacon?: boolean,
+  lang: Lang = "en",
+  bare?: boolean, // chromeless: no header bar, footer nav or language switcher (kiosk/display)
 ): string {
+  const cur = canonical ? langUrl(canonical, lang) : undefined;
+  // hreflang alternates for every language + x-default (English) so search
+  // engines pair the versions and serve the right one.
+  const alts = canonical
+    ? LANGS.map((L) => `<link rel="alternate" hreflang="${L}" href="${esc(langUrl(canonical, L))}">`).join("") +
+      `<link rel="alternate" hreflang="x-default" href="${esc(canonical)}">`
+    : "";
+  // Client-side relative time. English keeps singular/plural; other languages use
+  // the reviewed "X … ago" templates (the X slot survives translation).
+  const relFn =
+    lang === "en"
+      ? `function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}`
+      : `function r(ms){var m=Math.round(ms/6e4);if(m<1)return ${JSON.stringify(t("just now", lang))};if(m<60)return ${JSON.stringify(t("X min ago", lang))}.replace('X',m);var h=Math.round(m/60);if(h<24)return ${JSON.stringify(t("X hours ago", lang))}.replace('X',h);var d=Math.round(h/24);return ${JSON.stringify(t("X days ago", lang))}.replace('X',d);}`;
   return `<!doctype html>
-<html lang="en">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -229,12 +279,12 @@ function shell(
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>${title}</title>
 <meta name="description" content="${esc(desc)}">
-${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ""}
+${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="mugilu">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
-${canonical ? `<meta property="og:url" content="${esc(canonical)}">` : ""}
+${cur ? `<meta property="og:url" content="${esc(cur)}">` : ""}
 ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">` : ""}
 <meta name="twitter:card" content="${ogImage ? "summary_large_image" : "summary"}">
 <meta name="twitter:title" content="${esc(title)}">
@@ -242,14 +292,19 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}"><meta property=
 ${ogImage ? `<meta name="twitter:image" content="${esc(ogImage)}">` : ""}
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 ${CF_BEACON_TOKEN && !noBeacon ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${CF_BEACON_TOKEN}"}'></script>` : ""}
-<style>${BASE_CSS}${css}</style>
+<style>${BASE_CSS}${css}${langCss(lang)}</style>
 </head>
 <body>
-<header class="bar"><a class="brand" href="/">${CLOUD} mugilu</a></header>
+${
+  bare
+    ? body
+    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a></header>
 <main>${body}</main>
-<footer class="foot"><a href="/about">about</a> · <a href="/methodology">how it works</a> · <a href="/about#build">build on it</a> · <a href="/terms">terms</a> · <a href="https://github.com/urbanmorph/mugilu">code</a> · a <a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">digital commons</a></footer>
+<footer class="foot">${footerNav(lang)}</footer>
+${canonical ? langSwitcher(canonical, lang) : ""}`
+}
 <script>
-(function(){function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
+(function(){${relFn}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
 </script>
 </body>
 </html>`;
@@ -443,7 +498,12 @@ if(location.hash)try{history.replaceState(null,'',location.pathname+location.sea
 }catch(e){}})();
 </script>`;
 
-export function renderConditionsPage(c: Conditions, persona: Persona = "everyone", canonical?: string): string {
+export function renderConditionsPage(
+  c: Conditions,
+  persona: Persona = "everyone",
+  canonical?: string,
+  lang: Lang = "en",
+): string {
   const risk = ambientRisk(c, persona);
   const also = personaAlso(risk);
   const slug = `${c.location.lat},${c.location.lon}`;
@@ -455,34 +515,34 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   const condColor = RISK_COLOR[risk.band];
 
   // Persona toggles (understated text, not chips).
-  const base = `/c/${slug}`;
+  const base = lp(`/c/${slug}`, lang);
   const pills = PERSONAS.map((p) => {
     const href = p === "everyone" ? base : `${base}?as=${p}`;
-    return `<a${p === risk.persona ? ' class="on"' : ""} href="${href}">${esc(PERSONA_LABEL[p])}</a>`;
+    return `<a${p === risk.persona ? ' class="on"' : ""} href="${href}">${esc(t(PERSONA_LABEL[p], lang))}</a>`;
   }).join("");
 
   // Editorial headline: "High heat." (band coloured) or "All clear." when calm.
   const head =
     risk.band === "low"
-      ? '<span class="b">All clear.</span>'
-      : `<span class="b">${RISK_LABEL[risk.band]}</span> ${COND_NOUN[risk.driver] ?? "sky"}.`;
+      ? `<span class="b">${t("All clear", lang)}.</span>`
+      : `<span class="b">${t(RISK_LABEL[risk.band], lang)}</span> ${t(COND_NOUN[risk.driver] ?? "sky", lang)}.`;
 
   // The readings, as strata. Each renders only when it has a value; the Ambient
   // driver's stratum is highlighted (icon + label in the condition colour).
   const strata: string[] = [];
   if (c.air) {
     const marker = c.air.station
-      ? `<i class="dot meas"></i>measured · ${c.air.station.distance_km} km`
-      : '<i class="dot mod"></i>modelled here';
+      ? `<i class="dot meas"></i>${t("measured", lang)} · ${c.air.station.distance_km} km`
+      : `<i class="dot mod"></i>${t("modelled", lang)}`;
     const aqli = c.air.yll != null ? ` · ~${c.air.yll} yrs life lost` : "";
     const poll = pollutantLine(c.air.pollutants);
     strata.push(
       lyr(
         "air",
-        "Air",
+        t("Air", lang),
         risk.driver === "Air",
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
-        `<span class="qa">AQI</span> <b style="color:${bandColor}">${bandLabel}</b>`,
+        `<span class="qa">AQI</span> <b style="color:${bandColor}">${t(bandLabel, lang)}</b>`,
         `${marker}${aqli}${poll ? `<br><span class="poll">${poll}</span>` : ""}`,
         c.air.aqi != null ? scaleBar(Math.min(c.air.aqi, 400) / 400) : "",
       ),
@@ -492,16 +552,16 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     let sub = `${round(c.heat.temp_c)}° actual · ${round(c.heat.humidity_pct)}% humidity`;
     if (c.heat.wet_bulb_c != null) {
       const [wn, wc] = wetBulb(c.heat.wet_bulb_c);
-      sub += ` · wet-bulb ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${wn}</b>`;
+      sub += ` · wet-bulb ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b>`;
     }
     if (c.heat.wbgt_c != null) sub += ` · WBGT ${round(c.heat.wbgt_c)}°`;
     strata.push(
       lyr(
         "heat",
-        "Heat",
+        t("Heat", lang),
         risk.driver === "Heat",
         `${round(c.heat.apparent_c)}°`,
-        `<span class="qa">feels like</span> <b>${heatPhrase(c.heat.apparent_c ?? 0, c.heat.wet_bulb_c)}</b>`,
+        `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(c.heat.apparent_c ?? 0, c.heat.wet_bulb_c), lang)}</b>`,
         sub,
         c.heat.apparent_c != null ? scaleBar((c.heat.apparent_c - 25) / 25) : "",
       ),
@@ -511,10 +571,10 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     strata.push(
       lyr(
         "sun",
-        "Sun",
+        t("Sun", lang),
         risk.driver === "UV",
         String(Math.round(c.uv.index)),
-        `<span class="qa">UV index</span> <b>${uvWord(c.uv.index)}</b>`,
+        `<span class="qa">${t("UV index", lang)}</span> <b>${t(uvWord(c.uv.index), lang)}</b>`,
         "",
         scaleBar(Math.min(c.uv.index, 11) / 11),
       ),
@@ -524,10 +584,10 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     strata.push(
       lyr(
         "dust",
-        "Dust",
+        t("Dust", lang),
         risk.driver === "Dust",
         String(Math.round(c.dust.dust_ug_m3)),
-        `<span class="qa nu">µg/m³</span> <b>${dustWord(c.dust.dust_ug_m3)}</b>`,
+        `<span class="qa nu">µg/m³</span> <b>${t(dustWord(c.dust.dust_ug_m3), lang)}</b>`,
         "",
         scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500),
       ),
@@ -541,10 +601,10 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     strata.push(
       lyr(
         "wind",
-        "Wind",
+        t("Wind", lang),
         risk.driver === "Wind",
         String(Math.round(gust)),
-        `<span class="qa nu">km/h gusts</span> <b>${windWord(gust)}</b>`,
+        `<span class="qa nu">km/h gusts</span> <b>${t(windWord(gust), lang)}</b>`,
         dirParts.join(" · "),
         scaleBar(Math.min(gust, 100) / 100),
       ),
@@ -557,10 +617,10 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     strata.push(
       lyr(
         "fog",
-        "Visibility",
+        t("Visibility", lang),
         risk.driver === "Fog",
         val,
-        `<b>${visWord(m)}</b>`,
+        `<b>${t(visWord(m), lang)}</b>`,
         "",
         scaleBar(1 - Math.min(m, 5000) / 5000),
       ),
@@ -575,7 +635,7 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     strata.push(
       lyr(
         "smoke",
-        "Smoke",
+        t("Smoke", lang),
         risk.driver === "Smoke",
         String(c.smoke.count),
         `<span class="qa nu">fires &lt;100 km</span> <b>${SMOKE_WORD[smokeLvl]} burning</b>`,
@@ -590,16 +650,16 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
       strata.push(
         lyr(
           "rain",
-          "Rain",
+          t("Rain", lang),
           false,
           `${c.rain.probability_pct}%`,
-          '<span class="qa">chance of rain</span>',
+          `<span class="qa">${t("chance of rain", lang)}</span>`,
           mm ? `${mm} mm falling now` : "",
           scaleBar(c.rain.probability_pct / 100, true),
         ),
       );
     } else {
-      strata.push(lyr("rain", "Rain", false, String(mm), '<span class="qa nu">mm</span> <b>now</b>', ""));
+      strata.push(lyr("rain", t("Rain", lang), false, String(mm), '<span class="qa nu">mm</span> <b>now</b>', ""));
     }
   }
 
@@ -607,21 +667,21 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
   <article class="cx">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
-    <p class="when">the sky over this spot · updated ${relTime(c.air_as_of ?? c.as_of)}</p>
+    <p class="when">${t("the sky over this spot", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
     ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
     <section class="amb">
-      <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</span></p>
+      <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="amb-head">${head}</p>
-      <p class="amb-say">${esc(ambientMeaning(risk))}</p>
-      ${also ? `<p class="amb-also">${icon("users")}${esc(also)}</p>` : ""}
+      <p class="amb-say">${esc(t(ambientMeaning(risk), lang))}</p>
+      ${also ? `<p class="amb-also">${icon("users")}${esc(t(also, lang))}</p>` : ""}
       <nav class="who" aria-label="Who is this for">${pills}</nav>
     </section>
     <dl class="strata">${strata.join("")}</dl>
     <footer>
-      <p class="attr">${esc(c.attribution)}</p>
-      <p class="disc">${esc(c.disclaimer)}</p>
-      <p class="raw"><a href="/c/${slug}.json">JSON</a> · <a href="/c/${slug}.md">Markdown</a> · <a href="/c/${slug}.png">PNG</a> · <a href="/embed/${slug}">Embed</a> · <a href="/c/${slug}?kiosk">Display</a></p>
-      <p class="cxback"><a href="/">← Look up another place</a></p>
+      <p class="attr">${esc(lang === "en" ? c.attribution : c.attribution.replace(/^Sources:/, `${t("Sources", lang)}:`))}</p>
+      <p class="disc">${esc(t(c.disclaimer, lang))}</p>
+      <p class="raw"><a href="/c/${slug}.json">${t("JSON", lang)}</a> · <a href="/c/${slug}.md">${t("Markdown", lang)}</a> · <a href="/c/${slug}.png">${t("PNG", lang)}</a> · <a href="/embed/${slug}">${t("Embed", lang)}</a> · <a href="${lp(`/c/${slug}?kiosk`, lang)}">${t("Display", lang)}</a></p>
+      <p class="cxback"><a href="${lp("/", lang)}">← ${t("Look up another place", lang)}</a></p>
     </footer>
   </article>`;
 
@@ -671,6 +731,8 @@ export function renderConditionsPage(c: Conditions, persona: Persona = "everyone
     canonical,
     dataset,
     canonical ? `${canonical}.png` : HOME_OG,
+    undefined,
+    lang,
   );
 }
 
@@ -798,18 +860,24 @@ window.addEventListener('resize',fit);setTimeout(fit,300);
 start();
 })();`;
 
-export function renderKioskPage(c: Conditions, persona: Persona, canonical: string, qr: string): string {
+export function renderKioskPage(
+  c: Conditions,
+  persona: Persona,
+  canonical: string,
+  qr: string,
+  lang: Lang = "en",
+): string {
   const risk = ambientRisk(c, persona);
   const slug = `${c.location.lat},${c.location.lon}`;
   const place = c.place ? esc(c.place) : c.air?.station?.city ? esc(c.air.station.city) : slug;
   const condColor = RISK_COLOR[risk.band];
   const head =
     risk.band === "low"
-      ? '<span class="b">All clear.</span>'
-      : `<span class="b">${RISK_LABEL[risk.band]}</span> ${COND_NOUN[risk.driver] ?? "sky"}.`;
+      ? `<span class="b">${t("All clear", lang)}.</span>`
+      : `<span class="b">${t(RISK_LABEL[risk.band], lang)}</span> ${t(COND_NOUN[risk.driver] ?? "sky", lang)}.`;
 
   const tile = (label: string, value: string, word: string, on: boolean, color = "") =>
-    `<div class="kt${on ? " on" : ""}"><span class="kt-l">${label}</span><span class="kt-n">${value}</span><span class="kt-w"${color ? ` style="color:${color}"` : ""}>${esc(word)}</span></div>`;
+    `<div class="kt${on ? " on" : ""}"><span class="kt-l">${t(label, lang)}</span><span class="kt-n">${value}</span><span class="kt-w"${color ? ` style="color:${color}"` : ""}>${esc(t(word, lang))}</span></div>`;
   const tiles: string[] = [];
   if (c.air?.aqi != null)
     tiles.push(
@@ -848,18 +916,18 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
   <div class="k" style="--cond:${condColor}">
     <header class="ktop">
       <div><span class="kname">${place}</span><span class="kcoord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</span></div>
-      <div class="kclock"><span id="clk">--:--</span><span class="kago">updated <span id="ago" data-t="${c.air_as_of ?? c.as_of}">just now</span></span></div>
+      <div class="kclock"><span id="clk">--:--</span><span class="kago">${t("updated", lang)} <span id="ago" data-t="${c.air_as_of ?? c.as_of}">${t("just now", lang)}</span></span></div>
     </header>
     ${warn}
     <main class="kamb">
-      <p class="keye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · for ${esc(PERSONA_LABEL[risk.persona])}</span></p>
+      <p class="keye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="khead">${head}</p>
-      <p class="ksay">${esc(ambientMeaning(risk))}</p>
+      <p class="ksay">${esc(t(ambientMeaning(risk), lang))}</p>
     </main>
     <section class="ktiles">${tiles.join("")}</section>
     <footer class="kfoot">
       <span class="kbrand">mugilu.live</span>
-      <div class="kqr">${qr}<span class="kqrl">scan for this<br>on your phone</span></div>
+      <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan for this<br>on your phone" : t("scan for this on your phone", lang)}</span></div>
     </footer>
   </div>
   <div class="kload" aria-hidden="true"><div class="kspin"></div><p class="kverb">Reading the sky…</p></div>
@@ -869,7 +937,18 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
   const desc = `${c.place ?? slug}: a live wall-display of the whole sky over this spot, self-refreshing.`;
   // noBeacon: a kiosk is one persistent display auto-reloading every ~14 min; it would
   // inflate visitor counts and skew Core Web Vitals, so keep the RUM beacon off here.
-  return shell(`${place} on a screen: mugilu`, body, css, desc, canonical, undefined, `${canonical}.png`, true);
+  return shell(
+    `${place} on a screen: mugilu`,
+    body,
+    css,
+    desc,
+    canonical,
+    undefined,
+    `${canonical}.png`,
+    true,
+    lang,
+    true,
+  );
 }
 
 const DISPLAY_CSS = `
@@ -886,7 +965,7 @@ const DISPLAY_CSS = `
 
 // The "put it on a screen" builder: pick a place (+ who it's for), open the
 // self-refreshing kiosk view. Search routes through /go?kiosk=1 (zero JS).
-export function renderDisplayBuilder(persona: Persona = "everyone"): string {
+export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang = "en"): string {
   const popular: [string, string][] = [
     ["bengaluru", "Bengaluru"],
     ["delhi", "Delhi"],
@@ -903,36 +982,43 @@ export function renderDisplayBuilder(persona: Persona = "everyone"): string {
   ];
   const asQ = persona !== "everyone" ? `&as=${persona}` : "";
   const pills = PERSONAS.map((p) => {
-    const href = p === "everyone" ? "/display" : `/display?as=${p}`;
-    return `<a${p === persona ? ' class="on"' : ""} href="${href}">${esc(PERSONA_LABEL[p])}</a>`;
+    const href = p === "everyone" ? lp("/display", lang) : lp(`/display?as=${p}`, lang);
+    return `<a${p === persona ? ' class="on"' : ""} href="${href}">${esc(t(PERSONA_LABEL[p], lang))}</a>`;
   }).join("");
-  const tiles = popular.map(([s, n]) => `<a class="dtile" href="/c/${s}?kiosk${asQ}">${esc(n)}</a>`).join("");
+  const tiles = popular
+    .map(([s, n]) => `<a class="dtile" href="${lp(`/c/${s}?kiosk${asQ}`, lang)}">${esc(n)}</a>`)
+    .join("");
+  const heading = lang === "en" ? "Put mugilu<br>on a screen." : t("Put mugilu on a screen.", lang);
+  const step4 =
+    lang === "en"
+      ? "For an always-on unattended screen, point a kiosk-browser app (for example Fully Kiosk on Android) at the same link so it auto-starts."
+      : t("For an always-on unattended screen, point a kiosk-browser app at the same link so it auto-starts.", lang);
   const body = `
   <article class="ax">
-    <h1 class="ahero">Put mugilu<br>on a screen.</h1>
-    <p class="alead">Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.</p>
+    <h1 class="ahero">${heading}</h1>
+    <p class="alead">${t("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.", lang)}</p>
 
-    <p class="ah">${icon("users")}<span>Weight it for who is nearby</span></p>
+    <p class="ah">${icon("users")}<span>${t("Weight it for who is nearby", lang)}</span></p>
     <nav class="dpers" aria-label="Persona">${pills}</nav>
 
-    <p class="ah">${icon("pin")}<span>Pick a place</span></p>
-    <form class="dsearch" action="/go" method="get">
+    <p class="ah">${icon("pin")}<span>${t("Pick a place", lang)}</span></p>
+    <form class="dsearch" action="${lp("/go", lang)}" method="get">
       <input type="hidden" name="kiosk" value="1">
       ${persona !== "everyone" ? `<input type="hidden" name="as" value="${persona}">` : ""}
-      <input name="q" placeholder="Any place in India" autocomplete="off" autocapitalize="off">
-      <button type="submit">Open display</button>
+      <input name="q" placeholder="${esc(t("Any place in India", lang))}" autocomplete="off" autocapitalize="off">
+      <button type="submit">${t("Open display", lang)}</button>
     </form>
     <div class="dgrid">${tiles}</div>
 
-    <p class="ah">${icon("layers")}<span>How it runs</span></p>
+    <p class="ah">${icon("layers")}<span>${t("How it runs", lang)}</span></p>
     <ol class="dhow">
-      <li>Open the display link in the screen's browser: a smart TV, a cheap streaming stick, or an old tablet in a stand.</li>
-      <li>Press full-screen (F11 with a keyboard, or the browser's full-screen control).</li>
-      <li>Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.</li>
-      <li>For an always-on unattended screen, point a kiosk-browser app (for example Fully Kiosk on Android) at the same link so it auto-starts.</li>
+      <li>${t("Open the display link in the screen's browser: a smart TV, a cheap streaming stick, or an old tablet in a stand.", lang)}</li>
+      <li>${t("Press full-screen (F11 with a keyboard, or the browser's full-screen control).", lang)}</li>
+      <li>${t("Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.", lang)}</li>
+      <li>${step4}</li>
     </ol>
     <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
-    <p class="aback"><a href="/">← back to mugilu</a></p>
+    <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
   </article>`;
   return shell(
     "Put mugilu on a screen: mugilu",
@@ -942,10 +1028,12 @@ export function renderDisplayBuilder(persona: Persona = "everyone"): string {
     `${SITE}/display`,
     undefined,
     HOME_OG,
+    undefined,
+    lang,
   );
 }
 
-export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): string {
+export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, lang: Lang = "en"): string {
   const risk = ambientRisk(c, persona);
   const condColor = RISK_COLOR[risk.band];
   const slug = `${c.location.lat},${c.location.lon}`;
@@ -972,7 +1060,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string): s
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
 
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{--cond:${condColor}}</style></head><body>
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{--cond:${condColor}}</style></head><body>
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>
@@ -1019,7 +1107,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 /** The About page: the origin story + the dual nature (for people, and as
  *  infrastructure). Person-first, jargon-free. The "Build on it" section is a
  *  stub that grows as the API / MCP land. */
-export function renderAbout(): string {
+export function renderAbout(lang: Lang = "en"): string {
   // Q&A that ALSO ships as FAQPage structured data (answer-engine + SERP pickup);
   // the visible copy below and the schema are generated from this one list.
   const faqs = [
@@ -1085,7 +1173,7 @@ export function renderAbout(): string {
   </div>
 
   <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
-  <p class="aback"><a href="/">← back to mugilu</a></p>
+  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
   </article>`;
   return shell(
     "About: mugilu",
@@ -1103,12 +1191,14 @@ export function renderAbout(): string {
       })),
     }),
     HOME_OG,
+    undefined,
+    lang,
   );
 }
 
 /** Terms & attribution: the disclaimer in full, plus per-source credit/licence.
  *  The disclaimer that ships in every API response points here. */
-export function renderTerms(): string {
+export function renderTerms(lang: Lang = "en"): string {
   const body = `
   <h1 class="ahero">Terms &amp; attribution</h1>
   <p class="alead">mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.</p>
@@ -1134,7 +1224,7 @@ export function renderTerms(): string {
   <p class="amuted">No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses <b>Cloudflare Web Analytics</b>, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.</p>
 
   <p class="adisc">A digital commons by <a href="https://urbanmorph.com">urbanmorph</a>, alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
-  <p class="aback"><a href="/">← back to mugilu</a></p>`;
+  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>`;
   return shell(
     "Terms & attribution: mugilu",
     body,
@@ -1143,16 +1233,23 @@ export function renderTerms(): string {
     `${SITE}/terms`,
     undefined,
     HOME_OG,
+    undefined,
+    lang,
   );
 }
 
 /** A real 404 page (the catch-all used to return 200 with a debug string). */
-export function renderNotFound(): string {
+export function renderNotFound(lang: Lang = "en"): string {
+  const gone = "That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate.";
+  const lead =
+    lang === "en"
+      ? `That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate like <a href="/c/12.97,77.59">/c/12.97,77.59</a>.`
+      : `${t(gone, lang)} <a href="${lp("/c/12.97,77.59", lang)}">/c/12.97,77.59</a>`;
   const body = `
-  <h1 class="ahero">Not here.</h1>
-  <p class="alead">That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate like <a href="/c/12.97,77.59">/c/12.97,77.59</a>.</p>
-  <p class="aback"><a href="/">← back to mugilu</a></p>`;
-  return shell("Not found: mugilu", body, ABOUT_CSS, DEFAULT_DESC, undefined, undefined, HOME_OG);
+  <h1 class="ahero">${t("Not here.", lang)}</h1>
+  <p class="alead">${lead}</p>
+  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>`;
+  return shell("Not found: mugilu", body, ABOUT_CSS, DEFAULT_DESC, undefined, undefined, HOME_OG, undefined, lang);
 }
 
 const METHOD_CSS = `
@@ -1166,7 +1263,7 @@ const METHOD_CSS = `
 
 /** Glass-box methodology: how the Ambient read is computed, with the public
  *  thresholds (the "Algorithmic transparency" PDGI commitment, made auditable). */
-export function renderMethodology(): string {
+export function renderMethodology(lang: Lang = "en"): string {
   const row = (h: string, c1: string, c2: string, c3: string) =>
     `<tr><td>${h}</td><td>${c1}</td><td>${c2}</td><td>${c3}</td></tr>`;
   const body = `
@@ -1201,7 +1298,7 @@ export function renderMethodology(): string {
   <p class="atext">Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open <a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>, and every layer's source and licence is on <a href="/terms">terms &amp; attribution</a>.</p>
 
   <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
-  <p class="aback"><a href="/">← back to mugilu</a></p>
+  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
   </article>`;
   return shell(
     "How it works: mugilu",
@@ -1211,6 +1308,8 @@ export function renderMethodology(): string {
     `${SITE}/methodology`,
     undefined,
     HOME_OG,
+    undefined,
+    lang,
   );
 }
 
@@ -1226,7 +1325,7 @@ const WLIST_CSS = `
 
 /** The national active-warnings list: surfaces the SACHET feed mugilu polls
  *  and archives, so the warning "moat" is readable, not just point-queried on /c. */
-export function renderWarningsPage(snap: WarningsSnapshot | null): string {
+export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "en"): string {
   const items =
     snap && snap.alerts.length
       ? `<ul class="wlist">${snap.alerts
@@ -1235,15 +1334,19 @@ export function renderWarningsPage(snap: WarningsSnapshot | null): string {
               `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${a.link ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
           )
           .join("")}</ul>`
-      : `<p class="wempty">No active national alerts right now.</p>`;
+      : `<p class="wempty">${t("No active national alerts right now.", lang)}</p>`;
+  const disc =
+    lang === "en"
+      ? "Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD directly. mugilu mirrors the SACHET feed and keeps an archive of every alert."
+      : `${t("Informational only, not for medical, emergency, or safety-critical decisions. For official hazard warnings consult NDMA / IMD.", lang)} ${t("mugilu mirrors the SACHET feed and keeps an archive of every alert.", lang)}`;
   const body = `
   <article class="ax">
-    <h1 class="ahero">Active warnings</h1>
-    <p class="alead">${snap ? snap.count : 0} official NDMA / IMD alerts across India, right now.</p>
+    <h1 class="ahero">${t("Active warnings", lang)}</h1>
+    <p class="alead">${snap ? snap.count : 0} ${t("official NDMA / IMD alerts across India, right now.", lang)}</p>
     <p class="wgen">${snap ? `as of ${esc(istTime(snap.generated_at))} · via SACHET` : ""}</p>
     ${items}
-    <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD directly. mugilu mirrors the SACHET feed and keeps an archive of every alert.</p>
-    <p class="aback"><a href="/">← back to mugilu</a></p>
+    <p class="adisc">${disc}</p>
+    <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
   </article>`;
   return shell(
     "Active warnings: mugilu",
@@ -1253,6 +1356,8 @@ export function renderWarningsPage(snap: WarningsSnapshot | null): string {
     `${SITE}/warnings`,
     undefined,
     HOME_OG,
+    undefined,
+    lang,
   );
 }
 
@@ -1307,6 +1412,7 @@ export function renderHome(
   notFound?: string,
   highlights?: NationalHighlights,
   meta?: { gridAsOf?: string; airAsOf?: string; popular?: { label: string; lat: number; lon: number }[] },
+  lang: Lang = "en",
 ): string {
   // "Popular" = real top-lookups (D1) first, then seed cities to fill (deduped),
   // so it's useful from day one and grows into real data. Short, recognisable
@@ -1322,46 +1428,57 @@ export function renderHome(
     const k = name.toLowerCase();
     if (seen.has(k) || links.length >= 8) return;
     seen.add(k);
-    links.push(`<a href="/c/${lat},${lon}">${esc(name)}</a>`);
+    links.push(`<a href="${lp(`/c/${lat},${lon}`, lang)}">${esc(name)}</a>`);
   };
   for (const p of meta?.popular ?? []) addPlace(shortPlace(p.label), p.lat, p.lon);
   for (const c of CITIES) addPlace(c.name, c.lat, c.lon);
   const cityLinks = links.join(" · ");
-  const notice = notFound ? `<p class="notice">Couldn't find "${esc(notFound)}". Try a city or place name.</p>` : "";
+  const noticeMsg =
+    lang === "en"
+      ? `Couldn't find "${esc(notFound ?? "")}". Try a city or place name.`
+      : esc(t('Couldn\'t find "X". Try a city or place name.', lang)).replace("X", esc(notFound ?? ""));
+  const notice = notFound ? `<p class="notice">${noticeMsg}</p>` : "";
+  const cover = (ic: string, en: string) => `<span>${icon(ic)} ${t(en, lang)}</span>`;
+  const shint =
+    lang === "en"
+      ? `Type any place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>), to see <b>its sky</b>: air, heat, rain, dust. Not a map.`
+      : `${t("Type any place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("to see its sky: air, heat, rain, dust.", lang)} ${t("Not a map.", lang)}`;
 
   const body = `
-  <h1 class="hero">What's it like outside, right now?</h1>
-  <p class="tagline">The open sky of India, one coordinate at a time.</p>
-  <p class="covers"><span>${icon("air")} air</span><span>${icon("heat")} heat</span><span>${icon("rain")} rain</span><span>${icon("sun")} UV</span><span>${icon("dust")} dust</span><span>${icon("warn")} warnings</span></p>
+  <h1 class="hero">${t("What's it like outside, right now?", lang)}</h1>
+  <p class="tagline">${t("The open sky of India, one coordinate at a time.", lang)}</p>
+  <p class="covers">${cover("air", "air")}${cover("heat", "heat")}${cover("rain", "rain")}${cover("sun", "UV")}${cover("dust", "dust")}${cover("warn", "warnings")}</p>
   <div class="acwrap">
-    <form class="search" action="/go" method="get" role="search">
-      <input id="q" name="q" type="search" placeholder="A place in India, or lat,lon" autocomplete="off" autofocus aria-label="Look up a place in India">
-      <button type="submit">Go</button>
+    <form class="search" action="${lp("/go", lang)}" method="get" role="search">
+      <input id="q" name="q" type="search" placeholder="${esc(t("A place in India, or lat,lon", lang))}" autocomplete="off" autofocus aria-label="Look up a place in India">
+      <button type="submit">${t("Go", lang)}</button>
     </form>
     <ul id="ac" class="ac" role="listbox"></ul>
   </div>
-  <p class="shint">Type any place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>), to see <b>its sky</b>: air, heat, rain, dust. Not a map.</p>
-  <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} Use my location</button>
+  <p class="shint">${shint}</p>
+  <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} ${t("Use my location", lang)}</button>
   ${notice}
-  ${highlights ? renderHero(highlights, meta) : ""}
+  ${highlights ? renderHero(highlights, meta, lang) : ""}
   <div id="yp" class="yourplaces" hidden></div>
-  <p class="cities">Popular: ${cityLinks}</p>
+  <p class="cities">${t("Popular:", lang)} ${cityLinks}</p>
   <script>
+  var YP=${JSON.stringify(t("Your places", lang))};
+  var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};
   var b=document.getElementById('nearme'),label=b.textContent;
-  if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent='Locating…';navigator.geolocation.getCurrentPosition(function(p){location.href='/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent='Location unavailable';});};}
+  if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent='Locating…';navigator.geolocation.getCurrentPosition(function(p){location.href=LP+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent='Location unavailable';});};}
   addEventListener('pageshow',function(){b.textContent=label;});
   var q=document.getElementById('q'),ac=document.getElementById('ac'),items=[],ix=-1,t,seq=0;
   function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}
   function hide(){ac.innerHTML='';items=[];ix=-1;}
-  function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].className=i===ix?'on':'';if(items[ix])pf('/c/'+items[ix].lat+','+items[ix].lon);}
-  function go(i){var x=items[i];if(x)location.href='/c/'+x.lat+','+x.lon;}
-  q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(t);if(v.length<2){hide();return;}var s=++seq;t=setTimeout(function(){fetch('/suggest?q='+encodeURIComponent(v)).then(function(r){return r.json();}).then(function(d){if(s!==seq)return;items=d.suggestions||[];ix=-1;ac.innerHTML=items.map(function(x,i){return '<li role="option" data-i="'+i+'"><b>'+esc(x.label)+'</b>'+(x.sublabel?' <span>'+esc(x.sublabel)+'</span>':'')+'</li>';}).join('');if(items[0])pf('/c/'+items[0].lat+','+items[0].lon);}).catch(function(){if(s===seq)hide();});},150);});
+  function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].className=i===ix?'on':'';if(items[ix])pf(LP+'/c/'+items[ix].lat+','+items[ix].lon);}
+  function go(i){var x=items[i];if(x)location.href=LP+'/c/'+x.lat+','+x.lon;}
+  q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(t);if(v.length<2){hide();return;}var s=++seq;t=setTimeout(function(){fetch('/suggest?q='+encodeURIComponent(v)).then(function(r){return r.json();}).then(function(d){if(s!==seq)return;items=d.suggestions||[];ix=-1;ac.innerHTML=items.map(function(x,i){return '<li role="option" data-i="'+i+'"><b>'+esc(x.label)+'</b>'+(x.sublabel?' <span>'+esc(x.sublabel)+'</span>':'')+'</li>';}).join('');if(items[0])pf(LP+'/c/'+items[0].lat+','+items[0].lon);}).catch(function(){if(s===seq)hide();});},150);});
   q.addEventListener('keydown',function(e){if(!items.length)return;if(e.key==='ArrowDown'){ix=(ix+1)%items.length;e.preventDefault();paint();}else if(e.key==='ArrowUp'){ix=(ix-1+items.length)%items.length;e.preventDefault();paint();}else if(e.key==='Enter'&&ix>=0){e.preventDefault();go(ix);}else if(e.key==='Escape'){hide();}});
   ac.addEventListener('mousedown',function(e){var li=e.target.closest('li');if(li)go(+li.getAttribute('data-i'));});
   q.addEventListener('blur',function(){setTimeout(hide,150);});
   // Warm the edge + upstreams for a /c URL so the click lands instantly (dedup).
   function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
-  ac.addEventListener('mouseover',function(e){var li=e.target.closest('li');if(li){var x=items[+li.getAttribute('data-i')];if(x)pf('/c/'+x.lat+','+x.lon);}});
+  ac.addEventListener('mouseover',function(e){var li=e.target.closest('li');if(li){var x=items[+li.getAttribute('data-i')];if(x)pf(LP+'/c/'+x.lat+','+x.lon);}});
   // Your places: recents + favourites from localStorage (first-party, no login).
   (function(){
     var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;
@@ -1373,9 +1490,9 @@ export function renderHome(
       var L=ord(load());
       if(!L.length){yp.hidden=true;return;}
       yp.hidden=false;
-      yp.innerHTML='<h2>Your places</h2>'+L.map(function(p){return '<div class="pl" data-id="'+esc(p.id)+'"><button class="plfav'+(p.fav?' on':'')+'" data-a="fav" type="button" aria-pressed="'+(p.fav?'true':'false')+'" title="Favourite">'+(p.fav?'\\u2605':'\\u2606')+'</button><a href="/c/'+esc(p.lat)+','+esc(p.lon)+'">'+esc(nm(p))+'</a><button class="plx" data-a="ren" type="button" title="Rename">\\u270e</button><button class="plx" data-a="del" type="button" title="Remove">\\u00d7</button></div>';}).join('');
-      L.slice(0,4).forEach(function(p){pf('/c/'+p.lat+','+p.lon);});
-      if(L[0]&&!render.sr){render.sr=1;try{var sr=document.createElement('script');sr.type='speculationrules';sr.textContent=JSON.stringify({prerender:[{source:'list',urls:['/c/'+L[0].lat+','+L[0].lon]}]});document.head.appendChild(sr);}catch(e){}}
+      yp.innerHTML='<h2>'+YP+'</h2>'+L.map(function(p){return '<div class="pl" data-id="'+esc(p.id)+'"><button class="plfav'+(p.fav?' on':'')+'" data-a="fav" type="button" aria-pressed="'+(p.fav?'true':'false')+'" title="Favourite">'+(p.fav?'\\u2605':'\\u2606')+'</button><a href="'+LP+'/c/'+esc(p.lat)+','+esc(p.lon)+'">'+esc(nm(p))+'</a><button class="plx" data-a="ren" type="button" title="Rename">\\u270e</button><button class="plx" data-a="del" type="button" title="Remove">\\u00d7</button></div>';}).join('');
+      L.slice(0,4).forEach(function(p){pf(LP+'/c/'+p.lat+','+p.lon);});
+      if(L[0]&&!render.sr){render.sr=1;try{var sr=document.createElement('script');sr.type='speculationrules';sr.textContent=JSON.stringify({prerender:[{source:'list',urls:[LP+'/c/'+L[0].lat+','+L[0].lon]}]});document.head.appendChild(sr);}catch(e){}}
     }
     yp.addEventListener('click',function(e){
       var btn=e.target.closest('button[data-a]');if(!btn)return;
@@ -1409,5 +1526,5 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell("mugilu: India's open sky", body, HOME_CSS, DEFAULT_DESC, SITE, site, HOME_OG);
+  return shell("mugilu: India's open sky", body, HOME_CSS, DEFAULT_DESC, SITE, site, HOME_OG, undefined, lang);
 }

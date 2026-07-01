@@ -169,11 +169,17 @@ export function sitemapXml(siteUrl: string): string {
   const stable = new Set(["/about", "/methodology", "/terms"]);
   // Static pages + a named /c/{slug} page per district (keyword URLs that index).
   const paths = ["/", "/about", "/methodology", "/terms", "/warnings", ...allSlugPlaces().map((p) => `/c/${p.slug}`)];
+  // Localized URL for a path: English is unprefixed (canonical); hi/kn get a /prefix.
+  const loc = (p: string, l: string) => `${siteUrl}${l === "en" ? "" : "/" + l}${p === "/" ? "" : p}`;
+  // hreflang alternates so search engines pair the three language versions (+ x-default).
+  const alts = (p: string) =>
+    ["en", "hi", "kn"].map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${loc(p, l)}"/>`).join("") +
+    `<xhtml:link rel="alternate" hreflang="x-default" href="${loc(p, "en")}"/>`;
   const urls = paths
-    .map((p) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${stable.has(p) ? STATIC : today}</lastmod></url>`)
+    .map((p) => `  <url><loc>${loc(p, "en")}</loc><lastmod>${stable.has(p) ? STATIC : today}</lastmod>${alts(p)}</url>`)
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls}
 </urlset>
 `;

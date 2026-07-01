@@ -19,6 +19,7 @@ import {
   renderMethodology,
 } from "./page";
 import { qrSvg } from "./qr";
+import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
 import { geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
@@ -104,6 +105,16 @@ export default {
       return Response.redirect(`${SITE_URL}${url.pathname}${url.search}`, 301);
     }
 
+    // Language prefix (/hi, /kn): detect, strip to the language-agnostic path so
+    // every downstream route matches unchanged, and thread `lang` into the
+    // user-facing renderers. English stays unprefixed (its URLs are canonical).
+    let lang: Lang = "en";
+    const langMatch = url.pathname.match(/^\/(hi|kn)(?=\/|$)/);
+    if (langMatch) {
+      lang = langMatch[1] as Lang;
+      url.pathname = url.pathname.slice(3) || "/";
+    }
+
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
     }
@@ -114,22 +125,25 @@ export default {
     }
 
     if (url.pathname === "/about") {
-      return cachedResponse(renderAbout(), "text/html; charset=utf-8");
+      return cachedResponse(renderAbout(lang), "text/html; charset=utf-8");
     }
 
     // Glass-box methodology: how the Ambient read + thresholds work.
     if (url.pathname === "/methodology") {
-      return cachedResponse(renderMethodology(), "text/html; charset=utf-8");
+      return cachedResponse(renderMethodology(lang), "text/html; charset=utf-8");
     }
 
     // "Put it on a screen" builder: pick a place, open the self-refreshing kiosk view.
     if (url.pathname === "/display") {
-      return cachedResponse(renderDisplayBuilder(parsePersona(url.searchParams.get("as"))), "text/html; charset=utf-8");
+      return cachedResponse(
+        renderDisplayBuilder(parsePersona(url.searchParams.get("as")), lang),
+        "text/html; charset=utf-8",
+      );
     }
 
     // Terms & attribution (the disclaimer in every API response points here).
     if (url.pathname === "/terms") {
-      return cachedResponse(renderTerms(), "text/html; charset=utf-8");
+      return cachedResponse(renderTerms(lang), "text/html; charset=utf-8");
     }
 
     // Crawler + agent front-door files, built from the live route set. Edge-cached:
@@ -167,11 +181,16 @@ export default {
       const highlights =
         hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
       return cachedResponse(
-        renderHome(url.searchParams.get("notfound") ?? undefined, highlights, {
-          gridAsOf: hl.gridAsOf,
-          airAsOf: hl.airAsOf,
-          popular,
-        }),
+        renderHome(
+          url.searchParams.get("notfound") ?? undefined,
+          highlights,
+          {
+            gridAsOf: hl.gridAsOf,
+            airAsOf: hl.airAsOf,
+            popular,
+          },
+          lang,
+        ),
         "text/html; charset=utf-8",
       );
     }
@@ -199,13 +218,13 @@ export default {
       // native-script search ("ಬೆಂಗಳೂರು") is remembered in its own script in recents.
       const frag = q ? `#q=${encodeURIComponent(q)}` : "";
       const r = await resolveQuery(q, await loadGazetteer(env));
-      if (!r) return Response.redirect(`${url.origin}/?notfound=${encodeURIComponent(q)}`, 302);
+      if (!r) return Response.redirect(`${url.origin}${lp("/", lang)}?notfound=${encodeURIComponent(q)}`, 302);
       // A known place keeps its canonical /c/{slug} keyword URL; else the coordinate.
       const dest = r.slug ? `/c/${r.slug}` : `/c/${r.lat},${r.lon}`;
       // The display builder routes its search through here: carry ?kiosk (+ persona).
       const asP = parsePersona(url.searchParams.get("as"));
       const qs = url.searchParams.has("kiosk") ? `?kiosk${asP !== "everyone" ? `&as=${asP}` : ""}` : "";
-      return Response.redirect(`${url.origin}${dest}${qs}${frag}`, 302);
+      return Response.redirect(`${url.origin}${lp(dest, lang)}${qs}${frag}`, 302);
     }
 
     // Typeahead suggestions: gazetteer (our stations) + alias + coord-parse +
@@ -258,7 +277,7 @@ export default {
       if (url.pathname === "/warnings.md") {
         return cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8");
       }
-      return cachedResponse(renderWarningsPage(snap), "text/html; charset=utf-8");
+      return cachedResponse(renderWarningsPage(snap, lang), "text/html; charset=utf-8");
     }
 
     // Nearest air-quality stations to a point, haversine over the snapshot
@@ -341,11 +360,11 @@ export default {
       if (kiosk) {
         const qrTarget = persona === "everyone" ? canonical : `${canonical}?as=${persona}`;
         return cachedResponse(
-          renderKioskPage(conditions, persona, canonical, qrSvg(qrTarget)),
+          renderKioskPage(conditions, persona, canonical, qrSvg(qrTarget), lang),
           "text/html; charset=utf-8",
         );
       }
-      return cachedResponse(renderConditionsPage(conditions, persona, canonical), "text/html; charset=utf-8");
+      return cachedResponse(renderConditionsPage(conditions, persona, canonical, lang), "text/html; charset=utf-8");
     }
 
     // Conditions at a coordinate: /c/{lat},{lon}.{json,md,png}
@@ -370,7 +389,10 @@ export default {
       const [, slug, ext] = slugMatch;
       const place = placeBySlug(slug);
       if (!place)
-        return new Response(renderNotFound(), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
+        return new Response(renderNotFound(lang), {
+          status: 404,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
       const label = place.state ? `${place.name}, ${place.state}` : place.name;
       return serveConditions(place.lat, place.lon, ext, parsePersona(url.searchParams.get("as")), `/c/${slug}`, label);
     }
@@ -390,7 +412,7 @@ export default {
         recordLookup(env, coords.lat, coords.lon, conditions.place, "embed", req.headers.get("user-agent")),
       );
       ctx.waitUntil(recordReferrer(env, "embed", req, url));
-      return cachedResponse(renderEmbed(conditions, persona, SITE_URL), "text/html; charset=utf-8");
+      return cachedResponse(renderEmbed(conditions, persona, SITE_URL, lang), "text/html; charset=utf-8");
     }
 
     // Per-station OG image: /og/s/{provider}/{raw_id}.png (rendered via workers-og).
@@ -514,7 +536,7 @@ export default {
     }
 
     // Unknown path: a real 404 (this used to return 200 with a debug string).
-    return new Response(renderNotFound(), {
+    return new Response(renderNotFound(lang), {
       status: 404,
       headers: {
         "content-type": "text/html; charset=utf-8",
