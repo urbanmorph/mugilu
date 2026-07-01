@@ -27,3 +27,14 @@ test("sitemap.xml: every URL carries a <lastmod> (crawl-freshness signal)", () =
   // explainer pages get the fixed date; live pages get a fresh (YYYY-MM-DD) date
   assert.match(xml, /<loc>https:\/\/mugilu\.live\/about<\/loc><lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
 });
+
+test("sitemap.xml: hreflang alternates pair the en/hi/kn versions (+ x-default)", () => {
+  const xml = sitemapXml("https://mugilu.live");
+  assert.match(xml, /xmlns:xhtml="http:\/\/www\.w3\.org\/1999\/xhtml"/);
+  // home: English unprefixed, hi/kn prefixed, x-default = English
+  assert.match(xml, /<xhtml:link rel="alternate" hreflang="en" href="https:\/\/mugilu\.live"\/>/);
+  assert.match(xml, /<xhtml:link rel="alternate" hreflang="kn" href="https:\/\/mugilu\.live\/kn"\/>/);
+  assert.match(xml, /<xhtml:link rel="alternate" hreflang="x-default" href="https:\/\/mugilu\.live"\/>/);
+  // a deep page keeps its path under the language prefix
+  assert.match(xml, /<xhtml:link rel="alternate" hreflang="hi" href="https:\/\/mugilu\.live\/hi\/about"\/>/);
+});
