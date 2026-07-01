@@ -162,10 +162,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "हवा धूल भरी है। यदि आप संवेदनशील हैं तो मास्क धारण करें।",
     kn: "ಗಾಳಿಯಲ್ಲಿ ಧೂಳು ತುಂಬಿದೆ. ನಿಮಗೆ ಅಲರ್ಜಿ ಇದ್ದರೆ ಮಾಸ್ಕ್ ಧರಿಸಿ.",
   },
-  Embed: {
-    hi: "एम्बेड",
-    kn: "ಎಂಬೆಡ್",
-  },
   Everyone: {
     hi: "सभी",
     kn: "ಎಲ್ಲರೂ",
@@ -252,10 +248,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "हवा चल रही है। ढीले सामान को नीचे बांध दें ताकि वे उड़ न जाएं।",
     kn: "ಗಾಳಿ ಜೋರಾಗಿದೆ. ಸಡಿಲವಾದ ವಸ್ತುಗಳನ್ನು ಕಟ್ಟಿಕೊಳ್ಳಿ, ಆಗ ಅವು ಬೀಸಿ ಹೋಗುವುದಿಲ್ಲ.",
   },
-  JSON: {
-    hi: "जेसन",
-    kn: "ಜೇಸನ್",
-  },
   "Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.":
     {
       hi: "छोड़ दीजिए। यह अपने आप रिफ्रेश होता है, स्क्रीन को चालू रखता है, और यदि नेटवर्क कुछ देर के लिए बंद हो जाए तो आखिरी रीडिंग दिखाता रहता है और फिर से जुड़ जाता है।",
@@ -268,10 +260,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   Low: {
     hi: "कम",
     kn: "ಕೆಳಮಟ್ಟದ",
-  },
-  Markdown: {
-    hi: "मार्कडाउन",
-    kn: "ಮಾರ್ಕ್‌ಡೌನ್",
   },
   Moderate: {
     hi: "मध्यम",
@@ -304,10 +292,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   "Outdoor workers": {
     hi: "बाहर काम करने वाले",
     kn: "ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು",
-  },
-  PNG: {
-    hi: "पीएनजी",
-    kn: "ಪಿಎನ್‌ಜಿ",
   },
   "Patchy low visibility. Drive with care.": {
     hi: "धुंधली दृश्यता। सावधानी से चलाइए।",

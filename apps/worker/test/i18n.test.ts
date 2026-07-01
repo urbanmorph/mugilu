@@ -163,8 +163,8 @@ test("conditions /c (kn): pills/Display prefixed; format words translit+localise
   const html = renderConditionsPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "kn");
   assert.match(html, /<html lang="kn">/);
   assert.match(html, /href="\/kn\/c\/28\.61,77\.21\?as=asthma"/); // persona pill prefixed
-  assert.match(html, />ಜೇಸನ್<\/a>/); // JSON transliterated
-  assert.match(html, />ಪ್ರದರ್ಶನ<\/a>/); // Display localised
+  assert.match(html, />JSON<\/a>/); // format token stays Latin (typed/searched)
+  assert.match(html, />ಪ್ರದರ್ಶನ<\/a>/); // Display (a plain word) localised
   assert.match(html, /href="\/kn\/c\/28\.61,77\.21\?kiosk"/); // Display link prefixed
   assert.match(html, /href="\/c\/28\.61,77\.21\.json"/); // data sibling stays unprefixed
   assert.match(html, /ಮೂಲಗಳು: CPCB/); // Sources localised, source names English
