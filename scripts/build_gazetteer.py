@@ -14,10 +14,18 @@ Data: (c) OpenStreetMap contributors (ODbL); state boundaries from bharatlas / L
 """
 import json
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
-OVERPASS = "https://overpass-api.de/api/interpreter"
+# The public Overpass API 504s/429s frequently under load; try several mirrors,
+# each with retry + backoff, so a transient outage doesn't kill the monthly build.
+OVERPASS_MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+]
 STATES_GEOJSON = "https://pub-0429b8e3b5a946e69ea007df844a6f1c.r2.dev/admin/states/LGD_States.geojson"
 UA = "mugilu-gazetteer-build/1.0 (https://mugilu.live)"
 
@@ -36,10 +44,38 @@ ALT_TAGS = [
 ]
 
 
-def fetch(url, data=None, timeout=620):
-    req = urllib.request.Request(url, data=data, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+def fetch(url, data=None, timeout=620, attempts=4):
+    """GET/POST with retry + backoff on transient errors (429/5xx, timeouts)."""
+    last = None
+    for i in range(attempts):
+        try:
+            req = urllib.request.Request(url, data=data, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            last = e
+            if e.code not in (429, 500, 502, 503, 504):
+                raise  # a real client/permanent error, not worth retrying
+        except (urllib.error.URLError, TimeoutError) as e:
+            last = e
+        if i < attempts - 1:
+            wait = min(60, 5 * 2**i)
+            print(f"  fetch {url} failed ({last}); retry {i + 1}/{attempts} in {wait}s", file=sys.stderr)
+            time.sleep(wait)
+    raise last
+
+
+def overpass(query):
+    """Run an Overpass query, falling back across mirrors if one is unavailable."""
+    body = b"data=" + urllib.parse.quote(query).encode()
+    last = None
+    for url in OVERPASS_MIRRORS:
+        try:
+            return json.loads(fetch(url, data=body))["elements"]
+        except Exception as e:  # noqa: BLE001 - try the next mirror on any failure
+            last = e
+            print(f"  Overpass mirror unavailable ({url}): {e}", file=sys.stderr)
+    raise last
 
 
 def load_states():
@@ -87,7 +123,7 @@ def state_of(states, lon, lat):
 
 def main():
     print("Fetching OSM places via Overpass...", file=sys.stderr)
-    osm = json.loads(fetch(OVERPASS, data=b"data=" + urllib.parse.quote(OVERPASS_Q).encode()))["elements"]
+    osm = overpass(OVERPASS_Q)
     print(f"  {len(osm)} place nodes", file=sys.stderr)
 
     print("Loading state boundaries (bharatlas LGD)...", file=sys.stderr)
