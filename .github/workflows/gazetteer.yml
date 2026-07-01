@@ -22,6 +22,17 @@ jobs:
       - name: Build gazetteer from OSM
         run: python3 scripts/build_gazetteer.py
 
+      # Node + the workspace's pinned wrangler (4.x), so the upload uses the same
+      # wrangler as the deploy job. Without an install, wrangler-action can't find
+      # the project's wrangler and falls back to an old default (3.x) that rejects
+      # `r2 object put --remote` ("Unknown argument: remote").
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
       - name: Upload to R2
         uses: cloudflare/wrangler-action@v3
         with:
