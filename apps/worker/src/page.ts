@@ -1132,47 +1132,86 @@ export function renderAbout(lang: Lang = "en"): string {
       a: "Air refreshes hourly, the national heat, rain, UV and dust grid every few hours, and official warnings hourly. Every reading is timestamped with how long ago it was measured.",
     },
   ];
+  // Prose: English keeps its inline markup; hi/kn render the reviewed translated text
+  // (proper nouns already Latin). Precomputed to avoid nested template literals.
+  const heroH1 =
+    lang === "en"
+      ? "The open sky of India,<br>one coordinate at a time."
+      : t("The open sky of India, one coordinate at a time.", lang);
+  const sathya =
+    lang === "en"
+      ? `<a href="https://www.sathyasankaran.com">Sathya Sankaran</a> wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.`
+      : t(
+          "Sathya Sankaran wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.",
+          lang,
+        );
+  const refPara =
+    lang === "en"
+      ? `Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.`
+      : t(
+          "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.",
+          lang,
+        );
+  const wherePara =
+    lang === "en"
+      ? `mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: <b>CPCB</b> and <b>OpenAQ</b> for air, <b>Open-Meteo</b> for weather, <b>NDMA / IMD</b> (via SACHET) for warnings, and <b>bharatlas</b> for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.`
+      : t(
+          "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB and OpenAQ for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, and bharatlas for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.",
+          lang,
+        );
+  const freePara =
+    lang === "en"
+      ? `The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.`
+      : t(
+          "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.",
+          lang,
+        );
+  const builtBy =
+    lang === "en"
+      ? `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`
+      : t("Built by urbanmorph, led by Sathya Sankaran.", lang);
   const body = `
   <article class="ax">
-  <h1 class="ahero">The open sky of India,<br>one coordinate at a time.</h1>
-  <p class="alead">A whole-sky view for people, and shared infrastructure for anyone building on top of it.</p>
+  <h1 class="ahero">${heroH1}</h1>
+  <p class="alead">${t("A whole-sky view for people, and shared infrastructure for anyone building on top of it.", lang)}</p>
 
-  <p class="ah">${icon("compass")}<span>Why mugilu</span></p>
-  <p class="atext">For years, people across India have made the sky legible one piece at a time: a map of one city's air, a thread about a heatwave, a chart of last year's monsoon. Brilliant work, but scattered, and easy to lose by the next season.</p>
-  <p class="atext"><a href="https://www.sathyasankaran.com">Sathya Sankaran</a> wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.</p>
-  <p class="atext">That is mugilu.</p>
+  <p class="ah">${icon("compass")}<span>${t("Why mugilu", lang)}</span></p>
+  <p class="atext">${t("For years, people across India have made the sky legible one piece at a time: a map of one city's air, a thread about a heatwave, a chart of last year's monsoon. Brilliant work, but scattered, and easy to lose by the next season.", lang)}</p>
+  <p class="atext">${sathya}</p>
+  <p class="atext">${t("That is mugilu.", lang)}</p>
+  <p class="atext amuted">${t("mugilu is the Kannada word for the open sky.", lang)}</p>
 
-  <p class="ah">${icon("users")}<span>For people</span></p>
-  <p class="atext">Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.</p>
+  <p class="ah">${icon("users")}<span>${t("For people", lang)}</span></p>
+  <p class="atext">${t("Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.", lang)}</p>
 
-  <p class="ah" id="build">${icon("code")}<span>Build on it</span></p>
-  <p class="atext">mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.</p>
+  <p class="ah" id="build">${icon("code")}<span>${t("Build on it", lang)}</span></p>
+  <p class="atext">${t("mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.", lang)}</p>
   <ul class="alist">
-    <li>${icon("code")}<span class="t"><b>For AI agents</b>: an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
-    <li>${icon("layers")}<span class="t"><b>For developers</b>: a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
-    <li>${icon("pin")}<span class="t"><b>Embed it</b>: a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
-    <li>${icon("sun")}<span class="t"><b>Put it on a screen</b>: a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at <a href="/display">/display</a>.</span></li>
+    <li>${icon("code")}<span class="t"><b>${t("For AI agents", lang)}</b>: an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
+    <li>${icon("layers")}<span class="t"><b>${t("For developers", lang)}</b>: a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Embed it", lang)}</b>: a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
+    <li>${icon("sun")}<span class="t"><b>${t("Put it on a screen", lang)}</b>: a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at <a href="/display">/display</a>.</span></li>
   </ul>
-  <p class="abuild">Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.</p>
+  <p class="abuild">${refPara}</p>
 
-  <p class="ah">${icon("layers")}<span>Where it comes from</span></p>
-  <p class="atext">mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: <b>CPCB</b> and <b>OpenAQ</b> for air, <b>Open-Meteo</b> for weather, <b>NDMA / IMD</b> (via SACHET) for warnings, and <b>bharatlas</b> for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.</p>
+  <p class="ah">${icon("layers")}<span>${t("Where it comes from", lang)}</span></p>
+  <p class="atext">${wherePara}</p>
 
-  <p class="ah">${icon("heart")}<span>Why it's free</span></p>
-  <p class="atext">The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
+  <p class="ah">${icon("heart")}<span>${t("Why it's free", lang)}</span></p>
+  <p class="atext">${freePara}</p>
 
-  <p class="ah">${icon("compass")}<span>Common questions</span></p>
-  ${faqs.map((f) => `<p class="atext"><b>${f.q}</b><br>${f.a}</p>`).join("\n  ")}
+  <p class="ah">${icon("compass")}<span>${t("Common questions", lang)}</span></p>
+  ${faqs.map((f) => `<p class="atext"><b>${t(f.q, lang)}</b><br>${t(f.a, lang)}</p>`).join("\n  ")}
 
   <div class="builtby">
     <a href="https://urbanmorph.com" aria-label="Urban Morph"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"></a>
     <div>
-      <p class="bb-by">Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.</p>
-      <a class="star" href="https://github.com/urbanmorph/mugilu">${GH_MARK} Source on GitHub, drop a star if it's useful</a>
+      <p class="bb-by">${builtBy}</p>
+      <a class="star" href="https://github.com/urbanmorph/mugilu">${GH_MARK} ${t("Source on GitHub, drop a star if it's useful", lang)}</a>
     </div>
   </div>
 
-  <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
+  <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
   </article>`;
   return shell(
@@ -1186,8 +1225,8 @@ export function renderAbout(lang: Lang = "en"): string {
       "@type": "FAQPage",
       mainEntity: faqs.map((f) => ({
         "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
+        name: t(f.q, lang),
+        acceptedAnswer: { "@type": "Answer", text: t(f.a, lang) },
       })),
     }),
     HOME_OG,

@@ -8,6 +8,7 @@ import {
   renderDisplayBuilder,
   renderWarningsPage,
   renderKioskPage,
+  renderAbout,
 } from "../src/page";
 import type { Conditions } from "../src/types";
 
@@ -200,4 +201,18 @@ test("kiosk (?kiosk) is chromeless: no header bar, footer nav or language switch
   assert.doesNotMatch(html, /class="langsw"/); // no language switcher on a wall display
   assert.doesNotMatch(html, /class="foot"/); // no footer nav
   assert.doesNotMatch(html, /class="bar"/); // no header bar
+});
+
+test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss present; en unchanged", () => {
+  const kn = renderAbout("kn");
+  assert.match(kn, /<html lang="kn">/);
+  assert.match(kn, /ಜನರಿಗೆ ಸಂಪೂರ್ಣ ಆಕಾಶದ ನೋಟ/); // lead
+  assert.match(kn, /<span>mugilu ಏಕೆ<\/span>/); // heading, brand Latin
+  assert.match(kn, /ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಕನ್ನಡ ಪದ/); // the meaning gloss
+  assert.match(kn, /ಡೆವಲಪರ್‌ಗಳಿಗೆ/); // developer label (tech, not property)
+  assert.match(kn, /CPCB/); // proper nouns stay Latin
+  assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ|ಗಿಟ್‌ಹೌಸ್/); // no reverted-vocab / GitHouse
+  const en = renderAbout("en");
+  assert.match(en, /For years, people across India/); // English prose intact
+  assert.match(en, /<b>CPCB<\/b>/); // English keeps inline markup
 });
