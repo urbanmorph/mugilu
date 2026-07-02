@@ -10,6 +10,7 @@ import {
   renderKioskPage,
   renderAbout,
   renderMethodology,
+  renderTerms,
 } from "../src/page";
 import type { Conditions } from "../src/types";
 
@@ -236,4 +237,22 @@ test("renderMethodology(kn): prose localized, acronyms + numbers Latin, links pr
   assert.match(en, /How the Ambient read works/);
   assert.match(en, /<b>worst<\/b>/);
   assert.match(en, /href="\/terms">terms &amp; attribution<\/a>/);
+});
+
+test("renderTerms(kn): prose localized, source names + brand Latin, links preserved; en unchanged", () => {
+  const kn = renderTerms("kn");
+  assert.match(kn, /<html lang="kn">/);
+  assert.match(kn, /ಷರತ್ತುಗಳು ಮತ್ತು ಮನ್ನಣೆ/); // "Terms & attribution" heading localized
+  assert.match(kn, /ಗೌಪ್ಯತೆ/); // "Privacy" heading localized
+  assert.match(kn, /CPCB|OpenAQ|NASA FIRMS/); // source names stay Latin
+  assert.match(kn, /Cloudflare Web Analytics/); // brand kept Latin in the privacy note
+  assert.match(kn, /github\.com\/urbanmorph\/mugilu">ರೆಪೊಸಿಟರಿ<\/a>/); // {repo} slot filled + localized text
+  assert.match(kn, /mdshare\.live">mdshare<\/a>\.?/); // {md} commons link preserved
+  assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ/); // reverted-vocab guard
+  assert.doesNotMatch(kn, /\{repo\}|\{um\}|\{bl\}|\{md\}/); // no unfilled slot leaks
+  // English is byte-for-byte the pre-i18n page: inline markup + entity + links intact
+  const en = renderTerms("en");
+  assert.match(en, /<h1 class="ahero">Terms &amp; attribution<\/h1>/);
+  assert.match(en, /<b>code is MIT<\/b>/);
+  assert.match(en, /A digital commons by <a href="https:\/\/urbanmorph\.com">urbanmorph<\/a>, alongside/);
 });

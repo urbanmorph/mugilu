@@ -1238,31 +1238,61 @@ export function renderAbout(lang: Lang = "en"): string {
 /** Terms & attribution: the disclaimer in full, plus per-source credit/licence.
  *  The disclaimer that ships in every API response points here. */
 export function renderTerms(lang: Lang = "en"): string {
+  // Prose: English keeps its inline markup; hi/kn render the translated text (proper
+  // nouns/acronyms + source names Latin, source-detail lines kept English like /about's
+  // list). Paragraphs with inline links keep {slot}s filled after lookup, word-order-safe.
+  const warranty =
+    lang === "en"
+      ? `<b>Informational and educational only, not for medical, emergency, or safety-critical decisions.</b> Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult <b>NDMA</b> and <b>IMD</b> directly.`
+      : t(
+          "Informational and educational only, not for medical, emergency, or safety-critical decisions. Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult NDMA and IMD directly.",
+          lang,
+        );
+  const repoText = lang === "en" ? "repository" : t("repository", lang);
+  const repoLink = `<a href="https://github.com/urbanmorph/mugilu">${repoText}</a>`;
+  const licence =
+    lang === "en"
+      ? `The mugilu <b>code is MIT</b> (see the ${repoLink}). The <b>data is not relicensed</b>: each upstream source keeps its own licence and attribution. mugilu is <b>non-commercial, for individuals</b>, and is not affiliated with any data provider.`
+      : t(
+          "The mugilu code is MIT (see the {repo}). The data is not relicensed: each upstream source keeps its own licence and attribution. mugilu is non-commercial, for individuals, and is not affiliated with any data provider.",
+          lang,
+        ).replace("{repo}", repoLink);
+  const privacy =
+    lang === "en"
+      ? `No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses <b>Cloudflare Web Analytics</b>, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.`
+      : t(
+          "No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses Cloudflare Web Analytics, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.",
+          lang,
+        );
+  const commonsDisc = t("A digital commons by {um}, alongside {bl} and {md}.", lang)
+    .replace("{um}", `<a href="https://urbanmorph.com">urbanmorph</a>`)
+    .replace("{bl}", `<a href="https://bharatlas.com">bharatlas</a>`)
+    .replace("{md}", `<a href="https://mdshare.live">mdshare</a>`);
   const body = `
-  <h1 class="ahero">Terms &amp; attribution</h1>
-  <p class="alead">mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.</p>
+  <h1 class="ahero">${t("Terms &amp; attribution", lang)}</h1>
+  <p class="alead">${t("mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.", lang)}</p>
 
-  <h2 class="ah">No warranty</h2>
-  <p class="amuted"><b>Informational and educational only, not for medical, emergency, or safety-critical decisions.</b> Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult <b>NDMA</b> and <b>IMD</b> directly.</p>
+  <h2 class="ah">${t("No warranty", lang)}</h2>
+  <p class="amuted">${warranty}</p>
 
-  <h2 class="ah">Licence</h2>
-  <p class="alead2">The mugilu <b>code is MIT</b> (see the <a href="https://github.com/urbanmorph/mugilu">repository</a>). The <b>data is not relicensed</b>: each upstream source keeps its own licence and attribution. mugilu is <b>non-commercial, for individuals</b>, and is not affiliated with any data provider.</p>
+  <h2 class="ah">${t("Licence", lang)}</h2>
+  <p class="alead2">${licence}</p>
 
-  <h2 class="ah">Sources &amp; credit</h2>
+  <h2 class="ah">${t("Sources &amp; credit", lang)}</h2>
   <ul class="alist on">
-    <li>${icon("air")}<span class="t"><b>Air</b>: CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</span></li>
-    <li>${icon("heat")}<span class="t"><b>Heat, rain, UV, dust, wind</b>: <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
-    <li>${icon("warn")}<span class="t"><b>Official warnings</b>: NDMA / IMD via SACHET.</span></li>
-    <li>${icon("smoke")}<span class="t"><b>Fire / crop-burn smoke</b>: NASA FIRMS (VIIRS).</span></li>
-    <li>${icon("pin")}<span class="t"><b>Geography &amp; place names</b>: place search from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL); admin boundaries from <a href="https://bharatlas.com">bharatlas</a>.</span></li>
-    <li>${icon("heart")}<span class="t"><b>Health impact</b>: years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
+    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</span></li>
+    <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
+    <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: NDMA / IMD via SACHET.</span></li>
+    <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: place search from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL); admin boundaries from <a href="https://bharatlas.com">bharatlas</a>.</span></li>
+    <li>${icon("heart")}<span class="t"><b>${t("Health impact", lang)}</b>: years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
   </ul>
-  <p class="alead2">Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.</p>
+  <p class="alead2">${t("Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.", lang)}</p>
 
-  <h2 class="ah">Privacy</h2>
-  <p class="amuted">No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses <b>Cloudflare Web Analytics</b>, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.</p>
+  <h2 class="ah">${t("Privacy", lang)}</h2>
+  <p class="amuted">${privacy}</p>
 
-  <p class="adisc">A digital commons by <a href="https://urbanmorph.com">urbanmorph</a>, alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
+  <p class="adisc">${commonsDisc}</p>
   <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>`;
   return shell(
     "Terms & attribution: mugilu",

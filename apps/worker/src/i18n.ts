@@ -132,6 +132,61 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   "Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.": {
     "kn": "ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ."
   },
+  // /terms prose (kn): hand-composed from the reviewed glossary + existing UI/About/method
+  // strings (no Sarvam), proper nouns/acronyms/source names Latin, source-detail lines left
+  // English (like /about's list). Pending native sign-off (METHODOLOGY/TERMS review sheet).
+  // "Air" reuses the existing entry. {repo}/{um}/{bl}/{md} are link slots.
+  "Terms &amp; attribution": {
+    "kn": "ಷರತ್ತುಗಳು ಮತ್ತು ಮನ್ನಣೆ"
+  },
+  "mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.": {
+    "kn": "mugilu ಭಾರತದ ಯಾವುದೇ ಬಿಂದುವಿಗೆ ಇತರರ ಮುಕ್ತ ದತ್ತಾಂಶವನ್ನು ಒಟ್ಟುಗೂಡಿಸುತ್ತದೆ. ಈ ಜೋಡಣೆ ಮತ್ತು ಕೋಡ್ ನಮ್ಮದು; ದತ್ತಾಂಶ ಅವರದ್ದು, ಮತ್ತು ಅವರ ಷರತ್ತುಗಳ ಅಡಿಯಲ್ಲಿ ಉಳಿಯುತ್ತದೆ."
+  },
+  "No warranty": {
+    "kn": "ಯಾವುದೇ ಖಾತರಿ ಇಲ್ಲ"
+  },
+  "Informational and educational only, not for medical, emergency, or safety-critical decisions. Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult NDMA and IMD directly.": {
+    "kn": "ಮಾಹಿತಿ ಮತ್ತು ಶಿಕ್ಷಣಕ್ಕಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಮಾಹಿತಿಯು ಅಳೆದ ಮತ್ತು ಅಂದಾಜು ಮಾಡಿದ ಮೌಲ್ಯಗಳ ಮಿಶ್ರಣವಾಗಿದ್ದು, ತಪ್ಪಾಗಿರಬಹುದು, ಹಳೆಯದಾಗಿರಬಹುದು ಅಥವಾ ಇಲ್ಲದಿರಬಹುದು. ನಿಖರತೆ ಅಥವಾ ಲಭ್ಯತೆಯ ಯಾವುದೇ ಖಾತರಿ ಇಲ್ಲ. ಅಧಿಕೃತ ಅಪಾಯದ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ."
+  },
+  "Licence": {
+    "kn": "ಪರವಾನಗಿ"
+  },
+  "The mugilu code is MIT (see the {repo}). The data is not relicensed: each upstream source keeps its own licence and attribution. mugilu is non-commercial, for individuals, and is not affiliated with any data provider.": {
+    "kn": "mugilu ಕೋಡ್ MIT ಆಗಿದೆ ({repo} ನೋಡಿ). ದತ್ತಾಂಶವನ್ನು ಮರು-ಪರವಾನಗಿ ನೀಡಲಾಗಿಲ್ಲ: ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿ ಮತ್ತು ಮನ್ನಣೆಯನ್ನು ಉಳಿಸಿಕೊಳ್ಳುತ್ತದೆ. mugilu ವಾಣಿಜ್ಯೇತರವಾಗಿದ್ದು, ವ್ಯಕ್ತಿಗಳಿಗಾಗಿ, ಮತ್ತು ಯಾವುದೇ ದತ್ತಾಂಶ ಪೂರೈಕೆದಾರರೊಂದಿಗೆ ಸಂಬಂಧ ಹೊಂದಿಲ್ಲ."
+  },
+  "repository": {
+    "kn": "ರೆಪೊಸಿಟರಿ"
+  },
+  "Sources &amp; credit": {
+    "kn": "ಮೂಲಗಳು ಮತ್ತು ಮನ್ನಣೆ"
+  },
+  "Heat, rain, UV, dust, wind": {
+    "kn": "ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು, ಗಾಳಿ"
+  },
+  "Official warnings": {
+    "kn": "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು"
+  },
+  "Fire / crop-burn smoke": {
+    "kn": "ಬೆಂಕಿ / ಬೆಳೆ-ದಹನ ಹೊಗೆ"
+  },
+  "Geography &amp; place names": {
+    "kn": "ಭೌಗೋಳಿಕ ಮಾಹಿತಿ ಮತ್ತು ಸ್ಥಳ ಹೆಸರುಗಳು"
+  },
+  "Health impact": {
+    "kn": "ಆರೋಗ್ಯ ಪರಿಣಾಮ"
+  },
+  "Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.": {
+    "kn": "ಪ್ರತಿಯೊಂದು ಮಾಹಿತಿಯೂ ತನ್ನದೇ ಆದ ಮನ್ನಣೆ ಸಾಲನ್ನು ಒಳಗೊಂಡಿರುತ್ತದೆ, ಆದ್ದರಿಂದ ದತ್ತಾಂಶ ಎಲ್ಲಿ ಹೋದರೂ ಮನ್ನಣೆ ಅದರೊಂದಿಗೆ ಸಾಗುತ್ತದೆ."
+  },
+  "Privacy": {
+    "kn": "ಗೌಪ್ಯತೆ"
+  },
+  "No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses Cloudflare Web Analytics, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.": {
+    "kn": "ಯಾವುದೇ ಖಾತೆಗಳಿಲ್ಲ, ನೋಂದಣಿ ಇಲ್ಲ, ಜಾಹೀರಾತು ಜಾಲಗಳಿಲ್ಲ. ಬಳಕೆಯ ಎಣಿಕೆಗಳು ಪ್ರಥಮ-ಪಕ್ಷದವು ಮತ್ತು ಒಟ್ಟಾರೆಯಾಗಿವೆ (ದುಂಡಾದ ನಿರ್ದೇಶಾಂಕಗಳು, IP ಇಲ್ಲ, ವ್ಯಕ್ತಿವಾರು ದತ್ತಾಂಶ ಇಲ್ಲ). ಭೇಟಿ ಸಂಖ್ಯೆಗಳು ಮತ್ತು ಪುಟದ ಕಾರ್ಯಕ್ಷಮತೆಗಾಗಿ, mugilu Cloudflare Web Analytics ಅನ್ನು ಬಳಸುತ್ತದೆ, ಇದು ಕುಕೀರಹಿತವಾಗಿದ್ದು, ಯಾವುದೇ ವೈಯಕ್ತಿಕ ದತ್ತಾಂಶವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಅಡ್ಡ-ಸೈಟ್ ಟ್ರ್ಯಾಕಿಂಗ್ ಅಥವಾ ಫಿಂಗರ್‌ಪ್ರಿಂಟಿಂಗ್ ಮಾಡುವುದಿಲ್ಲ. ನಿಮ್ಮ ಉಳಿಸಿದ ಸ್ಥಳಗಳು ನಿಮ್ಮ ಸ್ವಂತ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಮಾತ್ರ ಇರುತ್ತವೆ."
+  },
+  "A digital commons by {um}, alongside {bl} and {md}.": {
+    "kn": "{um} ರಿಂದ ಒಂದು ಡಿಜಿಟಲ್ ಕಾಮನ್ಸ್, {bl} ಮತ್ತು {md} ಜೊತೆಗೆ."
+  },
   "A place in India, or lat,lon": {
     "hi": "भारत में एक स्थान, या अक्षांश, देशांतर",
     "kn": "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ"
