@@ -1219,10 +1219,13 @@ export function renderAbout(lang: Lang = "en"): string {
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
-    "About: mugilu",
+    t("About mugilu: the open sky of India", lang),
     body,
     ABOUT_CSS,
-    "Why mugilu exists: one whole-sky view for any point in India, built as open infrastructure others can build on. The origin story, the sources, and how to use the data.",
+    t(
+      "mugilu shows the air, heat, rain, sun, dust and official warnings over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.",
+      lang,
+    ),
     `${SITE}/about`,
     ld({
       "@context": "https://schema.org",
@@ -1299,10 +1302,13 @@ export function renderTerms(lang: Lang = "en"): string {
   <p class="adisc">${commonsDisc}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
   return shell(
-    "Terms & attribution: mugilu",
+    t("mugilu: terms, sources and attribution", lang),
     body,
     ABOUT_CSS,
-    "mugilu's sources, licences and attribution: open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
+    t(
+      "mugilu's sources, licences and attribution: open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
+      lang,
+    ),
     `${SITE}/terms`,
     undefined,
     HOME_OG,
@@ -1401,10 +1407,13 @@ export function renderMethodology(lang: Lang = "en"): string {
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
-    "How it works: mugilu",
+    t("How mugilu works: the Ambient read explained", lang),
     body,
     ABOUT_CSS + METHOD_CSS,
-    "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
+    t(
+      "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
+      lang,
+    ),
     `${SITE}/methodology`,
     undefined,
     HOME_OG,
@@ -1626,5 +1635,15 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell("mugilu: India's open sky", body, HOME_CSS, DEFAULT_DESC, SITE, site, HOME_OG, undefined, lang);
+  return shell(
+    t("mugilu: air, heat, rain and warnings over any point in India", lang),
+    body,
+    HOME_CSS,
+    t(DEFAULT_DESC, lang),
+    SITE,
+    site,
+    HOME_OG,
+    undefined,
+    lang,
+  );
 }

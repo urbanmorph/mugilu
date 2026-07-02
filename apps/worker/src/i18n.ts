@@ -304,6 +304,44 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "भारत में कोई स्थान खोजें",
     kn: "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳವನ್ನು ಹುಡುಕಿ",
   },
+  // SEO/AEO: page <title> + <meta description> (and og/twitter, which reuse them).
+  // Localised so regional SERP shows the hi/kn snippet, not English.
+  "mugilu: air, heat, rain and warnings over any point in India": {
+    hi: "mugilu: भारत में किसी भी बिंदु पर वायु, गर्मी, बारिश और चेतावनियाँ",
+    kn: "mugilu: ಭಾರತದಲ್ಲಿ ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲೆ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
+  },
+  "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.":
+    {
+      hi: "mugilu: भारत का खुला आकाश। किसी भी बिंदु पर वायु, गर्मी, बारिश, UV, धूल और आधिकारिक चेतावनी, आपके लिए नामित सबसे बुरा खतरा।",
+      kn: "mugilu: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ. ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯ.",
+    },
+  "About mugilu: the open sky of India": {
+    hi: "mugilu के बारे में: भारत का खुला आकाश",
+    kn: "mugilu ಬಗ್ಗೆ: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ",
+  },
+  "mugilu shows the air, heat, rain, sun, dust and official warnings over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.":
+    {
+      hi: "mugilu अभी भारत में किसी भी बिंदु पर वायु, गर्मी, बारिश, सूरज, धूल और आधिकारिक चेतावनियाँ दिखाता है, और आपके लिए सबसे बुरे खतरे को नाम देता है। परियोजना, इसके खुले डेटा स्रोतों, और इस पर कैसे निर्माण करें, इसके बारे में।",
+      kn: "mugilu ಈಗ ಭಾರತದ ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲు, ಮಳೆ, ಸೂರ್ಯ, ಧೂಳು ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳನ್ನು ತೋರಿಸುತ್ತದೆ, ಮತ್ತು ನಿಮಗೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸುತ್ತದೆ. ಯೋಜನೆ, ಅದರ ಮುಕ್ತ ದತ್ತಾಂಶ ಮೂಲಗಳು ಮತ್ತು ಅದರ ಮೇಲೆ ಹೇಗೆ ನಿರ್ಮಿಸುವುದು ಎಂಬುದರ ಬಗ್ಗೆ.",
+    },
+  "How mugilu works: the Ambient read explained": {
+    hi: "mugilu कैसे काम करता है: Ambient रीडिंग की व्याख्या",
+    kn: "mugilu ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ: Ambient ಓದುವಿಕೆಯ ವಿವರಣೆ",
+  },
+  "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.":
+    {
+      hi: "mugilu की Ambient रीडिंग की गणना कैसे होती है: वायु, गर्मी, सर्दी, हवा, कोहरा, धुआं, UV और धूल के लिए सार्वजनिक, जाँचने-योग्य सीमाएँ, और प्रोफ़ाइल भार कैसे काम करता है।",
+      kn: "mugilu ನ Ambient ಓದುವಿಕೆಯನ್ನು ಹೇಗೆ ಲೆಕ್ಕಹಾಕಲಾಗುತ್ತದೆ: ವಾಯು, ಬಿಸಿಲు, ಶೀತ, ಗಾಳಿ, ಮಂಜು, ಹೊಗೆ, UV ಮತ್ತು ಧೂಳಿಗೆ ಸಾರ್ವಜನಿಕ, ಪರಿಶೀಲಿಸಬಹುದಾದ ಮಿತಿಗಳು, ಮತ್ತು ಪ್ರೊಫೈಲ್ ತೂಕ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ.",
+    },
+  "mugilu: terms, sources and attribution": {
+    hi: "mugilu: शर्तें, स्रोत और श्रेय",
+    kn: "mugilu: ಷರತ್ತುಗಳು, ಮೂಲಗಳು ಮತ್ತು ಮನ್ನಣೆ",
+  },
+  "mugilu's sources, licences and attribution: open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.":
+    {
+      hi: "mugilu के स्रोत, लाइसेंस और श्रेय: CPCB, Open-Meteo, NDMA/IMD और NASA FIRMS से खुला डेटा, प्रत्येक अपने नियम बनाए रखता है। केवल जानकारी के लिए, सुरक्षा-महत्वपूर्ण उपयोग के लिए नहीं।",
+      kn: "mugilu ನ ಮೂಲಗಳು, ಪರವಾನಗಿಗಳು ಮತ್ತು ಮನ್ನಣೆ: CPCB, Open-Meteo, NDMA/IMD ಮತ್ತು NASA FIRMSನಿಂದ ಮುಕ್ತ ದತ್ತಾಂಶ, ಪ್ರತಿಯೊಂದೂ ತನ್ನದೇ ನಿಯಮಗಳನ್ನು ಉಳಿಸಿಕೊಳ್ಳುತ್ತದೆ. ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ, ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ಬಳಕೆಗೆ ಅಲ್ಲ.",
+    },
   "A place in India, or lat,lon": {
     hi: "भारत में एक स्थान, या अक्षांश, देशांतर",
     kn: "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ",

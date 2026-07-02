@@ -10,7 +10,7 @@ test("renderMethodology: glass-box thresholds page with named sources", () => {
   assert.match(html, /WBGT/);
   assert.match(html, /301\+/); // the air severe threshold is public
   assert.match(html, /not for medical/); // the disclaimer rides along
-  assert.match(html, /How it works: mugilu/); // page title
+  assert.match(html, /How mugilu works: the Ambient read explained/); // page title (SEO)
 });
 
 test("renderAbout: origin story + dual nature (people + infrastructure), credited", () => {

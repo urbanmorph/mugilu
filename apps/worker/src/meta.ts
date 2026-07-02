@@ -165,7 +165,7 @@ export function openApiSpec(siteUrl: string): object {
  *  change rarely, so they carry a fixed date (bump STATIC when they materially change). */
 export function sitemapXml(siteUrl: string): string {
   const today = new Date().toISOString().slice(0, 10);
-  const STATIC = "2026-06-28";
+  const STATIC = "2026-07-02";
   const stable = new Set(["/about", "/methodology", "/terms"]);
   // Static pages + a named /c/{slug} page per district (keyword URLs that index).
   const paths = ["/", "/about", "/methodology", "/terms", "/warnings", ...allSlugPlaces().map((p) => `/c/${p.slug}`)];
