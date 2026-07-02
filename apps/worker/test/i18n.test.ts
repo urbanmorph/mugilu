@@ -277,6 +277,28 @@ test("SEO: titles + descriptions are value-forward and localized (en/kn)", () =>
   assert.match(renderHome(undefined, undefined, undefined, "hi"), /<title>mugilu: भारत में किसी भी बिंदु/);
 });
 
+test("SEO: og:locale per language + alternates", () => {
+  const kn = renderAbout("kn");
+  assert.match(kn, /<meta property="og:locale" content="kn_IN">/);
+  assert.match(kn, /<meta property="og:locale:alternate" content="en_IN">/);
+  assert.match(kn, /<meta property="og:locale:alternate" content="hi_IN">/);
+  assert.match(renderAbout("en"), /<meta property="og:locale" content="en_IN">/);
+});
+
+test("SEO: /c conditions description localized (place verbatim); en byte-identical", () => {
+  const U = "https://mugilu.live/c/28.61,77.21";
+  const kn = renderConditionsPage(cond(), "everyone", U, "kn");
+  // framing localized, and no English framing leaks into the kn description
+  assert.match(kn, /<meta name="description" content="[^"]*ಈ ಸ್ಥಳದ ಮೇಲಿನ ವಾಯು/);
+  assert.doesNotMatch(kn, /over this spot, with the single worst hazard named for you/);
+  // English keeps the exact original framing
+  const en = renderConditionsPage(cond(), "everyone", U, "en");
+  assert.match(
+    en,
+    /Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you\./,
+  );
+});
+
 test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {
   const about = renderAbout("hi");
   assert.match(about, /<html lang="hi">/);

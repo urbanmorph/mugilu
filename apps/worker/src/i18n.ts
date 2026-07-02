@@ -346,6 +346,17 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "भारत में एक स्थान, या अक्षांश, देशांतर",
     kn: "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ",
   },
+  // /c conditions <title> descriptor (place name is prepended, stays verbatim).
+  "air, heat, rain and warnings right now": {
+    hi: "वायु, गर्मी, बारिश और चेतावनियाँ अभी",
+    kn: "ವಾಯು, ಬಿಸಿಲు, ಮಳೆ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳు ಈಗ",
+  },
+  // /c conditions <meta description> framing (place name is prepended, stays verbatim).
+  "Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.":
+    {
+      hi: "इस स्थान पर वायु, गर्मी, बारिश, UV, धूल, धुआं और कोई भी आधिकारिक चेतावनी, आपके लिए नामित सबसे बुरे खतरे के साथ।",
+      kn: "ಈ ಸ್ಥಳದ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು, ಹೊಗೆ ಮತ್ತು ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯದೊಂದಿಗೆ.",
+    },
   "A serious warning is active. Follow official guidance.": {
     hi: "एक गंभीर चेतावनी सक्रिय है। आधिकारिक मार्गदर्शन का पालन करें।",
     kn: "ಗಂಭೀರ ಎಚ್ಚರಿಕೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಅಧಿಕೃತ ಮಾರ್ಗದರ್ಶನವನ್ನು ಅನುಸರಿಸಿ.",

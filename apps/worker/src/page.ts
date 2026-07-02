@@ -263,6 +263,13 @@ function shell(
     ? LANGS.map((L) => `<link rel="alternate" hreflang="${L}" href="${esc(langUrl(canonical, L))}">`).join("") +
       `<link rel="alternate" hreflang="x-default" href="${esc(canonical)}">`
     : "";
+  // og:locale for the current language + alternates for the others (India variants).
+  const ogLoc: Record<Lang, string> = { en: "en_IN", hi: "hi_IN", kn: "kn_IN" };
+  const localeTags =
+    `<meta property="og:locale" content="${ogLoc[lang]}">` +
+    LANGS.filter((L) => L !== lang)
+      .map((L) => `<meta property="og:locale:alternate" content="${ogLoc[L]}">`)
+      .join("");
   // Client-side relative time. English keeps singular/plural; other languages use
   // the reviewed "X … ago" templates (the X slot survives translation).
   const relFn =
@@ -282,6 +289,7 @@ function shell(
 ${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="mugilu">
+${localeTags}
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 ${cur ? `<meta property="og:url" content="${esc(cur)}">` : ""}
@@ -686,7 +694,7 @@ export function renderConditionsPage(
   </article>`;
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
-  const desc = `${c.place ?? stationCity ?? slug}: ${ambientMeaning(risk)} Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.`;
+  const desc = `${c.place ?? stationCity ?? slug}: ${t(ambientMeaning(risk), lang)} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
   const placeName = c.place ?? stationCity ?? slug;
@@ -724,7 +732,7 @@ export function renderConditionsPage(
       })
     : undefined;
   return shell(
-    `${place}: mugilu`,
+    `${place}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
     body + PLACE_RECORDER,
     css,
     desc,
