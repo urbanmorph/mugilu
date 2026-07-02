@@ -256,3 +256,25 @@ test("renderTerms(kn): prose localized, source names + brand Latin, links preser
   assert.match(en, /<b>code is MIT<\/b>/);
   assert.match(en, /A digital commons by <a href="https:\/\/urbanmorph\.com">urbanmorph<\/a>, alongside/);
 });
+
+test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {
+  const about = renderAbout("hi");
+  assert.match(about, /<html lang="hi">/);
+  assert.match(about, /Noto (Serif|Sans) Devanagari/); // Indic font override
+  assert.match(about, /पूरे आकाश/); // lead localized (Sarvam + restore)
+  assert.match(about, /mugilu/); // brand stays Latin, not मुगिलु
+  assert.doesNotMatch(about, /मुगिल|मगुल|भारतल|सी\.पी\.सी/); // no residual transliteration
+  const meth = renderMethodology("hi");
+  assert.match(meth, /पारदर्शी व्यवस्था/); // "glass box" (hand-constructed, no Sarvam)
+  assert.match(meth, /CPCB/); // acronyms Latin
+  assert.match(meth, /301\+/); // numbers stay Latin
+  assert.match(meth, /href="\/hi\/terms"/); // {terms} slot filled, lang-prefixed
+  assert.match(meth, /score\.ts<\/a>/); // {score} slot filled
+  const terms = renderTerms("hi");
+  assert.match(terms, /शर्तें और श्रेय/); // H1 localized
+  assert.match(terms, /Cloudflare Web Analytics/); // brand Latin in privacy note
+  assert.match(terms, /urbanmorph\/mugilu">रिपॉजिटरी<\/a>/); // {repo} slot filled + localized
+  for (const html of [about, meth, terms]) {
+    assert.doesNotMatch(html, /\{score\}|\{terms\}|\{repo\}|\{um\}|\{bl\}|\{md\}/); // no slot leaks
+  }
+});

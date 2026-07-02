@@ -67,69 +67,91 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   // sign-off (supporting-docs/METHODOLOGY_KANNADA_REVIEW.md). Open calls flagged there:
   // "Ambient" feature name, "wet-bulb"=ತೇವ-ಬಲ್ಬ್, "read"=ಓದುವಿಕೆ. {score}/{terms} are link slots.
   "How the Ambient read works": {
+    "hi": "Ambient रीडिंग कैसे काम करती है",
     "kn": "Ambient ಓದುವಿಕೆ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ"
   },
   "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.": {
+    "hi": "mugilu अभी आकाश आपके साथ जो सबसे बुरा कर रहा है, उसे नाम देता है, आप कौन हैं उसके अनुसार। यह एक पारदर्शी व्यवस्था है: नीचे दी गई सीमाएँ सार्वजनिक हैं और CPCB, IMD, WHO, NASA, Australian BoM और AQLI से आती हैं। केवल जानकारी के लिए, कभी भी चिकित्सा या सुरक्षा सलाह नहीं।",
     "kn": "ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಮಾಡುತ್ತಿರುವ ಅತ್ಯಂತ ಕೆಟ್ಟ ಒಂದೇ ವಿಷಯವನ್ನು mugilu ಹೆಸರಿಸುತ್ತದೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ. ಇದು ಒಂದು ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ: ಕೆಳಗಿನ ಮಿತಿಗಳು ಸಾರ್ವಜನಿಕವಾಗಿವೆ ಮತ್ತು CPCB, IMD, WHO, NASA, Australian BoM ಮತ್ತು AQLIಯಿಂದ ಬಂದಿವೆ. ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ಎಂದಿಗೂ ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಯಲ್ಲ."
   },
   "One read, never an average": {
+    "hi": "एक ही रीडिंग, कभी औसत नहीं",
     "kn": "ಒಂದೇ ಓದುವಿಕೆ, ಎಂದಿಗೂ ಸರಾಸರಿ ಅಲ್ಲ"
   },
   "Each hazard is scored 0 to 3 (none, caution, high, severe). We surface the worst one, named in plain words (\"Severe smoke\", \"High heat\"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.": {
+    "hi": "प्रत्येक खतरे को 0 से 3 तक अंक दिए जाते हैं (कोई नहीं, सावधानी, अधिक, गंभीर)। हम सबसे बुरे को सरल शब्दों में नाम देकर दिखाते हैं (\"गंभीर धुआं\", \"अधिक गर्मी\"), क्या करना है इस पर एक वाक्य के साथ। औसत निकालने से जो मायने रखता है वह छिप जाएगा, इसलिए हम कभी औसत नहीं निकालते।",
     "kn": "ಪ್ರತಿಯೊಂದು ಅಪಾಯಕ್ಕೂ 0 ರಿಂದ 3 ರವರೆಗೆ ಅಂಕ ನೀಡಲಾಗುತ್ತದೆ (ಅಪಾಯವಿಲ್ಲ · ಎಚ್ಚರಿಕೆ · ಹೆಚ್ಚು · ತೀವ್ರ). ನಾವು ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ಸರಳ ಪದಗಳಲ್ಲಿ ಹೆಸರಿಸಿ ತೋರಿಸುತ್ತೇವೆ (\"ತೀವ್ರ ಹೊಗೆ\", \"ಹೆಚ್ಚು ಬಿಸಿಲು\"), ಏನು ಮಾಡಬೇಕು ಎಂಬುದರ ಬಗ್ಗೆ ಒಂದೇ ವಾಕ್ಯದೊಂದಿಗೆ. ಸರಾಸರಿ ಮಾಡಿದರೆ ಮುಖ್ಯವಾದ ವಿಷಯ ಮರೆಯಾಗುತ್ತದೆ, ಆದ್ದರಿಂದ ನಾವು ಎಂದಿಗೂ ಸರಾಸರಿ ಮಾಡುವುದಿಲ್ಲ."
   },
   "For who you are": {
+    "hi": "आप कौन हैं, उसके अनुसार",
     "kn": "ನೀವು ಯಾರೆಂಬುದಕ್ಕೆ ತಕ್ಕಂತೆ"
   },
   "Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as \"high\"). When your trigger isn't the headline but is still elevated, a second line surfaces it (\"also watch: air is high\"). The persona is a toggle you choose: never inferred, never stored.": {
+    "hi": "एक संवेदनशीलता चुनें (अस्थमा, वृद्ध, बच्चे, बाहर काम करने वाले, हृदय) और वह समूह जिन खतरों को अधिक तीव्रता से महसूस करता है उन्हें एक स्तर ऊपर कर दिया जाता है (इसलिए अस्थमा वाले को मध्यम वायु \"अधिक\" दिखती है)। जब आपकी समस्या मुख्य बात नहीं है पर फिर भी बढ़ी हुई है, तो एक दूसरी पंक्ति उसे सामने लाती है (\"यह भी देखें: वायु अधिक है\")। यह चुनाव आप स्वयं करते हैं: कभी अनुमान नहीं, कभी संग्रहीत नहीं।",
     "kn": "ಒಂದು ದುರ್ಬಲತೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ (ಆಸ್ತಮಾ, ವೃದ್ಧರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು, ಹೃದಯ) ಮತ್ತು ಆ ಗುಂಪು ಹೆಚ್ಚು ತೀವ್ರವಾಗಿ ಅನುಭವಿಸುವ ಅಪಾಯಗಳನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸಲಾಗುತ್ತದೆ (ಆದ್ದರಿಂದ ಆಸ್ತಮಾ ಇರುವವರು ಮಧ್ಯಮ ಗಾಳಿಯನ್ನು \"ಹೆಚ್ಚು\" ಎಂದು ನೋಡುತ್ತಾರೆ). ನಿಮ್ಮ ಸಮಸ್ಯೆ ಮುಖ್ಯಾಂಶವಲ್ಲದಿದ್ದರೂ ಇನ್ನೂ ಹೆಚ್ಚಿದ್ದರೆ, ಎರಡನೇ ಸಾಲು ಅದನ್ನು ತೋರಿಸುತ್ತದೆ (\"ಗಮನಿಸಿ: ಗಾಳಿ ಹೆಚ್ಚಿದೆ\"). ಈ ಆಯ್ಕೆ ನೀವೇ ಮಾಡುವ ಒಂದು ಟಾಗಲ್: ಎಂದಿಗೂ ಊಹಿಸುವುದಿಲ್ಲ, ಎಂದಿಗೂ ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ."
   },
   "The thresholds": {
+    "hi": "सीमाएँ",
     "kn": "ಮಿತಿಗಳು"
   },
   "Hazard": {
+    "hi": "खतरा",
     "kn": "ಅಪಾಯ"
   },
   "Caution": {
+    "hi": "सावधानी",
     "kn": "ಎಚ್ಚರಿಕೆ"
   },
   "Air (AQI)": {
+    "hi": "वायु (AQI)",
     "kn": "ವಾಯುಗುಣ (AQI)"
   },
   "Heat (feels-like)": {
+    "hi": "गर्मी (महसूस)",
     "kn": "ಬಿಸಿಲು (ಅನಿಸುವ)"
   },
   "Heat (wet-bulb)": {
+    "hi": "गर्मी (वेट-बल्ब)",
     "kn": "ಬಿಸಿಲು (ತೇವ-ಬಲ್ಬ್)"
   },
   "Heat (WBGT)": {
+    "hi": "गर्मी (WBGT)",
     "kn": "ಬಿಸಿಲು (WBGT)"
   },
   "Cold (feels-like)": {
+    "hi": "सर्दी (महसूस)",
     "kn": "ಶೀತ (ಅನಿಸುವ)"
   },
   "Wind (gusts, km/h)": {
+    "hi": "हवा (झोंके, km/h)",
     "kn": "ಗಾಳಿ (ರಭಸ, km/h)"
   },
   "Fog (visibility, m)": {
+    "hi": "कोहरा (दृश्यता, m)",
     "kn": "ಮಂಜು (ಗೋಚರತೆ, m)"
   },
   "Smoke (fires &lt;100 km)": {
+    "hi": "धुआं (100 km के भीतर आग)",
     "kn": "ಹೊಗೆ (100 km ಒಳಗಿನ ಬೆಂಕಿ)"
   },
   "UV (index)": {
+    "hi": "UV (सूचकांक)",
     "kn": "UV (ಸೂಚ್ಯಂಕ)"
   },
   "Dust (µg/m³)": {
+    "hi": "धूल (µg/m³)",
     "kn": "ಧೂಳు (µg/m³)"
   },
   "Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open {score}, and every layer's source and licence is on {terms}.": {
+    "hi": "गर्मी, महसूस-तापमान, वेट-बल्ब और WBGT में से सबसे बुरा लेती है। फिर persona टॉगल एक संवेदनशील खतरे को एक स्तर ऊपर कर देता है। ये सीमाएँ CPCB (वायु), IMD और Australian BoM (गर्मी / सर्दी / हवा), WHO (UV) और NASA FIRMS (धुआं) से आती हैं; पूरा तर्क खुला {score} है, और हर परत का स्रोत और लाइसेंस {terms} पृष्ठ पर है।",
     "kn": "ಬಿಸಿಲು ಎಂಬುದು ಅನಿಸುವ ತಾಪಮಾನ, ತೇವ-ಬಲ್ಬ್ ಮತ್ತು WBGT ಇವುಗಳಲ್ಲಿ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ. ನಂತರ ಪರ್ಸೋನಾ ಟಾಗಲ್ ಒಂದು ಸೂಕ್ಷ್ಮ ಅಪಾಯವನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸುತ್ತದೆ. ಈ ಮಟ್ಟಗಳು CPCB (ಗಾಳಿ), IMD ಮತ್ತು Australian BoM (ಬಿಸಿಲು / ಶೀತ / ಗಾಳಿ), WHO (UV) ಮತ್ತು NASA FIRMS (ಹೊಗೆ) ಇವುಗಳಿಂದ ಬರುತ್ತವೆ; ಸಂಪೂರ್ಣ ತರ್ಕವು ಮುಕ್ತ {score} ಆಗಿದೆ, ಮತ್ತು ಪ್ರತಿ ಪದರದ ಮೂಲ ಮತ್ತು ಪರವಾನಗಿ {terms} ಪುಟದಲ್ಲಿದೆ."
   },
   "terms & attribution": {
+    "hi": "शर्तें और श्रेय",
     "kn": "ಷರತ್ತುಗಳು ಮತ್ತು ಮನ್ನಣೆ"
   },
   "Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.": {
+    "hi": "केवल जानकारी के लिए, चिकित्सा, आपातकालीन या सुरक्षा-महत्वपूर्ण निर्णयों के लिए नहीं। आधिकारिक चेतावनियों के लिए, NDMA और IMD से परामर्श करें।",
     "kn": "ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ."
   },
   // /terms prose (kn): hand-composed from the reviewed glossary + existing UI/About/method
@@ -137,54 +159,71 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   // English (like /about's list). Pending native sign-off (METHODOLOGY/TERMS review sheet).
   // "Air" reuses the existing entry. {repo}/{um}/{bl}/{md} are link slots.
   "Terms &amp; attribution": {
+    "hi": "शर्तें और श्रेय",
     "kn": "ಷರತ್ತುಗಳು ಮತ್ತು ಮನ್ನಣೆ"
   },
   "mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.": {
+    "hi": "mugilu भारत में किसी भी बिंदु के लिए दूसरों के खुले डेटा को एक साथ लाता है। यह असेंबली और कोड हमारा है; डेटा उनका है और उनके नियमों के तहत रहता है।",
     "kn": "mugilu ಭಾರತದ ಯಾವುದೇ ಬಿಂದುವಿಗೆ ಇತರರ ಮುಕ್ತ ದತ್ತಾಂಶವನ್ನು ಒಟ್ಟುಗೂಡಿಸುತ್ತದೆ. ಈ ಜೋಡಣೆ ಮತ್ತು ಕೋಡ್ ನಮ್ಮದು; ದತ್ತಾಂಶ ಅವರದ್ದು, ಮತ್ತು ಅವರ ಷರತ್ತುಗಳ ಅಡಿಯಲ್ಲಿ ಉಳಿಯುತ್ತದೆ."
   },
   "No warranty": {
+    "hi": "कोई वारंटी नहीं",
     "kn": "ಯಾವುದೇ ಖಾತರಿ ಇಲ್ಲ"
   },
   "Informational and educational only, not for medical, emergency, or safety-critical decisions. Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult NDMA and IMD directly.": {
+    "hi": "केवल जानकारी और शिक्षा के लिए, न कि चिकित्सा, आपातकालीन या सुरक्षा-महत्वपूर्ण निर्णयों के लिए। रीडिंग मापे गए और अनुमानित मूल्यों का मिश्रण हैं और गलत, पुरानी या अनुपलब्ध हो सकती हैं। सटीकता या उपलब्धता की कोई गारंटी नहीं है। आधिकारिक खतरे की चेतावनियों के लिए, NDMA और IMD से सीधे परामर्श करें।",
     "kn": "ಮಾಹಿತಿ ಮತ್ತು ಶಿಕ್ಷಣಕ್ಕಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಮಾಹಿತಿಯು ಅಳೆದ ಮತ್ತು ಅಂದಾಜು ಮಾಡಿದ ಮೌಲ್ಯಗಳ ಮಿಶ್ರಣವಾಗಿದ್ದು, ತಪ್ಪಾಗಿರಬಹುದು, ಹಳೆಯದಾಗಿರಬಹುದು ಅಥವಾ ಇಲ್ಲದಿರಬಹುದು. ನಿಖರತೆ ಅಥವಾ ಲಭ್ಯತೆಯ ಯಾವುದೇ ಖಾತರಿ ಇಲ್ಲ. ಅಧಿಕೃತ ಅಪಾಯದ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ."
   },
   "Licence": {
+    "hi": "लाइसेंस",
     "kn": "ಪರವಾನಗಿ"
   },
   "The mugilu code is MIT (see the {repo}). The data is not relicensed: each upstream source keeps its own licence and attribution. mugilu is non-commercial, for individuals, and is not affiliated with any data provider.": {
+    "hi": "mugilu कोड MIT है ({repo} देखें)। डेटा को पुनः-लाइसेंस नहीं दिया गया है: प्रत्येक स्रोत अपना लाइसेंस और श्रेय बनाए रखता है। mugilu गैर-वाणिज्यिक है, व्यक्तियों के लिए, और किसी भी डेटा प्रदाता से संबद्ध नहीं है।",
     "kn": "mugilu ಕೋಡ್ MIT ಆಗಿದೆ ({repo} ನೋಡಿ). ದತ್ತಾಂಶವನ್ನು ಮರು-ಪರವಾನಗಿ ನೀಡಲಾಗಿಲ್ಲ: ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿ ಮತ್ತು ಮನ್ನಣೆಯನ್ನು ಉಳಿಸಿಕೊಳ್ಳುತ್ತದೆ. mugilu ವಾಣಿಜ್ಯೇತರವಾಗಿದ್ದು, ವ್ಯಕ್ತಿಗಳಿಗಾಗಿ, ಮತ್ತು ಯಾವುದೇ ದತ್ತಾಂಶ ಪೂರೈಕೆದಾರರೊಂದಿಗೆ ಸಂಬಂಧ ಹೊಂದಿಲ್ಲ."
   },
   "repository": {
+    "hi": "रिपॉजिटरी",
     "kn": "ರೆಪೊಸಿಟರಿ"
   },
   "Sources &amp; credit": {
+    "hi": "स्रोत और श्रेय",
     "kn": "ಮೂಲಗಳು ಮತ್ತು ಮನ್ನಣೆ"
   },
   "Heat, rain, UV, dust, wind": {
+    "hi": "गर्मी, बारिश, UV, धूल, हवा",
     "kn": "ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು, ಗಾಳಿ"
   },
   "Official warnings": {
+    "hi": "आधिकारिक चेतावनियाँ",
     "kn": "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು"
   },
   "Fire / crop-burn smoke": {
+    "hi": "आग / फसल-दहन का धुआं",
     "kn": "ಬೆಂಕಿ / ಬೆಳೆ-ದಹನ ಹೊಗೆ"
   },
   "Geography &amp; place names": {
+    "hi": "भूगोल और स्थान के नाम",
     "kn": "ಭೌಗೋಳಿಕ ಮಾಹಿತಿ ಮತ್ತು ಸ್ಥಳ ಹೆಸರುಗಳು"
   },
   "Health impact": {
+    "hi": "स्वास्थ्य प्रभाव",
     "kn": "ಆರೋಗ್ಯ ಪರಿಣಾಮ"
   },
   "Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.": {
+    "hi": "प्रत्येक जानकारी की अपनी श्रेय रेखा इनलाइन होती है, इसलिए श्रेय डेटा के साथ जहाँ भी जाता है वहाँ जाता है।",
     "kn": "ಪ್ರತಿಯೊಂದು ಮಾಹಿತಿಯೂ ತನ್ನದೇ ಆದ ಮನ್ನಣೆ ಸಾಲನ್ನು ಒಳಗೊಂಡಿರುತ್ತದೆ, ಆದ್ದರಿಂದ ದತ್ತಾಂಶ ಎಲ್ಲಿ ಹೋದರೂ ಮನ್ನಣೆ ಅದರೊಂದಿಗೆ ಸಾಗುತ್ತದೆ."
   },
   "Privacy": {
+    "hi": "गोपनीयता",
     "kn": "ಗೌಪ್ಯತೆ"
   },
   "No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses Cloudflare Web Analytics, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.": {
+    "hi": "कोई खाते नहीं, कोई साइन-अप नहीं, कोई विज्ञापन नेटवर्क नहीं। उपयोगिता गणनाएँ पहली-पक्ष और समग्र (गोल निर्देशांक, कोई IP पता, कोई प्रति-व्यक्ति डेटा) हैं। आगंतुकों की संख्या और पृष्ठ प्रदर्शन के लिए, mugilu Cloudflare Web Analytics का उपयोग करता है, जो कुकी-रहित है, कोई व्यक्तिगत डेटा एकत्र नहीं करता है, और कोई क्रॉस-साइट ट्रैकिंग या फिंगरप्रिंटिंग नहीं करता है। आपके सहेजे हुए स्थान केवल आपके अपने ब्राउज़र में ही रहते हैं।",
     "kn": "ಯಾವುದೇ ಖಾತೆಗಳಿಲ್ಲ, ನೋಂದಣಿ ಇಲ್ಲ, ಜಾಹೀರಾತು ಜಾಲಗಳಿಲ್ಲ. ಬಳಕೆಯ ಎಣಿಕೆಗಳು ಪ್ರಥಮ-ಪಕ್ಷದವು ಮತ್ತು ಒಟ್ಟಾರೆಯಾಗಿವೆ (ದುಂಡಾದ ನಿರ್ದೇಶಾಂಕಗಳು, IP ಇಲ್ಲ, ವ್ಯಕ್ತಿವಾರು ದತ್ತಾಂಶ ಇಲ್ಲ). ಭೇಟಿ ಸಂಖ್ಯೆಗಳು ಮತ್ತು ಪುಟದ ಕಾರ್ಯಕ್ಷಮತೆಗಾಗಿ, mugilu Cloudflare Web Analytics ಅನ್ನು ಬಳಸುತ್ತದೆ, ಇದು ಕುಕೀರಹಿತವಾಗಿದ್ದು, ಯಾವುದೇ ವೈಯಕ್ತಿಕ ದತ್ತಾಂಶವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಅಡ್ಡ-ಸೈಟ್ ಟ್ರ್ಯಾಕಿಂಗ್ ಅಥವಾ ಫಿಂಗರ್‌ಪ್ರಿಂಟಿಂಗ್ ಮಾಡುವುದಿಲ್ಲ. ನಿಮ್ಮ ಉಳಿಸಿದ ಸ್ಥಳಗಳು ನಿಮ್ಮ ಸ್ವಂತ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಮಾತ್ರ ಇರುತ್ತವೆ."
   },
   "A digital commons by {um}, alongside {bl} and {md}.": {
+    "hi": "{um} द्वारा एक डिजिटल कॉमन्स, {bl} और {md} के साथ।",
     "kn": "{um} ರಿಂದ ಒಂದು ಡಿಜಿಟಲ್ ಕಾಮನ್ಸ್, {bl} ಮತ್ತು {md} ಜೊತೆಗೆ."
   },
   "A place in India, or lat,lon": {
@@ -196,6 +235,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಗಂಭೀರ ಎಚ್ಚರಿಕೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಅಧಿಕೃತ ಮಾರ್ಗದರ್ಶನವನ್ನು ಅನುಸರಿಸಿ."
   },
   "A whole-sky view for people, and shared infrastructure for anyone building on top of it.": {
+    "hi": "लोगों के लिए पूरे आकाश का दृश्य, और इसके ऊपर निर्माण करने वाले किसी भी व्यक्ति के लिए साझा बुनियादी ढांचा।",
     "kn": "ಜನರಿಗೆ ಸಂಪೂರ್ಣ ಆಕಾಶದ ನೋಟ, ಮತ್ತು ಅದರ ಮೇಲೆ ನಿರ್ಮಿಸುವ ಯಾರಿಗಾದರೂ ಹಂಚಿಕೆಯ ಮೂಲಸೌಕರ್ಯ."
   },
   "Active warnings": {
@@ -203,6 +243,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳು"
   },
   "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.": {
+    "hi": "अपने ऐप (संचयी, डोमेन-स्तर) की पहचान करने के लिए किसी भी API या एम्बेड URL में पैरामीटर ref=your-app जोड़ें। यह सब निःशुल्क है और इसमें किसी कुंजी की आवश्यकता नहीं है।",
     "kn": "ನಿಮ್ಮ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಗುರುತಿಸಲು ಯಾವುದೇ API ಅಥವಾ ಎಂಬೆಡ್ URLಗೆ ref=your-app ಪ್ಯಾರಾಮೀಟರ್ ಅನ್ನು ಸೇರಿಸಿ (ಸರಾಸರಿ, ಡೊಮೇನ್-ಮಟ್ಟ). ಇದು ಎಲ್ಲಾ ಉಚಿತವಾಗಿದೆ ಮತ್ತು ಯಾವುದೇ ಕೀಲಿಯ ಅಗತ್ಯವಿಲ್ಲ."
   },
   "Air": {
@@ -210,6 +251,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ವಾಯುಗುಣ"
   },
   "Air from CPCB, Airnet (CSTEP) and Aurassure via the Open Air Quality broker and OpenAQ; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; geography from bharatlas. Each source keeps its own licence, and mugilu credits all of them.": {
+    "hi": "वायु गुणवत्ता CPCB, Airnet (CSTEP) और Aurassure से Open Air Quality broker और OpenAQ के माध्यम से; मौसम, गर्मी, UV और धूल से Open-Meteo; NDMA और IMD से आधिकारिक चेतावनियाँ; bharatlas से भूगोल। प्रत्येक स्रोत का अपना लाइसेंस होता है और mugilu उन सभी को श्रेय देता है।",
     "kn": "CPCB, Airnet (CSTEP) ಮತ್ತು Aurassure‌ನಿಂದ ವಾಯು ಗುಣಮಟ್ಟದ ಮಾಹಿತಿ; Open Air Quality broker ಮತ್ತು OpenAQ ಮೂಲಕ ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ಮಾಹಿತಿ; NDMA ಮತ್ತು IMDಯಿಂದ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು; bharatlas‌ನಿಂದ ಭೌಗೋಳಿಕ ಮಾಹಿತಿ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ."
   },
   "Air is dangerous. Stay indoors if you can.": {
@@ -225,6 +267,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ವಾಯು ಗುಣಮಟ್ಟ ಸ್ವಲ್ಪ ಮಟ್ಟಿಗೆ ಉತ್ತಮವಾಗಿದೆ, ಹೆಚ್ಚಿನ ಜನರಿಗೆ ಸರಿ."
   },
   "Air refreshes hourly, the national heat, rain, UV and dust grid every few hours, and official warnings hourly. Every reading is timestamped with how long ago it was measured.": {
+    "hi": "वायु-गुणवत्ता डेटा हर घंटे, राष्ट्रीय ताप, वर्षा, UV और धूल ग्रिड हर कुछ घंटों में और आधिकारिक चेतावनियाँ हर घंटे अद्यतन होती हैं। प्रत्येक जानकारी का समय-चिह्नित किया जाता है कि इसे कितने समय पहले मापा गया था।",
     "kn": "ವಾಯು-ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ ಪ್ರತಿ ಗಂಟೆಗೆ ನವೀಕರಿಸಲಾಗುತ್ತದೆ, ರಾಷ್ಟ್ರೀಯ ಬಿಸಿಲು, ಮಳೆ, UV ಮತ್ತು ಧೂಳಿನ ಗ್ರಿಡ್ ಪ್ರತಿ ಕೆಲವು ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಪ್ರತಿ ಗಂಟೆಗೆ. ಪ್ರತಿಯೊಂದು ಮಾಹಿತಿಯ ತುಣುಕಿಗೂ ಅದನ್ನು ಅಳೆಯಲಾದ ಸಮಯದೊಂದಿಗೆ ಸಮಯಮುದ್ರೆ ಮಾಡಲಾಗಿರುತ್ತದೆ."
   },
   "All clear": {
@@ -252,9 +295,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಆಸ್ತಮಾ ಮತ್ತು ಶ್ವಾಸಕೋಶ"
   },
   "Build on it": {
+    "hi": "इस पर निर्माण करें",
     "kn": "ಅದರ ಮೇಲೆ ನಿರ್ಮಿಸಿ"
   },
   "Built by urbanmorph, led by Sathya Sankaran.": {
+    "hi": "urbanmorph द्वारा निर्मित, Sathya Sankaran के नेतृत्व में।",
     "kn": "ಇದನ್ನು ನಿರ್ಮಿಸಿದ್ದು urbanmorph, Sathya Sankaran ನೇತೃತ್ವದಲ್ಲಿ."
   },
   "Children": {
@@ -266,6 +311,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಶೀತಲ ಪರಿಸ್ಥಿತಿಗಳು. ಹೊರಾಂಗಣದಲ್ಲಿ ಕಳೆಯುವ ಸಮಯವನ್ನು ಮಿತಿಗೊಳಿಸಿ ಮತ್ತು ಮುಚ್ಚಿಕೊಳ್ಳಿ."
   },
   "Common questions": {
+    "hi": "सामान्य प्रश्न",
     "kn": "ಸಾಮಾನ್ಯ ಪ್ರಶ್ನೆಗಳು"
   },
   "Conditions are good right now.": {
@@ -309,6 +355,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಗಾಳಿಯಲ್ಲಿ ಧೂಳು ತುಂಬಿದೆ. ನಿಮಗೆ ಅಲರ್ಜಿ ಇದ್ದರೆ ಮಾಸ್ಕ್ ಧರಿಸಿ."
   },
   "Embed it": {
+    "hi": "इसे एम्बेड करें",
     "kn": "ಅದನ್ನು ಅಳವಡಿಸಿ"
   },
   "Everyone": {
@@ -328,6 +375,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಹತ್ತಿರದಲ್ಲಿ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ. ಸೂಕ್ಷ್ಮ ವ್ಯಕ್ತಿಗಳು ವಾಯು ಗುಣಮಟ್ಟವನ್ನು ಗಮನಿಸಬೇಕು."
   },
   "For AI agents": {
+    "hi": "AI एजेंट्स के लिए",
     "kn": "AI ಏಜೆಂಟ್‌ಗಳಿಗೆ"
   },
   "For an always-on unattended screen, point a kiosk-browser app at the same link so it auto-starts.": {
@@ -335,12 +383,15 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಸದಾ-ಆನ್, ಮೇಲ್ವಿಚಾರಣೆಯಿಲ್ಲದ ಸ್ಕ್ರೀನ್‌ಗೆ, ಅದೇ ಕೊಂಡಿಗೆ ಕಿಒಸ್ಕ್-ಬ್ರೌಸರ್ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಹೊಂದಿಸಿ, ಆದ್ದರಿಂದ ಅದು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ."
   },
   "For developers": {
+    "hi": "डेवलपर्स के लिए",
     "kn": "ಡೆವಲಪರ್‌ಗಳಿಗೆ"
   },
   "For people": {
+    "hi": "लोगों के लिए",
     "kn": "ಜನರಿಗಾಗಿ"
   },
   "For years, people across India have made the sky legible one piece at a time: a map of one city's air, a thread about a heatwave, a chart of last year's monsoon. Brilliant work, but scattered, and easy to lose by the next season.": {
+    "hi": "कई वर्षों से भारत भर के लोग एक-एक करके आसमान को पढ़ने योग्य बना रहे हैंः एक शहर की वायु गुणवत्ता का मानचित्र, एक गर्मी की लहर के बारे में एक लेख, पिछले वर्ष के मानसून का एक चार्ट। शानदार काम है, लेकिन बिखरा हुआ है और अगले सत्र में आसानी से खो सकता है।",
     "kn": "ಹಲವು ವರ್ಷಗಳಿಂದ, ಭಾರತದಾದ್ಯಂತ ಜನರು ಆಕಾಶವನ್ನು ಒಂದು ಸಮಯದಲ್ಲಿ ಒಂದು ತುಣುಕಾಗಿ ಓದಬಲ್ಲಂತೆ ಮಾಡುತ್ತಿದ್ದಾರೆ: ಒಂದು ನಗರದ ಗಾಳಿಯ ನಕ್ಷೆ, ಬಿಸಿಲಿನ ಅಲೆಗಳ ಬಗ್ಗೆ ಒಂದು ಲೇಖನ, ಕಳೆದ ವರ್ಷದ ಮಳೆಯ ನಕ್ಷೆ. ಅತ್ಯುತ್ತಮ ಕೆಲಸ, ಆದರೆ ಮುಂದಿನ ಋತುವಿನಲ್ಲಿ ಹರಡಿ ಹೋಗಿ, ಸುಲಭವಾಗಿ ಕಳೆದುಹೋಗುತ್ತದೆ."
   },
   "Go": {
@@ -380,6 +431,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಅತ್ಯಂತ ಬಿಸಿಲು"
   },
   "How current are the readings?": {
+    "hi": "सूचना कितनी हाल की है?",
     "kn": "ಮಾಹಿತಿ ಎಷ್ಟು ಇತ್ತೀಚಿನದು?"
   },
   "How it runs": {
@@ -399,9 +451,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಹತ್ತಿರದಲ್ಲಿ ತೀವ್ರವಾದ ಬೆಂಕಿ ಕಾಣಿಸಿಕೊಂಡಿದೆ. ಗಾಳಿಯನ್ನು ಅಪಾಯಕಾರಿ ಎಂದು ಪರಿಗಣಿಸಿ, ಒಳಾಂಗಣದಲ್ಲಿರಿ."
   },
   "Is it safe to go outside right now?": {
+    "hi": "क्या अभी बाहर जाना सुरक्षित है?",
     "kn": "ಹೊರಗೆ ಹೋಗುವುದು ಈಗ ಸುರಕ್ಷಿತವೇ?"
   },
   "Is mugilu free?": {
+    "hi": "क्या mugilu निःशुल्क है?",
     "kn": "mugilu ಉಚಿತವೇ?"
   },
   "It's cold out. Layer up.": {
@@ -481,6 +535,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಫುಲ್-ಸ್ಕ್ರೀನ್ ಮೋಡ್ (ಕೀಬೋರ್ಡ್‌ನಲ್ಲಿ F11, ಅಥವಾ ಬ್ರೌಸರ್‌ನ ಫುಲ್-ಸ್ಕ್ರೀನ್ ನಿಯಂತ್ರಣ) ಒತ್ತಿ."
   },
   "Put it on a screen": {
+    "hi": "इसे स्क्रीन पर लगाएं",
     "kn": "ಸ್ಕ್ರೀನ್ ಮೇಲೆ ಹಾಕಿ"
   },
   "Put mugilu on a screen.": {
@@ -496,6 +551,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಈಗ ಭಾರತದಾದ್ಯಂತ"
   },
   "Sathya Sankaran wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.": {
+    "hi": "Sathya Sankaran हर बार शुरुआत से ही शुरू करना बंद करना चाहते थे: पूरे आकाश को एक दृष्टिकोण में लाना, भारत में किसी भी बिंदु पर हर खतरे को एक साथ लाना, और फिर इसे बुनियादी ढांचे के रूप में देना, ताकि अगले मानचित्र, कहानी या चेतावनी को कुछ भी नहीं से शुरू करना न पड़े।",
     "kn": "Sathya Sankaran ಪ್ರತಿ ಬಾರಿಯೂ ಮೊದಲಿನಿಂದ ಪ್ರಾರಂಭಿಸುವುದನ್ನು ನಿಲ್ಲಿಸಲು ಬಯಸಿದ್ದರು: ಭಾರತದ ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲೆ ಪ್ರತಿಯೊಂದು ಅಪಾಯವನ್ನು ಒಟ್ಟುಗೂಡಿಸಿ, ನಂತರ ಅದನ್ನು ಮೂಲಸೌಕರ್ಯವಾಗಿ ಹಸ್ತಾಂತರಿಸುವುದು, ಆದ್ದರಿಂದ ಮುಂದಿನ ನಕ್ಷೆ, ಕಥೆ ಅಥವಾ ಎಚ್ಚರಿಕೆಯು ಏನೂ ಇಲ್ಲದಿರುವಲ್ಲಿಂದ ಪ್ರಾರಂಭಿಸಬೇಕಾಗಿಲ್ಲ."
   },
   "Severe": {
@@ -511,6 +567,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಗಾಳಿಯಲ್ಲಿ ಸ್ವಲ್ಪ ಧೂಳು ಇದೆ."
   },
   "Source on GitHub, drop a star if it's useful": {
+    "hi": "GitHub पर सोर्स कोड, उपयोगी लगे तो एक स्टार दें।",
     "kn": "GitHub‌ನಲ್ಲಿರುವ ಮೂಲ ಸಂಕೇತ, ಅದು ಉಪಯುಕ್ತವಾಗಿದ್ದರೆ ಸ್ಟಾರ್ ಸೇರಿಸಿ."
   },
   "Sources": {
@@ -534,6 +591,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಹೊರಗೆ ಸ್ವಲ್ಪ ಜಾಗರೂಕತೆಯಿಂದಿರಿ."
   },
   "That is mugilu.": {
+    "hi": "यही है mugilu।",
     "kn": "ಅದೇ mugilu."
   },
   "That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate.": {
@@ -545,6 +603,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ, ನಿರ್ದೇಶಾಂಕ ಒಂದೊಂದಾಗಿ."
   },
   "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.": {
+    "hi": "आपके ऊपर का आकाश एक साझा सार्वजनिक क्षेत्र है। यह जानकर कि इसे खरीदने के लिए पैसे खर्च करने या किसी के ऐप के अंदर बंद रहने की आवश्यकता नहीं है। mugilu गैर-वाणिज्यिक है, जो सार्वजनिक हित के लिए बनाया गया है, bharatlas और mdshare के साथ सार्वजनिक उपकरणों के एक छोटे समूह में तीसरा है।",
     "kn": "ನಿಮ್ಮ ಮೇಲಿರುವ ಆಕಾಶವು ಒಂದು ಹಂಚಿಕೆಯ ಸಾಮಾನ್ಯ ಸ್ಥಳವಾಗಿದೆ. ಇದು ಹಣ ವೆಚ್ಚವಾಗಬಾರದು ಅಥವಾ ಯಾರೊಬ್ಬರ ಆ್ಯಪ್‌ನೊಳಗೆ ಲಾಕ್ ಆಗಬಾರದು ಎಂದು ತಿಳಿದಿದೆ. mugilu ವಾಣಿಜ್ಯೇತರವಾಗಿದ್ದು, ಸಾರ್ವಜನಿಕ ಹಿತಕ್ಕಾಗಿ ತಯಾರಿಸಲ್ಪಟ್ಟಿದೆ, bharatlas ಮತ್ತು mdshare ಜೊತೆಗೆ ಸಾರ್ವಜನಿಕ ಸಾಧನಗಳ ಸಣ್ಣ ಸಮೂಹದಲ್ಲಿ ಮೂರನೆಯದಾಗಿದೆ."
   },
   "The sun is very strong. Limit midday hours.": {
@@ -556,6 +615,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಯಾವುದೇ ಡಿಸ್ಪ್ಲೇಯನ್ನು ಆಕಾಶದ ಲೈವ್, ಸ್ವಯಂ-ಅಪ್‌ಡೇಟ್ ಆಗುವ ಓದುವಿಕೆಯಾಗಿ ಪರಿವರ್ತಿಸಿ. ಒಂದು ಸ್ಥಳವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ, ಅದನ್ನು ಸ್ಕ್ರೀನ್ ಮೇಲೆ ತೆರೆಯಿರಿ, ಫುಲ್-ಸ್ಕ್ರೀನ್ ಒತ್ತಿರಿ. ಇದು ತನ್ನನ್ನು ತಾನು ರಿಫ್ರೆಶ್ ಮಾಡಿಕೊಳ್ಳುತ್ತದೆ, ಮತ್ತು ಒಂದು ಮೂಲೆಯ ಕ್ಯೂ.ಆರ್. ಕೋಡ್‌ನಿಂದ ಹಾದುಹೋಗುವವರಿಗೆ ಅವರ ಫೋನಿನಲ್ಲಿ ಅದೇ ಸ್ಥಳಕ್ಕೆ ಕಳುಹಿಸುತ್ತದೆ."
   },
   "Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.": {
+    "hi": "स्थान लिख दीजिए। देखिए कि आसमान इस समय आपके साथ क्या कर रहा है: वायु गुणवत्ता, गर्मी (और यह वास्तव में कितना टिकाऊ है), बारिश, सूरज और धूल, साथ ही उस स्थान के बारे में कोई आधिकारिक चेतावनी। फिर एक सादी रेखा, जो आपके लिए सबसे खराब है, चाहे आपको दमा हो, बाहर काम करते हों या किसी बच्चे या बड़े माता-पिता की देखभाल कर रहे हों। कोई साइन-अप नहीं, और कोई तकनीकी शब्दावली नहीं।",
     "kn": "ಸ್ಥಳ ಟೈಪ್ ಮಾಡಿ. ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಏನು ಮಾಡುತ್ತಿದೆ ಎಂಬುದನ್ನು ನೋಡಿ: ವಾಯು ಗುಣಮಟ್ಟ, ಬಿಸಿಲು (ಮತ್ತು ಅದು ನಿಜವಾಗಿಯೂ ಎಷ್ಟು ಬದುಕುಳಿಯಬಲ್ಲದು), ಮಳೆ, ಸೂರ್ಯ ಮತ್ತು ಧೂಳು, ಜೊತೆಗೆ ಆ ಸ್ಥಳದ ಬಗ್ಗೆ ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ. ನಂತರ ಒಂದು ಸರಳ ರೇಖೆ, ನಿಮಗೆ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದು, ನೀವು ಆಸ್ತಮಾ ಹೊಂದಿದ್ದರೂ, ಹೊರಾಂಗಣದಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತಿದ್ದರೂ ಅಥವಾ ಮಗುವನ್ನು ಅಥವಾ ಹಿರಿಯ ಪೋಷಕರನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದರೂ. ನೋಂದಣಿ ಅಗತ್ಯವಿಲ್ಲ, ಯಾವುದೇ ತಾಂತ್ರಿಕ ಶಬ್ದಗಳಿಲ್ಲ."
   },
   "Type any place in India, in any language": {
@@ -586,10 +646,12 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "hi": "पास के लोगों के अनुसार पढ़ना तय करें",
     "kn": "ಹತ್ತಿರದಲ್ಲಿ ಇರುವ ಜನರ ಗುಂಪಿಗೆ ಓದುವಿಕೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ."
   },
-  "Wet-bulb is the temperature a wet thermometer settles at: it folds heat and humidity into the one number that decides whether your body can still cool itself. Above about 32 degrees wet-bulb, even resting in shade turns dangerous. Ordinary feels-like numbers hide this, so mugilu surfaces it.": {
+  "Wet-bulb is the temperature a wet thermometer settles at: it folds heat and humidity into the one number that decides whether your body can still cool itself. Above about 32°C wet-bulb, even resting in shade turns dangerous. Ordinary feels-like numbers hide this, so mugilu surfaces it.": {
+    "hi": "वेट-बल्ब वह तापमान है जिस पर एक गीला थर्मामीटर स्थिर होता हैः यह गर्मी और आर्द्रता को एक संख्या में मिलाता है जो यह तय करता है कि आपका शरीर अभी भी खुद को ठंडा कर सकता है या नहीं। लगभग 32 डिग्री वेट-बल्ब से ऊपर, छाया में भी रहना खतरनाक हो जाता है। सामान्य फील-लाइक संख्याएँ इसे छुपाती हैं, इसलिए mugilu इसे दिखाता है।",
     "kn": "ಆರ್ದ್ರ-ಬಲ್ಬ್ ಎಂಬುದು ತೇವವಾದ ಥರ್ಮಾಮೀಟರ್ ತಲುಪುವ ತಾಪಮಾನವಾಗಿದೆ: ಇದು ಬಿಸಿಲು ಮತ್ತು ತೇವಾಂಶವನ್ನು ಒಂದೇ ಸಂಖ್ಯೆಯಲ್ಲಿ ಸಂಯೋಜಿಸುತ್ತದೆ, ಇದು ನಿಮ್ಮ ದೇಹವು ಇನ್ನೂ ತನ್ನನ್ನು ತಾನು ತಂಪಾಗಿಸಿಕೊಳ್ಳಬಹುದೇ ಎಂಬುದನ್ನು ನಿರ್ಧರಿಸುತ್ತದೆ. ಸುಮಾರು 32 ಡಿಗ್ರಿ ತೇವ-ಬಲ್ಬ್‌ಗಿಂತ ಹೆಚ್ಚಿನ ತಾಪಮಾನದಲ್ಲಿ, ನೆರಳಿನಲ್ಲಿ ವಿಶ್ರಾಂತಿ ಪಡೆಯುವುದೂ ಸಹ ಅಪಾಯಕಾರಿಯಾಗುತ್ತದೆ. ಸಾಮಾನ್ಯ ಭಾವನೆಗಳು-ತರಹದ ಸಂಖ್ಯೆಗಳು ಇದನ್ನು ಮರೆಮಾಡುತ್ತವೆ, ಆದ್ದರಿಂದ mugilu ಅದನ್ನು ತೋರಿಸುತ್ತಾನೆ."
   },
   "What is wet-bulb temperature, and why does mugilu show it?": {
+    "hi": "वेट-बल्ब तापमान क्या है और mugilu इसे क्यों दिखाता है?",
     "kn": "ತೇವಾಂಶ-ಬಲ್ಬ್ ತಾಪಮಾನ ಎಂದರೇನು, ಮತ್ತು mugilu ಅದನ್ನು ಏಕೆ ತೋರಿಸುತ್ತದೆ?"
   },
   "What's it like outside, right now?": {
@@ -597,15 +659,19 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಈಗ ಹೊರಗೆ ಹೇಗಿದೆ?"
   },
   "Where does mugilu's data come from?": {
+    "hi": "mugilu द्वारा उपयोग किया जाने वाला डेटा कहाँ से आता है?",
     "kn": "mugilu ಬಳಸುವ ದತ್ತಾಂಶ ಎಲ್ಲಿಂದ ಬರುತ್ತದೆ?"
   },
   "Where it comes from": {
+    "hi": "यह कहाँ से आता है",
     "kn": "ಇದು ಎಲ್ಲಿಂದ ಬರುತ್ತದೆ"
   },
   "Why it's free": {
+    "hi": "यह निःशुल्क क्यों है",
     "kn": "ಇದು ಏಕೆ ಉಚಿತ"
   },
   "Why mugilu": {
+    "hi": "mugilu क्यों",
     "kn": "mugilu ಏಕೆ"
   },
   "Wind": {
@@ -629,6 +695,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "X ನಿಮಿಷಗಳ ಹಿಂದೆ"
   },
   "Yes. It is free, open source (MIT) and non-commercial, with no sign-up. Every reading is also available as JSON, Markdown, an embeddable card, an OpenAPI spec, and an MCP server for AI agents.": {
+    "hi": "हाँ। यह निःशुल्क, मुक्त स्रोत (MIT) और गैर-वाणिज्यिक है, जिसमें कोई साइन-अप नहीं है। प्रत्येक जानकारी JSON, Markdown, एम्बेडेबल कार्ड, OpenAPI स्पेक्स और MCP सर्वर के रूप में भी उपलब्ध है।",
     "kn": "ಹೌದು. ಇದು ಉಚಿತ, ಮುಕ್ತ ಮೂಲ (MIT) ಮತ್ತು ವಾಣಿಜ್ಯೇತರವಾಗಿದ್ದು, ಯಾವುದೇ ನೋಂದಣಿಯಿಲ್ಲ. ಪ್ರತಿಯೊಂದು ಮಾಹಿತಿಯು JSON, Markdown, ಎಂಬೆಡ್ ಮಾಡಬಹುದಾದ ಕಾರ್ಡ್, OpenAPI ಸ್ಪೆಕ್ ಮತ್ತು AI ಏಜೆಂಟ್‌ಗಳಿಗಾಗಿ MCP ಸರ್ವರ್ ಆಗಿ ಲಭ್ಯವಿದೆ."
   },
   "Your places": {
@@ -784,9 +851,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಮಧ್ಯಮ ಧೂಳು"
   },
   "mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.": {
+    "hi": "mugilu को केवल देखने के बजाय, उस पर निर्माण किया जाना चाहिए। प्रत्येक जानकारी भी खुली और मशीन द्वारा पढ़ी जाने योग्य है, इसलिए आप अपने स्वयं के मानचित्र, कहानी, डैशबोर्ड या चेतावनी के पीछे पूरा आकाश रख सकते हैं, और अपने समय को उस हिस्से पर व्यतीत कर सकते हैं जो मायने रखता हैः बताने वाला और कार्रवाई।",
     "kn": "mugilu ಎಂದರೆ ಕೇವಲ ನೋಡುವುದಷ್ಟೇ ಅಲ್ಲ, ಅದನ್ನು ಕಟ್ಟಬೇಕು. ಪ್ರತಿಯೊಂದು ಮಾಹಿತಿಯ ತುಣುಕು ಸಹ ಮುಕ್ತವಾಗಿದೆ, ಯಂತ್ರ-ಓದಬಲ್ಲದು, ಆದ್ದರಿಂದ ನೀವು ನಿಮ್ಮ ಸ್ವಂತ ನಕ್ಷೆ, ಕಥೆ, ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಅಥವಾ ಎಚ್ಚರಿಕೆಯ ಹಿಂದೆ ಇಡೀ ಆಕಾಶವನ್ನು ಇರಿಸಬಹುದು, ಮತ್ತು ನಿಮ್ಮ ಸಮಯವನ್ನು ಮುಖ್ಯವಾದ ಭಾಗದ ಮೇಲೆ ಕಳೆಯಬಹುದು: ಹೇಳುವುದು, ಮತ್ತು ಕ್ರಮ ಕೈಗೊಳ್ಳುವುದು."
   },
   "mugilu is the Kannada word for the open sky.": {
+    "hi": "mugilu — खुले आकाश के लिए कन्नड़ शब्द है।",
     "kn": "mugilu — ಇದು ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಕನ್ನಡ ಪದ (ಮುಗಿಲು)."
   },
   "mugilu mirrors the SACHET feed and keeps an archive of every alert.": {
@@ -794,9 +863,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "kn": "ಇದು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಫೀಡ್ ಅನ್ನು ಪ್ರತಿಬಿಂಬಿಸುತ್ತದೆ ಮತ್ತು ಪ್ರತಿ ಎಚ್ಚರಿಕೆಯ ಆರ್ಕೈವ್ ಅನ್ನು ಇಡುತ್ತದೆ."
   },
   "mugilu names the single worst hazard over your exact location and says plainly what to do, weighted for who you are: asthma, older adults, children, outdoor workers, or a heart condition. It is informational, not medical or safety advice; for official warnings, consult NDMA and IMD.": {
+    "hi": "mugilu आपके सटीक स्थान पर सबसे खराब खतरे का नाम लेता है और स्पष्ट रूप से बताता है कि क्या करना हैः अस्थमा, वृद्ध वयस्क, बच्चे, बाहरी श्रमिक या हृदय की स्थिति। यह केवल जानकारी के लिए है, चिकित्सा या सुरक्षा सलाह के लिए नहीं; आधिकारिक चेतावनियों के लिए, NDMA और IMD से परामर्श करें।",
     "kn": "mugilu ನಿಮ್ಮ ನಿಖರವಾದ ಸ್ಥಳದ ಮೇಲೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸಿ, ಏನು ಮಾಡಬೇಕು ಎಂಬುದನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳುತ್ತಾನೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ: ಆಸ್ತಮಾ, ಹಿರಿಯ ವಯಸ್ಕರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು ಅಥವಾ ಹೃದಯ ಸ್ಥಿತಿ. ಇದು ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಗಳಿಗಾಗಿ ಅಲ್ಲ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ."
   },
   "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB and OpenAQ for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, and bharatlas for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.": {
+    "hi": "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता है। यह दूसरों के काम पर खड़ा है और उन्हें श्रेय देता हैः वायु गुणवत्ता के लिए CPCB और OpenAQ, मौसम के लिए Open-Meteo, चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से) और भारत के मानचित्र के लिए bharatlas। कोड MIT लाइसेंस के तहत खुला है; डेटा प्रत्येक स्रोत के अपने नियमों को बनाए रखता है।",
     "kn": "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB ಮತ್ತು OpenAQ, ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ) ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ bharatlas. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ತೆರೆದಿರುತ್ತದೆ; ದತ್ತಾಂಶವು ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ."
   },
   "none": {
