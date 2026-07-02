@@ -56,7 +56,15 @@ export function langCss(lang: Lang): string {
     f.sans +
     "}" +
     "body{line-height:1.6}" +
-    ".hero,.tagline,.loc,.amb-head,.amb-say,.ahero,.alead,.eamb,.kname,.khead,.wcat,.covers{line-height:1.25}"
+    // Display headings: relax the tight Latin line-heights (.95-1.05) and drop the negative
+    // tracking so stacked matras / conjuncts don't clip or crowd.
+    ".hero,.tagline,.loc,.amb-head,.ahero,.eamb,.kname,.khead,.wcat,.covers{line-height:1.25;letter-spacing:normal}" +
+    // Leads sat at 1.42 in Latin; Indic needs MORE leading, not less (was wrongly 1.25).
+    ".alead,.amb-say{line-height:1.55}" +
+    // Eyebrow / dt label rows used line-height:1, which clips Indic matras.
+    ".ah,.amb-eye,.lyr dt{line-height:1.35}" +
+    // The footer back-link carries translated text; the mono stack has no Indic glyphs.
+    ".aback a{font-family:var(--sans)}"
   );
 }
 
