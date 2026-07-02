@@ -277,6 +277,15 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "hi": "स्नैपशॉट छवि",
     "kn": "ಸ್ನ್ಯಾಪ್‌ಶಾಟ್ ಚಿತ್ರ"
   },
+  // Accessibility labels (aria-label, screen-reader only) — localise too.
+  "Who is this for": {
+    "hi": "यह किसके लिए है",
+    "kn": "ಇದು ಯಾರಿಗಾಗಿ"
+  },
+  "Look up a place in India": {
+    "hi": "भारत में कोई स्थान खोजें",
+    "kn": "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳವನ್ನು ಹುಡುಕಿ"
+  },
   "A place in India, or lat,lon": {
     "hi": "भारत में एक स्थान, या अक्षांश, देशांतर",
     "kn": "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ"

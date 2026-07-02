@@ -674,7 +674,7 @@ export function renderConditionsPage(
       <p class="amb-head">${head}</p>
       <p class="amb-say">${esc(t(ambientMeaning(risk), lang))}</p>
       ${also ? `<p class="amb-also">${icon("users")}${esc(t(also, lang))}</p>` : ""}
-      <nav class="who" aria-label="Who is this for">${pills}</nav>
+      <nav class="who" aria-label="${esc(t("Who is this for", lang))}">${pills}</nav>
     </section>
     <dl class="strata">${strata.join("")}</dl>
     <footer>
@@ -1550,7 +1550,7 @@ export function renderHome(
   <p class="covers">${cover("air", "air")}${cover("heat", "heat")}${cover("rain", "rain")}${cover("sun", "UV")}${cover("dust", "dust")}${cover("warn", "warnings")}</p>
   <div class="acwrap">
     <form class="search" action="${lp("/go", lang)}" method="get" role="search">
-      <input id="q" name="q" type="search" placeholder="${esc(t("A place in India, or lat,lon", lang))}" autocomplete="off" autofocus aria-label="Look up a place in India">
+      <input id="q" name="q" type="search" placeholder="${esc(t("A place in India, or lat,lon", lang))}" autocomplete="off" autofocus aria-label="${esc(t("Look up a place in India", lang))}">
       <button type="submit">${t("Go", lang)}</button>
     </form>
     <ul id="ac" class="ac" role="listbox"></ul>
