@@ -1305,38 +1305,65 @@ const METHOD_CSS = `
 export function renderMethodology(lang: Lang = "en"): string {
   const row = (h: string, c1: string, c2: string, c3: string) =>
     `<tr><td>${h}</td><td>${c1}</td><td>${c2}</td><td>${c3}</td></tr>`;
+  // Prose: English keeps its inline markup; hi/kn render the reviewed translated text
+  // (proper nouns + acronyms Latin). Precomputed to avoid nested template literals.
+  const onePara =
+    lang === "en"
+      ? `Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.`
+      : t(
+          `Each hazard is scored 0 to 3 (none, caution, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.`,
+          lang,
+        );
+  const whoPara =
+    lang === "en"
+      ? `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.`
+      : t(
+          `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle you choose: never inferred, never stored.`,
+          lang,
+        );
+  // The thresholds note carries two inline links; word order differs across languages,
+  // so the translated string keeps {score}/{terms} slots we fill after lookup.
+  const scoreLink = `<a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>`;
+  const termsText = lang === "en" ? "terms &amp; attribution" : t("terms & attribution", lang);
+  const termsLink = `<a href="${lp("/terms", lang)}">${termsText}</a>`;
+  const threshNote = t(
+    "Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open {score}, and every layer's source and licence is on {terms}.",
+    lang,
+  )
+    .replace("{score}", scoreLink)
+    .replace("{terms}", termsLink);
   const body = `
   <article class="ax">
-  <h1 class="ahero">How the Ambient read works</h1>
-  <p class="alead">mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.</p>
+  <h1 class="ahero">${t("How the Ambient read works", lang)}</h1>
+  <p class="alead">${t("mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.", lang)}</p>
 
-  <h2 class="ah">One read, never an average</h2>
-  <p class="atext">Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.</p>
+  <h2 class="ah">${t("One read, never an average", lang)}</h2>
+  <p class="atext">${onePara}</p>
 
-  <h2 class="ah">For who you are</h2>
-  <p class="atext">Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.</p>
+  <h2 class="ah">${t("For who you are", lang)}</h2>
+  <p class="atext">${whoPara}</p>
 
-  <h2 class="ah">The thresholds</h2>
+  <h2 class="ah">${t("The thresholds", lang)}</h2>
   <div class="mtab-wrap">
   <table class="mtab">
-  <thead><tr><th>Hazard</th><th>Caution</th><th>High</th><th>Severe</th></tr></thead>
+  <thead><tr><th>${t("Hazard", lang)}</th><th>${t("Caution", lang)}</th><th>${t("High", lang)}</th><th>${t("Severe", lang)}</th></tr></thead>
   <tbody>
-  ${row("Air (AQI)", "101–200", "201–300", "301+")}
-  ${row("Heat (feels-like)", "35°", "40°", "45°")}
-  ${row("Heat (wet-bulb)", "26°", "28°", "31°")}
-  ${row("Heat (WBGT)", "30°", "32°", "35°")}
-  ${row("Cold (feels-like)", "≤10°", "≤5°", "≤0°")}
-  ${row("Wind (gusts, km/h)", "40", "62", "88")}
-  ${row("Fog (visibility, m)", "&lt;1000", "&lt;500", "&lt;200")}
-  ${row("Smoke (fires &lt;100 km)", "3+", "25+", "60+")}
-  ${row("UV (index)", "6–10", "-", "11+")}
-  ${row("Dust (µg/m³)", "80", "150", "500")}
+  ${row(t("Air (AQI)", lang), "101–200", "201–300", "301+")}
+  ${row(t("Heat (feels-like)", lang), "35°", "40°", "45°")}
+  ${row(t("Heat (wet-bulb)", lang), "26°", "28°", "31°")}
+  ${row(t("Heat (WBGT)", lang), "30°", "32°", "35°")}
+  ${row(t("Cold (feels-like)", lang), "≤10°", "≤5°", "≤0°")}
+  ${row(t("Wind (gusts, km/h)", lang), "40", "62", "88")}
+  ${row(t("Fog (visibility, m)", lang), "&lt;1000", "&lt;500", "&lt;200")}
+  ${row(t("Smoke (fires &lt;100 km)", lang), "3+", "25+", "60+")}
+  ${row(t("UV (index)", lang), "6–10", "-", "11+")}
+  ${row(t("Dust (µg/m³)", lang), "80", "150", "500")}
   </tbody>
   </table>
   </div>
-  <p class="atext">Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open <a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>, and every layer's source and licence is on <a href="/terms">terms &amp; attribution</a>.</p>
+  <p class="atext">${threshNote}</p>
 
-  <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
+  <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
   </article>`;
   return shell(

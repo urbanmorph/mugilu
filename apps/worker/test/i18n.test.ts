@@ -9,6 +9,7 @@ import {
   renderWarningsPage,
   renderKioskPage,
   renderAbout,
+  renderMethodology,
 } from "../src/page";
 import type { Conditions } from "../src/types";
 
@@ -215,4 +216,24 @@ test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss presen
   const en = renderAbout("en");
   assert.match(en, /For years, people across India/); // English prose intact
   assert.match(en, /<b>CPCB<\/b>/); // English keeps inline markup
+});
+
+test("renderMethodology(kn): prose localized, acronyms + numbers Latin, links preserved; en unchanged", () => {
+  const kn = renderMethodology("kn");
+  assert.match(kn, /<html lang="kn">/);
+  assert.match(kn, /ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ/); // "glass box" rendered in the lead
+  assert.match(kn, /ಮಿತಿಗಳು/); // "The thresholds" heading localized
+  assert.match(kn, /ವಾಯುಗುಣ \(AQI\)/); // table label localized, acronym Latin
+  assert.match(kn, /CPCB/); // proper nouns/acronyms stay Latin
+  assert.match(kn, /WBGT/);
+  assert.match(kn, /301\+/); // numeric thresholds stay Arabic numerals
+  assert.match(kn, /score\.ts<\/a>/); // {score} slot filled, link preserved
+  assert.match(kn, /href="\/kn\/terms"/); // {terms} link lang-prefixed
+  assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ/); // reverted-vocab guard (heat/screen)
+  assert.doesNotMatch(kn, /\{score\}|\{terms\}/); // no unfilled slot leaks
+  // English is byte-for-byte the pre-i18n page: inline markup + unprefixed link
+  const en = renderMethodology("en");
+  assert.match(en, /How the Ambient read works/);
+  assert.match(en, /<b>worst<\/b>/);
+  assert.match(en, /href="\/terms">terms &amp; attribution<\/a>/);
 });

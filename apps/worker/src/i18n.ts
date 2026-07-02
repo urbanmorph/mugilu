@@ -62,6 +62,76 @@ export function langCss(lang: Lang): string {
 
 // en -> { hi, kn }. Generated from the native-reviewed sheets; edit there and regenerate.
 const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
+  // /methodology prose (kn): hand-composed from the reviewed KANNADA_GLOSSARY + existing
+  // UI strings (no Sarvam pass), proper nouns/acronyms kept Latin. Pending native
+  // sign-off (supporting-docs/METHODOLOGY_KANNADA_REVIEW.md). Open calls flagged there:
+  // "Ambient" feature name, "wet-bulb"=ತೇವ-ಬಲ್ಬ್, "read"=ಓದುವಿಕೆ. {score}/{terms} are link slots.
+  "How the Ambient read works": {
+    "kn": "Ambient ಓದುವಿಕೆ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ"
+  },
+  "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.": {
+    "kn": "ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಮಾಡುತ್ತಿರುವ ಅತ್ಯಂತ ಕೆಟ್ಟ ಒಂದೇ ವಿಷಯವನ್ನು mugilu ಹೆಸರಿಸುತ್ತದೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ. ಇದು ಒಂದು ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ: ಕೆಳಗಿನ ಮಿತಿಗಳು ಸಾರ್ವಜನಿಕವಾಗಿವೆ ಮತ್ತು CPCB, IMD, WHO, NASA, Australian BoM ಮತ್ತು AQLIಯಿಂದ ಬಂದಿವೆ. ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ಎಂದಿಗೂ ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಯಲ್ಲ."
+  },
+  "One read, never an average": {
+    "kn": "ಒಂದೇ ಓದುವಿಕೆ, ಎಂದಿಗೂ ಸರಾಸರಿ ಅಲ್ಲ"
+  },
+  "Each hazard is scored 0 to 3 (none, caution, high, severe). We surface the worst one, named in plain words (\"Severe smoke\", \"High heat\"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.": {
+    "kn": "ಪ್ರತಿಯೊಂದು ಅಪಾಯಕ್ಕೂ 0 ರಿಂದ 3 ರವರೆಗೆ ಅಂಕ ನೀಡಲಾಗುತ್ತದೆ (ಅಪಾಯವಿಲ್ಲ · ಎಚ್ಚರಿಕೆ · ಹೆಚ್ಚು · ತೀವ್ರ). ನಾವು ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ಸರಳ ಪದಗಳಲ್ಲಿ ಹೆಸರಿಸಿ ತೋರಿಸುತ್ತೇವೆ (\"ತೀವ್ರ ಹೊಗೆ\", \"ಹೆಚ್ಚು ಬಿಸಿಲು\"), ಏನು ಮಾಡಬೇಕು ಎಂಬುದರ ಬಗ್ಗೆ ಒಂದೇ ವಾಕ್ಯದೊಂದಿಗೆ. ಸರಾಸರಿ ಮಾಡಿದರೆ ಮುಖ್ಯವಾದ ವಿಷಯ ಮರೆಯಾಗುತ್ತದೆ, ಆದ್ದರಿಂದ ನಾವು ಎಂದಿಗೂ ಸರಾಸರಿ ಮಾಡುವುದಿಲ್ಲ."
+  },
+  "For who you are": {
+    "kn": "ನೀವು ಯಾರೆಂಬುದಕ್ಕೆ ತಕ್ಕಂತೆ"
+  },
+  "Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as \"high\"). When your trigger isn't the headline but is still elevated, a second line surfaces it (\"also watch: air is high\"). The persona is a toggle you choose: never inferred, never stored.": {
+    "kn": "ಒಂದು ದುರ್ಬಲತೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ (ಆಸ್ತಮಾ, ವೃದ್ಧರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು, ಹೃದಯ) ಮತ್ತು ಆ ಗುಂಪು ಹೆಚ್ಚು ತೀವ್ರವಾಗಿ ಅನುಭವಿಸುವ ಅಪಾಯಗಳನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸಲಾಗುತ್ತದೆ (ಆದ್ದರಿಂದ ಆಸ್ತಮಾ ಇರುವವರು ಮಧ್ಯಮ ಗಾಳಿಯನ್ನು \"ಹೆಚ್ಚು\" ಎಂದು ನೋಡುತ್ತಾರೆ). ನಿಮ್ಮ ಸಮಸ್ಯೆ ಮುಖ್ಯಾಂಶವಲ್ಲದಿದ್ದರೂ ಇನ್ನೂ ಹೆಚ್ಚಿದ್ದರೆ, ಎರಡನೇ ಸಾಲು ಅದನ್ನು ತೋರಿಸುತ್ತದೆ (\"ಗಮನಿಸಿ: ಗಾಳಿ ಹೆಚ್ಚಿದೆ\"). ಈ ಆಯ್ಕೆ ನೀವೇ ಮಾಡುವ ಒಂದು ಟಾಗಲ್: ಎಂದಿಗೂ ಊಹಿಸುವುದಿಲ್ಲ, ಎಂದಿಗೂ ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ."
+  },
+  "The thresholds": {
+    "kn": "ಮಿತಿಗಳು"
+  },
+  "Hazard": {
+    "kn": "ಅಪಾಯ"
+  },
+  "Caution": {
+    "kn": "ಎಚ್ಚರಿಕೆ"
+  },
+  "Air (AQI)": {
+    "kn": "ವಾಯುಗುಣ (AQI)"
+  },
+  "Heat (feels-like)": {
+    "kn": "ಬಿಸಿಲು (ಅನಿಸುವ)"
+  },
+  "Heat (wet-bulb)": {
+    "kn": "ಬಿಸಿಲು (ತೇವ-ಬಲ್ಬ್)"
+  },
+  "Heat (WBGT)": {
+    "kn": "ಬಿಸಿಲು (WBGT)"
+  },
+  "Cold (feels-like)": {
+    "kn": "ಶೀತ (ಅನಿಸುವ)"
+  },
+  "Wind (gusts, km/h)": {
+    "kn": "ಗಾಳಿ (ರಭಸ, km/h)"
+  },
+  "Fog (visibility, m)": {
+    "kn": "ಮಂಜು (ಗೋಚರತೆ, m)"
+  },
+  "Smoke (fires &lt;100 km)": {
+    "kn": "ಹೊಗೆ (100 km ಒಳಗಿನ ಬೆಂಕಿ)"
+  },
+  "UV (index)": {
+    "kn": "UV (ಸೂಚ್ಯಂಕ)"
+  },
+  "Dust (µg/m³)": {
+    "kn": "ಧೂಳు (µg/m³)"
+  },
+  "Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open {score}, and every layer's source and licence is on {terms}.": {
+    "kn": "ಬಿಸಿಲು ಎಂಬುದು ಅನಿಸುವ ತಾಪಮಾನ, ತೇವ-ಬಲ್ಬ್ ಮತ್ತು WBGT ಇವುಗಳಲ್ಲಿ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ. ನಂತರ ಪರ್ಸೋನಾ ಟಾಗಲ್ ಒಂದು ಸೂಕ್ಷ್ಮ ಅಪಾಯವನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸುತ್ತದೆ. ಈ ಮಟ್ಟಗಳು CPCB (ಗಾಳಿ), IMD ಮತ್ತು Australian BoM (ಬಿಸಿಲು / ಶೀತ / ಗಾಳಿ), WHO (UV) ಮತ್ತು NASA FIRMS (ಹೊಗೆ) ಇವುಗಳಿಂದ ಬರುತ್ತವೆ; ಸಂಪೂರ್ಣ ತರ್ಕವು ಮುಕ್ತ {score} ಆಗಿದೆ, ಮತ್ತು ಪ್ರತಿ ಪದರದ ಮೂಲ ಮತ್ತು ಪರವಾನಗಿ {terms} ಪುಟದಲ್ಲಿದೆ."
+  },
+  "terms & attribution": {
+    "kn": "ಷರತ್ತುಗಳು ಮತ್ತು ಮನ್ನಣೆ"
+  },
+  "Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.": {
+    "kn": "ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ."
+  },
   "A place in India, or lat,lon": {
     "hi": "भारत में एक स्थान, या अक्षांश, देशांतर",
     "kn": "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ"
