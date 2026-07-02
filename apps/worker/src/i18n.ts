@@ -226,6 +226,57 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     "hi": "{um} द्वारा एक डिजिटल कॉमन्स, {bl} और {md} के साथ।",
     "kn": "{um} ರಿಂದ ಒಂದು ಡಿಜಿಟಲ್ ಕಾಮನ್ಸ್, {bl} ಮತ್ತು {md} ಜೊತೆಗೆ."
   },
+  // Source/build list DETAIL lines (/terms sources, /about "Build on it"): localised too,
+  // with {slots} for inline links. Source names, acronyms, licence codes and format/path
+  // tokens (JSON/Markdown/OpenAPI/MCP//mcp//display/llms.txt) stay Latin.
+  "back to mugilu": {
+    "hi": "mugilu पर वापस",
+    "kn": "mugilu ಗೆ ಹಿಂತಿರುಗಿ"
+  },
+  "CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the {oaq} broker; plus OpenAQ.": {
+    "hi": "CPCB (भारत सरकार), Airnet (CSTEP), और Aurassure, {oaq} ब्रोकर के माध्यम से; साथ ही OpenAQ।",
+    "kn": "CPCB (ಭಾರತ ಸರ್ಕಾರ), Airnet (CSTEP), ಮತ್ತು Aurassure, {oaq} ಬ್ರೋಕರ್ ಮೂಲಕ; ಜೊತೆಗೆ OpenAQ."
+  },
+  "{ometeo}, licensed CC-BY 4.0.": {
+    "hi": "{ometeo}, CC-BY 4.0 के तहत लाइसेंस प्राप्त।",
+    "kn": "{ometeo}, CC-BY 4.0 ಅಡಿಯಲ್ಲಿ ಪರವಾನಗಿ ಪಡೆದಿದೆ."
+  },
+  "NDMA / IMD via SACHET.": {
+    "hi": "SACHET के माध्यम से NDMA / IMD।",
+    "kn": "SACHET ಮೂಲಕ NDMA / IMD."
+  },
+  "place search from {osm} contributors (ODbL); admin boundaries from {bharatlas}.": {
+    "hi": "{osm} योगदानकर्ताओं से स्थान खोज (ODbL); {bharatlas} से प्रशासनिक सीमाएँ।",
+    "kn": "{osm} ಕೊಡುಗೆದಾರರಿಂದ ಸ್ಥಳ ಹುಡುಕಾಟ (ODbL); {bharatlas} ನಿಂದ ಆಡಳಿತ ಗಡಿಗಳು."
+  },
+  "years of life lost uses the {aqli} methodology (U Chicago EPIC).": {
+    "hi": "जीवन के खोए वर्ष {aqli} पद्धति का उपयोग करते हैं (U Chicago EPIC)।",
+    "kn": "ಜೀವನದ ಕಳೆದುಹೋದ ವರ್ಷಗಳು {aqli} ವಿಧಾನವನ್ನು ಬಳಸುತ್ತವೆ (U Chicago EPIC)."
+  },
+  "an MCP server at {mcp} (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in {llms}.": {
+    "hi": "{mcp} पर एक MCP सर्वर (स्थितियों, स्थान खोज, निकटतम केंद्रों, चेतावनियों और राष्ट्रीय चित्र के लिए टूल; साथ ही संसाधन और प्रॉम्प्ट)। {llms} में सूचीबद्ध।",
+    "kn": "{mcp} ನಲ್ಲಿ ಒಂದು MCP ಸರ್ವರ್ (ಪರಿಸ್ಥಿತಿಗಳು, ಸ್ಥಳ ಹುಡುಕಾಟ, ಹತ್ತಿರದ ಕೇಂದ್ರಗಳು, ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ರಾಷ್ಟ್ರೀಯ ಚಿತ್ರಣಕ್ಕೆ ಸಾಧನಗಳು; ಜೊತೆಗೆ ಸಂಪನ್ಮೂಲಗಳು ಮತ್ತು ಪ್ರಾಂಪ್ಟ್‌ಗಳು). {llms} ನಲ್ಲಿ ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ."
+  },
+  "a documented {openapi}, and every reading as {json} or {md}.": {
+    "hi": "एक प्रलेखित {openapi}, और प्रत्येक जानकारी {json} या {md} के रूप में।",
+    "kn": "ದಾಖಲಿತ {openapi}, ಮತ್ತು ಪ್ರತಿಯೊಂದು ಮಾಹಿತಿಯೂ {json} ಅಥವಾ {md} ಆಗಿ."
+  },
+  "a live card in one line of HTML ({embed}), or a {png}.": {
+    "hi": "HTML की एक पंक्ति में एक लाइव कार्ड ({embed}), या एक {png}।",
+    "kn": "HTML ನ ಒಂದೇ ಸಾಲಿನಲ್ಲಿ ಒಂದು ಲೈವ್ ಕಾರ್ಡ್ ({embed}), ಅಥವಾ ಒಂದು {png}."
+  },
+  "a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.": {
+    "hi": "क्लिनिक, स्कूल या लॉबी के लिए एक स्वयं-रिफ्रेश होने वाला वॉल डिस्प्ले या कियोस्क, {display} पर सेट करें।",
+    "kn": "ಚಿಕಿತ್ಸಾಲಯ, ಶಾಲೆ ಅಥವಾ ಲಾಬಿಗೆ ಸ್ವಯಂ-ರಿಫ್ರೆಶ್ ಆಗುವ ಗೋಡೆ ಪ್ರದರ್ಶನ ಅಥವಾ ಕಿಒಸ್ಕ್, {display} ನಲ್ಲಿ ಹೊಂದಿಸಲಾಗಿದೆ."
+  },
+  "OpenAPI spec": {
+    "hi": "OpenAPI स्पेक",
+    "kn": "OpenAPI ಸ್ಪೆಕ್"
+  },
+  "snapshot image": {
+    "hi": "स्नैपशॉट छवि",
+    "kn": "ಸ್ನ್ಯಾಪ್‌ಶಾಟ್ ಚಿತ್ರ"
+  },
   "A place in India, or lat,lon": {
     "hi": "भारत में एक स्थान, या अक्षांश, देशांतर",
     "kn": "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ"

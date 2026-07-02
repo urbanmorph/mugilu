@@ -1018,7 +1018,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       <li>${step4}</li>
     </ol>
     <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
-    <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+    <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "Put mugilu on a screen: mugilu",
@@ -1170,6 +1170,10 @@ export function renderAbout(lang: Lang = "en"): string {
     lang === "en"
       ? `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`
       : t("Built by urbanmorph, led by Sathya Sankaran.", lang);
+  // Descriptive link texts in the "Build on it" list (format tokens like JSON/Markdown
+  // stay Latin; these two are prose, so they localise).
+  const aboutOpenapi = lang === "en" ? "OpenAPI spec" : t("OpenAPI spec", lang);
+  const aboutSnapshot = lang === "en" ? "snapshot image" : t("snapshot image", lang);
   const body = `
   <article class="ax">
   <h1 class="ahero">${heroH1}</h1>
@@ -1187,10 +1191,10 @@ export function renderAbout(lang: Lang = "en"): string {
   <p class="ah" id="build">${icon("code")}<span>${t("Build on it", lang)}</span></p>
   <p class="atext">${t("mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.", lang)}</p>
   <ul class="alist">
-    <li>${icon("code")}<span class="t"><b>${t("For AI agents", lang)}</b>: an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
-    <li>${icon("layers")}<span class="t"><b>${t("For developers", lang)}</b>: a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
-    <li>${icon("pin")}<span class="t"><b>${t("Embed it", lang)}</b>: a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
-    <li>${icon("sun")}<span class="t"><b>${t("Put it on a screen", lang)}</b>: a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at <a href="/display">/display</a>.</span></li>
+    <li>${icon("code")}<span class="t"><b>${t("For AI agents", lang)}</b>: ${t("an MCP server at {mcp} (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in {llms}.", lang).replace("{mcp}", `<a href="/mcp">/mcp</a>`).replace("{llms}", `<a href="/llms.txt">llms.txt</a>`)}</span></li>
+    <li>${icon("layers")}<span class="t"><b>${t("For developers", lang)}</b>: ${t("a documented {openapi}, and every reading as {json} or {md}.", lang).replace("{openapi}", `<a href="/openapi.json">${aboutOpenapi}</a>`).replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`).replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`)}</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Embed it", lang)}</b>: ${t("a live card in one line of HTML ({embed}), or a {png}.", lang).replace("{embed}", `<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>`).replace("{png}", `<a href="/c/12.97,77.59.png">${aboutSnapshot}</a>`)}</span></li>
+    <li>${icon("sun")}<span class="t"><b>${t("Put it on a screen", lang)}</b>: ${t("a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.", lang).replace("{display}", `<a href="/display">/display</a>`)}</span></li>
   </ul>
   <p class="abuild">${refPara}</p>
 
@@ -1212,7 +1216,7 @@ export function renderAbout(lang: Lang = "en"): string {
   </div>
 
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "About: mugilu",
@@ -1280,12 +1284,12 @@ export function renderTerms(lang: Lang = "en"): string {
 
   <h2 class="ah">${t("Sources &amp; credit", lang)}</h2>
   <ul class="alist on">
-    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</span></li>
-    <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
-    <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: NDMA / IMD via SACHET.</span></li>
+    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the {oaq} broker; plus OpenAQ.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
+    <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: ${t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", `<a href="https://open-meteo.com">Open-Meteo</a>`)}</span></li>
+    <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: ${t("NDMA / IMD via SACHET.", lang)}</span></li>
     <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>
-    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: place search from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL); admin boundaries from <a href="https://bharatlas.com">bharatlas</a>.</span></li>
-    <li>${icon("heart")}<span class="t"><b>${t("Health impact", lang)}</b>: years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
+    <li>${icon("heart")}<span class="t"><b>${t("Health impact", lang)}</b>: ${t("years of life lost uses the {aqli} methodology (U Chicago EPIC).", lang).replace("{aqli}", `<a href="https://aqli.epic.uchicago.edu">AQLI</a>`)}</span></li>
   </ul>
   <p class="alead2">${t("Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.", lang)}</p>
 
@@ -1293,7 +1297,7 @@ export function renderTerms(lang: Lang = "en"): string {
   <p class="amuted">${privacy}</p>
 
   <p class="adisc">${commonsDisc}</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>`;
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
   return shell(
     "Terms & attribution: mugilu",
     body,
@@ -1317,7 +1321,7 @@ export function renderNotFound(lang: Lang = "en"): string {
   const body = `
   <h1 class="ahero">${t("Not here.", lang)}</h1>
   <p class="alead">${lead}</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>`;
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
   return shell("Not found: mugilu", body, ABOUT_CSS, DEFAULT_DESC, undefined, undefined, HOME_OG, undefined, lang);
 }
 
@@ -1394,7 +1398,7 @@ export function renderMethodology(lang: Lang = "en"): string {
   <p class="atext">${threshNote}</p>
 
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "How it works: mugilu",
@@ -1442,7 +1446,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     <p class="wgen">${snap ? `as of ${esc(istTime(snap.generated_at))} · via SACHET` : ""}</p>
     ${items}
     <p class="adisc">${disc}</p>
-    <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+    <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "Active warnings: mugilu",

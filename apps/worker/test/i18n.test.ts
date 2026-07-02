@@ -214,6 +214,9 @@ test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss presen
   assert.match(kn, /ಡೆವಲಪರ್‌ಗಳಿಗೆ/); // developer label (tech, not property)
   assert.match(kn, /CPCB/); // proper nouns stay Latin
   assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ|ಗಿಟ್‌ಹೌಸ್/); // no reverted-vocab / GitHouse
+  assert.match(kn, /MCP ಸರ್ವರ್/); // "Build on it" list DETAIL localized (MCP token Latin)
+  assert.doesNotMatch(kn, /tools for conditions|snapshot image/); // no English detail leaks
+  assert.match(kn, /← mugilu ಗೆ ಹಿಂತಿರುಗಿ/); // back-link text localized
   const en = renderAbout("en");
   assert.match(en, /For years, people across India/); // English prose intact
   assert.match(en, /<b>CPCB<\/b>/); // English keeps inline markup
@@ -250,6 +253,9 @@ test("renderTerms(kn): prose localized, source names + brand Latin, links preser
   assert.match(kn, /mdshare\.live">mdshare<\/a>\.?/); // {md} commons link preserved
   assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ/); // reverted-vocab guard
   assert.doesNotMatch(kn, /\{repo\}|\{um\}|\{bl\}|\{md\}/); // no unfilled slot leaks
+  assert.match(kn, /ಬ್ರೋಕರ್ ಮೂಲಕ/); // source-detail line localized (was English)
+  assert.doesNotMatch(kn, /broker; plus OpenAQ|admin boundaries from/); // no English detail leaks
+  assert.match(kn, /← mugilu ಗೆ ಹಿಂತಿರುಗಿ/); // back-link text localized
   // English is byte-for-byte the pre-i18n page: inline markup + entity + links intact
   const en = renderTerms("en");
   assert.match(en, /<h1 class="ahero">Terms &amp; attribution<\/h1>/);
@@ -273,6 +279,10 @@ test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots re
   const terms = renderTerms("hi");
   assert.match(terms, /शर्तें और श्रेय/); // H1 localized
   assert.match(terms, /Cloudflare Web Analytics/); // brand Latin in privacy note
+  assert.match(terms, /ब्रोकर के माध्यम से/); // source-detail line localized (hi)
+  assert.match(about, /MCP सर्वर/); // "Build on it" detail localized (hi)
+  assert.match(meth, /mugilu पर वापस/); // back-link localized (hi)
+  assert.doesNotMatch(terms, /broker; plus OpenAQ|admin boundaries from/); // no English detail leak
   assert.match(terms, /urbanmorph\/mugilu">रिपॉजिटरी<\/a>/); // {repo} slot filled + localized
   for (const html of [about, meth, terms]) {
     assert.doesNotMatch(html, /\{score\}|\{terms\}|\{repo\}|\{um\}|\{bl\}|\{md\}/); // no slot leaks
