@@ -8,6 +8,9 @@ import {
   renderDisplayBuilder,
   renderWarningsPage,
   renderKioskPage,
+  renderAbout,
+  renderMethodology,
+  renderTerms,
 } from "../src/page";
 import type { Conditions } from "../src/types";
 
@@ -163,8 +166,8 @@ test("conditions /c (kn): pills/Display prefixed; format words translit+localise
   const html = renderConditionsPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "kn");
   assert.match(html, /<html lang="kn">/);
   assert.match(html, /href="\/kn\/c\/28\.61,77\.21\?as=asthma"/); // persona pill prefixed
-  assert.match(html, />ಜೇಸನ್<\/a>/); // JSON transliterated
-  assert.match(html, />ಪ್ರದರ್ಶನ<\/a>/); // Display localised
+  assert.match(html, />JSON<\/a>/); // format token stays Latin (typed/searched)
+  assert.match(html, />ಪ್ರದರ್ಶನ<\/a>/); // Display (a plain word) localised
   assert.match(html, /href="\/kn\/c\/28\.61,77\.21\?kiosk"/); // Display link prefixed
   assert.match(html, /href="\/c\/28\.61,77\.21\.json"/); // data sibling stays unprefixed
   assert.match(html, /ಮೂಲಗಳು: CPCB/); // Sources localised, source names English
@@ -200,4 +203,88 @@ test("kiosk (?kiosk) is chromeless: no header bar, footer nav or language switch
   assert.doesNotMatch(html, /class="langsw"/); // no language switcher on a wall display
   assert.doesNotMatch(html, /class="foot"/); // no footer nav
   assert.doesNotMatch(html, /class="bar"/); // no header bar
+});
+
+test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss present; en unchanged", () => {
+  const kn = renderAbout("kn");
+  assert.match(kn, /<html lang="kn">/);
+  assert.match(kn, /ಜನರಿಗೆ ಸಂಪೂರ್ಣ ಆಕಾಶದ ನೋಟ/); // lead
+  assert.match(kn, /<span>mugilu ಏಕೆ<\/span>/); // heading, brand Latin
+  assert.match(kn, /ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಕನ್ನಡ ಪದ/); // the meaning gloss
+  assert.match(kn, /ಡೆವಲಪರ್‌ಗಳಿಗೆ/); // developer label (tech, not property)
+  assert.match(kn, /CPCB/); // proper nouns stay Latin
+  assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ|ಗಿಟ್‌ಹೌಸ್/); // no reverted-vocab / GitHouse
+  assert.match(kn, /MCP ಸರ್ವರ್/); // "Build on it" list DETAIL localized (MCP token Latin)
+  assert.doesNotMatch(kn, /tools for conditions|snapshot image/); // no English detail leaks
+  assert.match(kn, /← mugilu ಗೆ ಹಿಂತಿರುಗಿ/); // back-link text localized
+  const en = renderAbout("en");
+  assert.match(en, /For years, people across India/); // English prose intact
+  assert.match(en, /<b>CPCB<\/b>/); // English keeps inline markup
+});
+
+test("renderMethodology(kn): prose localized, acronyms + numbers Latin, links preserved; en unchanged", () => {
+  const kn = renderMethodology("kn");
+  assert.match(kn, /<html lang="kn">/);
+  assert.match(kn, /ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ/); // "glass box" rendered in the lead
+  assert.match(kn, /ಮಿತಿಗಳು/); // "The thresholds" heading localized
+  assert.match(kn, /ವಾಯುಗುಣ \(AQI\)/); // table label localized, acronym Latin
+  assert.match(kn, /CPCB/); // proper nouns/acronyms stay Latin
+  assert.match(kn, /WBGT/);
+  assert.match(kn, /301\+/); // numeric thresholds stay Arabic numerals
+  assert.match(kn, /score\.ts<\/a>/); // {score} slot filled, link preserved
+  assert.match(kn, /href="\/kn\/terms"/); // {terms} link lang-prefixed
+  assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ/); // reverted-vocab guard (heat/screen)
+  assert.doesNotMatch(kn, /\{score\}|\{terms\}/); // no unfilled slot leaks
+  // English is byte-for-byte the pre-i18n page: inline markup + unprefixed link
+  const en = renderMethodology("en");
+  assert.match(en, /How the Ambient read works/);
+  assert.match(en, /<b>worst<\/b>/);
+  assert.match(en, /href="\/terms">terms &amp; attribution<\/a>/);
+});
+
+test("renderTerms(kn): prose localized, source names + brand Latin, links preserved; en unchanged", () => {
+  const kn = renderTerms("kn");
+  assert.match(kn, /<html lang="kn">/);
+  assert.match(kn, /ಷರತ್ತುಗಳು ಮತ್ತು ಮನ್ನಣೆ/); // "Terms & attribution" heading localized
+  assert.match(kn, /ಗೌಪ್ಯತೆ/); // "Privacy" heading localized
+  assert.match(kn, /CPCB|OpenAQ|NASA FIRMS/); // source names stay Latin
+  assert.match(kn, /Cloudflare Web Analytics/); // brand kept Latin in the privacy note
+  assert.match(kn, /github\.com\/urbanmorph\/mugilu">ರೆಪೊಸಿಟರಿ<\/a>/); // {repo} slot filled + localized text
+  assert.match(kn, /mdshare\.live">mdshare<\/a>\.?/); // {md} commons link preserved
+  assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ/); // reverted-vocab guard
+  assert.doesNotMatch(kn, /\{repo\}|\{um\}|\{bl\}|\{md\}/); // no unfilled slot leaks
+  assert.match(kn, /ಬ್ರೋಕರ್ ಮೂಲಕ/); // source-detail line localized (was English)
+  assert.doesNotMatch(kn, /broker; plus OpenAQ|admin boundaries from/); // no English detail leaks
+  assert.match(kn, /← mugilu ಗೆ ಹಿಂತಿರುಗಿ/); // back-link text localized
+  // English is byte-for-byte the pre-i18n page: inline markup + entity + links intact
+  const en = renderTerms("en");
+  assert.match(en, /<h1 class="ahero">Terms &amp; attribution<\/h1>/);
+  assert.match(en, /<b>code is MIT<\/b>/);
+  assert.match(en, /A digital commons by <a href="https:\/\/urbanmorph\.com">urbanmorph<\/a>, alongside/);
+});
+
+test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {
+  const about = renderAbout("hi");
+  assert.match(about, /<html lang="hi">/);
+  assert.match(about, /Noto (Serif|Sans) Devanagari/); // Indic font override
+  assert.match(about, /पूरे आकाश/); // lead localized (Sarvam + restore)
+  assert.match(about, /mugilu/); // brand stays Latin, not मुगिलु
+  assert.doesNotMatch(about, /मुगिल|मगुल|भारतल|सी\.पी\.सी/); // no residual transliteration
+  const meth = renderMethodology("hi");
+  assert.match(meth, /पारदर्शी व्यवस्था/); // "glass box" (hand-constructed, no Sarvam)
+  assert.match(meth, /CPCB/); // acronyms Latin
+  assert.match(meth, /301\+/); // numbers stay Latin
+  assert.match(meth, /href="\/hi\/terms"/); // {terms} slot filled, lang-prefixed
+  assert.match(meth, /score\.ts<\/a>/); // {score} slot filled
+  const terms = renderTerms("hi");
+  assert.match(terms, /शर्तें और श्रेय/); // H1 localized
+  assert.match(terms, /Cloudflare Web Analytics/); // brand Latin in privacy note
+  assert.match(terms, /ब्रोकर के माध्यम से/); // source-detail line localized (hi)
+  assert.match(about, /MCP सर्वर/); // "Build on it" detail localized (hi)
+  assert.match(meth, /mugilu पर वापस/); // back-link localized (hi)
+  assert.doesNotMatch(terms, /broker; plus OpenAQ|admin boundaries from/); // no English detail leak
+  assert.match(terms, /urbanmorph\/mugilu">रिपॉजिटरी<\/a>/); // {repo} slot filled + localized
+  for (const html of [about, meth, terms]) {
+    assert.doesNotMatch(html, /\{score\}|\{terms\}|\{repo\}|\{um\}|\{bl\}|\{md\}/); // no slot leaks
+  }
 });

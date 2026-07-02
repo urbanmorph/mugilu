@@ -674,7 +674,7 @@ export function renderConditionsPage(
       <p class="amb-head">${head}</p>
       <p class="amb-say">${esc(t(ambientMeaning(risk), lang))}</p>
       ${also ? `<p class="amb-also">${icon("users")}${esc(t(also, lang))}</p>` : ""}
-      <nav class="who" aria-label="Who is this for">${pills}</nav>
+      <nav class="who" aria-label="${esc(t("Who is this for", lang))}">${pills}</nav>
     </section>
     <dl class="strata">${strata.join("")}</dl>
     <footer>
@@ -1018,7 +1018,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       <li>${step4}</li>
     </ol>
     <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
-    <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+    <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "Put mugilu on a screen: mugilu",
@@ -1132,48 +1132,91 @@ export function renderAbout(lang: Lang = "en"): string {
       a: "Air refreshes hourly, the national heat, rain, UV and dust grid every few hours, and official warnings hourly. Every reading is timestamped with how long ago it was measured.",
     },
   ];
+  // Prose: English keeps its inline markup; hi/kn render the reviewed translated text
+  // (proper nouns already Latin). Precomputed to avoid nested template literals.
+  const heroH1 =
+    lang === "en"
+      ? "The open sky of India,<br>one coordinate at a time."
+      : t("The open sky of India, one coordinate at a time.", lang);
+  const sathya =
+    lang === "en"
+      ? `<a href="https://www.sathyasankaran.com">Sathya Sankaran</a> wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.`
+      : t(
+          "Sathya Sankaran wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.",
+          lang,
+        );
+  const refPara =
+    lang === "en"
+      ? `Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.`
+      : t(
+          "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.",
+          lang,
+        );
+  const wherePara =
+    lang === "en"
+      ? `mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: <b>CPCB</b> and <b>OpenAQ</b> for air, <b>Open-Meteo</b> for weather, <b>NDMA / IMD</b> (via SACHET) for warnings, and <b>bharatlas</b> for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.`
+      : t(
+          "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB and OpenAQ for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, and bharatlas for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.",
+          lang,
+        );
+  const freePara =
+    lang === "en"
+      ? `The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.`
+      : t(
+          "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.",
+          lang,
+        );
+  const builtBy =
+    lang === "en"
+      ? `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`
+      : t("Built by urbanmorph, led by Sathya Sankaran.", lang);
+  // Descriptive link texts in the "Build on it" list (format tokens like JSON/Markdown
+  // stay Latin; these two are prose, so they localise).
+  const aboutOpenapi = lang === "en" ? "OpenAPI spec" : t("OpenAPI spec", lang);
+  const aboutSnapshot = lang === "en" ? "snapshot image" : t("snapshot image", lang);
   const body = `
   <article class="ax">
-  <h1 class="ahero">The open sky of India,<br>one coordinate at a time.</h1>
-  <p class="alead">A whole-sky view for people, and shared infrastructure for anyone building on top of it.</p>
+  <h1 class="ahero">${heroH1}</h1>
+  <p class="alead">${t("A whole-sky view for people, and shared infrastructure for anyone building on top of it.", lang)}</p>
 
-  <p class="ah">${icon("compass")}<span>Why mugilu</span></p>
-  <p class="atext">For years, people across India have made the sky legible one piece at a time: a map of one city's air, a thread about a heatwave, a chart of last year's monsoon. Brilliant work, but scattered, and easy to lose by the next season.</p>
-  <p class="atext"><a href="https://www.sathyasankaran.com">Sathya Sankaran</a> wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.</p>
-  <p class="atext">That is mugilu.</p>
+  <p class="ah">${icon("compass")}<span>${t("Why mugilu", lang)}</span></p>
+  <p class="atext">${t("For years, people across India have made the sky legible one piece at a time: a map of one city's air, a thread about a heatwave, a chart of last year's monsoon. Brilliant work, but scattered, and easy to lose by the next season.", lang)}</p>
+  <p class="atext">${sathya}</p>
+  <p class="atext">${t("That is mugilu.", lang)}</p>
+  <p class="atext amuted">${t("mugilu is the Kannada word for the open sky.", lang)}</p>
 
-  <p class="ah">${icon("users")}<span>For people</span></p>
-  <p class="atext">Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.</p>
+  <p class="ah">${icon("users")}<span>${t("For people", lang)}</span></p>
+  <p class="atext">${t("Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.", lang)}</p>
 
-  <p class="ah" id="build">${icon("code")}<span>Build on it</span></p>
-  <p class="atext">mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.</p>
+  <p class="ah" id="build">${icon("code")}<span>${t("Build on it", lang)}</span></p>
+  <p class="atext">${t("mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.", lang)}</p>
   <ul class="alist">
-    <li>${icon("code")}<span class="t"><b>For AI agents</b>: an MCP server at <a href="/mcp">/mcp</a> (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in <a href="/llms.txt">llms.txt</a>.</span></li>
-    <li>${icon("layers")}<span class="t"><b>For developers</b>: a documented <a href="/openapi.json">OpenAPI spec</a>, and every reading as <a href="/c/12.97,77.59.json">JSON</a> or <a href="/c/12.97,77.59.md">Markdown</a>.</span></li>
-    <li>${icon("pin")}<span class="t"><b>Embed it</b>: a live card in one line of HTML (<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>), or a <a href="/c/12.97,77.59.png">snapshot image</a>.</span></li>
-    <li>${icon("sun")}<span class="t"><b>Put it on a screen</b>: a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at <a href="/display">/display</a>.</span></li>
+    <li>${icon("code")}<span class="t"><b>${t("For AI agents", lang)}</b>: ${t("an MCP server at {mcp} (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in {llms}.", lang).replace("{mcp}", `<a href="/mcp">/mcp</a>`).replace("{llms}", `<a href="/llms.txt">llms.txt</a>`)}</span></li>
+    <li>${icon("layers")}<span class="t"><b>${t("For developers", lang)}</b>: ${t("a documented {openapi}, and every reading as {json} or {md}.", lang).replace("{openapi}", `<a href="/openapi.json">${aboutOpenapi}</a>`).replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`).replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`)}</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Embed it", lang)}</b>: ${t("a live card in one line of HTML ({embed}), or a {png}.", lang).replace("{embed}", `<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>`).replace("{png}", `<a href="/c/12.97,77.59.png">${aboutSnapshot}</a>`)}</span></li>
+    <li>${icon("sun")}<span class="t"><b>${t("Put it on a screen", lang)}</b>: ${t("a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.", lang).replace("{display}", `<a href="/display">/display</a>`)}</span></li>
   </ul>
-  <p class="abuild">Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.</p>
+  <p class="abuild">${refPara}</p>
 
-  <p class="ah">${icon("layers")}<span>Where it comes from</span></p>
-  <p class="atext">mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: <b>CPCB</b> and <b>OpenAQ</b> for air, <b>Open-Meteo</b> for weather, <b>NDMA / IMD</b> (via SACHET) for warnings, and <b>bharatlas</b> for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.</p>
+  <p class="ah">${icon("layers")}<span>${t("Where it comes from", lang)}</span></p>
+  <p class="atext">${wherePara}</p>
 
-  <p class="ah">${icon("heart")}<span>Why it's free</span></p>
-  <p class="atext">The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
+  <p class="ah">${icon("heart")}<span>${t("Why it's free", lang)}</span></p>
+  <p class="atext">${freePara}</p>
 
-  <p class="ah">${icon("compass")}<span>Common questions</span></p>
-  ${faqs.map((f) => `<p class="atext"><b>${f.q}</b><br>${f.a}</p>`).join("\n  ")}
+  <p class="ah">${icon("compass")}<span>${t("Common questions", lang)}</span></p>
+  ${faqs.map((f) => `<p class="atext"><b>${t(f.q, lang)}</b><br>${t(f.a, lang)}</p>`).join("\n  ")}
 
   <div class="builtby">
     <a href="https://urbanmorph.com" aria-label="Urban Morph"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"></a>
     <div>
-      <p class="bb-by">Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.</p>
-      <a class="star" href="https://github.com/urbanmorph/mugilu">${GH_MARK} Source on GitHub, drop a star if it's useful</a>
+      <p class="bb-by">${builtBy}</p>
+      <a class="star" href="https://github.com/urbanmorph/mugilu">${GH_MARK} ${t("Source on GitHub, drop a star if it's useful", lang)}</a>
     </div>
   </div>
 
-  <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+  <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "About: mugilu",
@@ -1186,8 +1229,8 @@ export function renderAbout(lang: Lang = "en"): string {
       "@type": "FAQPage",
       mainEntity: faqs.map((f) => ({
         "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
+        name: t(f.q, lang),
+        acceptedAnswer: { "@type": "Answer", text: t(f.a, lang) },
       })),
     }),
     HOME_OG,
@@ -1199,32 +1242,62 @@ export function renderAbout(lang: Lang = "en"): string {
 /** Terms & attribution: the disclaimer in full, plus per-source credit/licence.
  *  The disclaimer that ships in every API response points here. */
 export function renderTerms(lang: Lang = "en"): string {
+  // Prose: English keeps its inline markup; hi/kn render the translated text (proper
+  // nouns/acronyms + source names Latin, source-detail lines kept English like /about's
+  // list). Paragraphs with inline links keep {slot}s filled after lookup, word-order-safe.
+  const warranty =
+    lang === "en"
+      ? `<b>Informational and educational only, not for medical, emergency, or safety-critical decisions.</b> Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult <b>NDMA</b> and <b>IMD</b> directly.`
+      : t(
+          "Informational and educational only, not for medical, emergency, or safety-critical decisions. Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult NDMA and IMD directly.",
+          lang,
+        );
+  const repoText = lang === "en" ? "repository" : t("repository", lang);
+  const repoLink = `<a href="https://github.com/urbanmorph/mugilu">${repoText}</a>`;
+  const licence =
+    lang === "en"
+      ? `The mugilu <b>code is MIT</b> (see the ${repoLink}). The <b>data is not relicensed</b>: each upstream source keeps its own licence and attribution. mugilu is <b>non-commercial, for individuals</b>, and is not affiliated with any data provider.`
+      : t(
+          "The mugilu code is MIT (see the {repo}). The data is not relicensed: each upstream source keeps its own licence and attribution. mugilu is non-commercial, for individuals, and is not affiliated with any data provider.",
+          lang,
+        ).replace("{repo}", repoLink);
+  const privacy =
+    lang === "en"
+      ? `No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses <b>Cloudflare Web Analytics</b>, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.`
+      : t(
+          "No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses Cloudflare Web Analytics, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.",
+          lang,
+        );
+  const commonsDisc = t("A digital commons by {um}, alongside {bl} and {md}.", lang)
+    .replace("{um}", `<a href="https://urbanmorph.com">urbanmorph</a>`)
+    .replace("{bl}", `<a href="https://bharatlas.com">bharatlas</a>`)
+    .replace("{md}", `<a href="https://mdshare.live">mdshare</a>`);
   const body = `
-  <h1 class="ahero">Terms &amp; attribution</h1>
-  <p class="alead">mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.</p>
+  <h1 class="ahero">${t("Terms &amp; attribution", lang)}</h1>
+  <p class="alead">${t("mugilu stitches together others' open data for any point in India. The stitch and the code are ours; the data is theirs, and stays under their terms.", lang)}</p>
 
-  <h2 class="ah">No warranty</h2>
-  <p class="amuted"><b>Informational and educational only, not for medical, emergency, or safety-critical decisions.</b> Readings are a mix of measured and modelled values and may be wrong, stale, or missing. There is no accuracy or availability guarantee. For official hazard warnings, consult <b>NDMA</b> and <b>IMD</b> directly.</p>
+  <h2 class="ah">${t("No warranty", lang)}</h2>
+  <p class="amuted">${warranty}</p>
 
-  <h2 class="ah">Licence</h2>
-  <p class="alead2">The mugilu <b>code is MIT</b> (see the <a href="https://github.com/urbanmorph/mugilu">repository</a>). The <b>data is not relicensed</b>: each upstream source keeps its own licence and attribution. mugilu is <b>non-commercial, for individuals</b>, and is not affiliated with any data provider.</p>
+  <h2 class="ah">${t("Licence", lang)}</h2>
+  <p class="alead2">${licence}</p>
 
-  <h2 class="ah">Sources &amp; credit</h2>
+  <h2 class="ah">${t("Sources &amp; credit", lang)}</h2>
   <ul class="alist on">
-    <li>${icon("air")}<span class="t"><b>Air</b>: CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the <a href="https://oaq.notf.in">OAQ</a> broker; plus OpenAQ.</span></li>
-    <li>${icon("heat")}<span class="t"><b>Heat, rain, UV, dust, wind</b>: <a href="https://open-meteo.com">Open-Meteo</a>, licensed CC-BY 4.0.</span></li>
-    <li>${icon("warn")}<span class="t"><b>Official warnings</b>: NDMA / IMD via SACHET.</span></li>
-    <li>${icon("smoke")}<span class="t"><b>Fire / crop-burn smoke</b>: NASA FIRMS (VIIRS).</span></li>
-    <li>${icon("pin")}<span class="t"><b>Geography &amp; place names</b>: place search from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL); admin boundaries from <a href="https://bharatlas.com">bharatlas</a>.</span></li>
-    <li>${icon("heart")}<span class="t"><b>Health impact</b>: years of life lost uses the <a href="https://aqli.epic.uchicago.edu">AQLI</a> methodology (U Chicago EPIC).</span></li>
+    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the {oaq} broker; plus OpenAQ.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
+    <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: ${t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", `<a href="https://open-meteo.com">Open-Meteo</a>`)}</span></li>
+    <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: ${t("NDMA / IMD via SACHET.", lang)}</span></li>
+    <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
+    <li>${icon("heart")}<span class="t"><b>${t("Health impact", lang)}</b>: ${t("years of life lost uses the {aqli} methodology (U Chicago EPIC).", lang).replace("{aqli}", `<a href="https://aqli.epic.uchicago.edu">AQLI</a>`)}</span></li>
   </ul>
-  <p class="alead2">Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.</p>
+  <p class="alead2">${t("Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.", lang)}</p>
 
-  <h2 class="ah">Privacy</h2>
-  <p class="amuted">No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses <b>Cloudflare Web Analytics</b>, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.</p>
+  <h2 class="ah">${t("Privacy", lang)}</h2>
+  <p class="amuted">${privacy}</p>
 
-  <p class="adisc">A digital commons by <a href="https://urbanmorph.com">urbanmorph</a>, alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>`;
+  <p class="adisc">${commonsDisc}</p>
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
   return shell(
     "Terms & attribution: mugilu",
     body,
@@ -1248,7 +1321,7 @@ export function renderNotFound(lang: Lang = "en"): string {
   const body = `
   <h1 class="ahero">${t("Not here.", lang)}</h1>
   <p class="alead">${lead}</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>`;
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
   return shell("Not found: mugilu", body, ABOUT_CSS, DEFAULT_DESC, undefined, undefined, HOME_OG, undefined, lang);
 }
 
@@ -1266,39 +1339,66 @@ const METHOD_CSS = `
 export function renderMethodology(lang: Lang = "en"): string {
   const row = (h: string, c1: string, c2: string, c3: string) =>
     `<tr><td>${h}</td><td>${c1}</td><td>${c2}</td><td>${c3}</td></tr>`;
+  // Prose: English keeps its inline markup; hi/kn render the reviewed translated text
+  // (proper nouns + acronyms Latin). Precomputed to avoid nested template literals.
+  const onePara =
+    lang === "en"
+      ? `Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.`
+      : t(
+          `Each hazard is scored 0 to 3 (none, caution, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.`,
+          lang,
+        );
+  const whoPara =
+    lang === "en"
+      ? `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.`
+      : t(
+          `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle you choose: never inferred, never stored.`,
+          lang,
+        );
+  // The thresholds note carries two inline links; word order differs across languages,
+  // so the translated string keeps {score}/{terms} slots we fill after lookup.
+  const scoreLink = `<a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>`;
+  const termsText = lang === "en" ? "terms &amp; attribution" : t("terms & attribution", lang);
+  const termsLink = `<a href="${lp("/terms", lang)}">${termsText}</a>`;
+  const threshNote = t(
+    "Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open {score}, and every layer's source and licence is on {terms}.",
+    lang,
+  )
+    .replace("{score}", scoreLink)
+    .replace("{terms}", termsLink);
   const body = `
   <article class="ax">
-  <h1 class="ahero">How the Ambient read works</h1>
-  <p class="alead">mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.</p>
+  <h1 class="ahero">${t("How the Ambient read works", lang)}</h1>
+  <p class="alead">${t("mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.", lang)}</p>
 
-  <h2 class="ah">One read, never an average</h2>
-  <p class="atext">Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.</p>
+  <h2 class="ah">${t("One read, never an average", lang)}</h2>
+  <p class="atext">${onePara}</p>
 
-  <h2 class="ah">For who you are</h2>
-  <p class="atext">Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.</p>
+  <h2 class="ah">${t("For who you are", lang)}</h2>
+  <p class="atext">${whoPara}</p>
 
-  <h2 class="ah">The thresholds</h2>
+  <h2 class="ah">${t("The thresholds", lang)}</h2>
   <div class="mtab-wrap">
   <table class="mtab">
-  <thead><tr><th>Hazard</th><th>Caution</th><th>High</th><th>Severe</th></tr></thead>
+  <thead><tr><th>${t("Hazard", lang)}</th><th>${t("Caution", lang)}</th><th>${t("High", lang)}</th><th>${t("Severe", lang)}</th></tr></thead>
   <tbody>
-  ${row("Air (AQI)", "101–200", "201–300", "301+")}
-  ${row("Heat (feels-like)", "35°", "40°", "45°")}
-  ${row("Heat (wet-bulb)", "26°", "28°", "31°")}
-  ${row("Heat (WBGT)", "30°", "32°", "35°")}
-  ${row("Cold (feels-like)", "≤10°", "≤5°", "≤0°")}
-  ${row("Wind (gusts, km/h)", "40", "62", "88")}
-  ${row("Fog (visibility, m)", "&lt;1000", "&lt;500", "&lt;200")}
-  ${row("Smoke (fires &lt;100 km)", "3+", "25+", "60+")}
-  ${row("UV (index)", "6–10", "-", "11+")}
-  ${row("Dust (µg/m³)", "80", "150", "500")}
+  ${row(t("Air (AQI)", lang), "101–200", "201–300", "301+")}
+  ${row(t("Heat (feels-like)", lang), "35°", "40°", "45°")}
+  ${row(t("Heat (wet-bulb)", lang), "26°", "28°", "31°")}
+  ${row(t("Heat (WBGT)", lang), "30°", "32°", "35°")}
+  ${row(t("Cold (feels-like)", lang), "≤10°", "≤5°", "≤0°")}
+  ${row(t("Wind (gusts, km/h)", lang), "40", "62", "88")}
+  ${row(t("Fog (visibility, m)", lang), "&lt;1000", "&lt;500", "&lt;200")}
+  ${row(t("Smoke (fires &lt;100 km)", lang), "3+", "25+", "60+")}
+  ${row(t("UV (index)", lang), "6–10", "-", "11+")}
+  ${row(t("Dust (µg/m³)", lang), "80", "150", "500")}
   </tbody>
   </table>
   </div>
-  <p class="atext">Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open <a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>, and every layer's source and licence is on <a href="/terms">terms &amp; attribution</a>.</p>
+  <p class="atext">${threshNote}</p>
 
-  <p class="adisc">Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.</p>
-  <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+  <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
+  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "How it works: mugilu",
@@ -1346,7 +1446,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     <p class="wgen">${snap ? `as of ${esc(istTime(snap.generated_at))} · via SACHET` : ""}</p>
     ${items}
     <p class="adisc">${disc}</p>
-    <p class="aback"><a href="${lp("/", lang)}">← back to mugilu</a></p>
+    <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
   return shell(
     "Active warnings: mugilu",
@@ -1450,7 +1550,7 @@ export function renderHome(
   <p class="covers">${cover("air", "air")}${cover("heat", "heat")}${cover("rain", "rain")}${cover("sun", "UV")}${cover("dust", "dust")}${cover("warn", "warnings")}</p>
   <div class="acwrap">
     <form class="search" action="${lp("/go", lang)}" method="get" role="search">
-      <input id="q" name="q" type="search" placeholder="${esc(t("A place in India, or lat,lon", lang))}" autocomplete="off" autofocus aria-label="Look up a place in India">
+      <input id="q" name="q" type="search" placeholder="${esc(t("A place in India, or lat,lon", lang))}" autocomplete="off" autofocus aria-label="${esc(t("Look up a place in India", lang))}">
       <button type="submit">${t("Go", lang)}</button>
     </form>
     <ul id="ac" class="ac" role="listbox"></ul>
