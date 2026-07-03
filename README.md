@@ -70,6 +70,8 @@ npx @modelcontextprotocol/inspector --cli https://mugilu.live/mcp --transport ht
 | `/mcp` · `/openapi.json` · `/llms.txt` | MCP server · OpenAPI 3.1 spec · LLM manifest |
 | `?ref=your-app` | self-identify on any API/embed call (aggregate attribution) |
 
+**Refreshing:** readings recompute on a ~15-minute cycle (air and official warnings change hourly, weather at most every 15 minutes). A single conditions response carries every metric, each with its own `as_of`, and a `refresh_after_seconds` field mirrored by the `Cache-Control` max-age on the JSON, Markdown and `/embed` surfaces. Poll or reload at most once every 15 minutes per place: faster returns identical data. If you embed the card, that means refreshing the iframe every 15 minutes or so, or use `/c/{place}?kiosk` (the Display view), which self-refreshes.
+
 ## Run it locally
 
 One Cloudflare Worker, forkable and self-hostable. Needs **Node 22+**, **[pnpm](https://pnpm.io)**, and — to deploy — a Cloudflare account.

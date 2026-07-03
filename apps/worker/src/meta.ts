@@ -51,7 +51,17 @@ feels-like, wet-bulb, WBGT), rain, uv, dust, wind, visibility, fire/crop-burn sm
 (NASA FIRMS), and any official NDMA/SACHET warnings at the point. Each layer carries
 its "source", a "kind" (measured / modelled / observed) and its own "as_of". An
 "ambient" object names the single worst hazard weighted by persona, with a plain
-"summary". Attribution and a disclaimer travel inside every response.
+"summary". Every response also carries "refresh_after_seconds" (how long the reading
+stays current). Attribution and a disclaimer travel inside every response.
+
+## Freshness and polling
+mugilu recomputes on a ~15-minute cycle. Air quality and official warnings only
+change hourly; weather (heat, wet-bulb, wind, UV, dust) moves at most every 15
+minutes. A single conditions response already carries every layer, each with its own
+"as_of", so you never need to poll per-metric. Refresh at most once every 15 minutes
+(the "refresh_after_seconds" value, also sent as the Cache-Control max-age on JSON,
+Markdown and /embed): polling faster returns identical data. If you display many
+places, that rate is per place. Readings are current, never a forecast.
 
 ## Sources
 Air: CPCB, Airnet (CSTEP), Aurassure via the OAQ broker, plus OpenAQ.
@@ -88,7 +98,7 @@ export function openApiSpec(siteUrl: string): object {
       title: "mugilu: India's open sky",
       version: "1.0.0",
       description:
-        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb), rain, UV, dust, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read. Informational only, not for medical, emergency, or safety-critical use.",
+        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb), rain, UV, dust, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read. Informational only, not for medical, emergency, or safety-critical use. Freshness: readings recompute on a ~15-minute cycle (air and warnings change hourly, weather at most every 15 min). Each response carries refresh_after_seconds and a matching Cache-Control max-age; poll at most once every 15 minutes per place, faster returns identical data.",
       license: { name: "Sources keep their own licence; see /terms", url: `${siteUrl}/terms` },
       contact: { url: siteUrl },
     },
