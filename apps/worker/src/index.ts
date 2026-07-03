@@ -5,7 +5,7 @@ import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
 import { renderStationOg, renderConditionsOg, renderHomeOg } from "./og";
 import { faviconSvg, appleIconPng } from "./icon";
 import { findNearest, parseLatLon } from "./near";
-import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
+import { buildConditions, renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
 import {
   renderConditionsPage,
   renderKioskPage,
@@ -52,12 +52,21 @@ export interface Env {
   EVENTS?: AnalyticsEngineDataset;
 }
 
-/** Standard cached, CORS-open API response for a given body + content-type. */
-function cachedResponse(body: string, contentType: string): Response {
+/** Standard cached, CORS-open API response for a given body + content-type.
+ *  Pass `clientMaxAge` (seconds) on the "build-on" data surfaces (JSON, Markdown,
+ *  /embed) so a browser, iframe or plain HTTP client also caches for that long, not
+ *  just shared/CDN caches. Without it we only send `s-maxage`, which a browser
+ *  ignores, so an embed or poller had no directive telling it "this only changes
+ *  every 15 min" and could re-fetch every second for identical bytes. The human
+ *  HTML pages deliberately omit it, so a manual reload always revalidates. */
+function cachedResponse(body: string, contentType: string, clientMaxAge?: number): Response {
+  const cc = clientMaxAge
+    ? `public, max-age=${clientMaxAge}, s-maxage=900, stale-while-revalidate=3600`
+    : "public, s-maxage=900, stale-while-revalidate=3600";
   return new Response(body, {
     headers: {
       "content-type": contentType,
-      "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
+      "cache-control": cc,
       "access-control-allow-origin": "*",
     },
   });
@@ -242,26 +251,18 @@ export default {
     if (url.pathname === "/index.json") {
       const snap = await loadSnapshot(env);
       if (!snap) return new Response("no snapshot yet", { status: 503 });
-      return new Response(JSON.stringify(snap), {
-        headers: {
-          "content-type": "application/json; charset=utf-8",
-          "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
-          "access-control-allow-origin": "*",
-        },
-      });
+      return cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
     }
 
     // Leaderboard Markdown.
     if (url.pathname === "/index.md") {
       const snap = await loadSnapshot(env);
       if (!snap) return new Response("no snapshot yet", { status: 503 });
-      return new Response(renderSnapshotMarkdown(snap, SITE_URL), {
-        headers: {
-          "content-type": "text/markdown; charset=utf-8",
-          "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
-          "access-control-allow-origin": "*",
-        },
-      });
+      return cachedResponse(
+        renderSnapshotMarkdown(snap, SITE_URL),
+        "text/markdown; charset=utf-8",
+        REFRESH_AFTER_SECONDS,
+      );
     }
 
     // National active warnings: the SACHET archive made readable, not just
@@ -271,11 +272,11 @@ export default {
       // .json returns the stored payload verbatim (no parse + re-serialize).
       if (url.pathname === "/warnings.json") {
         if (!obj) return new Response("no warnings snapshot yet", { status: 503 });
-        return cachedResponse(await obj.text(), "application/json; charset=utf-8");
+        return cachedResponse(await obj.text(), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
       }
       const snap = obj ? ((await obj.json()) as WarningsSnapshot) : null;
       if (url.pathname === "/warnings.md") {
-        return cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8");
+        return cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8", REFRESH_AFTER_SECONDS);
       }
       return cachedResponse(renderWarningsPage(snap, lang), "text/html; charset=utf-8");
     }
@@ -354,9 +355,14 @@ export default {
         return cachedResponse(
           JSON.stringify(serializeConditionsV1(conditions, persona), null, 2),
           "application/json; charset=utf-8",
+          REFRESH_AFTER_SECONDS,
         );
       if (ext === "md")
-        return cachedResponse(renderConditionsMarkdown(conditions, persona), "text/markdown; charset=utf-8");
+        return cachedResponse(
+          renderConditionsMarkdown(conditions, persona),
+          "text/markdown; charset=utf-8",
+          REFRESH_AFTER_SECONDS,
+        );
       if (kiosk) {
         const qrTarget = persona === "everyone" ? canonical : `${canonical}?as=${persona}`;
         return cachedResponse(
@@ -412,7 +418,11 @@ export default {
         recordLookup(env, coords.lat, coords.lon, conditions.place, "embed", req.headers.get("user-agent")),
       );
       ctx.waitUntil(recordReferrer(env, "embed", req, url));
-      return cachedResponse(renderEmbed(conditions, persona, SITE_URL, lang), "text/html; charset=utf-8");
+      return cachedResponse(
+        renderEmbed(conditions, persona, SITE_URL, lang),
+        "text/html; charset=utf-8",
+        REFRESH_AFTER_SECONDS,
+      );
     }
 
     // Per-station OG image: /og/s/{provider}/{raw_id}.png (rendered via workers-og).
@@ -435,21 +445,17 @@ export default {
       const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
       if (!station) return new Response("station not found", { status: 404 });
       if (ext === "json") {
-        return new Response(JSON.stringify({ generated_at: snap.generated_at, station }), {
-          headers: {
-            "content-type": "application/json; charset=utf-8",
-            "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
-            "access-control-allow-origin": "*",
-          },
-        });
+        return cachedResponse(
+          JSON.stringify({ generated_at: snap.generated_at, station }),
+          "application/json; charset=utf-8",
+          REFRESH_AFTER_SECONDS,
+        );
       }
-      return new Response(renderStationMarkdown(station, snap.generated_at, SITE_URL), {
-        headers: {
-          "content-type": "text/markdown; charset=utf-8",
-          "cache-control": "public, s-maxage=900, stale-while-revalidate=3600",
-          "access-control-allow-origin": "*",
-        },
-      });
+      return cachedResponse(
+        renderStationMarkdown(station, snap.generated_at, SITE_URL),
+        "text/markdown; charset=utf-8",
+        REFRESH_AFTER_SECONDS,
+      );
     }
 
     // Public R2 proxy for dev and for the build script. In production we'll

@@ -255,6 +255,12 @@ const UNITS = {
   level: "0-3",
 };
 
+/** Seconds a conditions response stays fresh: mugilu recomputes on a ~15-min cycle
+ *  (air and warnings only move hourly; weather at most every 15 min), so a faster
+ *  poll returns identical data. Surfaced in JSON and as the `max-age` on the build-on
+ *  responses so a client or embed can self-throttle instead of guessing per-metric. */
+export const REFRESH_AFTER_SECONDS = 900;
+
 /** Serialize the internal model into the stable, self-describing /c `.json` v1
  *  contract: a `schema` + `version` handle, a `units` map, machine-readable
  *  provenance (`kind`) and freshness (`as_of`) on every layer, consistent
@@ -271,6 +277,8 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
     location: c.location,
     place: c.place ?? null,
     as_of: c.as_of,
+    // How long this reading stays current; polling faster returns identical data.
+    refresh_after_seconds: REFRESH_AFTER_SECONDS,
     units: UNITS,
     air: c.air
       ? {

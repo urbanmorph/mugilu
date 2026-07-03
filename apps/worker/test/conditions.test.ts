@@ -11,6 +11,7 @@ test("serializeConditionsV1: a stable, self-describing /c v1 contract", async ()
     const v1 = serializeConditionsV1(c, "everyone") as Record<string, any>;
     assert.equal(v1.schema, "mugilu/conditions");
     assert.equal(v1.version, 1); // a version handle exists
+    assert.equal(v1.refresh_after_seconds, 900); // self-describes its refresh cadence
     assert.equal(v1.units.pollutants.co, "mg/m3"); // CO mg/m³ vs the rest is discoverable
     assert.ok(Array.isArray(v1.warnings)); // one null convention: always a list
     assert.equal(v1.air.kind, "measured"); // provenance always present
