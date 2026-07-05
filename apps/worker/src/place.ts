@@ -14,6 +14,37 @@ function cityOf(sourceLayer: string): string | null {
   return m[1].charAt(0).toUpperCase() + m[1].slice(1);
 }
 
+// BMC's 24 wards are officially bare letter codes (A, L, H/W, G/S…). bharatlas
+// mirrors that faithfully, so a raw label reads "L, Mumbai" — meaningless to a
+// reader. We alias each code to the locality it's best known by, for a human
+// label. bharatlas stays the source of truth; this is display-only curation.
+const BMC_WARD_AREA: Record<string, string> = {
+  A: "Colaba",
+  B: "Sandhurst Road",
+  C: "Kalbadevi",
+  D: "Malabar Hill",
+  E: "Byculla",
+  "F/N": "Matunga",
+  "F/S": "Parel",
+  "G/N": "Dadar",
+  "G/S": "Worli",
+  "H/E": "Bandra East",
+  "H/W": "Bandra West",
+  "K/E": "Andheri East",
+  "K/W": "Andheri West",
+  L: "Kurla",
+  "M/E": "Govandi",
+  "M/W": "Chembur",
+  N: "Ghatkopar",
+  "P/N": "Malad",
+  "P/S": "Goregaon",
+  "R/C": "Borivali",
+  "R/N": "Dahisar",
+  "R/S": "Kandivali",
+  S: "Bhandup",
+  T: "Mulund",
+};
+
 function nearestCentroid(lat: number, lon: number): Centroid | null {
   let best: Centroid | null = null;
   let bestD = Infinity;
@@ -33,10 +64,13 @@ export function nearestPlace(lat: number, lon: number): string | null {
   if (!best) return null;
   if (best.level === "ward") {
     const city = cityOf(best.source_layer);
+    // BMC ward codes ("L", "H/W") → the locality they're known by; other cities
+    // keep the ward name as-is.
+    const aliased = city === "Mumbai" ? BMC_WARD_AREA[best.name] : undefined;
     // Some ward centroids carry an id-like ("wards_bengaluru-0") or bare-number
     // ("62") name; fall back to the city alone rather than show a meaningless id.
     const idLike = /^wards?_/i.test(best.name) || /^\d+$/.test(best.name);
-    const human = idLike ? null : best.name;
+    const human = aliased ?? (idLike ? null : best.name);
     return [human, city].filter(Boolean).join(", ") || best.name;
   }
   return best.state ? `${best.name}, ${best.state}` : best.name;

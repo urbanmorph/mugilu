@@ -23,6 +23,11 @@ test("nearestPlace: numeric ward names fall back to the city", () => {
   assert.match(label!, /Chennai/);
 });
 
+test("nearestPlace: BMC ward codes resolve to their locality, not a bare letter", () => {
+  const label = nearestPlace(19.0876, 72.8867); // BMC ward "L" centroid → Kurla
+  assert.equal(label, "Kurla, Mumbai"); // never "L, Mumbai"
+});
+
 test("nearestPlace: labels a non-metro point with its district", () => {
   const label = nearestPlace(26.85, 80.95); // Lucknow area — no ward grid
   assert.ok(label);
