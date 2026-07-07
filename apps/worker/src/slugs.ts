@@ -1,4 +1,5 @@
 import centroids from "../data/centroids.json";
+import { haversineKm } from "./near";
 import type { Centroid } from "./types";
 
 // Named place URLs for SEO + humans: /c/lucknow resolves to a district's centroid
@@ -103,4 +104,35 @@ export function slugForName(name: string): string | undefined {
 /** Every named place (for the sitemap). */
 export function allSlugPlaces(): SlugPlace[] {
   return [...SLUGS.values()];
+}
+
+/** Named places grouped by state (for the /places directory), states A→Z and
+ *  places A→Z within each. The directory is the crawlable index that links every
+ *  /c/{slug} page, so search engines have a path to them (not sitemap-only). */
+export function slugPlacesByState(): { state: string; places: SlugPlace[] }[] {
+  const byState = new Map<string, SlugPlace[]>();
+  for (const p of SLUGS.values()) {
+    const st = p.state ?? "Other";
+    const list = byState.get(st);
+    if (list) list.push(p);
+    else byState.set(st, [p]);
+  }
+  return [...byState.entries()]
+    .map(([state, places]) => ({
+      state,
+      places: places.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    }))
+    .sort((a, b) => a.state.localeCompare(b.state));
+}
+
+/** A handful of other named places nearest to `slug`, in the same state. Rendered
+ *  as cross-links on each conditions page so the named-place pages form a connected
+ *  graph a crawler can walk, instead of ~800 orphans reachable only via the sitemap. */
+export function siblingPlaces(slug: string, limit = 6): SlugPlace[] {
+  const here = SLUGS.get(slug.toLowerCase());
+  if (!here || !here.state) return [];
+  return [...SLUGS.values()]
+    .filter((p) => p.state === here.state && p.slug !== here.slug)
+    .sort((a, b) => haversineKm(here.lat, here.lon, a.lat, a.lon) - haversineKm(here.lat, here.lon, b.lat, b.lon))
+    .slice(0, limit);
 }

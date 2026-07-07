@@ -13,6 +13,7 @@ import {
   renderHome,
   renderAbout,
   renderTerms,
+  renderPlaces,
   renderNotFound,
   renderEmbed,
   renderWarningsPage,
@@ -153,6 +154,13 @@ export default {
     // Terms & attribution (the disclaimer in every API response points here).
     if (url.pathname === "/terms") {
       return cachedResponse(renderTerms(lang), "text/html; charset=utf-8");
+    }
+
+    // The place directory: every named /c/{slug} page, grouped by state. A crawlable
+    // index that gives search engines a path to all ~800 place pages (and readers a
+    // way to browse), so they aren't discoverable only through the sitemap.
+    if (url.pathname === "/places") {
+      return cachedResponse(renderPlaces(lang), "text/html; charset=utf-8");
     }
 
     // Crawler + agent front-door files, built from the live route set. Edge-cached:

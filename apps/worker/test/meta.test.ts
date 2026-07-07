@@ -28,6 +28,27 @@ test("sitemap.xml: every URL carries a <lastmod> (crawl-freshness signal)", () =
   assert.match(xml, /<loc>https:\/\/mugilu\.live\/about<\/loc><lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
 });
 
+test("sitemap.xml: lists the /places directory (the crawlable index of place pages)", () => {
+  const xml = sitemapXml("https://mugilu.live");
+  assert.match(xml, /<loc>https:\/\/mugilu\.live\/places<\/loc>/);
+});
+
+test("sitemap.xml: place pages carry a stable lastmod (not a daily-churning one)", () => {
+  const xml = sitemapXml("https://mugilu.live");
+  const lastmodOf = (loc: string) => {
+    const m = xml.match(
+      new RegExp(`<loc>${loc.replace(/[.\\/]/g, "\\$&")}</loc><lastmod>(\\d{4}-\\d{2}-\\d{2})</lastmod>`),
+    );
+    return m && m[1];
+  };
+  // a place page shares the explainers' fixed date, so stamping ~800 pages "today"
+  // every day doesn't teach crawlers to distrust our lastmod.
+  const about = lastmodOf("https://mugilu.live/about");
+  assert.ok(about, "explainer has a lastmod");
+  assert.equal(lastmodOf("https://mugilu.live/c/bengaluru"), about);
+  assert.equal(lastmodOf("https://mugilu.live/c/mumbai"), about);
+});
+
 test("sitemap.xml: hreflang alternates pair the en/hi/kn versions (+ x-default)", () => {
   const xml = sitemapXml("https://mugilu.live");
   assert.match(xml, /xmlns:xhtml="http:\/\/www\.w3\.org\/1999\/xhtml"/);

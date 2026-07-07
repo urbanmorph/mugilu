@@ -5,6 +5,7 @@ import { pollutantParts } from "./formats";
 import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
+import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 
@@ -226,7 +227,7 @@ function footerNav(lang: Lang): string {
   const nav = (path: string, en: string) => `<a href="${lp(path, lang)}">${t(en, lang)}</a>`;
   return (
     `${nav("/about", "about")} · ${nav("/methodology", "how it works")} · ` +
-    `${nav("/about#build", "build on it")} · ${nav("/terms", "terms")} · ` +
+    `${nav("/places", "all places")} · ${nav("/about#build", "build on it")} · ${nav("/terms", "terms")} · ` +
     `<a href="https://github.com/urbanmorph/mugilu">${t("code", lang)}</a> · ` +
     `<a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">${t("a digital commons", lang)}</a>`
   );
@@ -367,6 +368,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .raw{margin:.95rem 0 0;font:500 .82rem var(--mono);letter-spacing:.02em}
 .raw a{color:var(--cond);text-decoration:none}
 .raw a:hover{text-decoration:underline}
+.nearby{margin:1.1rem 0 0;font-size:.9rem;line-height:1.9;color:var(--muted)}.nearby a{color:var(--cond);text-decoration:none}.nearby a:hover{text-decoration:underline}
 .cxback{margin:1.1rem 0 0;font-size:.9rem}.cxback a{color:var(--muted);text-decoration:none}.cxback a:hover{color:var(--ink)}
 @media(prefers-reduced-motion:no-preference){
 .coord,.loc,.when,.warn,.amb,.lyr{animation:rise .55s both cubic-bezier(.2,.7,.2,1)}
@@ -671,6 +673,20 @@ export function renderConditionsPage(
     }
   }
 
+  // Cross-links to nearby named places in the same state. Turns the ~800 /c/{slug}
+  // pages from sitemap-only orphans into a connected graph a crawler can walk, the
+  // fix for their sitting in "Discovered - currently not indexed". Only on a named
+  // page (canonical is /c/{slug}); arbitrary-coordinate pages have no state anchor.
+  let nearby = "";
+  if (canonical) {
+    const m = new URL(canonical).pathname.match(/^\/c\/([a-z][a-z0-9-]*)$/);
+    const sibs = m ? siblingPlaces(m[1]) : [];
+    if (sibs.length) {
+      const near = sibs.map((s) => `<a href="${lp(`/c/${s.slug}`, lang)}">${esc(s.name)}</a>`).join(" · ");
+      nearby = `<nav class="nearby" aria-label="${esc(t("Nearby places", lang))}">${t("Nearby:", lang)} ${near}</nav>`;
+    }
+  }
+
   const body = `
   <article class="cx">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
@@ -689,7 +705,8 @@ export function renderConditionsPage(
       <p class="attr">${esc(lang === "en" ? c.attribution : c.attribution.replace(/^Sources:/, `${t("Sources", lang)}:`))}</p>
       <p class="disc">${esc(t(c.disclaimer, lang))}</p>
       <p class="raw"><a href="/c/${slug}.json">${t("JSON", lang)}</a> · <a href="/c/${slug}.md">${t("Markdown", lang)}</a> · <a href="/c/${slug}.png">${t("PNG", lang)}</a> · <a href="/embed/${slug}">${t("Embed", lang)}</a> · <a href="${lp(`/c/${slug}?kiosk`, lang)}">${t("Display", lang)}</a></p>
-      <p class="cxback"><a href="${lp("/", lang)}">← ${t("Look up another place", lang)}</a></p>
+      ${nearby}
+      <p class="cxback"><a href="${lp("/", lang)}">← ${t("Look up another place", lang)}</a> · <a href="${lp("/places", lang)}">${t("all places", lang)}</a></p>
     </footer>
   </article>`;
 
@@ -1325,6 +1342,58 @@ export function renderTerms(lang: Lang = "en"): string {
   );
 }
 
+const PLACES_CSS = `
+.places h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6vw,2.2rem);line-height:1.1;margin:.2rem 0 .35rem}
+.places .lede{color:var(--muted);font-size:.98rem;line-height:1.5;margin:0 0 .3rem;max-width:54ch}
+.places .count{color:var(--muted);font-size:.86rem;margin:0 0 1.7rem}
+.places .st{margin:0 0 1.6rem;break-inside:avoid}
+.places .st h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 .55rem;padding-bottom:.3rem;border-bottom:1px solid var(--hair)}
+.places .st ul{list-style:none;margin:0;padding:0;columns:2;column-gap:1.5rem}
+@media(min-width:620px){.places .st ul{columns:3}}
+@media(min-width:900px){.places .st ul{columns:4}}
+.places .st li{padding:2px 0;break-inside:avoid}
+.places .st a{color:var(--sky);text-decoration:none;font-size:.93rem}
+.places .st a:hover{text-decoration:underline}
+`;
+
+/** The place directory: every named /c/{slug} page, grouped by state. This is the
+ *  crawlable index that links all ~800 place pages, so search engines have a path
+ *  to them (and readers can browse) instead of the pages being sitemap-only. */
+export function renderPlaces(lang: Lang = "en"): string {
+  const groups = slugPlacesByState();
+  const total = groups.reduce((n, g) => n + g.places.length, 0);
+  const sections = groups
+    .map(
+      (g) =>
+        `<section class="st"><h2>${esc(g.state)}</h2><ul>${g.places
+          .map((p) => `<li><a href="${lp(`/c/${p.slug}`, lang)}">${esc(p.name)}</a></li>`)
+          .join("")}</ul></section>`,
+    )
+    .join("");
+  const canonical = "https://mugilu.live/places";
+  const title = t("Every place in India: air, heat and warnings by district · mugilu", lang);
+  const desc = t(
+    "Browse the sky over every district and major city in India: air quality, heat, rain, UV, dust and any official warning, one page each.",
+    lang,
+  );
+  const crumb = ld({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "mugilu", item: "https://mugilu.live" },
+      { "@type": "ListItem", position: 2, name: "Places", item: canonical },
+    ],
+  });
+  const body = `
+  <div class="places">
+    <h1>${t("Every place, by state", lang)}</h1>
+    <p class="lede">${t("The sky over every district and major city in India, one page each. Pick a place to see its air, heat, rain, UV, dust and any official warning, right now.", lang)}</p>
+    <p class="count">${total} ${t("places across India", lang)}</p>
+    ${sections}
+  </div>`;
+  return shell(title, body, PLACES_CSS, desc, canonical, crumb, HOME_OG, undefined, lang);
+}
+
 /** A real 404 page (the catch-all used to return 200 with a debug string). */
 export function renderNotFound(lang: Lang = "en"): string {
   const gone = "That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate.";
@@ -1545,7 +1614,12 @@ export function renderHome(
     const k = name.toLowerCase();
     if (seen.has(k) || links.length >= 8) return;
     seen.add(k);
-    links.push(`<a href="${lp(`/c/${lat},${lon}`, lang)}">${esc(name)}</a>`);
+    // Link the canonical /c/{slug} when the place has one (the metros, most districts)
+    // so the internal link points at the page that actually indexes, not a coordinate
+    // URL that just canonicalises to it. Wards and arbitrary points stay coordinate.
+    const s = slugForName(name);
+    const href = s ? `/c/${s}` : `/c/${lat},${lon}`;
+    links.push(`<a href="${lp(href, lang)}">${esc(name)}</a>`);
   };
   for (const p of meta?.popular ?? []) addPlace(shortPlace(p.label), p.lat, p.lon);
   for (const c of CITIES) addPlace(c.name, c.lat, c.lon);
