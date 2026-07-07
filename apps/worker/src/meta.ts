@@ -170,15 +170,26 @@ export function openApiSpec(siteUrl: string): object {
 }
 
 /** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite).
- *  lastmod tells crawlers when to recrawl: the live pages (home, warnings, every
- *  conditions slug) refresh daily, so they carry today's date; the explainer pages
- *  change rarely, so they carry a fixed date (bump STATIC when they materially change). */
+ *  lastmod tells crawlers when to recrawl. Only the home and warnings pages change
+ *  their indexable TEXT daily, so they carry today's date; every other page (the
+ *  explainers, the /places directory, and each /c/{slug}) carries a fixed date. A
+ *  place page's live readings move constantly, but its indexable text does not, and
+ *  stamping all ~800 with today's date every day just teaches crawlers to distrust
+ *  our lastmod. Bump STATIC when a page's text (not its live numbers) changes. */
 export function sitemapXml(siteUrl: string): string {
   const today = new Date().toISOString().slice(0, 10);
-  const STATIC = "2026-07-02";
-  const stable = new Set(["/about", "/methodology", "/terms"]);
-  // Static pages + a named /c/{slug} page per district (keyword URLs that index).
-  const paths = ["/", "/about", "/methodology", "/terms", "/warnings", ...allSlugPlaces().map((p) => `/c/${p.slug}`)];
+  const STATIC = "2026-07-07";
+  const live = new Set(["/", "/warnings"]);
+  // Static pages + the /places directory + a named /c/{slug} page per district.
+  const paths = [
+    "/",
+    "/about",
+    "/methodology",
+    "/terms",
+    "/places",
+    "/warnings",
+    ...allSlugPlaces().map((p) => `/c/${p.slug}`),
+  ];
   // Localized URL for a path: English is unprefixed (canonical); hi/kn get a /prefix.
   const loc = (p: string, l: string) => `${siteUrl}${l === "en" ? "" : "/" + l}${p === "/" ? "" : p}`;
   // hreflang alternates so search engines pair the three language versions (+ x-default).
@@ -186,7 +197,7 @@ export function sitemapXml(siteUrl: string): string {
     ["en", "hi", "kn"].map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${loc(p, l)}"/>`).join("") +
     `<xhtml:link rel="alternate" hreflang="x-default" href="${loc(p, "en")}"/>`;
   const urls = paths
-    .map((p) => `  <url><loc>${loc(p, "en")}</loc><lastmod>${stable.has(p) ? STATIC : today}</lastmod>${alts(p)}</url>`)
+    .map((p) => `  <url><loc>${loc(p, "en")}</loc><lastmod>${live.has(p) ? today : STATIC}</lastmod>${alts(p)}</url>`)
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">

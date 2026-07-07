@@ -152,13 +152,13 @@ test("nav preserves language: home Popular + hero + recents carry the /kn prefix
     hottest: { name: "Sitapur", state: "UP", lat: 27.5, lon: 80.7, apparent_c: 41, wet_bulb_c: 29 },
   } as unknown as Parameters<typeof renderHome>[1];
   const kn = renderHome(undefined, hl, { popular: [{ label: "Delhi", lat: 28.6, lon: 77.2 }] }, "kn");
-  assert.match(kn, /href="\/kn\/c\/28\.6,77\.2"/); // Popular link
+  assert.match(kn, /href="\/kn\/c\/delhi"/); // Popular link: canonical slug, still /kn-prefixed
   assert.match(kn, /class="hl"[^>]*href="\/kn\/c\//); // hero highlight
   assert.match(kn, /var LP="\/kn"/); // client prefix
   assert.match(kn, /\+ ?LP ?\+ ?'\/c\/'/); // recents/autocomplete built with LP
   const en = renderHome(undefined, hl, { popular: [{ label: "Delhi", lat: 28.6, lon: 77.2 }] }, "en");
   assert.match(en, /var LP=""/);
-  assert.match(en, /href="\/c\/28\.6,77\.2"/);
+  assert.match(en, /href="\/c\/delhi"/);
   assert.doesNotMatch(en, /\/en\/c\//);
 });
 

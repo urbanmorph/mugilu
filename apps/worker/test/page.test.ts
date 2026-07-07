@@ -123,3 +123,16 @@ test("renderConditionsPage: falls back to coords when no station/air", () => {
   const html = renderConditionsPage(conditions({ air: null }));
   assert.match(html, /12\.97/);
 });
+
+test("renderConditionsPage: cross-links nearby places in the same state (internal linking)", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru");
+  assert.match(html, /class="nearby"/);
+  assert.match(html, /Nearby:/);
+  assert.match(html, /<a href="\/c\/[a-z][a-z0-9-]*">/); // links to other named pages, not coords
+  assert.match(html, /href="\/places"/); // and a path to the full directory
+});
+
+test("renderConditionsPage: no nearby block on a bare-coordinate page (no state anchor)", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/12.97,77.59");
+  assert.doesNotMatch(html, /class="nearby"/);
+});

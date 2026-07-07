@@ -12,17 +12,19 @@ test("renderHome: a valid HTML doc with the brand and a search form to /go", () 
   assert.match(html, /name="q"/);
 });
 
-test("renderHome: includes city quick-links to /c", () => {
+test("renderHome: city quick-links use the canonical /c/{slug}, not the coordinate", () => {
   const html = renderHome();
-  assert.match(html, /\/c\/12\.97,77\.59/); // Bengaluru
-  assert.match(html, /Delhi/);
+  // Link the page that actually indexes, not a coordinate URL that canonicalises to it.
+  assert.match(html, /<a href="\/c\/bengaluru">Bengaluru<\/a>/);
+  assert.match(html, /<a href="\/c\/delhi">Delhi<\/a>/);
+  assert.doesNotMatch(html, /\/c\/12\.97,77\.59/); // no coordinate link for a place that has a slug
 });
 
 test("renderHome: 'Popular' leads with real top-lookups (D1), padded by seed cities", () => {
   const html = renderHome(undefined, undefined, {
     popular: [{ label: "Ludhiana, Punjab", lat: 30.9, lon: 75.85 }],
   });
-  assert.match(html, /Popular:\s*<a href="\/c\/30\.9,75\.85">Ludhiana<\/a>/); // real lookup leads
+  assert.match(html, /Popular:\s*<a href="\/c\/ludhiana">Ludhiana<\/a>/); // real lookup leads, canonical slug
   assert.match(html, /Mumbai/); // seed cities fill the rest so it's never sparse
   assert.match(renderHome(), /Delhi/); // with no data, all seed cities
 });
