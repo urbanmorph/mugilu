@@ -4,10 +4,22 @@ import { allSlugPlaces } from "./slugs";
 // pages, so people, search engines, and LLM crawlers all find the same surface.
 // All built from the live route set, no stale OAQ leftovers.
 
-/** robots.txt: allow everyone (AI crawlers included) and point at the sitemap. */
+/** robots.txt: allow everyone (search engines + AI crawlers included) and point
+ *  at the sitemap. The one exception is the SEO-audit crawlers below: they hammer
+ *  every district page (roughly a third of all traffic) to build backlink indexes
+ *  that do nothing for a public-good site, so they are asked to stay out. Search
+ *  and AI-answer crawlers stay welcome; declining these does not affect indexing. */
 export function robotsTxt(siteUrl: string): string {
   return [
     "# mugilu is for people, apps, and AI agents alike. Crawl freely.",
+    "# The exception is the SEO-audit crawlers below: heavy load, no value to a",
+    "# public-good site, so they are asked to stay out. Search + AI crawlers welcome.",
+    "User-agent: SemrushBot",
+    "User-agent: AhrefsBot",
+    "User-agent: MJ12bot",
+    "User-agent: DotBot",
+    "Disallow: /",
+    "",
     "User-agent: *",
     "Allow: /",
     "",

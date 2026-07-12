@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { openApiSpec, llmsTxt, sitemapXml } from "../src/meta";
+import { openApiSpec, llmsTxt, sitemapXml, robotsTxt } from "../src/meta";
 
 test("openApiSpec: a valid 3.1 spec covering the read endpoints", () => {
   const s = openApiSpec("https://mugilu.live") as any;
@@ -16,6 +16,23 @@ test("llms.txt: advertises the MCP server + the OpenAPI spec", () => {
   const t = llmsTxt("https://mugilu.live");
   assert.match(t, /MCP server.*\/mcp/);
   assert.match(t, /openapi\.json/);
+});
+
+test("robots.txt: opens the site to all, but declines the SEO-audit scrapers", () => {
+  const t = robotsTxt("https://mugilu.live");
+  // the wildcard group still welcomes people, search engines and AI agents...
+  assert.match(t, /User-agent: \*\nAllow: \//);
+  // ...and we did NOT fat-finger a site-wide block on the wildcard
+  assert.doesNotMatch(t, /User-agent: \*\nDisallow: \//);
+  // the sitemap is still advertised
+  assert.match(t, /Sitemap: https:\/\/mugilu\.live\/sitemap\.xml/);
+  // the four backlink/SEO crawlers share one Disallow-all group (search + AI crawlers
+  // like Googlebot/GPTBot/amazonbot are deliberately NOT here)
+  assert.match(
+    t,
+    /User-agent: SemrushBot\nUser-agent: AhrefsBot\nUser-agent: MJ12bot\nUser-agent: DotBot\nDisallow: \//,
+  );
+  assert.doesNotMatch(t, /User-agent: (Googlebot|GPTBot|amazonbot)/i);
 });
 
 test("sitemap.xml: every URL carries a <lastmod> (crawl-freshness signal)", () => {
