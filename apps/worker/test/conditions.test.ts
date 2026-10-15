@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "../src/conditions";
-import type { Snapshot } from "../src/types";
+import { buildConditions, pickStation, renderConditionsMarkdown, serializeConditionsV1 } from "../src/conditions";
+import type { NormalizedStation, Snapshot } from "../src/types";
 
 test("serializeConditionsV1: a stable, self-describing /c v1 contract", async () => {
   const realFetch = globalThis.fetch;
@@ -112,4 +112,37 @@ test("renderConditionsMarkdown: includes air, heat, attribution and disclaimer",
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+function st(id: string, provider: NormalizedStation["provider"], lat: number, aqi: number | null): NormalizedStation {
+  return {
+    id,
+    raw_id: id,
+    provider,
+    name: id,
+    city: "X",
+    state: "",
+    lat,
+    lon: 77,
+    pollutants: aqi == null ? {} : { pm25: 40 },
+    aqi,
+    band: aqi == null ? "unknown" : "satisfactory",
+    ts: null,
+  };
+}
+
+// 0.01° of latitude ≈ 1.1 km.
+test("pickStation: the nearest station wins when no CPCB is about as near", () => {
+  const s = [st("a", "airview", 12.001, 80), st("c", "cpcb", 12.05, 90)];
+  assert.equal(pickStation(s, 12, 77)?.id, "a");
+});
+
+test("pickStation: a CPCB station within the near-tie band beats a nearer sensor", () => {
+  const s = [st("a", "airview", 12.001, 80), st("n", "airnet", 12.005, 85), st("c", "cpcb", 12.01, 90)];
+  assert.equal(pickStation(s, 12, 77)?.id, "c");
+});
+
+test("pickStation: a nearest CPCB stays, and stations without a reading are skipped", () => {
+  assert.equal(pickStation([st("c", "cpcb", 12.001, 90), st("a", "airview", 12.0005, null)], 12, 77)?.id, "c");
+  assert.equal(pickStation([], 12, 77), undefined);
 });

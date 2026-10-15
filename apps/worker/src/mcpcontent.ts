@@ -58,7 +58,7 @@ Pick a vulnerability (asthma, elderly, child, outdoor, heart) and the hazards th
 Heat takes the worst of feels-like, wet-bulb and WBGT.
 
 ## Sources
-Air: CPCB / Airnet (CSTEP) / Aurassure via the OAQ broker, plus OpenAQ. Weather, heat, UV, dust and wind: Open-Meteo (CC-BY 4.0). Official warnings: NDMA / IMD (SACHET). Fire-smoke: NASA FIRMS. Life-expectancy impact: the AQLI methodology (U Chicago EPIC).
+Air: CPCB / Airnet (CSTEP) / Aurassure / Google AirView+ via the OAQ broker, plus OpenAQ. Weather, heat, UV, dust and wind: Open-Meteo (CC-BY 4.0). Official warnings: NDMA / IMD (SACHET). Fire-smoke: NASA FIRMS. Life-expectancy impact: the AQLI methodology (U Chicago EPIC).
 
 Informational only, not for medical, emergency, or safety-critical decisions. Full page: https://mugilu.live/methodology`,
 
@@ -70,7 +70,7 @@ Code is MIT (https://github.com/urbanmorph/mugilu). The data is not relicensed: 
 Every conditions response carries an "attribution" and a "disclaimer" field. Surface them. Suggested: "Sky data via mugilu (mugilu.live)", and name the upstream layer's source.
 
 ## Sources & licences
-- Air: CPCB (Govt. of India), Airnet (CSTEP), Aurassure via the OAQ broker; plus OpenAQ.
+- Air: CPCB (Govt. of India), Airnet (CSTEP), Aurassure, Google AirView+ via the OAQ broker; plus OpenAQ.
 - Heat, rain, UV, dust, wind: Open-Meteo, CC-BY 4.0.
 - Official warnings: NDMA / IMD (SACHET).
 - Fire / crop-burn smoke: NASA FIRMS (VIIRS).

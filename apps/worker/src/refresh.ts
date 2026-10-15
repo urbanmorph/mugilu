@@ -122,7 +122,7 @@ function normalize(provider: ProviderId, raw: UpstreamStation): NormalizedStatio
     pollutants,
     aqi,
     band: aqiBand(aqi),
-    ts: (raw.timestamp as string) ?? (raw.last_updated as string) ?? null,
+    ts: raw.last_seen ?? raw.timestamp ?? raw.last_updated ?? null,
     yll: lifeYearsLost(pollutants.pm25),
   };
 }
@@ -146,9 +146,36 @@ async function fetchProvider(env: Env, provider: ProviderId): Promise<UpstreamSt
   return body.stations ?? [];
 }
 
+/**
+ * The providers to pull this run: our known floor (PROVIDERS) plus any new id
+ * OAQ lists in meta/providers.json, so a provider OAQ adds is picked up without
+ * a code change. If providers.json is unreachable we still pull the floor.
+ */
+export async function providerIds(env: Env): Promise<ProviderId[]> {
+  const ids = new Set<string>(PROVIDERS);
+  try {
+    const sig = await getSignature(env);
+    const res = await fetch(signUrl(sig, "meta/providers.json"));
+    if (res.ok) {
+      const body = (await res.json()) as { providers?: { id?: unknown }[] };
+      for (const p of body.providers ?? []) {
+        if (typeof p.id === "string" && /^[a-z0-9_-]+$/.test(p.id)) ids.add(p.id);
+      }
+    } else {
+      console.warn(`[refresh] providers.json: HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.error("[refresh] providers.json:", e);
+  }
+  // An id we don't know yet still flows through: it gets a generic credit line
+  // and display name until it is added to ProviderId.
+  return [...ids] as ProviderId[];
+}
+
 export async function refreshLatest(env: Env): Promise<Snapshot> {
   const all: NormalizedStation[] = [];
-  for (const p of PROVIDERS) {
+  const providers = await providerIds(env);
+  for (const p of providers) {
     try {
       const raws = await fetchProvider(env, p);
       for (const raw of raws) all.push(normalize(p, raw));
@@ -172,12 +199,12 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
   const snapshot: Snapshot = {
     generated_at: new Date().toISOString(),
     station_count: all.length,
-    providers: [...PROVIDERS],
+    providers,
     stations: all,
   };
 
   // Hourly air archive (gzipped): the lost-forever record. The private Airnet /
-  // Aurassure readings in this blend are not kept anywhere else, so capturing each
+  // Aurassure / AirView+ readings in this blend are not kept anywhere else, so capturing each
   // hourly snapshot builds an air time-series we can never reconstruct later.
   // Key: archive/air/{YYYY-MM-DD}/{HH}.json.gz, off the snapshot's UTC hour.
   const gen = snapshot.generated_at;

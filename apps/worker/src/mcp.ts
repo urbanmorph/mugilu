@@ -21,7 +21,7 @@ Scope and limits: India only. Readings are CURRENT, not a forecast. Informationa
 
 For a vulnerable person: pass persona (one of asthma, elderly, child, outdoor, heart) to weight the Ambient read for who is actually affected (e.g. an asthmatic sees poor air rank above heat).
 
-Attribution: every response carries "attribution" and "disclaimer" fields. Please surface them. Data: air from CPCB / Airnet (CSTEP) / Aurassure via the OAQ broker plus OpenAQ; weather, heat, UV, dust and wind from Open-Meteo (CC-BY 4.0); warnings from NDMA/IMD (SACHET); smoke from NASA FIRMS; life-expectancy impact from the AQLI methodology. Code is MIT; each source keeps its own licence.
+Attribution: every response carries "attribution" and "disclaimer" fields. Please surface them. Data: air from CPCB / Airnet (CSTEP) / Aurassure / Google AirView+ via the OAQ broker plus OpenAQ; weather, heat, UV, dust and wind from Open-Meteo (CC-BY 4.0); warnings from NDMA/IMD (SACHET); smoke from NASA FIRMS; life-expectancy impact from the AQLI methodology. Code is MIT; each source keeps its own licence.
 
 Tools: use conditions_at for the sky at a place (by name or coordinate); search_place to disambiguate a name; nearest_stations to see how close real measurement is; active_warnings for official alerts; national_now for the worst-air or hottest picture across India.
 

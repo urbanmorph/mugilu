@@ -6,7 +6,7 @@ info:
   description: |
     Open, key-free, read-only access to live air quality data for ~650 stations
     across India. Data is mirrored hourly from [oaq.notf.in](https://oaq.notf.in),
-    which aggregates from CPCB, Airnet (CSTEP), and Aurassure.
+    which aggregates from CPCB, Airnet (CSTEP), Aurassure, and Google AirView+.
 
     This is an unofficial mirror. The upstream handshake and signed-URL flow is
     handled server-side — clients of *this* API never need an API key.
@@ -86,7 +86,7 @@ components:
   schemas:
     ProviderId:
       type: string
-      enum: [cpcb, airnet, aurassure]
+      enum: [cpcb, airnet, aurassure, airview]
     Band:
       type: string
       enum: [good, satisfactory, moderate, poor, vpoor, severe, unknown]

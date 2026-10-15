@@ -1,6 +1,9 @@
-export type ProviderId = "cpcb" | "airnet" | "aurassure";
+export type ProviderId = "cpcb" | "airnet" | "aurassure" | "airview";
 
-export const PROVIDERS: ProviderId[] = ["cpcb", "airnet", "aurassure"];
+// Providers we always pull. OAQ serves some (airview) before listing them in
+// meta/providers.json, so this is the floor; refresh also adds any new id that
+// providers.json lists (see providerIds in refresh.ts).
+export const PROVIDERS: ProviderId[] = ["cpcb", "airnet", "aurassure", "airview"];
 
 export interface Signature {
   baseUrl: string; // "https://oaq.notf.in/v1/"
@@ -24,6 +27,7 @@ export interface UpstreamStation {
   readings?: Record<string, number | null | undefined>;
   timestamp?: string;
   last_updated?: string;
+  last_seen?: string;
   [k: string]: unknown;
 }
 
