@@ -200,3 +200,11 @@ test("renderWarningsPage: a CAP link is only linked when it is http(s)", () => {
   );
   assert.doesNotMatch(renderWarningsPage(snap("javascript:alert(1)")), /javascript:/);
 });
+
+test("renderConditionsPage: a missing feels-like is not read as 0° 'dangerous cold'", () => {
+  const html = renderConditionsPage(
+    conditions({ heat: { temp_c: 31, apparent_c: undefined, wet_bulb_c: 22, source: "open-meteo" } }),
+    "everyone",
+  );
+  assert.doesNotMatch(html, /dangerous cold/i);
+});

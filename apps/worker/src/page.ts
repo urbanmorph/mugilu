@@ -586,7 +586,10 @@ export function renderConditionsPage(
         t("Heat", lang),
         risk.driver === "Heat",
         `${round(c.heat.apparent_c)}°`,
-        `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(c.heat.apparent_c ?? 0, c.heat.wet_bulb_c), lang)}</b>`,
+        // No feels-like, no phrase (never read a missing value as 0°, "dangerous cold").
+        c.heat.apparent_c != null
+          ? `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(c.heat.apparent_c, c.heat.wet_bulb_c), lang)}</b>`
+          : "",
         sub,
         c.heat.apparent_c != null ? scaleBar((c.heat.apparent_c - 25) / 25) : "",
       ),
