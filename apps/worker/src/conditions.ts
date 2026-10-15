@@ -148,8 +148,8 @@ export async function buildConditions(
     location: { lat, lon },
     place: nearestPlace(lat, lon) ?? undefined,
     as_of,
-    // Measured air is from the hourly snapshot; modelled air is live (~now).
-    air_as_of: air && air.station && snapshot ? snapshot.generated_at : as_of,
+    // Measured air is as old as the station's own reading; modelled air is live (~now).
+    air_as_of: air?.station && nearest?.ts ? new Date(nearest.ts).toISOString() : as_of,
     air,
     heat: om.heat,
     rain: om.rain,
