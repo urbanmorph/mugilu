@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderConditionsPage, renderEmbed, renderKioskPage } from "../src/page";
+import { renderConditionsPage, renderEmbed, renderKioskPage, renderWarningsPage } from "../src/page";
+import type { WarningsSnapshot } from "../src/sachet";
 import type { Conditions } from "../src/types";
 
 function conditions(overrides: Partial<Conditions> = {}): Conditions {
@@ -160,4 +161,42 @@ test("kiosk + embed carry a not-medical-advice disclaimer (no room for the full 
     /class="kdisc">Informational only, not medical advice\./,
   );
   assert.match(renderEmbed(c, "asthma", "https://mugilu.live", "hi"), /चिकित्सीय सलाह नहीं/);
+});
+
+test("titles are escaped exactly once (og:title showed '&amp;amp;')", () => {
+  const html = renderConditionsPage(
+    conditions({ place: "Daman & Diu" }),
+    "everyone",
+    "https://mugilu.live/c/20.4,72.8",
+  );
+  assert.match(html, /<title>Daman &amp; Diu: /);
+  assert.match(html, /<meta property="og:title" content="Daman &amp; Diu: /);
+  assert.doesNotMatch(html, /&amp;amp;/);
+});
+
+test("attribute values escape quotes, so upstream text can't break out of an attribute", () => {
+  const html = renderConditionsPage(
+    conditions({ place: 'Foo" onmouseover="x' }),
+    "everyone",
+    "https://mugilu.live/c/12.97,77.59",
+  );
+  assert.doesNotMatch(html, /onmouseover="x/);
+  assert.match(html, /Foo&quot; onmouseover=&quot;x/);
+});
+
+test("renderWarningsPage: a CAP link is only linked when it is http(s)", () => {
+  const alert = (link: string) => ({
+    identifier: "1",
+    headline: "Heavy rain",
+    category: "Met",
+    issuer: "IMD",
+    sent: "",
+    link,
+  });
+  const snap = (link: string) => ({ generated_at: "", count: 1, alerts: [alert(link)] }) as unknown as WarningsSnapshot;
+  assert.match(
+    renderWarningsPage(snap("https://sachet.ndma.gov.in/cap/1.xml")),
+    /href="https:\/\/sachet\.ndma\.gov\.in\/cap\/1\.xml"/,
+  );
+  assert.doesNotMatch(renderWarningsPage(snap("javascript:alert(1)")), /javascript:/);
 });

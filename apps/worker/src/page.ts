@@ -29,8 +29,19 @@ const BAND_LABEL: Record<string, string> = {
   unknown: "n/a",
 };
 
+// Safe in text AND in quoted attribute values (upstream names, warning text).
 function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** An upstream URL fit for an href: http(s) only, else null (no javascript: etc.). */
+function safeHref(u: string): string | null {
+  return /^https?:\/\//i.test(u) ? u : null;
 }
 
 function round(n: number | undefined): string {
@@ -287,7 +298,7 @@ function shell(
 <meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>${title}</title>
+<title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 ${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
 <meta property="og:type" content="website">
@@ -521,8 +532,8 @@ export function renderConditionsPage(
   const say = ambientSummary(risk);
   const meaning = t(say.meaning, lang);
   const slug = `${c.location.lat},${c.location.lon}`;
-  const stationCity = c.air?.station?.city;
-  const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
+  const placeName = c.place ?? c.air?.station?.city ?? slug; // raw: shell() escapes the title
+  const place = esc(placeName);
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = BAND_LABEL[band] ?? "n/a";
@@ -716,10 +727,9 @@ export function renderConditionsPage(
   </article>`;
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
-  const desc = `${c.place ?? stationCity ?? slug}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
+  const desc = `${placeName}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
-  const placeName = c.place ?? stationCity ?? slug;
   const dataset = canonical
     ? ld({
         "@context": "https://schema.org",
@@ -754,7 +764,7 @@ export function renderConditionsPage(
       })
     : undefined;
   return shell(
-    `${place}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
+    `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
     body + PLACE_RECORDER,
     css,
     desc,
@@ -903,7 +913,8 @@ export function renderKioskPage(
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk);
   const slug = `${c.location.lat},${c.location.lon}`;
-  const place = c.place ? esc(c.place) : c.air?.station?.city ? esc(c.air.station.city) : slug;
+  const placeName = c.place ?? c.air?.station?.city ?? slug; // raw: shell() escapes the title
+  const place = esc(placeName);
   const condColor = RISK_COLOR[risk.band];
   const head =
     risk.band === "low"
@@ -973,7 +984,7 @@ export function renderKioskPage(
   // noBeacon: a kiosk is one persistent display auto-reloading every ~14 min; it would
   // inflate visitor counts and skew Core Web Vitals, so keep the RUM beacon off here.
   return shell(
-    `${place} on a screen: mugilu`,
+    `${placeName} on a screen: mugilu`,
     body,
     css,
     desc,
@@ -1073,8 +1084,8 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const say = ambientSummary(risk);
   const condColor = RISK_COLOR[risk.band];
   const slug = `${c.location.lat},${c.location.lon}`;
-  const stationCity = c.air?.station?.city;
-  const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
+  const placeName = c.place ?? c.air?.station?.city ?? slug; // raw: shell() escapes the title
+  const place = esc(placeName);
   const head = risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
 
   const reads: string[] = [];
@@ -1530,7 +1541,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
       ? `<ul class="wlist">${snap.alerts
           .map(
             (a) =>
-              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${a.link ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
+              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${safeHref(a.link) ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
           )
           .join("")}</ul>`
       : `<p class="wempty">${t("No active national alerts right now.", lang)}</p>`;
