@@ -20,7 +20,7 @@ const BP: Record<string, Breakpoints> = {
   nh3:  [[0, 200, 0, 50], [201, 400, 51, 100], [401, 800, 101, 200], [801, 1200, 201, 300], [1201, 1800, 301, 400], [1801, 2400, 401, 500]],
 };
 
-function subIndex(pollutant: keyof typeof BP, value: number): number | null {
+export function subIndex(pollutant: keyof typeof BP, value: number): number | null {
   const bps = BP[pollutant];
   if (!bps) return null;
   for (const [cLow, cHigh, iLow, iHigh] of bps) {

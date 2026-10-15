@@ -1,5 +1,6 @@
 import type { AirConditions, AirPollutants, Conditions, NearStation, NormalizedStation, Snapshot } from "./types";
 import { findNearest } from "./near";
+import { isPlausible } from "./plausible";
 import { getOpenMeteo } from "./openmeteo";
 import { computeAqi, aqiBand } from "./aqi";
 import { pollutantParts } from "./formats";
@@ -15,14 +16,16 @@ import type { Persona } from "./score";
 const NEAR_TIE_KM = 2;
 
 /**
- * Nearby first, then CPCB: take the nearest station with a reading, but if a
- * CPCB station is also within NEAR_TIE_KM of it, use that CPCB station.
+ * Nearby first, then CPCB: take the nearest station with a plausible reading,
+ * but if a CPCB station is also within NEAR_TIE_KM of it, use that CPCB station.
  */
 export function pickStation(stations: NormalizedStation[], lat: number, lon: number): NearStation | undefined {
   const withReading = stations.filter((s) => s.aqi != null);
   const pool = withReading.length ? withReading : stations;
   const ranked = findNearest(pool, lat, lon, pool.length);
-  const nearest = ranked[0];
+  // Skip stuck or spiking sensors (plausible.ts); with no reading at all there
+  // is nothing to judge, so the plain nearest stands.
+  const nearest = withReading.length ? ranked.find((s) => isPlausible(s, stations)) : ranked[0];
   if (!nearest || nearest.provider === "cpcb") return nearest;
   const cpcb = ranked.find((s) => s.provider === "cpcb" && s.distance_km - nearest.distance_km <= NEAR_TIE_KM);
   return cpcb ?? nearest;

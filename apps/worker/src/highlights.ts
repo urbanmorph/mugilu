@@ -2,6 +2,7 @@ import type { ConditionsPoint, NormalizedStation } from "./types";
 import type { Env } from "./index";
 import { loadGrid, loadSnapshot } from "./snapshot";
 import { stateAt } from "./place";
+import { isPlausible } from "./plausible";
 
 // The national multi-hazard "right now" picture, drives the landing hero.
 // Deliberately NOT air-led: heat and dust first (per the whole-sky framing).
@@ -38,15 +39,15 @@ export function nationalHighlights(points: ConditionsPoint[]): NationalHighlight
 
 /** The single worst-AQI station with coordinates, from the hourly air snapshot.
  *  Sourced separately from the 4-hourly weather grid, so the home hero can show
- *  a genuinely fresher air row beside the heat/dust ones. */
+ *  a genuinely fresher air row beside the heat/dust ones. A low-cost sensor that
+ *  is spiking, or too isolated to check (plausible.ts), cannot headline the country. */
 export function worstAirStation(stations: NormalizedStation[]): NationalHighlights["worstAir"] {
-  let worst: NationalHighlights["worstAir"];
-  for (const s of stations) {
-    if (s.aqi != null && s.lat != null && s.lon != null && (!worst || s.aqi > worst.aqi)) {
-      worst = { name: s.city || s.name, lat: s.lat, lon: s.lon, aqi: s.aqi, band: s.band };
-    }
-  }
-  return worst;
+  const ranked = stations
+    .filter((s) => s.aqi != null && s.lat != null && s.lon != null)
+    .sort((a, b) => b.aqi! - a.aqi!);
+  const s = ranked.find((c) => isPlausible(c, stations, true));
+  if (!s) return undefined;
+  return { name: s.city || s.name, lat: s.lat!, lon: s.lon!, aqi: s.aqi!, band: s.band };
 }
 
 /** The national picture composed from R2: heat/dust from the 4-hourly grid, the
