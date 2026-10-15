@@ -1,4 +1,8 @@
 # Local-only secrets for `wrangler dev`. Never commit this file.
 # Copy to .dev.vars and fill in.
 OAQ_API_KEY=
+# Gates the admin routes (Authorization: Bearer <key>); also set with `wrangler secret put ADMIN_KEY`.
+ADMIN_KEY=
+# NASA FIRMS map key for the fire/smoke layer (optional).
+FIRMS_MAP_KEY=
 CLOUDFLARE_API_TOKEN=

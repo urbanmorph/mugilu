@@ -52,7 +52,9 @@ function num(x: unknown): number | undefined {
 
 async function fetchCurrent(url: string): Promise<OmResponse> {
   // Cache the upstream at the edge. These values only change ~hourly.
-  const res = await fetch(url, { cf: { cacheTtl: 900, cacheEverything: true } });
+  // Time-boxed: this is on the page's request path, so a slow upstream nulls its
+  // layer (getOpenMeteo tolerates a failed call) instead of hanging the page.
+  const res = await fetch(url, { cf: { cacheTtl: 900, cacheEverything: true }, signal: AbortSignal.timeout(4000) });
   if (!res.ok) throw new Error(`open-meteo ${res.status}: ${url}`);
   return (await res.json()) as OmResponse;
 }
@@ -141,7 +143,8 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
 const BULK_BATCH = 100;
 
 async function fetchBulk(url: string): Promise<OmResponse[]> {
-  const res = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+  // Cron-only, but still bounded so one stuck batch can't eat the whole run.
+  const res = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true }, signal: AbortSignal.timeout(20_000) });
   if (!res.ok) throw new Error(`open-meteo bulk ${res.status}`);
   const body = (await res.json()) as OmResponse | OmResponse[];
   // Bulk (multi-coordinate) returns an array; a single coord returns an object.

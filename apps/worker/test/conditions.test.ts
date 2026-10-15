@@ -88,6 +88,19 @@ test("buildConditions: composes air + open-meteo + attribution + disclaimer", as
   }
 });
 
+test("buildConditions: measured air is dated by the station's own reading, not the snapshot run", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch();
+  try {
+    const s = snap();
+    s.stations[0].ts = "2026-06-26T19:15:00+05:30";
+    const c = await buildConditions(s, 12.9716, 77.5946);
+    assert.equal(c.air_as_of, "2026-06-26T13:45:00.000Z");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test("buildConditions: null snapshot → air null, weather still present", async () => {
   const realFetch = globalThis.fetch;
   globalThis.fetch = mockFetch();

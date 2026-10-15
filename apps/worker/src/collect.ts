@@ -9,6 +9,16 @@ import centroids from "../data/centroids.json";
 // geography for labels/warnings; hyperlocal /c fetches the exact point live.
 const GRID = (centroids as Centroid[]).filter((c) => c.level === "district");
 
+// Below this share of points with any reading, the run failed (Open-Meteo down
+// or rate-limited) and the previous grid is kept rather than overwritten.
+const MIN_COVERAGE = 0.9;
+
+/** Whether enough grid points came back with data to be worth writing. */
+export function hasCoverage(points: ConditionsPoint[]): boolean {
+  const filled = points.filter((p) => Object.values(p.wx).some((v) => v != null)).length;
+  return points.length > 0 && filled / points.length >= MIN_COVERAGE;
+}
+
 /**
  * Collect modelled conditions (heat/rain/UV/dust) over the national grid and
  * write the snapshot to R2. This is what makes heat etc. national, rankable and
@@ -21,6 +31,7 @@ export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
     12_000,
   );
   const points: ConditionsPoint[] = GRID.map((c, i) => ({ ...c, wx: wx[i] ?? {} }));
+  if (!hasCoverage(points)) throw new Error("[collect] too few grid points came back; kept the previous grid");
 
   const snapshot: ConditionsSnapshot = {
     generated_at: new Date().toISOString(),

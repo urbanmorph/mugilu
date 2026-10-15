@@ -42,8 +42,8 @@ test("applyAlias: rewrites known old/colloquial city names", () => {
 test("parseCoordQuery: detects a lat,lon pair", () => {
   assert.deepEqual(parseCoordQuery("12.97,77.59"), { lat: 12.97, lon: 77.59 });
   assert.deepEqual(parseCoordQuery("12.97, 77.59"), { lat: 12.97, lon: 77.59 });
-  assert.equal(parseCoordQuery("Bengaluru"), null);
-  assert.equal(parseCoordQuery("999,0"), null);
+  assert.equal(parseCoordQuery("Bengaluru"), undefined);
+  assert.equal(parseCoordQuery("99,0"), null);
 });
 
 test("matchStations: gazetteer prefix + substring, capped, ignores <2 chars", () => {

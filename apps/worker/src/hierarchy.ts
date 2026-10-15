@@ -11,7 +11,7 @@ import { providerIds } from "./refresh";
 export async function refreshHierarchy(env: Env): Promise<{ providers: number; hierarchies: number }> {
   const sig = await getSignature(env);
   const providersUrl = signUrl(sig, "meta/providers.json");
-  const pRes = await fetch(providersUrl);
+  const pRes = await fetch(providersUrl, { signal: AbortSignal.timeout(10_000) });
   if (!pRes.ok) throw new Error(`providers.json fetch failed: ${pRes.status}`);
   const providersJson = (await pRes.json()) as unknown;
 
@@ -19,7 +19,7 @@ export async function refreshHierarchy(env: Env): Promise<{ providers: number; h
   for (const p of await providerIds(env)) {
     try {
       const hUrl = signUrl(sig, `provider=${p}/meta/hierarchy.json`);
-      const hRes = await fetch(hUrl);
+      const hRes = await fetch(hUrl, { signal: AbortSignal.timeout(20_000) });
       if (!hRes.ok) {
         console.warn(`[hierarchy] ${p}: HTTP ${hRes.status}`);
         continue;

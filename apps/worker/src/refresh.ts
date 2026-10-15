@@ -2,6 +2,7 @@ import type { Env } from "./index";
 import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
 import { computeAqi, aqiBand } from "./aqi";
+import { freshStations, LATEST_KEY, loadRawSnapshot } from "./snapshot";
 
 // AQLI coefficient from Ebenstein et al. 2017 PNAS (0.098 yr per µg/m³)
 // above the WHO 2021 annual PM2.5 guideline (5 µg/m³).
@@ -84,7 +85,7 @@ export function cleanStationName(name: string, city?: string): string {
   if (city) {
     const c = city.trim();
     if (c) {
-      const re = new RegExp(`,\\s*${c.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b.*$`, "iu");
+      const re = new RegExp(`,\\s*${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}]).*$`, "iu");
       out = out.replace(re, "").trim();
     }
   }
@@ -130,7 +131,7 @@ function normalize(provider: ProviderId, raw: UpstreamStation): NormalizedStatio
 async function fetchProvider(env: Env, provider: ProviderId): Promise<UpstreamStation[]> {
   const sig = await getSignature(env);
   const url = signUrl(sig, `provider=${provider}/live/global/all_stations_latest.json`);
-  const res = await fetch(url, { cf: { cacheEverything: false } });
+  const res = await fetch(url, { cf: { cacheEverything: false }, signal: AbortSignal.timeout(30_000) });
   // Log any rate-limit headers the upstream exposes so we notice if we get close.
   const used = res.headers.get("x-ratelimit-used");
   const remaining = res.headers.get("x-ratelimit-remaining");
@@ -141,9 +142,16 @@ async function fetchProvider(env: Env, provider: ProviderId): Promise<UpstreamSt
   if (!res.ok) {
     throw new Error(`provider ${provider} fetch failed: ${res.status} ${await res.text().catch(() => "")}`);
   }
-  const body = (await res.json()) as { stations?: UpstreamStation[] } | UpstreamStation[];
-  if (Array.isArray(body)) return body;
-  return body.stations ?? [];
+  return providerStations(await res.json());
+}
+
+/** A provider's station list from its response body. An HTTP-200 body with no
+ *  stations (an error object, an empty list) is a failed fetch, so the provider
+ *  is carried forward instead of going blank for the hour. */
+export function providerStations(body: unknown): UpstreamStation[] {
+  const list = Array.isArray(body) ? body : (body as { stations?: unknown } | null)?.stations;
+  if (!Array.isArray(list) || list.length === 0) throw new Error("no stations in the provider response");
+  return list as UpstreamStation[];
 }
 
 /**
@@ -155,7 +163,7 @@ export async function providerIds(env: Env): Promise<ProviderId[]> {
   const ids = new Set<string>(PROVIDERS);
   try {
     const sig = await getSignature(env);
-    const res = await fetch(signUrl(sig, "meta/providers.json"));
+    const res = await fetch(signUrl(sig, "meta/providers.json"), { signal: AbortSignal.timeout(10_000) });
     if (res.ok) {
       const body = (await res.json()) as { providers?: { id?: unknown }[] };
       for (const p of body.providers ?? []) {
@@ -172,17 +180,39 @@ export async function providerIds(env: Env): Promise<ProviderId[]> {
   return [...ids] as ProviderId[];
 }
 
+/** This run's stations plus, for each provider whose fetch failed, its stations
+ *  from the previous snapshot. A failed fetch then never blanks a provider for
+ *  the hour; carried readings keep their own ts, so they age out (loadSnapshot). */
+export function carryForward(
+  fresh: NormalizedStation[],
+  failed: ProviderId[],
+  previous: Snapshot | null,
+): NormalizedStation[] {
+  if (!previous) return fresh;
+  const lost = new Set(failed);
+  return [...fresh, ...previous.stations.filter((s) => lost.has(s.provider))];
+}
+
 export async function refreshLatest(env: Env): Promise<Snapshot> {
-  const all: NormalizedStation[] = [];
+  const fresh: NormalizedStation[] = [];
+  const failed: ProviderId[] = [];
   const providers = await providerIds(env);
   for (const p of providers) {
     try {
       const raws = await fetchProvider(env, p);
-      for (const raw of raws) all.push(normalize(p, raw));
+      for (const raw of raws) fresh.push(normalize(p, raw));
     } catch (e) {
+      failed.push(p);
       console.error(`[refresh] provider ${p}:`, e);
     }
   }
+  // Stale stations (dead feeds, or carried readings past their age) are dropped
+  // here too, so the stored snapshot, the archive and /data are clean; the
+  // read-time filter in loadSnapshot covers a refresh that stalls.
+  const all = freshStations(carryForward(fresh, failed, failed.length ? await loadRawSnapshot(env) : null));
+  // Nothing fresh came back and there is nothing to carry: keep the last good
+  // snapshot rather than overwrite it with an empty one.
+  if (!all.length) throw new Error(`[refresh] no stations from ${providers.join(", ")}; kept the previous snapshot`);
 
   // Sort worst first: valid AQI desc, unknowns last.
   all.sort((a, b) => {
@@ -217,7 +247,7 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
   // live leaderboard (/index), home hero and MCP national_now compute their slices from
   // this snapshot; the old pre-computed top-50 files were written but never read (legacy).
   const writes: Promise<unknown>[] = [
-    env.OAQ_R2.put("data/latest.json", JSON.stringify(snapshot, null, 2), {
+    env.OAQ_R2.put(LATEST_KEY, JSON.stringify(snapshot, null, 2), {
       httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=60" },
     }),
     env.OAQ_R2.put("data/latest.min.json", JSON.stringify(snapshot), {

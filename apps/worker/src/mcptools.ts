@@ -1,7 +1,6 @@
 import type { Env } from "./index";
 import type { NormalizedStation } from "./types";
 import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
-import { loadFires } from "./firms";
 import { parsePersona } from "./score";
 import { buildSuggestions } from "./suggest";
 import { geocodeList } from "./geocode";
@@ -9,7 +8,7 @@ import { findNearest } from "./near";
 import { composeHighlights } from "./highlights";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
+import { loadFires, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { recordLookup, recordEvent } from "./metrics";
 
 // The MCP tool surface (Phase 2). Each tool is a thin adapter over an existing

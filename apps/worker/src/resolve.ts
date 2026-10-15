@@ -17,8 +17,9 @@ export interface ResolvedPlace {
 }
 
 export async function resolveQuery(query: string, gaz: GazIndex | null = null): Promise<ResolvedPlace | null> {
+  // A typed coordinate is taken as given (null when it is outside India).
   const coord = parseCoordQuery(query);
-  if (coord) return coord;
+  if (coord !== undefined) return coord;
   const aliased = applyAlias(query);
   const slug = slugForName(aliased) ?? slugForName(query);
   if (slug) {

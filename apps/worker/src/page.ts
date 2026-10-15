@@ -2,6 +2,7 @@ import type { Conditions, Warning, AirPollutants } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
+import { esc } from "./html";
 import { ambientRisk, ambientSummary, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
@@ -29,8 +30,14 @@ const BAND_LABEL: Record<string, string> = {
   unknown: "n/a",
 };
 
-function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+/** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
+function isHttpUrl(u: string): boolean {
+  return /^https?:\/\//i.test(u);
+}
+
+/** The place's display name, raw (escape it where it is written out). */
+function placeLabel(c: Conditions): string {
+  return c.place ?? c.air?.station?.city ?? `${c.location.lat},${c.location.lon}`;
 }
 
 function round(n: number | undefined): string {
@@ -287,7 +294,7 @@ function shell(
 <meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>${title}</title>
+<title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 ${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
 <meta property="og:type" content="website">
@@ -521,8 +528,8 @@ export function renderConditionsPage(
   const say = ambientSummary(risk);
   const meaning = t(say.meaning, lang);
   const slug = `${c.location.lat},${c.location.lon}`;
-  const stationCity = c.air?.station?.city;
-  const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
+  const placeName = placeLabel(c); // raw: shell() escapes the title
+  const place = esc(placeName);
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = BAND_LABEL[band] ?? "n/a";
@@ -575,7 +582,10 @@ export function renderConditionsPage(
         t("Heat", lang),
         risk.driver === "Heat",
         `${round(c.heat.apparent_c)}°`,
-        `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(c.heat.apparent_c ?? 0, c.heat.wet_bulb_c), lang)}</b>`,
+        // No feels-like, no phrase (never read a missing value as 0°, "dangerous cold").
+        c.heat.apparent_c != null
+          ? `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(c.heat.apparent_c, c.heat.wet_bulb_c), lang)}</b>`
+          : "",
         sub,
         c.heat.apparent_c != null ? scaleBar((c.heat.apparent_c - 25) / 25) : "",
       ),
@@ -716,10 +726,9 @@ export function renderConditionsPage(
   </article>`;
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
-  const desc = `${c.place ?? stationCity ?? slug}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
+  const desc = `${placeName}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
-  const placeName = c.place ?? stationCity ?? slug;
   const dataset = canonical
     ? ld({
         "@context": "https://schema.org",
@@ -754,7 +763,7 @@ export function renderConditionsPage(
       })
     : undefined;
   return shell(
-    `${place}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
+    `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
     body + PLACE_RECORDER,
     css,
     desc,
@@ -903,7 +912,8 @@ export function renderKioskPage(
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk);
   const slug = `${c.location.lat},${c.location.lon}`;
-  const place = c.place ? esc(c.place) : c.air?.station?.city ? esc(c.air.station.city) : slug;
+  const placeName = placeLabel(c); // raw: shell() escapes the title
+  const place = esc(placeName);
   const condColor = RISK_COLOR[risk.band];
   const head =
     risk.band === "low"
@@ -973,7 +983,7 @@ export function renderKioskPage(
   // noBeacon: a kiosk is one persistent display auto-reloading every ~14 min; it would
   // inflate visitor counts and skew Core Web Vitals, so keep the RUM beacon off here.
   return shell(
-    `${place} on a screen: mugilu`,
+    `${placeName} on a screen: mugilu`,
     body,
     css,
     desc,
@@ -1073,8 +1083,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const say = ambientSummary(risk);
   const condColor = RISK_COLOR[risk.band];
   const slug = `${c.location.lat},${c.location.lon}`;
-  const stationCity = c.air?.station?.city;
-  const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
+  const place = esc(placeLabel(c));
   const head = risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
 
   const reads: string[] = [];
@@ -1530,7 +1539,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
       ? `<ul class="wlist">${snap.alerts
           .map(
             (a) =>
-              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${a.link ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
+              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${isHttpUrl(a.link) ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
           )
           .join("")}</ul>`
       : `<p class="wempty">${t("No active national alerts right now.", lang)}</p>`;
