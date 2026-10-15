@@ -114,8 +114,6 @@ export async function collectWarnings(env: Env): Promise<{ changed: boolean; cou
   if (!res.ok) throw new Error(`sachet feed ${res.status}`);
 
   const alerts = parseSachetRss(await res.text());
-  const newEtag = res.headers.get("etag");
-  if (newEtag) await env.OAQ_KV.put("sachet:etag", newEtag);
 
   const snapshot: WarningsSnapshot = {
     generated_at: new Date().toISOString(),
@@ -140,6 +138,10 @@ export async function collectWarnings(env: Env): Promise<{ changed: boolean; cou
     archived++;
   }
   if (archived) await env.OAQ_KV.put("sachet:seen", JSON.stringify([...seen]));
+  // Remember the ETag only now that the snapshot and archive are written: saved
+  // earlier, a failed write would turn every later poll into a 304 on stale data.
+  const newEtag = res.headers.get("etag");
+  if (newEtag) await env.OAQ_KV.put("sachet:etag", newEtag);
 
   return { changed: true, count: alerts.length, archived };
 }

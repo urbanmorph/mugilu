@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getLocationAlerts, parseSachetRss, renderWarningsMarkdown } from "../src/sachet";
+import { collectWarnings, getLocationAlerts, parseSachetRss, renderWarningsMarkdown } from "../src/sachet";
 
 test("renderWarningsMarkdown: lists active alerts, empty state when none", () => {
   const md = renderWarningsMarkdown({
@@ -98,6 +98,29 @@ test("getLocationAlerts: empty list and upstream errors both → []", async () =
   globalThis.fetch = (async () => new Response("err", { status: 500 })) as typeof fetch;
   try {
     assert.deepEqual(await getLocationAlerts(0, 0), []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("collectWarnings: the ETag is only remembered once the snapshot is written", async () => {
+  // If the R2 write fails after the ETag was saved, every later poll gets a 304
+  // and the warnings stay stale until the feed changes. Save it last.
+  const kv = new Map<string, string>();
+  const env = {
+    OAQ_KV: { get: async (k: string) => kv.get(k) ?? null, put: async (k: string, v: string) => void kv.set(k, v) },
+    OAQ_R2: {
+      put: async () => {
+        throw new Error("r2 down");
+      },
+    },
+  } as unknown as Parameters<typeof collectWarnings>[0];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response("<rss><channel></channel></rss>", { headers: { etag: '"v2"' } })) as unknown as typeof fetch;
+  try {
+    await assert.rejects(collectWarnings(env));
+    assert.equal(kv.get("sachet:etag"), undefined);
   } finally {
     globalThis.fetch = realFetch;
   }
