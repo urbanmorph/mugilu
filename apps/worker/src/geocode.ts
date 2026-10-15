@@ -66,7 +66,9 @@ async function geocodeAttempt(q: string, count: number): Promise<GeoResult[]> {
   // For native-script queries, fetch a few even when the caller wants one, so a
   // city can be preferred over the airport of the same name before slicing.
   const fetchCount = language === "en" ? count : Math.max(count, 5);
-  const url = `${GEOCODE_URL}?name=${encodeURIComponent(q)}&count=${fetchCount}&language=${language}`;
+  // countryCode=IN: mugilu covers India only, so a foreign namesake (London, Tokyo)
+  // is a miss, not a coordinate abroad.
+  const url = `${GEOCODE_URL}?name=${encodeURIComponent(q)}&count=${fetchCount}&language=${language}&countryCode=IN`;
   try {
     // Place → coords is stable; cache hard at the edge. Time-box the upstream so
     // a slow geocoder can never hang a request.

@@ -1,6 +1,7 @@
 import { parseCoordQuery, applyAlias } from "./suggest";
 import { slugForName, placeBySlug } from "./slugs";
 import { geocode } from "./geocode";
+import { inIndia } from "./india";
 import { matchGazetteer, type GazIndex } from "./gazetteer";
 
 // Canonical "what place does this query mean?", used by /go, the MCP tools, and
@@ -17,8 +18,9 @@ export interface ResolvedPlace {
 }
 
 export async function resolveQuery(query: string, gaz: GazIndex | null = null): Promise<ResolvedPlace | null> {
+  // A coordinate is taken as given, but only inside India (mugilu's coverage).
   const coord = parseCoordQuery(query);
-  if (coord) return coord;
+  if (coord) return inIndia(coord.lat, coord.lon) ? coord : null;
   const aliased = applyAlias(query);
   const slug = slugForName(aliased) ?? slugForName(query);
   if (slug) {

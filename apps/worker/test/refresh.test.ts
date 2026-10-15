@@ -60,7 +60,12 @@ test("cleanStationName: a city with regex characters is matched literally, never
 });
 
 const sta = (provider: string, id: string) => ({ id: `${provider}-${id}`, provider }) as unknown as NormalizedStation;
-const prev = { generated_at: "t0", station_count: 3, providers: [], stations: [sta("cpcb", "1"), sta("airnet", "2"), sta("airnet", "3")] } as unknown as Snapshot;
+const prev = {
+  generated_at: "t0",
+  station_count: 3,
+  providers: [],
+  stations: [sta("cpcb", "1"), sta("airnet", "2"), sta("airnet", "3")],
+} as unknown as Snapshot;
 
 test("carryForward: a provider that failed this run keeps its last stations (they age out by ts)", () => {
   const out = carryForward([sta("cpcb", "9")], ["airnet"], prev).map((s) => s.id);

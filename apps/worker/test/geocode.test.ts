@@ -60,3 +60,18 @@ test("geocode: returns null on an upstream error", async () => {
     globalThis.fetch = realFetch;
   }
 });
+
+test("geocode: asks the upstream for Indian places only (London is not a place mugilu can serve)", async () => {
+  const realFetch = globalThis.fetch;
+  let asked = "";
+  globalThis.fetch = (async (u: RequestInfo | URL) => {
+    asked = String(u);
+    return new Response(JSON.stringify(BENGALURU));
+  }) as typeof fetch;
+  try {
+    await geocode("Bengaluru");
+    assert.match(asked, /[?&]countryCode=IN(&|$)/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

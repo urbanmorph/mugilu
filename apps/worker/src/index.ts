@@ -293,7 +293,7 @@ export default {
     // already in memory. The lat/lng entry point for the air layer (A2).
     if (url.pathname === "/near") {
       const coords = parseLatLon(url.searchParams.get("lat"), url.searchParams.get("lon"));
-      if (!coords) return badRequest("valid `lat` and `lon` query params are required");
+      if (!coords) return badRequest("valid `lat` and `lon` query params in India are required");
       const { lat, lon } = coords;
       const nRaw = Number(url.searchParams.get("n") ?? "5");
       const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 50) : 5;
@@ -386,7 +386,7 @@ export default {
     if (condMatch) {
       const [, latStr, lonStr, ext] = condMatch;
       const coords = parseLatLon(latStr, lonStr);
-      if (!coords) return badRequest("coordinates out of range");
+      if (!coords) return badRequest("coordinates outside India (mugilu covers India only)");
       return serveConditions(
         coords.lat,
         coords.lon,
@@ -418,7 +418,7 @@ export default {
     if (embedMatch) {
       const [, latStr, lonStr] = embedMatch;
       const coords = parseLatLon(latStr, lonStr);
-      if (!coords) return badRequest("coordinates out of range");
+      if (!coords) return badRequest("coordinates outside India (mugilu covers India only)");
       const persona = parsePersona(url.searchParams.get("as"));
       const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
       const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);

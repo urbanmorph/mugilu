@@ -1,3 +1,4 @@
+import { inIndia } from "./india";
 import type { NearStation, NormalizedStation } from "./types";
 
 const EARTH_RADIUS_KM = 6371;
@@ -32,14 +33,14 @@ export function findNearest(stations: NormalizedStation[], lat: number, lon: num
 
 /**
  * Parse + validate `lat`/`lon` request params. Returns null when either is
- * missing/empty or the pair is out of geographic range. Callers turn null into
- * a 400. Guards against `Number(null) === 0` silently passing as a valid point.
+ * missing/empty or the point is outside India (mugilu covers India only).
+ * Callers turn null into a 400. Guards against `Number(null) === 0` silently passing as a valid point.
  */
 export function parseLatLon(latParam: string | null, lonParam: string | null): { lat: number; lon: number } | null {
   if (!latParam || !lonParam) return null;
   const lat = Number(latParam);
   const lon = Number(lonParam);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  if (!inIndia(lat, lon)) return null;
   return { lat, lon };
 }

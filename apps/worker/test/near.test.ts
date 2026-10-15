@@ -61,7 +61,7 @@ test("parseLatLon: rejects non-numeric and out-of-range", () => {
   assert.equal(parseLatLon("12", "200"), null);
 });
 
-test("parseLatLon: accepts valid coords including 0,0", () => {
+test("parseLatLon: accepts valid coords in India; 0,0 (Gulf of Guinea) is outside coverage", () => {
   assert.deepEqual(parseLatLon("12.97", "77.59"), { lat: 12.97, lon: 77.59 });
-  assert.deepEqual(parseLatLon("0", "0"), { lat: 0, lon: 0 });
+  assert.equal(parseLatLon("0", "0"), null);
 });
