@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ambientRisk, ambientMeaning, personaAlso } from "../src/score";
+import {
+  ambientRisk,
+  ambientMeaning,
+  personaAlso,
+  personaAction,
+  PERSONAS,
+  SENSITIVE,
+  PERSONA_ACTION,
+} from "../src/score";
 import type { Conditions } from "../src/types";
 
 test("personaAlso: surfaces an asthmatic's air trigger under a heat headline (option A)", () => {
@@ -175,4 +183,62 @@ test("ambientRisk: WBGT contributes to heat, calibrated so extreme=35 is severe"
 test("ambientMeaning: a plain sentence that explains the band", () => {
   assert.match(ambientMeaning(ambientRisk(cond({}), "everyone")), /good/i);
   assert.match(ambientMeaning(ambientRisk(cond({ heat: { apparent_c: 47, source: "om" } }), "everyone")), /heat/i);
+});
+
+// ── Persona advice: the bump changes what to do, never what the air is called ──
+
+const air = (band: "moderate" | "poor", aqi: number): Conditions["air"] => ({
+  aqi,
+  band,
+  pollutants: {},
+  yll: null,
+  station: { id: "x", name: "x", city: "x", distance_km: 1 },
+  source: "cpcb",
+});
+
+test("ambientMeaning: a persona bump keeps the CPCB description (moderate air is not called poor)", () => {
+  const r = ambientRisk(cond({ air: air("moderate", 150) }), "asthma");
+  assert.equal(r.band, "high"); // bumped for asthma...
+  assert.equal(ambientMeaning(r), ambientMeaning(ambientRisk(cond({ air: air("moderate", 150) }), "everyone")));
+  assert.doesNotMatch(ambientMeaning(r), /poor/i); // ...but still described as CPCB moderate
+});
+
+test("personaAction: tells the persona what to do about their own trigger", () => {
+  const asthma = ambientRisk(cond({ air: air("moderate", 150) }), "asthma");
+  assert.match(personaAction(asthma) ?? "", /inhaler/i);
+  const heart = ambientRisk(cond({ air: air("poor", 250) }), "heart");
+  assert.match(personaAction(heart) ?? "", /chest pain/i);
+});
+
+test("personaAction: none for everyone, none when the driver is not the persona's trigger", () => {
+  assert.equal(personaAction(ambientRisk(cond({ air: air("poor", 250) }), "everyone")), null);
+  // UV is not an asthma trigger.
+  assert.equal(personaAction(ambientRisk(cond({ uv: { index: 11, source: "om" } }), "asthma")), null);
+});
+
+test("heat advice: older adults are not told to just go indoors (hot homes kill too)", () => {
+  const r = ambientRisk(cond({ heat: { apparent_c: 41, source: "om" } }), "elderly");
+  assert.equal(r.driver, "Heat");
+  const said = `${ambientMeaning(r)} ${personaAction(r)}`;
+  assert.doesNotMatch(said, /avoid being outdoors/i);
+  assert.match(said, /check on you/i);
+});
+
+test("heat advice: even for everyone, dangerous heat points to somewhere cool, not just indoors", () => {
+  const r = ambientRisk(cond({ heat: { apparent_c: 47, source: "om" } }), "everyone");
+  assert.equal(r.band, "severe");
+  assert.match(ambientMeaning(r), /somewhere cool/i);
+});
+
+test("ambientRisk: outdoor workers feel air and dust (prolonged exposure), children feel dust", () => {
+  const moderateAir = cond({ air: air("moderate", 150) });
+  assert.equal(ambientRisk(moderateAir, "outdoor").band, "high");
+  const dusty = cond({ dust: { dust_ug_m3: 100, source: "om" } });
+  assert.equal(ambientRisk(dusty, "outdoor").band, "high");
+  assert.equal(ambientRisk(dusty, "child").band, "high");
+  assert.equal(ambientRisk(dusty, "everyone").band, "moderate");
+});
+
+test("personaAction: every persona has an action for each hazard it is sensitive to", () => {
+  for (const p of PERSONAS) for (const h of SENSITIVE[p]) assert.ok(PERSONA_ACTION[p]?.[h], `${p}/${h} has no action`);
 });

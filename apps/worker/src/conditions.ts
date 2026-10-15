@@ -8,7 +8,7 @@ import { nearestPlace } from "./place";
 import { getLocationAlerts } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
-import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientSummary, smokeLevel, PERSONA_LABEL } from "./score";
 import type { Persona } from "./score";
 
 // Stations within this many km of the nearest one count as equally near; among
@@ -175,10 +175,11 @@ export async function buildConditions(
 /** LLM-friendly Markdown rendering of a conditions response. */
 export function renderConditionsMarkdown(c: Conditions, persona: Persona = "everyone"): string {
   const risk = ambientRisk(c, persona);
+  const say = ambientSummary(risk);
   const out: string[] = [
     `# Conditions at ${c.location.lat}, ${c.location.lon}`,
     "",
-    `**Ambient for ${PERSONA_LABEL[persona]}: ${risk.band}.** ${ambientMeaning(risk)}`,
+    `**Ambient for ${PERSONA_LABEL[persona]}: ${risk.band}.** ${[say.meaning, say.action].filter(Boolean).join(" ")}`,
     "",
     `*As of ${c.as_of}.*`,
     "",
@@ -287,7 +288,7 @@ export const REFRESH_AFTER_SECONDS = 900;
  *  without reading source. The HTML/MD/PNG renderers keep the internal model. */
 export function serializeConditionsV1(c: Conditions, persona: Persona) {
   const risk = ambientRisk(c, persona);
-  const also = personaAlso(risk);
+  const say = ambientSummary(risk);
   const modelled = <T extends object>(o: T | null) => (o ? { kind: "modelled" as const, ...o, as_of: c.as_of } : null);
   return {
     schema: "mugilu/conditions",
@@ -325,8 +326,9 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
       score: risk.score,
       driver: risk.driver.toLowerCase(),
       persona: risk.persona,
-      summary: ambientMeaning(risk),
-      persona_also: also ?? null,
+      summary: say.meaning,
+      persona_action: say.action,
+      persona_also: say.also,
       hazards: risk.hazards.map((h) => ({ hazard: h.hazard.toLowerCase(), level: h.level, risk_band: h.band })),
     },
     attribution: c.attribution,

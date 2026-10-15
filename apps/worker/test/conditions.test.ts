@@ -146,3 +146,18 @@ test("pickStation: a nearest CPCB stays, and stations without a reading are skip
   assert.equal(pickStation([st("c", "cpcb", 12.001, 90), st("a", "airview", 12.0005, null)], 12, 77)?.id, "c");
   assert.equal(pickStation([], 12, 77), undefined);
 });
+
+test("serializeConditionsV1 + markdown: carry the persona's own step", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch();
+  try {
+    const c = await buildConditions(snap(), 12.9716, 77.5946);
+    c.air = { ...c.air!, aqi: 150, band: "moderate" };
+    const asthma = serializeConditionsV1(c, "asthma") as Record<string, any>;
+    assert.match(asthma.ambient.persona_action, /inhaler/);
+    assert.equal((serializeConditionsV1(c, "everyone") as Record<string, any>).ambient.persona_action, null);
+    assert.match(renderConditionsMarkdown(c, "asthma"), /inhaler/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

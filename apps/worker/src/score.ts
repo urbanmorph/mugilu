@@ -30,12 +30,14 @@ const SCORE: Record<number, number> = { 0: 15, 1: 45, 2: 72, 3: 95 };
 // Hazards each persona is extra-sensitive to (bumped one level if already risky).
 // Heat and Cold are separate identities: cold, dry air is an asthma trigger, but
 // asthma isn't heat-sensitive; the elderly/very young/exposed feel both extremes.
-const SENSITIVE: Record<Persona, string[]> = {
+// Outdoor workers breathe air and dust for hours while exerting, the "prolonged
+// exposure" CPCB's health statements are written for; children feel dust too.
+export const SENSITIVE: Record<Persona, string[]> = {
   everyone: [],
   asthma: ["Air", "Dust", "Smoke", "Cold"],
   elderly: ["Heat", "Cold", "Air", "Smoke"],
-  child: ["UV", "Air", "Heat", "Cold", "Smoke"],
-  outdoor: ["Heat", "Cold", "UV", "Smoke"],
+  child: ["UV", "Air", "Dust", "Heat", "Cold", "Smoke"],
+  outdoor: ["Heat", "Cold", "UV", "Air", "Dust", "Smoke"],
   heart: ["Heat", "Cold", "Air", "Smoke"],
 };
 
@@ -43,10 +45,14 @@ export interface HazardRisk {
   hazard: string;
   band: RiskBand;
   level: number;
+  /** Level before the persona bump: what the hazard itself is (e.g. CPCB moderate). */
+  base: number;
 }
 export interface AmbientRisk {
   band: RiskBand;
   level: number; // 0–3, the worst hazard's level (band as an integer)
+  /** The driver's level before the persona bump: what the hazard itself is. */
+  base: number;
   score: number; // 0–100 proxy of the worst hazard (band midpoint)
   driver: string; // the dominant hazard
   persona: Persona;
@@ -177,14 +183,22 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
   for (const [hazard, level] of checks) {
     if (level == null) continue;
     const amped = sensitive.includes(hazard) && level >= 1 ? Math.min(3, level + 1) : level;
-    hazards.push({ hazard, level: amped, band: BANDS[amped] });
+    hazards.push({ hazard, level: amped, band: BANDS[amped], base: level });
   }
 
   if (hazards.length === 0) {
-    return { band: "low", level: 0, score: 0, driver: "none", persona, hazards };
+    return { band: "low", level: 0, base: 0, score: 0, driver: "none", persona, hazards };
   }
   const worst = hazards.reduce((a, b) => (b.level > a.level ? b : a));
-  return { band: worst.band, level: worst.level, score: SCORE[worst.level], driver: worst.hazard, persona, hazards };
+  return {
+    band: worst.band,
+    level: worst.level,
+    base: worst.base,
+    score: SCORE[worst.level],
+    driver: worst.hazard,
+    persona,
+    hazards,
+  };
 }
 
 // What each band means in plain language, per dominant hazard, so the score
@@ -198,7 +212,7 @@ const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
   Heat: {
     moderate: "It's warm, so keep water handy.",
     high: "Heat is high. Slow down, hydrate, find shade.",
-    severe: "Dangerous heat. Avoid being outdoors.",
+    severe: "Dangerous heat. Get somewhere cool, out of the sun, and drink water.",
   },
   Cold: {
     moderate: "It's cold out. Layer up.",
@@ -237,10 +251,61 @@ const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
   },
 };
 
-/** One plain sentence explaining the band and what to do (replaces the old verdict). */
+/** One plain sentence explaining the band and what to do (replaces the old verdict).
+ *  Describes the hazard as it is (its unbumped level), so a persona bump never
+ *  renames CPCB moderate air "poor"; the persona's own step is personaAction. */
 export function ambientMeaning(risk: AmbientRisk): string {
   if (risk.band === "low") return "Conditions are good right now.";
-  return ADVICE[risk.driver]?.[risk.band] ?? "Take some care outdoors.";
+  return ADVICE[risk.driver]?.[BANDS[risk.base]] ?? "Take some care outdoors.";
+}
+
+// What a persona should DO when its own trigger drives the read. Plain, specific
+// steps for that group (DRAFT: needs clinical / public-health review before it
+// ships). Every SENSITIVE hazard has an entry (enforced by a test).
+export const PERSONA_ACTION: Record<Persona, Partial<Record<string, string>>> = {
+  everyone: {},
+  asthma: {
+    Air: "Keep your reliever inhaler with you and skip hard exercise outdoors.",
+    Dust: "Wear a well-fitting mask outdoors and keep your reliever inhaler with you.",
+    Smoke: "Keep windows shut and your reliever inhaler with you.",
+    Cold: "Cover your nose and mouth outdoors, cold air can tighten your airways.",
+  },
+  elderly: {
+    Heat: "Hot homes are risky too: stay somewhere cool, sip water even if not thirsty, and have someone check on you.",
+    Cold: "Keep your home warm, wear layers indoors too, and have someone check on you.",
+    Air: "Limit time outdoors and avoid exertion; get help if breathing or your chest feels wrong.",
+    Smoke: "Keep windows shut and limit time outdoors.",
+  },
+  child: {
+    UV: "Hat, shade and sunscreen, and keep midday play short.",
+    Air: "Keep outdoor play short and gentle today.",
+    Dust: "Keep outdoor play short today.",
+    Heat: "Give extra water, keep play in the shade, and never leave a child in a parked vehicle.",
+    Cold: "Dress them in layers and cover their head and hands.",
+    Smoke: "Keep them indoors with windows shut.",
+  },
+  outdoor: {
+    Heat: "Drink water every 20 minutes, take regular breaks in the shade, and move heavy work out of 12-3 pm.",
+    Cold: "Wear layers, keep dry, and take warm breaks.",
+    UV: "Cover up, wear a hat, and take shade breaks around midday.",
+    Air: "Wear an N95 mask if you can, and swap heavy work for lighter tasks.",
+    Dust: "Cover your nose and mouth, and protect your eyes.",
+    Smoke: "Wear an N95 mask if you can, and take breaks indoors.",
+  },
+  heart: {
+    Heat: "Avoid exertion, stay cool, and keep taking your medicines; get help for chest pain or breathlessness.",
+    Cold: "Keep warm and avoid sudden exertion in the cold.",
+    Air: "Avoid exertion outdoors; get help for chest pain or breathlessness.",
+    Smoke: "Stay indoors with windows shut and avoid exertion.",
+  },
+};
+
+/** The persona's own step when the headline driver is one of its triggers;
+ *  null for everyone, a low read, or a driver the persona isn't sensitive to
+ *  (PERSONA_ACTION is keyed by exactly the SENSITIVE hazards). */
+export function personaAction(risk: AmbientRisk): string | null {
+  if (risk.band === "low") return null;
+  return PERSONA_ACTION[risk.persona][risk.driver] ?? null;
 }
 
 const HAZARD_NOUN: Record<string, string> = {
@@ -264,4 +329,11 @@ export function personaAlso(risk: AmbientRisk): string | null {
     .sort((a, b) => b.level - a.level)[0];
   if (!top) return null;
   return `For ${PERSONA_LABEL[risk.persona].toLowerCase()}, also watch: ${HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()} is ${top.band}.`;
+}
+
+/** Everything a renderer says about the Ambient read, in English (renderers
+ *  translate): the hazard as it is, the persona's own step, and the persona's
+ *  other elevated trigger. One place, so every surface tells personas the same. */
+export function ambientSummary(risk: AmbientRisk): { meaning: string; action: string | null; also: string | null } {
+  return { meaning: ambientMeaning(risk), action: personaAction(risk), also: personaAlso(risk) };
 }

@@ -65,3 +65,12 @@ test("renderDisplayBuilder: a chosen persona carries into the tiles and the sear
   assert.match(html, /name="as" value="elderly"/);
   assert.match(html, /class="on"/); // the persona pill is selected
 });
+
+test("renderKioskPage: a persona display shows that group's own step", () => {
+  const c = conditions();
+  const hot = { ...c, heat: { ...c.heat!, apparent_c: 42 } };
+  assert.match(
+    renderKioskPage(hot, "outdoor", "https://mugilu.live/c/delhi", "<svg>QR</svg>"),
+    /class="kact"[^>]*>[^<]*shade/,
+  );
+});
