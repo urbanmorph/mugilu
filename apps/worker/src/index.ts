@@ -36,6 +36,7 @@ import { placeBySlug, slugForName } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
 import { loadSnapshot } from "./snapshot";
+import { isAdmin } from "./admin";
 import { handleMcp } from "./mcp";
 import type { NormalizedStation } from "./types";
 
@@ -43,6 +44,8 @@ export interface Env {
   OAQ_KV: KVNamespace;
   OAQ_R2: R2Bucket;
   OAQ_API_KEY: string;
+  /** Gates the admin routes (manual triggers, usage counts); see admin.ts. */
+  ADMIN_KEY?: string;
   OAQ_BROKER_URL: string;
   OAQ_BASE_URL: string;
   /** NASA FIRMS map key for the fire/crop-burn smoke layer (optional). */
@@ -216,7 +219,7 @@ export default {
     // never cached. Aggregate, privacy-preserving (rounded coords, no IP). The
     // public only ever sees these via the server-rendered home "Popular".
     if (url.pathname === "/api/counts") {
-      if (url.searchParams.get("key") !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       const [places, formats, referrers] = await Promise.all([
         topPlaces(env, 50),
         counters(env),
@@ -479,10 +482,9 @@ export default {
       return new Response(obj.body, { headers });
     }
 
-    // Manual trigger for local dev & smoke tests: /refresh?key=OAQ_API_KEY.
+    // Manual trigger for local dev & smoke tests: /refresh (Authorization: Bearer ADMIN_KEY).
     if (url.pathname === "/refresh") {
-      const key = url.searchParams.get("key");
-      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         const snap = await refreshLatest(env);
         return Response.json({
@@ -497,10 +499,9 @@ export default {
       }
     }
 
-    // Manual trigger: collect the national conditions grid. /collect?key=OAQ_API_KEY
+    // Manual trigger: collect the national conditions grid. /collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/collect") {
-      const key = url.searchParams.get("key");
-      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         const snap = await collectConditions(env);
         return Response.json({
@@ -514,10 +515,9 @@ export default {
       }
     }
 
-    // Manual trigger: poll + archive SACHET warnings. /warnings/collect?key=OAQ_API_KEY
+    // Manual trigger: poll + archive SACHET warnings. /warnings/collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/warnings/collect") {
-      const key = url.searchParams.get("key");
-      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         return Response.json({ ok: true, ...(await collectWarnings(env)) });
       } catch (e) {
@@ -525,10 +525,9 @@ export default {
       }
     }
 
-    // Manual trigger: poll + archive FIRMS fire detections. /fires/collect?key=OAQ_API_KEY
+    // Manual trigger: poll + archive FIRMS fire detections. /fires/collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/fires/collect") {
-      const key = url.searchParams.get("key");
-      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         return Response.json({ ok: true, ...(await collectFires(env)) });
       } catch (e) {
@@ -538,8 +537,7 @@ export default {
 
     // Debug: peek at the current signature without exposing it.
     if (url.pathname === "/sig") {
-      const key = url.searchParams.get("key");
-      if (key !== env.OAQ_API_KEY) return new Response("unauthorized", { status: 401 });
+      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       const sig = await getSignature(env);
       return Response.json({
         baseUrl: sig.baseUrl,
