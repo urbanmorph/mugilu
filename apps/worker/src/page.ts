@@ -2,7 +2,7 @@ import type { Conditions, Warning, AirPollutants } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
-import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientSummary, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
@@ -206,6 +206,8 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 const DEFAULT_DESC =
   "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.";
 const SITE = "https://mugilu.live";
+/** Where there is no room for the full disclaimer (kiosk, embed card). */
+const SHORT_DISCLAIMER = "Informational only, not medical advice.";
 const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
 /** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
@@ -338,6 +340,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .amb-head{font-family:var(--serif);font-weight:600;font-size:clamp(2.6rem,12vw,3.7rem);line-height:.95;letter-spacing:-.025em;margin:0;color:var(--ink)}
 .amb-head .b{color:var(--cond)}
 .amb-say{font-family:var(--serif);font-size:1.18rem;line-height:1.42;margin:.65rem 0 0;color:var(--ink);max-width:32ch}
+.amb-act{font:600 1rem/1.4 var(--sans);margin:.5rem 0 0;max-width:34ch}
 .amb-also{display:flex;align-items:flex-start;gap:.4rem;font:500 .92rem/1.4 var(--sans);color:var(--cond);margin:.7rem 0 0;max-width:34ch}
 .amb-also .ic{width:16px;height:16px;flex:none;margin-top:.1rem}
 .who{display:flex;flex-wrap:wrap;gap:.35rem 1rem;margin:1.2rem 0 0;padding:0}
@@ -515,7 +518,8 @@ export function renderConditionsPage(
   lang: Lang = "en",
 ): string {
   const risk = ambientRisk(c, persona);
-  const also = personaAlso(risk);
+  const say = ambientSummary(risk);
+  const meaning = t(say.meaning, lang);
   const slug = `${c.location.lat},${c.location.lon}`;
   const stationCity = c.air?.station?.city;
   const place = c.place ? esc(c.place) : stationCity ? esc(stationCity) : slug;
@@ -696,8 +700,9 @@ export function renderConditionsPage(
     <section class="amb">
       <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="amb-head">${head}</p>
-      <p class="amb-say">${esc(t(ambientMeaning(risk), lang))}</p>
-      ${also ? `<p class="amb-also">${icon("users")}${esc(t(also, lang))}</p>` : ""}
+      <p class="amb-say">${esc(meaning)}</p>
+      ${say.action ? `<p class="amb-act">${esc(t(say.action, lang))}</p>` : ""}
+      ${say.also ? `<p class="amb-also">${icon("users")}${esc(t(say.also, lang))}</p>` : ""}
       <nav class="who" aria-label="${esc(t("Who is this for", lang))}">${pills}</nav>
     </section>
     <dl class="strata">${strata.join("")}</dl>
@@ -711,7 +716,7 @@ export function renderConditionsPage(
   </article>`;
 
   const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
-  const desc = `${c.place ?? stationCity ?? slug}: ${t(ambientMeaning(risk), lang)} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
+  const desc = `${c.place ?? stationCity ?? slug}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
   const placeName = c.place ?? stationCity ?? slug;
@@ -799,11 +804,13 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;padding:8
 .eamb{display:flex;align-items:center;gap:.5rem;font-family:var(--serif);font-size:1.35rem;font-weight:600;letter-spacing:-.01em;color:var(--cond);margin:0 0 .15rem}
 .eamb .dot{width:10px;height:10px;border-radius:50%;background:var(--cond);flex:none}
 .esay{color:var(--ink);font-size:.92rem;margin:0 0 .85rem}
+.eact{color:var(--ink);font-size:.85rem;font-weight:600;margin:-.45rem 0 .85rem}
 .ereads{display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:.75rem}
 .eread{display:flex;flex-direction:column}
 .eread b{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .eread span{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .efoot{display:flex;justify-content:space-between;color:var(--muted);font-size:.74rem;margin:.85rem 0 0}
+.edisc{color:var(--muted);font-size:.68rem;margin:.3rem 0 0}
 .ecode{max-width:460px;margin:14px auto 0;font-size:.82rem;color:var(--muted)}
 .ecode summary{cursor:pointer;font-weight:600;color:var(--ink)}
 .ecode pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:.72rem;white-space:pre-wrap;word-break:break-all}
@@ -836,8 +843,8 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .khead{font-family:var(--serif),Georgia,serif;font-weight:700;font-size:12vmin;line-height:1;letter-spacing:-.01em;margin:1.1vmin 0 .9vmin}
 .khead .b{color:var(--cond)}
 .ksay{font-size:4.2vmin;line-height:1.2;color:#cfd7e2;max-width:42ch}
-.kalso{display:flex;align-items:center;gap:1.2vmin;margin-top:1.8vmin;font-size:2.8vmin;color:var(--cond)}
-.kalso svg{width:3vmin;height:3vmin;flex:none}
+.kact{font-size:2.8vmin;font-weight:600;line-height:1.25;margin-top:1.2vmin;max-width:60ch}
+.kamb:has(.kact) .ksay{font-size:3.4vmin}
 .ktiles{display:flex;gap:2vmin}
 .kt{flex:1;display:flex;flex-direction:column;gap:.4vmin;padding:1.8vmin 2.2vmin;border-radius:1.6vmin;background:#0f1626;border:.3vmin solid #1c2740}
 .kt.on{border-color:var(--cond)}
@@ -847,6 +854,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .kt-w{font-size:2.4vmin;color:#aeb9c8}
 .kfoot{display:flex;justify-content:space-between;align-items:flex-end;gap:2vmin}
 .kbrand{font-size:3vmin;font-weight:700;color:#38bdf8}
+.kdisc{font-size:1.7vmin;color:#8b97a8;margin-top:.5vmin}
 .kqr{display:flex;align-items:center;gap:1.6vmin}
 .kqr svg{width:11vmin;height:11vmin;background:#fff;border-radius:1vmin;padding:.7vmin}
 .kqrl{font-size:1.9vmin;line-height:1.2;color:#8b97a8;text-align:right}
@@ -893,6 +901,7 @@ export function renderKioskPage(
   lang: Lang = "en",
 ): string {
   const risk = ambientRisk(c, persona);
+  const say = ambientSummary(risk);
   const slug = `${c.location.lat},${c.location.lon}`;
   const place = c.place ? esc(c.place) : c.air?.station?.city ? esc(c.air.station.city) : slug;
   const condColor = RISK_COLOR[risk.band];
@@ -947,11 +956,12 @@ export function renderKioskPage(
     <main class="kamb">
       <p class="keye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="khead">${head}</p>
-      <p class="ksay">${esc(t(ambientMeaning(risk), lang))}</p>
+      <p class="ksay">${esc(t(say.meaning, lang))}</p>
+      ${say.action ? `<p class="kact">${esc(t(say.action, lang))}</p>` : ""}
     </main>
     <section class="ktiles">${tiles.join("")}</section>
     <footer class="kfoot">
-      <span class="kbrand">mugilu.live</span>
+      <div><span class="kbrand">mugilu.live</span><p class="kdisc">${esc(t(SHORT_DISCLAIMER, lang))}</p></div>
       <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan for this<br>on your phone" : t("scan for this on your phone", lang)}</span></div>
     </footer>
   </div>
@@ -1060,6 +1070,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
 
 export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, lang: Lang = "en"): string {
   const risk = ambientRisk(c, persona);
+  const say = ambientSummary(risk);
   const condColor = RISK_COLOR[risk.band];
   const slug = `${c.location.lat},${c.location.lon}`;
   const stationCity = c.air?.station?.city;
@@ -1089,9 +1100,11 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>
-    <div class="esay">${esc(ambientMeaning(risk))}</div>
+    <div class="esay">${esc(t(say.meaning, lang))}</div>
+    ${say.action ? `<div class="eact">${esc(t(say.action, lang))}</div>` : ""}
     <div class="ereads">${reads.join("")}</div>
     <div class="efoot"><span>as of ${esc(istTime(c.as_of))}</span><span>mugilu.live →</span></div>
+    <div class="edisc">${esc(t(SHORT_DISCLAIMER, lang))}</div>
   </a>
   <details class="ecode"><summary>Embed this</summary>
     <p>Live widget (iframe):</p><pre>${esc(iframe)}</pre>

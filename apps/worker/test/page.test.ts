@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderConditionsPage } from "../src/page";
+import { renderConditionsPage, renderEmbed, renderKioskPage } from "../src/page";
 import type { Conditions } from "../src/types";
 
 function conditions(overrides: Partial<Conditions> = {}): Conditions {
@@ -135,4 +135,29 @@ test("renderConditionsPage: cross-links nearby places in the same state (interna
 test("renderConditionsPage: no nearby block on a bare-coordinate page (no state anchor)", () => {
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/12.97,77.59");
   assert.doesNotMatch(html, /class="nearby"/);
+});
+
+test("renderConditionsPage: shows the persona's own step when its trigger drives the read", () => {
+  const moderateAir = conditions({ air: { ...conditions().air!, aqi: 150, band: "moderate" } });
+  assert.match(renderConditionsPage(moderateAir, "asthma"), /class="amb-act">[^<]*hard exercise/);
+  assert.doesNotMatch(renderConditionsPage(moderateAir, "everyone"), /class="amb-act"/);
+});
+
+test("renderEmbed: a persona card carries that group's own step", () => {
+  const moderateAir = conditions({ air: { ...conditions().air!, aqi: 150, band: "moderate" } });
+  assert.match(renderEmbed(moderateAir, "asthma", "https://mugilu.live"), /class="eact">[^<]*hard exercise/);
+  assert.doesNotMatch(renderEmbed(moderateAir, "everyone", "https://mugilu.live"), /class="eact"/);
+});
+
+test("kiosk + embed carry a not-medical-advice disclaimer (no room for the full one)", () => {
+  const c = conditions();
+  assert.match(
+    renderEmbed(c, "asthma", "https://mugilu.live"),
+    /class="edisc">Informational only, not medical advice\./,
+  );
+  assert.match(
+    renderKioskPage(c, "asthma", "https://mugilu.live/c/12.97,77.59", "<svg></svg>"),
+    /class="kdisc">Informational only, not medical advice\./,
+  );
+  assert.match(renderEmbed(c, "asthma", "https://mugilu.live", "hi"), /चिकित्सीय सलाह नहीं/);
 });
