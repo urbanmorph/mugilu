@@ -1,4 +1,4 @@
-import { inIndia } from "./india";
+import { indianPoint } from "./india";
 import type { NearStation, NormalizedStation } from "./types";
 
 const EARTH_RADIUS_KM = 6371;
@@ -38,9 +38,5 @@ export function findNearest(stations: NormalizedStation[], lat: number, lon: num
  */
 export function parseLatLon(latParam: string | null, lonParam: string | null): { lat: number; lon: number } | null {
   if (!latParam || !lonParam) return null;
-  const lat = Number(latParam);
-  const lon = Number(lonParam);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  if (!inIndia(lat, lon)) return null;
-  return { lat, lon };
+  return indianPoint(Number(latParam), Number(lonParam));
 }

@@ -3,6 +3,7 @@ import type { NormalizedStation, Conditions } from "./types";
 import { ambientRisk, ambientMeaning, smokeLevel } from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
+import { esc } from "./html";
 
 const BAND_LABELS: Record<NormalizedStation["band"], string> = {
   good: "Good",
@@ -13,10 +14,6 @@ const BAND_LABELS: Record<NormalizedStation["band"], string> = {
   severe: "Severe",
   unknown: "n/a",
 };
-
-function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
 
 export function renderStationOg(s: NormalizedStation, generatedAt: string): Response {
   const band = BAND_COLOR[s.band];

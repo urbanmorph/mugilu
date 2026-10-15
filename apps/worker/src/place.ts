@@ -1,6 +1,5 @@
 import centroids from "../data/centroids.json";
 import { haversineKm } from "./near";
-import { inIndia } from "./india";
 import type { Centroid } from "./types";
 
 // Reverse-geocode a point to a human label using the bundled bharatlas grid,
@@ -46,9 +45,7 @@ const BMC_WARD_AREA: Record<string, string> = {
   T: "Mulund",
 };
 
-// Outside India there is no Indian place to name (Paris is not Muzaffarabad).
 function nearestCentroid(lat: number, lon: number): Centroid | null {
-  if (!inIndia(lat, lon)) return null;
   let best: Centroid | null = null;
   let bestD = Infinity;
   for (const c of GRID) {

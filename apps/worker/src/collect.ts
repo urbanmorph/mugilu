@@ -9,11 +9,6 @@ import centroids from "../data/centroids.json";
 // geography for labels/warnings; hyperlocal /c fetches the exact point live.
 const GRID = (centroids as Centroid[]).filter((c) => c.level === "district");
 
-/**
- * Collect modelled conditions (heat/rain/UV/dust) over the national grid and
- * write the snapshot to R2. This is what makes heat etc. national, rankable and
- * archivable, first-class alongside the air-station snapshot, not air-biased.
- */
 // Below this share of points with any reading, the run failed (Open-Meteo down
 // or rate-limited) and the previous grid is kept rather than overwritten.
 const MIN_COVERAGE = 0.9;
@@ -24,6 +19,11 @@ export function hasCoverage(points: ConditionsPoint[]): boolean {
   return points.length > 0 && filled / points.length >= MIN_COVERAGE;
 }
 
+/**
+ * Collect modelled conditions (heat/rain/UV/dust) over the national grid and
+ * write the snapshot to R2. This is what makes heat etc. national, rankable and
+ * archivable, first-class alongside the air-station snapshot, not air-biased.
+ */
 export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
   // Throttle ~12s/batch to keep any 60s window under Open-Meteo's minute limit.
   const wx = await getOpenMeteoBulk(

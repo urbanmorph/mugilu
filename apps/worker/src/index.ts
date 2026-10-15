@@ -27,7 +27,7 @@ import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import type { WarningsSnapshot } from "./sachet";
-import { collectFires, loadFires } from "./firms";
+import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
 import { recordLookup, recordReferrer, recordEvent, topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
@@ -35,8 +35,8 @@ import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadSnapshot } from "./snapshot";
-import { isAdmin } from "./admin";
+import { loadFires, loadSnapshot } from "./snapshot";
+import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { NormalizedStation } from "./types";
 
@@ -103,6 +103,9 @@ async function edgeCache(
 }
 
 /** 400 with a JSON `{ error }` body (CORS-open), matching the API error shape. */
+/** The one message for a coordinate that fails parseLatLon (bad, or outside India). */
+const BAD_COORDS = "valid coordinates in India are required (mugilu covers India only)";
+
 function badRequest(message: string): Response {
   return Response.json({ error: message }, { status: 400, headers: { "access-control-allow-origin": "*" } });
 }
@@ -127,6 +130,11 @@ export default {
       lang = langMatch[1] as Lang;
       url.pathname = url.pathname.slice(3) || "/";
     }
+
+    // Admin routes, gated in one place (admin.ts) so a new one can't skip it.
+    // After the language strip, so /hi/refresh is gated like /refresh.
+    const denied = adminGate(url.pathname, req, env);
+    if (denied) return denied;
 
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
@@ -219,7 +227,6 @@ export default {
     // never cached. Aggregate, privacy-preserving (rounded coords, no IP). The
     // public only ever sees these via the server-rendered home "Popular".
     if (url.pathname === "/api/counts") {
-      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       const [places, formats, referrers] = await Promise.all([
         topPlaces(env, 50),
         counters(env),
@@ -296,7 +303,7 @@ export default {
     // already in memory. The lat/lng entry point for the air layer (A2).
     if (url.pathname === "/near") {
       const coords = parseLatLon(url.searchParams.get("lat"), url.searchParams.get("lon"));
-      if (!coords) return badRequest("valid `lat` and `lon` query params in India are required");
+      if (!coords) return badRequest(BAD_COORDS);
       const { lat, lon } = coords;
       const nRaw = Number(url.searchParams.get("n") ?? "5");
       const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 50) : 5;
@@ -389,7 +396,7 @@ export default {
     if (condMatch) {
       const [, latStr, lonStr, ext] = condMatch;
       const coords = parseLatLon(latStr, lonStr);
-      if (!coords) return badRequest("coordinates outside India (mugilu covers India only)");
+      if (!coords) return badRequest(BAD_COORDS);
       return serveConditions(
         coords.lat,
         coords.lon,
@@ -421,7 +428,7 @@ export default {
     if (embedMatch) {
       const [, latStr, lonStr] = embedMatch;
       const coords = parseLatLon(latStr, lonStr);
-      if (!coords) return badRequest("coordinates outside India (mugilu covers India only)");
+      if (!coords) return badRequest(BAD_COORDS);
       const persona = parsePersona(url.searchParams.get("as"));
       const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
       const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
@@ -484,7 +491,6 @@ export default {
 
     // Manual trigger for local dev & smoke tests: /refresh (Authorization: Bearer ADMIN_KEY).
     if (url.pathname === "/refresh") {
-      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         const snap = await refreshLatest(env);
         return Response.json({
@@ -501,7 +507,6 @@ export default {
 
     // Manual trigger: collect the national conditions grid. /collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/collect") {
-      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         const snap = await collectConditions(env);
         return Response.json({
@@ -517,7 +522,6 @@ export default {
 
     // Manual trigger: poll + archive SACHET warnings. /warnings/collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/warnings/collect") {
-      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         return Response.json({ ok: true, ...(await collectWarnings(env)) });
       } catch (e) {
@@ -527,7 +531,6 @@ export default {
 
     // Manual trigger: poll + archive FIRMS fire detections. /fires/collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/fires/collect") {
-      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       try {
         return Response.json({ ok: true, ...(await collectFires(env)) });
       } catch (e) {
@@ -537,7 +540,6 @@ export default {
 
     // Debug: peek at the current signature without exposing it.
     if (url.pathname === "/sig") {
-      if (!isAdmin(req, env)) return new Response("unauthorized", { status: 401 });
       const sig = await getSignature(env);
       return Response.json({
         baseUrl: sig.baseUrl,

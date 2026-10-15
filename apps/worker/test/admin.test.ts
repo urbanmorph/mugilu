@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isAdmin } from "../src/admin";
+import { adminGate, isAdmin } from "../src/admin";
 
 const req = (headers: Record<string, string> = {}, qs = "") =>
   new Request(`https://mugilu.live/refresh${qs}`, { headers });
@@ -24,4 +24,12 @@ test("isAdmin: the key in the URL is never accepted (URLs land in logs and histo
 test("isAdmin: fails closed when ADMIN_KEY is unset (never matches an empty bearer)", () => {
   assert.equal(isAdmin(req({ authorization: "Bearer " }), {}), false);
   assert.equal(isAdmin(req({ authorization: "Bearer undefined" }), {}), false);
+});
+
+test("adminGate: every admin route is refused without the key; other paths pass through", () => {
+  const env = { ADMIN_KEY: "s3cret-admin" };
+  for (const p of ["/refresh", "/collect", "/api/counts", "/sig", "/warnings/collect", "/fires/collect"])
+    assert.equal(adminGate(p, req(), env)?.status, 401, p);
+  assert.equal(adminGate("/refresh", req({ authorization: "Bearer s3cret-admin" }), env), null);
+  assert.equal(adminGate("/c/bengaluru", req(), env), null);
 });

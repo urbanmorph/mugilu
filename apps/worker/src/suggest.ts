@@ -1,6 +1,7 @@
 import type { NormalizedStation } from "./types";
 import type { GeoResult } from "./geocode";
 import { matchGazetteer, type GazIndex } from "./gazetteer";
+import { indianPoint } from "./india";
 
 export interface Suggestion {
   label: string;
@@ -56,13 +57,12 @@ export function applyAlias(q: string): string {
 }
 
 /** Detect a "lat,lon" (or "lat, lon") query → coordinates, else null. */
-export function parseCoordQuery(q: string): { lat: number; lon: number } | null {
+/** A typed "lat,lon": the point if it is in India, null if it is a coordinate
+ *  outside India (so it is refused, not searched as a name), undefined if the
+ *  query isn't a coordinate at all. */
+export function parseCoordQuery(q: string): { lat: number; lon: number } | null | undefined {
   const m = q.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)$/);
-  if (!m) return null;
-  const lat = Number(m[1]);
-  const lon = Number(m[2]);
-  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
-  return { lat, lon };
+  return m ? indianPoint(Number(m[1]), Number(m[2])) : undefined;
 }
 
 /**
@@ -107,10 +107,18 @@ export async function buildSuggestions(
   gaz: GazIndex | null = null,
 ): Promise<Suggestion[]> {
   const coord = parseCoordQuery(q);
-  if (coord) {
-    return [
-      { label: `${coord.lat}, ${coord.lon}`, sublabel: "coordinates", lat: coord.lat, lon: coord.lon, kind: "coord" },
-    ];
+  if (coord !== undefined) {
+    return coord
+      ? [
+          {
+            label: `${coord.lat}, ${coord.lon}`,
+            sublabel: "coordinates",
+            lat: coord.lat,
+            lon: coord.lon,
+            kind: "coord",
+          },
+        ]
+      : [];
   }
 
   const query = applyAlias(q);

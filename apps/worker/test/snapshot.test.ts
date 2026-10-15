@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { freshStations, STALE_AFTER_MS } from "../src/snapshot";
+import { freshStations, STALE_AFTER_MS, youngerThan } from "../src/snapshot";
 import type { NormalizedStation } from "../src/types";
 
 const st = (id: string, ts: string | null): NormalizedStation => ({
@@ -38,4 +38,11 @@ test("freshStations: drops readings older than the cutoff, or with no time, from
 test("freshStations: a reading stamped slightly in the future (clock skew) still counts", () => {
   const now = Date.parse("2026-10-15T05:00:00Z");
   assert.equal(freshStations([st("skew", "2026-10-15T05:05:00Z")], now).length, 1);
+});
+
+test("youngerThan: a snapshot kept through failed runs stops being served once too old", () => {
+  const now = Date.parse("2026-10-15T12:00:00Z");
+  assert.equal(youngerThan({ generated_at: "2026-10-15T09:00:00Z" }, 6 * 3600_000, now), true);
+  assert.equal(youngerThan({ generated_at: "2026-10-14T12:00:00Z" }, 6 * 3600_000, now), false);
+  assert.equal(youngerThan({ generated_at: "garbage" }, 6 * 3600_000, now), false);
 });

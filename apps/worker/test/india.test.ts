@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { inIndia } from "../src/india";
 import { parseLatLon } from "../src/near";
-import { nearestPlace } from "../src/place";
+import { buildSuggestions, parseCoordQuery } from "../src/suggest";
 import { resolveQuery } from "../src/resolve";
 
 // India's edges (islands, high Himalaya, the Rann) and its neighbours' cities.
@@ -35,14 +35,13 @@ test("inIndia: India's edges are in, its neighbours and the open sea are out", (
   for (const [n, lat, lon] of ABROAD) assert.equal(inIndia(lat, lon), false, n);
 });
 
-test("a point outside India gets no Indian place name (Paris is not Muzaffarabad)", () => {
-  assert.equal(nearestPlace(48.85, 2.35), null);
-  assert.equal(nearestPlace(31.52, 74.36), null); // Lahore, not Tarn Taran
-  assert.ok(nearestPlace(12.97, 77.59));
-});
-
-test("parseLatLon + resolveQuery: India only, so a foreign coordinate is refused, not misread", async () => {
+test("every coordinate input is India only: a foreign point is refused, never given an Indian name", async () => {
+  // Paris was "Muzaffarabad, Jammu & Kashmir": no input may carry it that far.
   assert.equal(parseLatLon("48.85", "2.35"), null);
   assert.deepEqual(parseLatLon("12.97", "77.59"), { lat: 12.97, lon: 77.59 });
+  assert.equal(parseCoordQuery("48.85,2.35"), null); // a coordinate, but refused
+  assert.equal(parseCoordQuery("Paris"), undefined); // not a coordinate: search it
   assert.equal(await resolveQuery("48.85,2.35"), null);
+  const none = async () => [];
+  assert.deepEqual(await buildSuggestions([], "51.5,-0.12", none), []);
 });

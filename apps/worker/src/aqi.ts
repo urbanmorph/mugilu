@@ -22,7 +22,7 @@ const BP: Record<string, Breakpoints> = {
 
 export function subIndex(pollutant: keyof typeof BP, value: number): number | null {
   const bps = BP[pollutant];
-  if (!bps) return null;
+  if (!bps || !Number.isFinite(value)) return null;
   // CPCB's ranges have integer edges (0-30, 31-60), but readings are fractional,
   // so each range runs up to its cHigh. A gap value (30.5) takes the next range's
   // line, floored at the previous range's top (iLow - 1) so the index never dips.
@@ -32,9 +32,7 @@ export function subIndex(pollutant: keyof typeof BP, value: number): number | nu
       return Math.max(iLow - 1, Math.round(((iHigh - iLow) / (cHigh - cLow)) * (value - cLow) + iLow));
     }
   }
-  // Above the top breakpoint: saturate at 500.
-  if (value > bps[bps.length - 1][1]) return 500;
-  return null;
+  return 500; // above the top breakpoint: saturate
 }
 
 export function computeAqi(p: NormalizedStation["pollutants"]): number | null {

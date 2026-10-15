@@ -110,10 +110,3 @@ export async function collectFires(env: Env): Promise<{ count: number; archived:
   });
   return { count: fires.length, archived: true };
 }
-
-/** Load the current fires snapshot from R2 (null if not collected yet). */
-export async function loadFires(env: Env): Promise<FiresSnapshot | null> {
-  const obj = await env.OAQ_R2.get("data/fires.json");
-  if (!obj) return null;
-  return (await obj.json()) as FiresSnapshot;
-}

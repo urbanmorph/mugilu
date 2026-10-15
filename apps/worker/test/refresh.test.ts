@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleanStationName, carryForward } from "../src/refresh";
+import { cleanStationName, carryForward, providerStations } from "../src/refresh";
 import type { NormalizedStation, Snapshot } from "../src/types";
 
 test("cleanStationName with known city strips ', {city} …'", () => {
@@ -75,4 +75,12 @@ test("carryForward: a provider that failed this run keeps its last stations (the
 test("carryForward: nothing failed, nothing carried; no previous snapshot, nothing to carry", () => {
   assert.equal(carryForward([sta("cpcb", "9")], [], prev).length, 1);
   assert.equal(carryForward([], ["cpcb"], null).length, 0);
+});
+
+test("providerStations: an HTTP-200 body with no station list is a failure, not an empty provider", () => {
+  assert.deepEqual(providerStations([{ id: 1 }]), [{ id: 1 }]);
+  assert.deepEqual(providerStations({ stations: [{ id: 1 }] }), [{ id: 1 }]);
+  assert.throws(() => providerStations({ error: "quota" }));
+  assert.throws(() => providerStations({ stations: [] }));
+  assert.throws(() => providerStations([]));
 });

@@ -19,7 +19,7 @@ export async function getSignature(env: Env): Promise<Signature> {
 
 async function refreshSignature(env: Env): Promise<Signature> {
   const url = `${env.OAQ_BROKER_URL}?action=api_session&token=${encodeURIComponent(env.OAQ_API_KEY)}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!res.ok) {
     throw new Error(`handshake failed: ${res.status} ${await res.text()}`);
   }

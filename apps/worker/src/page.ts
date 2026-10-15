@@ -2,6 +2,7 @@ import type { Conditions, Warning, AirPollutants } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
+import { esc } from "./html";
 import { ambientRisk, ambientSummary, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
@@ -29,19 +30,14 @@ const BAND_LABEL: Record<string, string> = {
   unknown: "n/a",
 };
 
-// Safe in text AND in quoted attribute values (upstream names, warning text).
-function esc(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+/** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
+function isHttpUrl(u: string): boolean {
+  return /^https?:\/\//i.test(u);
 }
 
-/** An upstream URL fit for an href: http(s) only, else null (no javascript: etc.). */
-function safeHref(u: string): string | null {
-  return /^https?:\/\//i.test(u) ? u : null;
+/** The place's display name, raw (escape it where it is written out). */
+function placeLabel(c: Conditions): string {
+  return c.place ?? c.air?.station?.city ?? `${c.location.lat},${c.location.lon}`;
 }
 
 function round(n: number | undefined): string {
@@ -532,7 +528,7 @@ export function renderConditionsPage(
   const say = ambientSummary(risk);
   const meaning = t(say.meaning, lang);
   const slug = `${c.location.lat},${c.location.lon}`;
-  const placeName = c.place ?? c.air?.station?.city ?? slug; // raw: shell() escapes the title
+  const placeName = placeLabel(c); // raw: shell() escapes the title
   const place = esc(placeName);
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
@@ -916,7 +912,7 @@ export function renderKioskPage(
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk);
   const slug = `${c.location.lat},${c.location.lon}`;
-  const placeName = c.place ?? c.air?.station?.city ?? slug; // raw: shell() escapes the title
+  const placeName = placeLabel(c); // raw: shell() escapes the title
   const place = esc(placeName);
   const condColor = RISK_COLOR[risk.band];
   const head =
@@ -1087,8 +1083,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const say = ambientSummary(risk);
   const condColor = RISK_COLOR[risk.band];
   const slug = `${c.location.lat},${c.location.lon}`;
-  const placeName = c.place ?? c.air?.station?.city ?? slug; // raw: shell() escapes the title
-  const place = esc(placeName);
+  const place = esc(placeLabel(c));
   const head = risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
 
   const reads: string[] = [];
@@ -1544,7 +1539,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
       ? `<ul class="wlist">${snap.alerts
           .map(
             (a) =>
-              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${safeHref(a.link) ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
+              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${isHttpUrl(a.link) ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
           )
           .join("")}</ul>`
       : `<p class="wempty">${t("No active national alerts right now.", lang)}</p>`;
