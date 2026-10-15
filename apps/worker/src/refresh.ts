@@ -2,6 +2,7 @@ import type { Env } from "./index";
 import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
 import { computeAqi, aqiBand } from "./aqi";
+import { loadJson } from "./snapshot";
 
 // AQLI coefficient from Ebenstein et al. 2017 PNAS (0.098 yr per µg/m³)
 // above the WHO 2021 annual PM2.5 guideline (5 µg/m³).
@@ -84,7 +85,7 @@ export function cleanStationName(name: string, city?: string): string {
   if (city) {
     const c = city.trim();
     if (c) {
-      const re = new RegExp(`,\\s*${c.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b.*$`, "iu");
+      const re = new RegExp(`,\\s*${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}]).*$`, "iu");
       out = out.replace(re, "").trim();
     }
   }
@@ -172,17 +173,36 @@ export async function providerIds(env: Env): Promise<ProviderId[]> {
   return [...ids] as ProviderId[];
 }
 
+/** This run's stations plus, for each provider whose fetch failed, its stations
+ *  from the previous snapshot. A failed fetch then never blanks a provider for
+ *  the hour; carried readings keep their own ts, so they age out (loadSnapshot). */
+export function carryForward(
+  fresh: NormalizedStation[],
+  failed: string[],
+  previous: Snapshot | null,
+): NormalizedStation[] {
+  if (!failed.length || !previous) return fresh;
+  const lost = new Set(failed);
+  return [...fresh, ...previous.stations.filter((s) => lost.has(s.provider))];
+}
+
 export async function refreshLatest(env: Env): Promise<Snapshot> {
-  const all: NormalizedStation[] = [];
+  const fresh: NormalizedStation[] = [];
+  const failed: ProviderId[] = [];
   const providers = await providerIds(env);
   for (const p of providers) {
     try {
       const raws = await fetchProvider(env, p);
-      for (const raw of raws) all.push(normalize(p, raw));
+      for (const raw of raws) fresh.push(normalize(p, raw));
     } catch (e) {
+      failed.push(p);
       console.error(`[refresh] provider ${p}:`, e);
     }
   }
+  const all = carryForward(fresh, failed, failed.length ? await loadJson<Snapshot>(env, "data/latest.json") : null);
+  // Every provider failed and there is nothing to carry: keep the last good
+  // snapshot rather than overwrite it with an empty one.
+  if (!all.length) throw new Error(`[refresh] no stations from ${providers.join(", ")}; kept the previous snapshot`);
 
   // Sort worst first: valid AQI desc, unknowns last.
   all.sort((a, b) => {

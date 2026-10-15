@@ -14,6 +14,16 @@ const GRID = (centroids as Centroid[]).filter((c) => c.level === "district");
  * write the snapshot to R2. This is what makes heat etc. national, rankable and
  * archivable, first-class alongside the air-station snapshot, not air-biased.
  */
+// Below this share of points with any reading, the run failed (Open-Meteo down
+// or rate-limited) and the previous grid is kept rather than overwritten.
+const MIN_COVERAGE = 0.9;
+
+/** Whether enough grid points came back with data to be worth writing. */
+export function hasCoverage(points: ConditionsPoint[]): boolean {
+  const filled = points.filter((p) => Object.values(p.wx).some((v) => v != null)).length;
+  return points.length > 0 && filled / points.length >= MIN_COVERAGE;
+}
+
 export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
   // Throttle ~12s/batch to keep any 60s window under Open-Meteo's minute limit.
   const wx = await getOpenMeteoBulk(
@@ -21,6 +31,7 @@ export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
     12_000,
   );
   const points: ConditionsPoint[] = GRID.map((c, i) => ({ ...c, wx: wx[i] ?? {} }));
+  if (!hasCoverage(points)) throw new Error("[collect] too few grid points came back; kept the previous grid");
 
   const snapshot: ConditionsSnapshot = {
     generated_at: new Date().toISOString(),

@@ -30,7 +30,6 @@ export interface FiresSnapshot {
  *  (order-independent): latitude, longitude, acq_date, acq_time, confidence, frp, daynight. */
 export function parseFirmsCsv(csv: string): FireDetection[] {
   const lines = csv.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
   const h = lines[0].split(",").map((s) => s.trim());
   const at = (k: string) => h.indexOf(k);
   const iLat = at("latitude"),
@@ -40,7 +39,9 @@ export function parseFirmsCsv(csv: string): FireDetection[] {
     iDate = at("acq_date"),
     iTime = at("acq_time"),
     iDn = at("daynight");
-  if (iLat < 0 || iLon < 0) return [];
+  // No lat/lon header means FIRMS sent an error (bad key, outage) with HTTP 200:
+  // throw so the caller keeps the last snapshot instead of writing "no fires".
+  if (iLat < 0 || iLon < 0) throw new Error(`firms: not a FIRMS CSV (${csv.slice(0, 80)})`);
   const out: FireDetection[] = [];
   for (let i = 1; i < lines.length; i++) {
     const c = lines[i].split(",");

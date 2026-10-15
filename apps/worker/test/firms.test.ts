@@ -18,9 +18,15 @@ test("parseFirmsCsv: header-addressed parse of lat/lon/frp/confidence/daynight",
   assert.match(fires[0].acq, /2026-06-27 0812/);
 });
 
-test("parseFirmsCsv: empty or header-only input → []", () => {
-  assert.deepEqual(parseFirmsCsv(""), []);
+test("parseFirmsCsv: header-only input → [] (no fires today)", () => {
   assert.deepEqual(parseFirmsCsv("latitude,longitude,frp"), []);
+});
+
+test("parseFirmsCsv: a body that isn't FIRMS CSV is an upstream error, not 'no fires'", () => {
+  // FIRMS answers a bad key or outage with text and HTTP 200; that must not
+  // overwrite the fires snapshot with zero detections.
+  assert.throws(() => parseFirmsCsv(""));
+  assert.throws(() => parseFirmsCsv("Invalid MAP_KEY."));
 });
 
 test("fireRiskAt: counts + sums FRP within radius and finds the nearest", () => {
