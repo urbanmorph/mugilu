@@ -1,7 +1,7 @@
 // Run with: pnpm -C apps/worker test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeAqi, aqiBand } from "../src/aqi";
+import { computeAqi, aqiBand, subIndex } from "../src/aqi";
 
 // Reference values from CPCB breakpoints
 // https://cpcb.nic.in/National-Air-Quality-Index/
@@ -70,4 +70,28 @@ test("aqiBand classification", () => {
   assert.equal(aqiBand(401), "severe");
   assert.equal(aqiBand(500), "severe");
   assert.equal(aqiBand(null), "unknown");
+});
+
+// CPCB publishes integer-edged ranges (0-30, 31-60, ...). Real readings are
+// fractional, so a value in the gap (30.5) must still get a sub-index.
+test("subIndex: fractional readings between CPCB's integer ranges still get a sub-index", () => {
+  for (const [p, v] of [["pm25", 30.5], ["pm25", 60.4], ["pm25", 250.5], ["pm10", 100.7], ["no2", 40.2], ["co", 1.05], ["o3", 168.5], ["nh3", 200.5]] as const)
+    assert.notEqual(subIndex(p, v), null, `${p} ${v}`);
+  assert.ok(subIndex("pm25", 250.5)! >= 400); // severe edge, not dropped
+});
+
+test("computeAqi: a gap value is not dropped from the max (PM2.5 250.5 + PM10 100 is ~401, not 100)", () => {
+  assert.ok(computeAqi({ pm25: 250.5, pm10: 100 })! >= 400);
+});
+
+test("subIndex: monotonic across every pollutant's whole range (no holes, no dips)", () => {
+  for (const [p, top] of [["pm25", 500], ["pm10", 600], ["no2", 600], ["so2", 2400], ["co", 50], ["o3", 1000], ["nh3", 2400]] as const) {
+    let prev = -1;
+    for (let v = 0; v <= top; v += top / 5000) {
+      const s = subIndex(p, v);
+      assert.notEqual(s, null, `${p} ${v}`);
+      assert.ok(s! >= prev, `${p} dips at ${v}`);
+      prev = s!;
+    }
+  }
 });
