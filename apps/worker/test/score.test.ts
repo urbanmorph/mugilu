@@ -205,9 +205,9 @@ test("ambientMeaning: a persona bump keeps the CPCB description (moderate air is
 
 test("personaAction: tells the persona what to do about their own trigger", () => {
   const asthma = ambientRisk(cond({ air: air("moderate", 150) }), "asthma");
-  assert.match(personaAction(asthma) ?? "", /inhaler/i);
+  assert.match(personaAction(asthma) ?? "", /exercise outdoors/i);
   const heart = ambientRisk(cond({ air: air("poor", 250) }), "heart");
-  assert.match(personaAction(heart) ?? "", /chest pain/i);
+  assert.match(personaAction(heart) ?? "", /exertion/i);
 });
 
 test("personaAction: none for everyone, none when the driver is not the persona's trigger", () => {
@@ -241,4 +241,10 @@ test("ambientRisk: outdoor workers feel air and dust (prolonged exposure), child
 
 test("personaAction: every persona has an action for each hazard it is sensitive to", () => {
   for (const p of PERSONAS) for (const h of SENSITIVE[p]) assert.ok(PERSONA_ACTION[p]?.[h], `${p}/${h} has no action`);
+});
+
+test("personaAction: exposure steps only, never medical advice (no medication, symptoms or diagnosis)", () => {
+  const medical = /inhaler|medicine|medication|dose|doctor|hospital|symptom|chest pain|breathless|treat|diagnos|N95/i;
+  for (const p of PERSONAS)
+    for (const [h, said] of Object.entries(PERSONA_ACTION[p])) assert.doesNotMatch(said ?? "", medical, `${p}/${h}`);
 });

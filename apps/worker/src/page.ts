@@ -206,6 +206,8 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 const DEFAULT_DESC =
   "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.";
 const SITE = "https://mugilu.live";
+/** Where there is no room for the full disclaimer (kiosk, embed card). */
+const SHORT_DISCLAIMER = "Informational only, not medical advice.";
 const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
 /** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
@@ -808,6 +810,7 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;padding:8
 .eread b{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .eread span{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .efoot{display:flex;justify-content:space-between;color:var(--muted);font-size:.74rem;margin:.85rem 0 0}
+.edisc{color:var(--muted);font-size:.68rem;margin:.3rem 0 0}
 .ecode{max-width:460px;margin:14px auto 0;font-size:.82rem;color:var(--muted)}
 .ecode summary{cursor:pointer;font-weight:600;color:var(--ink)}
 .ecode pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:.72rem;white-space:pre-wrap;word-break:break-all}
@@ -851,6 +854,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .kt-w{font-size:2.4vmin;color:#aeb9c8}
 .kfoot{display:flex;justify-content:space-between;align-items:flex-end;gap:2vmin}
 .kbrand{font-size:3vmin;font-weight:700;color:#38bdf8}
+.kdisc{font-size:1.7vmin;color:#8b97a8;margin-top:.5vmin}
 .kqr{display:flex;align-items:center;gap:1.6vmin}
 .kqr svg{width:11vmin;height:11vmin;background:#fff;border-radius:1vmin;padding:.7vmin}
 .kqrl{font-size:1.9vmin;line-height:1.2;color:#8b97a8;text-align:right}
@@ -957,7 +961,7 @@ export function renderKioskPage(
     </main>
     <section class="ktiles">${tiles.join("")}</section>
     <footer class="kfoot">
-      <span class="kbrand">mugilu.live</span>
+      <div><span class="kbrand">mugilu.live</span><p class="kdisc">${esc(t(SHORT_DISCLAIMER, lang))}</p></div>
       <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan for this<br>on your phone" : t("scan for this on your phone", lang)}</span></div>
     </footer>
   </div>
@@ -1100,6 +1104,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
     ${say.action ? `<div class="eact">${esc(t(say.action, lang))}</div>` : ""}
     <div class="ereads">${reads.join("")}</div>
     <div class="efoot"><span>as of ${esc(istTime(c.as_of))}</span><span>mugilu.live →</span></div>
+    <div class="edisc">${esc(t(SHORT_DISCLAIMER, lang))}</div>
   </a>
   <details class="ecode"><summary>Embed this</summary>
     <p>Live widget (iframe):</p><pre>${esc(iframe)}</pre>

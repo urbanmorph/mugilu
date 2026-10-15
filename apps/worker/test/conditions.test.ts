@@ -154,9 +154,9 @@ test("serializeConditionsV1 + markdown: carry the persona's own step", async () 
     const c = await buildConditions(snap(), 12.9716, 77.5946);
     c.air = { ...c.air!, aqi: 150, band: "moderate" };
     const asthma = serializeConditionsV1(c, "asthma") as Record<string, any>;
-    assert.match(asthma.ambient.persona_action, /inhaler/);
+    assert.match(asthma.ambient.persona_action, /hard exercise/);
     assert.equal((serializeConditionsV1(c, "everyone") as Record<string, any>).ambient.persona_action, null);
-    assert.match(renderConditionsMarkdown(c, "asthma"), /inhaler/);
+    assert.match(renderConditionsMarkdown(c, "asthma"), /hard exercise/);
   } finally {
     globalThis.fetch = realFetch;
   }

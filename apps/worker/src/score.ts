@@ -259,21 +259,23 @@ export function ambientMeaning(risk: AmbientRisk): string {
   return ADVICE[risk.driver]?.[BANDS[risk.base]] ?? "Take some care outdoors.";
 }
 
-// What a persona should DO when its own trigger drives the read. Plain, specific
-// steps for that group (DRAFT: needs clinical / public-health review before it
-// ships). Every SENSITIVE hazard has an entry (enforced by a test).
+// What a persona can do to cut its exposure when its own trigger drives the
+// read. Exposure steps only (time outdoors, exertion, shade, water, windows,
+// layers, someone checking in), the kind of public guidance NDMA/IMD give.
+// Never medication, symptoms or diagnosis: mugilu is not medical advice (a test
+// enforces this). Every SENSITIVE hazard has an entry (also enforced by a test).
 export const PERSONA_ACTION: Record<Persona, Partial<Record<string, string>>> = {
   everyone: {},
   asthma: {
-    Air: "Keep your reliever inhaler with you and skip hard exercise outdoors.",
-    Dust: "Wear a well-fitting mask outdoors and keep your reliever inhaler with you.",
-    Smoke: "Keep windows shut and your reliever inhaler with you.",
-    Cold: "Cover your nose and mouth outdoors, cold air can tighten your airways.",
+    Air: "Cut down time and hard exercise outdoors today.",
+    Dust: "Limit time outdoors, and cover your nose and mouth if you go out.",
+    Smoke: "Keep windows shut and limit time outdoors.",
+    Cold: "Cover your nose and mouth when you go out in the cold.",
   },
   elderly: {
-    Heat: "Hot homes are risky too: stay somewhere cool, sip water even if not thirsty, and have someone check on you.",
+    Heat: "Hot homes are risky too: stay somewhere cool, drink water regularly, and have someone check on you.",
     Cold: "Keep your home warm, wear layers indoors too, and have someone check on you.",
-    Air: "Limit time outdoors and avoid exertion; get help if breathing or your chest feels wrong.",
+    Air: "Limit time and exertion outdoors today.",
     Smoke: "Keep windows shut and limit time outdoors.",
   },
   child: {
@@ -285,17 +287,17 @@ export const PERSONA_ACTION: Record<Persona, Partial<Record<string, string>>> = 
     Smoke: "Keep them indoors with windows shut.",
   },
   outdoor: {
-    Heat: "Drink water every 20 minutes, take regular breaks in the shade, and move heavy work out of 12-3 pm.",
+    Heat: "Drink water often, take regular breaks in the shade, and move heavy work out of 12-3 pm.",
     Cold: "Wear layers, keep dry, and take warm breaks.",
     UV: "Cover up, wear a hat, and take shade breaks around midday.",
-    Air: "Wear an N95 mask if you can, and swap heavy work for lighter tasks.",
+    Air: "Swap heavy work for lighter tasks and take breaks indoors.",
     Dust: "Cover your nose and mouth, and protect your eyes.",
-    Smoke: "Wear an N95 mask if you can, and take breaks indoors.",
+    Smoke: "Take breaks indoors and keep heavy work short.",
   },
   heart: {
-    Heat: "Avoid exertion, stay cool, and keep taking your medicines; get help for chest pain or breathlessness.",
+    Heat: "Avoid exertion and stay somewhere cool.",
     Cold: "Keep warm and avoid sudden exertion in the cold.",
-    Air: "Avoid exertion outdoors; get help for chest pain or breathlessness.",
+    Air: "Avoid exertion outdoors today.",
     Smoke: "Stay indoors with windows shut and avoid exertion.",
   },
 };
