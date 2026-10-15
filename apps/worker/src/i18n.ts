@@ -250,9 +250,9 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "mugilu पर वापस",
     kn: "mugilu ಗೆ ಹಿಂತಿರುಗಿ",
   },
-  "CPCB (Govt. of India), Airnet (CSTEP), and Aurassure, via the {oaq} broker; plus OpenAQ.": {
-    hi: "CPCB (भारत सरकार), Airnet (CSTEP), और Aurassure, {oaq} ब्रोकर के माध्यम से; साथ ही OpenAQ।",
-    kn: "CPCB (ಭಾರತ ಸರ್ಕಾರ), Airnet (CSTEP), ಮತ್ತು Aurassure, {oaq} ಬ್ರೋಕರ್ ಮೂಲಕ; ಜೊತೆಗೆ OpenAQ.",
+  "CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker; plus OpenAQ.": {
+    hi: "CPCB (भारत सरकार), Airnet (CSTEP), Aurassure, और Google AirView+, {oaq} ब्रोकर के माध्यम से; साथ ही OpenAQ।",
+    kn: "CPCB (ಭಾರತ ಸರ್ಕಾರ), Airnet (CSTEP), Aurassure, ಮತ್ತು Google AirView+, {oaq} ಬ್ರೋಕರ್ ಮೂಲಕ; ಜೊತೆಗೆ OpenAQ.",
   },
   "{ometeo}, licensed CC-BY 4.0.": {
     hi: "{ometeo}, CC-BY 4.0 के तहत लाइसेंस प्राप्त।",
@@ -378,10 +378,10 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "वायु",
     kn: "ವಾಯುಗುಣ",
   },
-  "Air from CPCB, Airnet (CSTEP) and Aurassure via the Open Air Quality broker and OpenAQ; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; geography from bharatlas. Each source keeps its own licence, and mugilu credits all of them.":
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality broker and OpenAQ; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; geography from bharatlas. Each source keeps its own licence, and mugilu credits all of them.":
     {
-      hi: "वायु गुणवत्ता CPCB, Airnet (CSTEP) और Aurassure से Open Air Quality broker और OpenAQ के माध्यम से; मौसम, गर्मी, UV और धूल से Open-Meteo; NDMA और IMD से आधिकारिक चेतावनियाँ; bharatlas से भूगोल। प्रत्येक स्रोत का अपना लाइसेंस होता है और mugilu उन सभी को श्रेय देता है।",
-      kn: "CPCB, Airnet (CSTEP) ಮತ್ತು Aurassure‌ನಿಂದ ವಾಯು ಗುಣಮಟ್ಟದ ಮಾಹಿತಿ; Open Air Quality broker ಮತ್ತು OpenAQ ಮೂಲಕ ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ಮಾಹಿತಿ; NDMA ಮತ್ತು IMDಯಿಂದ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು; bharatlas‌ನಿಂದ ಭೌಗೋಳಿಕ ಮಾಹಿತಿ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
+      hi: "वायु गुणवत्ता CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality broker और OpenAQ के माध्यम से; मौसम, गर्मी, UV और धूल से Open-Meteo; NDMA और IMD से आधिकारिक चेतावनियाँ; bharatlas से भूगोल। प्रत्येक स्रोत का अपना लाइसेंस होता है और mugilu उन सभी को श्रेय देता है।",
+      kn: "CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ ವಾಯು ಗುಣಮಟ್ಟದ ಮಾಹಿತಿ; Open Air Quality broker ಮತ್ತು OpenAQ ಮೂಲಕ ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ಮಾಹಿತಿ; NDMA ಮತ್ತು IMDಯಿಂದ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು; bharatlas‌ನಿಂದ ಭೌಗೋಳಿಕ ಮಾಹಿತಿ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
     },
   "Air is dangerous. Stay indoors if you can.": {
     hi: "वायु गुणवत्ता खतरनाक है। यदि आप कर सकते हैं तो घर के अंदर रहें।",

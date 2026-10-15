@@ -1,6 +1,6 @@
 import type { Env } from "./index";
 import { getSignature, signUrl } from "./handshake";
-import { PROVIDERS } from "./types";
+import { providerIds } from "./refresh";
 
 /**
  * Daily job: fetch meta/providers.json and per-provider meta/hierarchy.json,
@@ -16,7 +16,7 @@ export async function refreshHierarchy(env: Env): Promise<{ providers: number; h
   const providersJson = (await pRes.json()) as unknown;
 
   const hierarchies: Record<string, unknown> = {};
-  for (const p of PROVIDERS) {
+  for (const p of await providerIds(env)) {
     try {
       const hUrl = signUrl(sig, `provider=${p}/meta/hierarchy.json`);
       const hRes = await fetch(hUrl);

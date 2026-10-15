@@ -4,7 +4,13 @@ const PROVIDER_NAMES: Record<ProviderId, string> = {
   cpcb: "Central Pollution Control Board, Government of India",
   airnet: "Center for Study of Science, Technology and Policy (CSTEP)",
   aurassure: "Aurassure University Clean Air Network",
+  airview: "Google AirView+",
 };
+
+// A provider OAQ adds before we name it here falls back to its id.
+function providerName(p: ProviderId): string {
+  return PROVIDER_NAMES[p] ?? p;
+}
 
 const BAND_LABELS: Record<NormalizedStation["band"], string> = {
   good: "Good",
@@ -111,7 +117,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
     `source: https://oaq.notf.in`,
     `mirror: ${siteUrl}`,
     `providers:`,
-    ...snap.providers.map((p) => `  - ${p}: ${PROVIDER_NAMES[p]}`),
+    ...snap.providers.map((p) => `  - ${p}: ${providerName(p)}`),
     "---",
     "",
     "# India Air Quality Leaderboard",
@@ -155,7 +161,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
   const foot = [
     "## Source",
     "",
-    `Data from CPCB, Airnet (CSTEP), and Aurassure via the OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
+    `Data from CPCB, Airnet (CSTEP), Aurassure, and Google AirView+ via the OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
     "",
     `This document is an open-source mirror. See ${siteUrl}/about.`,
     "",
@@ -178,7 +184,7 @@ export function renderStationMarkdown(s: NormalizedStation, generatedAt: string,
     `state: ${JSON.stringify(s.state)}`,
     `country: India`,
     `provider: ${s.provider}`,
-    `provider_name: ${JSON.stringify(PROVIDER_NAMES[s.provider])}`,
+    `provider_name: ${JSON.stringify(providerName(s.provider))}`,
     `lat: ${s.lat ?? "null"}`,
     `lon: ${s.lon ?? "null"}`,
     `aqi: ${s.aqi ?? "null"}`,
@@ -196,7 +202,7 @@ export function renderStationMarkdown(s: NormalizedStation, generatedAt: string,
       ? `Current AQI: **${s.aqi} (${bandLabel})** as of ${formatIst(generatedAt)}.`
       : `No AQI available as of ${formatIst(generatedAt)}.`,
     "",
-    `Located in ${s.city || "n/a"}${s.state ? `, ${s.state}` : ""}, India. Source: **${PROVIDER_NAMES[s.provider]}** via OAQ.`,
+    `Located in ${s.city || "n/a"}${s.state ? `, ${s.state}` : ""}, India. Source: **${providerName(s.provider)}** via OAQ.`,
     "",
     "## Pollutants",
     "",
@@ -222,7 +228,7 @@ export function renderStationMarkdown(s: NormalizedStation, generatedAt: string,
     "",
     "## Source",
     "",
-    `Data from ${PROVIDER_NAMES[s.provider]} via OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
+    `Data from ${providerName(s.provider)} via OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
     "",
     `Part of an open-source mirror. See ${siteUrl}/about.`,
     "",

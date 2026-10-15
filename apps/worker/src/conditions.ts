@@ -1,4 +1,4 @@
-import type { AirConditions, AirPollutants, Conditions, NearStation, Snapshot } from "./types";
+import type { AirConditions, AirPollutants, Conditions, NearStation, NormalizedStation, Snapshot } from "./types";
 import { findNearest } from "./near";
 import { getOpenMeteo } from "./openmeteo";
 import { computeAqi, aqiBand } from "./aqi";
@@ -9,6 +9,24 @@ import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
 import { ambientRisk, ambientMeaning, personaAlso, smokeLevel, PERSONA_LABEL } from "./score";
 import type { Persona } from "./score";
+
+// Stations within this many km of the nearest one count as equally near; among
+// them a CPCB reference monitor (full pollutant set) beats a low-cost sensor.
+const NEAR_TIE_KM = 2;
+
+/**
+ * Nearby first, then CPCB: take the nearest station with a reading, but if a
+ * CPCB station is also within NEAR_TIE_KM of it, use that CPCB station.
+ */
+export function pickStation(stations: NormalizedStation[], lat: number, lon: number): NearStation | undefined {
+  const withReading = stations.filter((s) => s.aqi != null);
+  const pool = withReading.length ? withReading : stations;
+  const ranked = findNearest(pool, lat, lon, pool.length);
+  const nearest = ranked[0];
+  if (!nearest || nearest.provider === "cpcb") return nearest;
+  const cpcb = ranked.find((s) => s.provider === "cpcb" && s.distance_km - nearest.distance_km <= NEAR_TIE_KM);
+  return cpcb ?? nearest;
+}
 
 // Beyond this, a ground station is too far to represent the query point, so we
 // prefer Open-Meteo's modelled PM (gap-fill) over a distant monitor.
@@ -59,12 +77,13 @@ export const DISCLAIMER =
   "Informational only, not for medical, emergency, or safety-critical decisions. " +
   "For official hazard warnings consult NDMA / IMD.";
 
-// Per-source credit lines. CPCB/Airnet/Aurassure reach us via the OAQ broker;
+// Per-source credit lines. CPCB/Airnet/Aurassure/AirView+ reach us via the OAQ broker;
 // Open-Meteo is CC-BY 4.0 (attribution mandatory).
 const SOURCE_CREDIT: Record<string, string> = {
   cpcb: "CPCB (Govt. of India) via OAQ",
   airnet: "Airnet / CSTEP via OAQ",
   aurassure: "Aurassure via OAQ",
+  airview: "Google AirView+ via OAQ",
   "open-meteo": "Open-Meteo (CC-BY 4.0)",
   sachet: "NDMA / IMD (SACHET)",
   firms: "NASA FIRMS",
@@ -92,15 +111,11 @@ export async function buildConditions(
   lon: number,
   fires: FiresSnapshot | null = null,
 ): Promise<Conditions> {
-  // Nearest station that actually has a reading, from ANY provider (CPCB,
-  // Airnet, Aurassure via OAQ). The very closest is often null, so don't stop
-  // there; fall back to overall nearest only if nothing has a reading.
-  let nearest: NearStation | undefined;
-  if (snapshot) {
-    const withReading = snapshot.stations.filter((s) => s.aqi != null);
-    const pool = withReading.length ? withReading : snapshot.stations;
-    [nearest] = findNearest(pool, lat, lon, 1);
-  }
+  // Nearest station that actually has a reading, from ANY provider via OAQ,
+  // preferring CPCB when one is about as near (pickStation). The very closest
+  // is often null, so don't stop there; fall back to overall nearest only if
+  // nothing has a reading.
+  const nearest = snapshot ? pickStation(snapshot.stations, lat, lon) : undefined;
 
   const [om, warnings] = await Promise.all([getOpenMeteo(lat, lon), getLocationAlerts(lat, lon)]);
 
