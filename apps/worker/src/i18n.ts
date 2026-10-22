@@ -1210,6 +1210,23 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "यह केवल जानकारी के लिए है, और यह चिकित्सीय सलाह नहीं है।",
     kn: "ಇದು ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ಮತ್ತು ಇದು ವೈದ್ಯಕೀಯ ಸಲಹೆಯಲ್ಲ.",
   },
+  // "Install app" button + iOS Add-to-Home-Screen guide (install.ts). Draft, pending
+  // native review. The quoted iOS labels follow iOS's own hi/kn UI wording.
+  "Install app": { hi: "ऐप इंस्टॉल करें", kn: "ಆ್ಯಪ್ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ" },
+  "Add mugilu to your Home Screen": {
+    hi: "mugilu को अपनी होम स्क्रीन पर जोड़ें",
+    kn: "mugilu ಅನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ",
+  },
+  "Tap the Share button (the square with an arrow) in Safari's toolbar.": {
+    hi: "Safari के टूलबार में शेयर करें बटन (तीर वाला चौकोर) पर टैप करें।",
+    kn: "Safari ಟೂಲ್‌ಬಾರ್‌ನಲ್ಲಿರುವ ಹಂಚಿಕೊಳ್ಳಿ ಬಟನ್ (ಬಾಣದ ಗುರುತಿನ ಚೌಕ) ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.",
+  },
+  "Scroll down and tap Add to Home Screen.": {
+    hi: "नीचे स्क्रॉल करें और होम स्क्रीन में जोड़ें पर टैप करें।",
+    kn: "ಕೆಳಗೆ ಸ್ಕ್ರಾಲ್ ಮಾಡಿ, ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.",
+  },
+  "Tap Add.": { hi: "जोड़ें पर टैप करें।", kn: "ಸೇರಿಸಿ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ." },
+  OK: { hi: "ठीक है", kn: "ಸರಿ" },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;
