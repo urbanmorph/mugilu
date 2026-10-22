@@ -18,15 +18,21 @@ export function faviconSvg(): Response {
   });
 }
 
-/** 180x180 PNG apple-touch icon (Apple ignores SVG here), rendered via workers-og. */
-export function appleIconPng(): Response {
+/** Square PNG app icon: the cloud on a full-bleed sky tile, rendered via workers-og.
+ *  180 = apple-touch-icon (Apple ignores SVG); 192/512 = manifest icons. `maskable`
+ *  shrinks the cloud into the central 80% safe zone so launcher masks (circle,
+ *  squircle) never crop it. */
+export function iconPng(size = 180, maskable = false): Response {
   // Satori is flex-only (no absolute positioning, no SVG backgrounds), so the
   // cloud is three overlapping circles, bottoms aligned, via negative margins.
+  // Geometry is designed at 180px (the original apple-touch-icon) and scaled.
+  const k = (size / 180) * (maskable ? 0.8 : 1);
+  const px = (n: number) => Math.round(n * k);
   const circle = (d: number, mr = 0) =>
-    `<div style="display:flex;width:${d}px;height:${d}px;border-radius:50%;background:#fff;margin-right:${mr}px;"></div>`;
+    `<div style="display:flex;width:${px(d)}px;height:${px(d)}px;border-radius:50%;background:#fff;margin-right:${px(mr)}px;"></div>`;
   const html =
-    `<div style="display:flex;width:180px;height:180px;background:#0284c7;align-items:flex-end;justify-content:center;padding-bottom:50px;">` +
+    `<div style="display:flex;width:${size}px;height:${size}px;background:#0284c7;align-items:flex-end;justify-content:center;padding-bottom:${Math.round((size - px(72)) / 2 - px(4))}px;">` +
     `<div style="display:flex;align-items:flex-end;">${circle(52, -20)}${circle(72, -20)}${circle(44)}</div>` +
     `</div>`;
-  return new ImageResponse(html, { width: 180, height: 180, format: "png" });
+  return new ImageResponse(html, { width: size, height: size, format: "png" });
 }

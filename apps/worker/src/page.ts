@@ -9,6 +9,7 @@ import { RISK_COLOR, BAND_COLOR } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
+import { INSTALL_CSS, INSTALL_HEAD, INSTALL_JS, installButton } from "./install";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().
@@ -294,6 +295,7 @@ function shell(
 <meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+${INSTALL_HEAD}
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 ${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
@@ -310,16 +312,17 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}"><meta property=
 ${ogImage ? `<meta name="twitter:image" content="${esc(ogImage)}">` : ""}
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 ${CF_BEACON_TOKEN && !noBeacon ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${CF_BEACON_TOKEN}"}'></script>` : ""}
-<style>${BASE_CSS}${css}${langCss(lang)}</style>
+<style>${BASE_CSS}${bare ? "" : INSTALL_CSS}${css}${langCss(lang)}</style>
 </head>
 <body>
 ${
   bare
     ? body
-    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a></header>
+    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a>${installButton(lang)}</header>
 <main>${body}</main>
 <footer class="foot">${footerNav(lang)}</footer>
-${canonical ? langSwitcher(canonical, lang) : ""}`
+${canonical ? langSwitcher(canonical, lang) : ""}
+<script>${INSTALL_JS}</script>`
 }
 <script>
 (function(){${relFn}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
