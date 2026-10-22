@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { INSTALL_JS, webManifest } from "../src/install";
-import { renderHome, renderKioskPage, renderEmbed, renderAbout } from "../src/page";
+import { renderHome, renderKioskPage, renderEmbed, renderAbout, renderConditionsPage } from "../src/page";
 import type { Conditions } from "../src/types";
 
 // --- the client script, run against a fake browser -------------------------------
@@ -142,6 +143,36 @@ test("webManifest: installable fields, 192 + 512 'any' icons and a separate mask
   assert.equal(new Set(m.icons.map((i) => i.src)).size, 3, "maskable is its own file");
 });
 
+/** Pixel size of a WebP file (lossy VP8, lossless VP8L or extended VP8X header). */
+function webpSize(b: Buffer): { width: number; height: number } {
+  assert.equal(b.toString("ascii", 0, 4), "RIFF");
+  assert.equal(b.toString("ascii", 8, 12), "WEBP");
+  const chunk = b.toString("ascii", 12, 16);
+  if (chunk === "VP8X") return { width: b.readUIntLE(24, 3) + 1, height: b.readUIntLE(27, 3) + 1 };
+  if (chunk === "VP8L") {
+    const bits = b.readUInt32LE(21);
+    return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+  }
+  assert.equal(chunk, "VP8 ");
+  return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff };
+}
+
+test("webManifest: a narrow and a wide screenshot, files present, declared sizes = real pixels", () => {
+  const shots = webManifest().screenshots;
+  assert.deepEqual(shots.map((s) => s.form_factor).sort(), ["narrow", "wide"]);
+  for (const s of shots) {
+    assert.equal(s.type, "image/webp");
+    assert.ok(s.label.length > 10);
+    const file = readFileSync(new URL(`../public${s.src}`, import.meta.url));
+    assert.ok(file.length < 300_000, `${s.src} is ${file.length} bytes`);
+    const { width, height } = webpSize(file);
+    assert.equal(s.sizes, `${width}x${height}`);
+    for (const d of [width, height]) assert.ok(d >= 320 && d <= 3840);
+    assert.ok(Math.max(width, height) / Math.min(width, height) <= 2.3);
+    assert.equal(width > height, s.form_factor === "wide");
+  }
+});
+
 // --- page wiring ------------------------------------------------------------------
 
 function cond(): Conditions {
@@ -182,4 +213,50 @@ test("kiosk + embed: no install button (kiosk keeps the manifest link)", () => {
   const embed = renderEmbed(cond(), "everyone", "https://mugilu.live");
   assert.doesNotMatch(embed, /id="install-app"/);
   assert.ok(!embed.includes(INSTALL_JS));
+});
+
+// --- notched phones: viewport-fit=cover + safe-area padding on the edge elements ---
+
+/** All declarations of every `selector{...}` rule in the page's CSS, one string per rule. */
+function rules(html: string, selector: string): string[] {
+  const re = new RegExp(`(?:^|[}\\s])${selector.replace(/\./g, "\\.")}\\{([^}]*)\\}`, "g");
+  return [...html.matchAll(re)].map((m) => m[1]);
+}
+
+test("pages: every page, language, kiosk and embed opt into viewport-fit=cover", () => {
+  const pages = [
+    renderHome(),
+    renderHome(undefined, undefined, undefined, "hi"),
+    renderHome(undefined, undefined, undefined, "kn"),
+    renderAbout(),
+    renderConditionsPage(cond()),
+    renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>"),
+    renderEmbed(cond(), "everyone", "https://mugilu.live"),
+  ];
+  for (const html of pages) {
+    const vp = html.match(/<meta name="viewport" content="([^"]*)">/g);
+    assert.equal(vp?.length, 1);
+    assert.match(vp![0], /width=device-width/);
+    assert.match(vp![0], /viewport-fit=cover/);
+  }
+});
+
+test("pages: header clears the top/side insets, the page end clears the bottom one", () => {
+  for (const html of [renderHome(), renderHome(undefined, undefined, undefined, "kn"), renderAbout()]) {
+    const bar = rules(html, ".bar").join(";");
+    for (const side of ["top", "left", "right"]) assert.match(bar, new RegExp(`env\\(safe-area-inset-${side}\\)`));
+    assert.doesNotMatch(bar, /safe-area-inset-bottom/);
+    assert.match(rules(html, "body").join(";"), /padding-bottom:env\(safe-area-inset-bottom\)/);
+  }
+});
+
+test("kiosk + embed: the full-bleed frame/card is padded on all four sides, landscape and portrait", () => {
+  const kiosk = rules(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>"), ".k");
+  const embed = rules(renderEmbed(cond(), "everyone", "https://mugilu.live"), "body");
+  assert.equal(kiosk.length, 2, "landscape rule + portrait override");
+  for (const rule of [...kiosk, ...embed.filter((r) => r.includes("padding"))]) {
+    for (const side of ["top", "right", "bottom", "left"])
+      assert.match(rule, new RegExp(`env\\(safe-area-inset-${side}\\)`));
+  }
+  assert.ok(embed.some((r) => r.includes("safe-area")));
 });
