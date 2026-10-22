@@ -10,6 +10,11 @@ routes = [
   { pattern = "www.mugilu.live", custom_domain = true },
 ]
 
+# Static files (the manifest's install-dialog screenshots). A request matching a
+# file is served from here with its content type; everything else reaches the worker.
+[assets]
+directory = "./public"
+
 # Crons (UTC): ":05 hourly" = air refresh + SACHET warnings poll;
 # ":05 every 4h" = national conditions grid (fits Open-Meteo's free quota);
 # "20:30 daily" (02:00 IST) = provider hierarchy refresh.

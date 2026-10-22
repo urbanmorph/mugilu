@@ -194,12 +194,23 @@ const GH_MARK =
 const UM_ICON =
   "data:image/webp;base64,UklGRoQDAABXRUJQVlA4WAoAAAAQAAAAQgAASgAAQUxQSGABAAABkJNtW6U5rwQcLBIQsEk+CSMBCSOBLu0vAQcZCZ+DIIEuZai2fXPiTJkiIiYAAAL/HRD4b8FP/lMx2N1RCwMal3OvzH/u4xPru1yZrXtYZfsWV+F2gd0bRO4XuV/kfp77OR4gHSBwP1sOELmf4QHCCfIBHA8QTqAn4AHsCeQE/gThvzgPfCXg2y4KqSS870KgQsH3xaTmkCoJ+FjAD7lxVxjx9mOetKCWYWsMwNePWaYpVSiINT4GeHufUtAcawpbaiwvC0x52q4aBXcDyeyn+DbTkA20iWGKaUOsMcKkVR50SgM9TFrk6oE20MPoEhnd0kIP3GUB3wdtYTSwcZpioG1iFsDcOseNwN1EqgCAXDIsYKy2kTk4/D0oYbBJHX/rI4OyGQVX+sgwpjiMd2WR4jDTpiWyw1zzLKAG0+8yK2BFq1PUYlHRYSpY2MUyoETB6tcrNaXXhU2deIF4cTg/VlA4IP4BAAAwDwCdASpDAEsAPmEqkEYkIiGhLhLpIIAMCWgAxy4m3X55/Wfx452bgrvdh4X5LpYeJF0gPMB+wHrTehb0AP2K6zf0AP1G9MH9u/go/cT0gMwl/AD9KwRtq39DJthRE7/H373TUAJXNuytPYhPi8MfLHkJV50C4PGrb5fSD4WgzSjQAPh3RT0GeeeTA4yz+jQX+ee18m/jZVpp8lpybn+Tp/c4H/9Dg1zVx+/8YsvIDz27eD4nJgnR/9mGT7GBUr+atMN5idp9vfkv/dxusODKkUfkm7dc9OORlMEkdLOWb95Mv6Sr/FT3ky/pKm868ItysJf5pVPbP2/zTP/+tG4+lPY+QR2MaFA5FKAhAphAgPngo3P448Pg3dlyT5sgQ/DC2XOncFEuTYcuTY8vnDQY0Z4F1AgRwfuAqdKLE6QHZgBK6Xw5g1byAH3cLsY1KMv/d542Q73UdTBEWLf3/Vj9Q4amKbTs1XoUXRzBWE+Atwe+00idWo9294h0q/eZjD5I1GANDkIne1SB0Qb+NiQO8cRp1I4Hxjf4gQaeaqez9KoIlJhW4Bvg1IOxIx0IuWGi3qRnpMMGvfIzDdWPHD0t8m8/yhT42IhbFj3rfFDvvfGNMr/2Mo/BWrIvf9NccHkg6U8jqDPvuT7cTvc7S2vkJcs8etluA1LbC+AAAAA=";
 
+// Notched phones: pages opt into the full screen (viewport-fit=cover) and pad
+// whatever meets a screen edge by the notch/home-bar inset. env() is 0 on other
+// screens, so the "+ inset" leaves their layout unchanged.
+const VIEWPORT = `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`;
+
+/** `padding` of `y` (top/bottom) and `x` (left/right), each plus that side's safe-area inset. */
+function safePad(y: string, x: string): string {
+  const side = (s: string, v: string) => `calc(${v} + env(safe-area-inset-${s}))`;
+  return `padding:${side("top", y)} ${side("right", x)} ${side("bottom", y)} ${side("left", x)}`;
+}
+
 const BASE_CSS = `
 :root{--sky:#0284c7;--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--warn-text:#b45309;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--hair:color-mix(in srgb,var(--ink) 12%,transparent)}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937;--warn-text:#fbbf24}}
 *{box-sizing:border-box}html,body{margin:0}
-body{font:16px/1.5 var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
-.bar{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+body{font:16px/1.5 var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+.bar{display:flex;align-items:center;padding:calc(14px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 14px calc(18px + env(safe-area-inset-left));border-bottom:1px solid var(--line)}
 .brand{font-weight:700;letter-spacing:-.02em;color:var(--ink);text-decoration:none;font-size:1.1rem}
 main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .foot{max-width:560px;margin:0 auto;padding:18px;color:var(--muted);font-size:.78rem;border-top:1px solid var(--line)}
@@ -291,7 +302,7 @@ function shell(
 <html lang="${lang}">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+${VIEWPORT}
 <meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -807,7 +818,7 @@ const EMBED_CSS = `
 *{box-sizing:border-box}html,body{margin:0}
 :root{--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937}}
-body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;padding:8px}
+body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad("8px", "8px")}}
 .card{display:block;text-decoration:none;color:var(--ink);background:linear-gradient(160deg,color-mix(in srgb,var(--cond) 20%,var(--card)),var(--card) 72%);border:1px solid color-mix(in srgb,var(--cond) 30%,var(--line));border-radius:16px;padding:16px 18px;max-width:460px;margin:0 auto}
 .etop{display:flex;justify-content:space-between;align-items:center;margin:0 0 .6rem}
 .eplace{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
@@ -838,7 +849,7 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;padding:8
 const KIOSK_CSS = `
 .bar,.foot{display:none}
 html,body{height:100%;overflow:hidden;background:#080d18}
-.k{position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;padding:4.4vmin 4.8vmin;color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
+.k{position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
 .k::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,var(--cond),transparent 62%);opacity:.16;pointer-events:none}
 .k>*{position:relative;z-index:1}
 .ktop{display:flex;justify-content:space-between;align-items:flex-start;gap:3vmin}
@@ -871,7 +882,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .kqr svg{width:11vmin;height:11vmin;background:#fff;border-radius:1vmin;padding:.7vmin}
 .kqrl{font-size:1.9vmin;line-height:1.2;color:#8b97a8;text-align:right}
 @media (orientation:portrait){
-  .k{gap:2.6vmin;padding:5.5vmin 5vmin}
+  .k{gap:2.6vmin;${safePad("5.5vmin", "5vmin")}}
   .kname{font-size:7vmin}.kclock #clk{font-size:6vmin}
   .khead{font-size:10vmin}.ksay{font-size:4.6vmin;max-width:24ch}
   .ktiles{flex-wrap:wrap;gap:1.6vmin}.kt{flex:1 1 42%;padding:1.8vmin 2vmin}.kt-n{font-size:6vmin}
@@ -1108,7 +1119,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{--cond:${condColor}}</style></head><body>
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{--cond:${condColor}}</style></head><body>
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>

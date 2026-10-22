@@ -24,6 +24,13 @@ export const ICONS = {
   "/icon-maskable-512.png": { size: 512, maskable: true },
 } as const;
 
+/** Install-dialog screenshots of the home page (static files in public/, served by
+ *  Workers Static Assets). Only the browser's install UI fetches them. */
+const SCREENSHOTS = {
+  "/screenshot-narrow.webp": { sizes: "824x1830", form_factor: "narrow" },
+  "/screenshot-wide.webp": { sizes: "1280x800", form_factor: "wide" },
+} as const;
+
 export function webManifest() {
   return {
     name: "mugilu: India's open sky",
@@ -42,6 +49,12 @@ export function webManifest() {
       sizes: `${size}x${size}`,
       type: "image/png",
       purpose: maskable ? "maskable" : "any",
+    })),
+    screenshots: Object.entries(SCREENSHOTS).map(([src, shot]) => ({
+      src,
+      ...shot,
+      type: "image/webp",
+      label: "Look up the sky over any place in India",
     })),
   };
 }
