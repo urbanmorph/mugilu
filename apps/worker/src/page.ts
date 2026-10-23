@@ -11,6 +11,7 @@ import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 import { INSTALL_CSS, INSTALL_HEAD, INSTALL_JS, installButton } from "./install";
 import { OFFLINE_NOTE_ID, SW_REGISTER } from "./sw";
+import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().
@@ -539,6 +540,8 @@ export function renderConditionsPage(
   persona: Persona = "everyone",
   canonical?: string,
   lang: Lang = "en",
+  /** mugilu's VAPID public key, when alerts are set up: shows the "alert me" box. */
+  alertsKey?: string,
 ): string {
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk);
@@ -733,6 +736,7 @@ export function renderConditionsPage(
       <nav class="who" aria-label="${esc(t("Who is this for", lang))}">${pills}</nav>
     </section>
     <dl class="strata">${strata.join("")}</dl>
+    ${alertsKey ? renderAlertsBox(alertsKey, lang) : ""}
     <footer>
       <p class="attr">${esc(lang === "en" ? c.attribution : c.attribution.replace(/^Sources:/, `${t("Sources", lang)}:`))}</p>
       <p class="disc">${esc(t(c.disclaimer, lang))}</p>
@@ -742,7 +746,7 @@ export function renderConditionsPage(
     </footer>
   </article>`;
 
-  const css = CONDITIONS_CSS + `\n:root{--cond:${condColor}}`;
+  const css = CONDITIONS_CSS + (alertsKey ? ALERTS_CSS : "") + `\n:root{--cond:${condColor}}`;
   const desc = `${placeName}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
@@ -781,7 +785,7 @@ export function renderConditionsPage(
     : undefined;
   return shell(
     `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
-    body + PLACE_RECORDER,
+    body + PLACE_RECORDER + (alertsKey ? `<script>${ALERTS_JS}</script>` : ""),
     css,
     desc,
     canonical,
@@ -1361,7 +1365,7 @@ export function renderTerms(lang: Lang = "en"): string {
   <p class="alead2">${t("Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.", lang)}</p>
 
   <h2 class="ah">${t("Privacy", lang)}</h2>
-  <p class="amuted">${privacy}</p>
+  <p class="amuted">${privacy} ${t("If you turn on alerts for a place, mugilu keeps that place (to about 1 km) and your browser's push address, only to send you official warnings for it, and deletes them when you turn alerts off.", lang)}</p>
 
   <p class="adisc">${commonsDisc}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;

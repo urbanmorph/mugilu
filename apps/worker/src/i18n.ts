@@ -1240,6 +1240,43 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       kn: "mugilu ಈಗಿನ ಆಕಾಶವನ್ನು ತೋರಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಇದಕ್ಕೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಬೇಕು. ಈ ಸಾಧನದಲ್ಲಿ ಹಿಂದೆ ತೆರೆದ ಸ್ಥಳಗಳ ಕೊನೆಯ ರೀಡಿಂಗ್ ಉಳಿದಿರುತ್ತದೆ.",
     },
   "See your places": { hi: "अपनी जगहें देखें", kn: "ನಿಮ್ಮ ಸ್ಥಳಗಳನ್ನು ನೋಡಿ" },
+  // Opt-in alerts (alerts.ts, alerts-ui.ts): drafted here, native review pending.
+  "Official warning for X, until Y.": { hi: "X के लिए आधिकारिक चेतावनी, Y तक।", kn: "X ಗೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, Y ವರೆಗೆ." },
+  "Official warning for X.": { hi: "X के लिए आधिकारिक चेतावनी।", kn: "X ಗೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ." },
+  "Official warnings for this place": { hi: "इस जगह के लिए आधिकारिक चेतावनियाँ", kn: "ಈ ಸ್ಥಳಕ್ಕೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು" },
+  "Alert me about official warnings here": {
+    hi: "यहाँ की आधिकारिक चेतावनियों के बारे में मुझे सूचित करें",
+    kn: "ಇಲ್ಲಿನ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳ ಬಗ್ಗೆ ನನಗೆ ತಿಳಿಸಿ",
+  },
+  "Alerts are on for this place.": { hi: "इस जगह के लिए अलर्ट चालू हैं।", kn: "ಈ ಸ್ಥಳಕ್ಕೆ ಅಲರ್ಟ್‌ಗಳು ಆನ್ ಆಗಿವೆ." },
+  "Turn off": { hi: "बंद करें", kn: "ಆಫ್ ಮಾಡಿ" },
+  "Notifications are blocked for mugilu. Allow them in your browser's site settings, then try again.": {
+    hi: "mugilu के लिए सूचनाएँ बंद हैं। अपने ब्राउज़र की साइट सेटिंग में इन्हें अनुमति दें, फिर दोबारा कोशिश करें।",
+    kn: "mugilu ಗೆ ಅಧಿಸೂಚನೆಗಳನ್ನು ತಡೆಯಲಾಗಿದೆ. ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಸೈಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅನುಮತಿಸಿ, ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  },
+  "Alerts are on for 12 places already. Turn one off first.": {
+    hi: "12 जगहों के लिए अलर्ट पहले से चालू हैं। पहले किसी एक को बंद करें।",
+    kn: "ಈಗಾಗಲೇ 12 ಸ್ಥಳಗಳಿಗೆ ಅಲರ್ಟ್‌ಗಳು ಆನ್ ಆಗಿವೆ. ಮೊದಲು ಒಂದನ್ನು ಆಫ್ ಮಾಡಿ.",
+  },
+  "Alerts could not be turned on. Try again.": {
+    hi: "अलर्ट चालू नहीं हो सके। दोबारा कोशिश करें।",
+    kn: "ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಲು ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  },
+  "On iPhone and iPad, add mugilu to your Home Screen first (Share, then Add to Home Screen), open it from there, and turn alerts on here.":
+    {
+      hi: "iPhone और iPad पर, पहले mugilu को अपनी होम स्क्रीन पर जोड़ें (शेयर करें, फिर होम स्क्रीन में जोड़ें), उसे वहीं से खोलें, और यहाँ अलर्ट चालू करें।",
+      kn: "iPhone ಮತ್ತು iPad ನಲ್ಲಿ, ಮೊದಲು mugilu ಅನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ (ಹಂಚಿಕೊಳ್ಳಿ, ನಂತರ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ), ಅಲ್ಲಿಂದ ತೆರೆಯಿರಿ, ಮತ್ತು ಇಲ್ಲಿ ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿ.",
+    },
+  "Opt-in. When you turn alerts on, mugilu keeps this place (to about 1 km) and your browser's push address, only to send you official NDMA/IMD warnings for it, and deletes them when you turn alerts off.":
+    {
+      hi: "आपकी मर्ज़ी से। अलर्ट चालू करने पर mugilu यह जगह (लगभग 1 किमी तक) और आपके ब्राउज़र का पुश पता रखता है, केवल इस जगह की आधिकारिक NDMA/IMD चेतावनियाँ भेजने के लिए, और अलर्ट बंद करने पर इन्हें मिटा देता है।",
+      kn: "ನಿಮ್ಮ ಆಯ್ಕೆ. ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿದಾಗ, mugilu ಈ ಸ್ಥಳವನ್ನು (ಸುಮಾರು 1 ಕಿಮೀ ವರೆಗೆ) ಮತ್ತು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಪುಶ್ ವಿಳಾಸವನ್ನು ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ, ಈ ಸ್ಥಳದ ಅಧಿಕೃತ NDMA/IMD ಎಚ್ಚರಿಕೆಗಳನ್ನು ಕಳುಹಿಸಲು ಮಾತ್ರ, ಮತ್ತು ಅಲರ್ಟ್‌ಗಳನ್ನು ಆಫ್ ಮಾಡಿದಾಗ ಅವುಗಳನ್ನು ಅಳಿಸುತ್ತದೆ.",
+    },
+  "If you turn on alerts for a place, mugilu keeps that place (to about 1 km) and your browser's push address, only to send you official warnings for it, and deletes them when you turn alerts off.":
+    {
+      hi: "अगर आप किसी जगह के लिए अलर्ट चालू करते हैं, तो mugilu वह जगह (लगभग 1 किमी तक) और आपके ब्राउज़र का पुश पता रखता है, केवल उस जगह की आधिकारिक चेतावनियाँ भेजने के लिए, और अलर्ट बंद करने पर इन्हें मिटा देता है।",
+      kn: "ನೀವು ಒಂದು ಸ್ಥಳಕ್ಕೆ ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿದರೆ, mugilu ಆ ಸ್ಥಳವನ್ನು (ಸುಮಾರು 1 ಕಿಮೀ ವರೆಗೆ) ಮತ್ತು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಪುಶ್ ವಿಳಾಸವನ್ನು ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ, ಆ ಸ್ಥಳದ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಕಳುಹಿಸಲು ಮಾತ್ರ, ಮತ್ತು ಅಲರ್ಟ್‌ಗಳನ್ನು ಆಫ್ ಮಾಡಿದಾಗ ಅವುಗಳನ್ನು ಅಳಿಸುತ್ತದೆ.",
+    },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;

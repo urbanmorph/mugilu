@@ -1,0 +1,54 @@
+// The "alert me" box on a place's page (alerts.ts holds the server side). Its
+// messages are rendered here, translated and hidden; the script only shows the
+// right ones. Hidden until the script runs: shown where the browser can receive
+// alerts, or on an iPhone or iPad not yet installed (Safari allows web push only
+// to an app on the Home Screen), with the steps to install first.
+
+import { esc } from "./html";
+import { t, type Lang } from "./i18n";
+
+export function renderAlertsBox(publicKey: string, lang: Lang): string {
+  return `<section class="alerts" id="alerts" hidden data-key="${esc(publicKey)}" data-lang="${lang}">
+  <h2 class="alerts-h">${t("Official warnings for this place", lang)}</h2>
+  <button type="button" class="alerts-btn" id="alerts-on">${t("Alert me about official warnings here", lang)}</button>
+  <p id="alerts-state" hidden>${t("Alerts are on for this place.", lang)} <button type="button" class="alerts-link" id="alerts-off">${t("Turn off", lang)}</button></p>
+  <p class="alerts-msg" id="alerts-denied" hidden>${t("Notifications are blocked for mugilu. Allow them in your browser's site settings, then try again.", lang)}</p>
+  <p class="alerts-msg" id="alerts-full" hidden>${t("Alerts are on for 12 places already. Turn one off first.", lang)}</p>
+  <p class="alerts-msg" id="alerts-failed" hidden>${t("Alerts could not be turned on. Try again.", lang)}</p>
+  <p class="alerts-msg" id="alerts-ios" hidden>${t("On iPhone and iPad, add mugilu to your Home Screen first (Share, then Add to Home Screen), open it from there, and turn alerts on here.", lang)}</p>
+  <p class="alerts-note">${t("Opt-in. When you turn alerts on, mugilu keeps this place (to about 1 km) and your browser's push address, only to send you official NDMA/IMD warnings for it, and deletes them when you turn alerts off.", lang)}</p>
+</section>`;
+}
+
+export const ALERTS_CSS = `.alerts{margin:1.6rem 0 0;padding:1rem 1.1rem;border:1px solid var(--line,rgba(127,127,127,.25));border-radius:12px}
+.alerts-h{font-size:1rem;margin:0 0 .6rem}
+.alerts-btn{font:inherit;padding:.55rem .9rem;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer}
+.alerts-link{font:inherit;background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer}
+.alerts-msg{margin:.6rem 0 0}
+.alerts-note{color:var(--muted);font-size:.85rem;margin:.7rem 0 0}`;
+
+export const ALERTS_JS = `(function(){
+var box=document.getElementById('alerts'),h=document.querySelector('h1.loc');if(!box||!h)return;
+var $=function(id){return document.getElementById(id)},ll=(h.getAttribute('data-ll')||'').split(','),lat=+ll[0],lon=+ll[1];
+var here=lat.toFixed(2)+','+lon.toFixed(2),K='mugilu:alerts';
+var list=function(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}};
+var keep=function(L){try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}};
+var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+var installed=navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+if(!('serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window)){
+if(ios&&!installed){box.hidden=false;$('alerts-on').hidden=true;$('alerts-ios').hidden=false}return}
+box.hidden=false;
+var say=function(id){['alerts-denied','alerts-full','alerts-failed'].forEach(function(m){$(m).hidden=m!==id})};
+var show=function(){var on=list().indexOf(here)>=0;$('alerts-on').hidden=on;$('alerts-state').hidden=!on};
+var post=function(path,body){return fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(r){if(!r.ok)throw r.status})};
+var key=function(s){var b=atob(s.replace(/-/g,'+').replace(/_/g,'/')),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
+$('alerts-on').addEventListener('click',function(){say();
+return Notification.requestPermission().then(function(p){if(p!=='granted'){say('alerts-denied');return}
+return navigator.serviceWorker.ready.then(function(reg){return reg.pushManager.getSubscription().then(function(s){return s||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key(box.getAttribute('data-key'))})})})
+.then(function(s){return post('/push/subscribe',{subscription:s.toJSON(),lat:lat,lon:lon,label:h.textContent.trim(),lang:box.getAttribute('data-lang')})})
+.then(function(){var L=list();if(L.indexOf(here)<0)L.push(here);keep(L);show()})}).catch(function(e){say(e===409?'alerts-full':'alerts-failed')})});
+$('alerts-off').addEventListener('click',function(){say();var L=list().filter(function(k){return k!==here});
+return navigator.serviceWorker.ready.then(function(reg){return reg.pushManager.getSubscription()}).then(function(s){if(!s)return;
+return post('/push/unsubscribe',L.length?{endpoint:s.endpoint,lat:lat,lon:lon}:{endpoint:s.endpoint}).then(function(){if(!L.length)return s.unsubscribe()})})
+.then(function(){keep(L);show()}).catch(function(){say('alerts-failed')})});
+show()})();`;

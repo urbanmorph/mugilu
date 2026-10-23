@@ -65,12 +65,23 @@ function makeWorker() {
     },
   };
   const handlers: Record<string, Handler> = {};
+  // Notifications shown, windows open (url + whether focused) and windows opened.
+  const shown: { title: string; options: Record<string, unknown> }[] = [];
+  const windows: { url: string; focused: boolean; focus: () => Promise<void> }[] = [];
+  const opened: string[] = [];
   const self = {
     location: new URL(`${ORIGIN}/sw.js`),
     addEventListener: (type: string, fn: Handler) => (handlers[type] = fn),
     skipWaiting: async () => {},
-    clients: { claim: async () => {} },
-    registration: { navigationPreload: { enable: async () => {} } },
+    clients: {
+      claim: async () => {},
+      matchAll: async () => windows,
+      openWindow: async (url: string) => void opened.push(url),
+    },
+    registration: {
+      navigationPreload: { enable: async () => {} },
+      showNotification: async (title: string, options: Record<string, unknown>) => void shown.push({ title, options }),
+    },
   };
   runInNewContext(SW_JS, { self, caches, fetch: net, Request: WorkerRequest, Response, URL, Promise });
 
@@ -97,9 +108,15 @@ function makeWorker() {
     return res;
   }
   const page = (path: string) => request(path, { mode: "navigate" });
+  /** Dispatches an event that the worker keeps alive with waitUntil. */
+  async function dispatch(type: string, event: Record<string, unknown>) {
+    let done: Promise<unknown> = Promise.resolve();
+    handlers[type]({ ...event, waitUntil: (p: Promise<unknown>) => (done = p) });
+    await done;
+  }
   const saved = () =>
     [...(stores.get("mugilu-readings")?.keys() ?? [])].map((u) => new URL(u).pathname + new URL(u).search);
-  return { state, stores, saved, lifecycle, request, page };
+  return { state, stores, saved, lifecycle, request, page, dispatch, shown, windows, opened };
 }
 
 let w: ReturnType<typeof makeWorker>;
@@ -231,4 +248,50 @@ test("offline, the real page's note is the one the worker shows, with the readin
   assert.ok(shown, "the note is shown");
   assert.match(shown[1], /13:35 IST · 23 Oct/);
   assert.match(shown[1], /कनेक्शन नहीं है/);
+});
+
+// --- alerts ------------------------------------------------------------------------
+
+const pushOf = (message: unknown) => ({ data: { json: () => message } });
+
+test("an alert arriving shows as a notification, one per warning, that opens the place", async () => {
+  const message = {
+    title: "Lightning · Severe",
+    body: "Official warning for Kavali",
+    url: "/c/14.91,79.99",
+    tag: "warning-1",
+  };
+  await w.dispatch("push", pushOf(message));
+  assert.equal(w.shown.length, 1);
+  const { title, options } = w.shown[0];
+  assert.equal(title, "Lightning · Severe");
+  assert.equal(options.body, "Official warning for Kavali");
+  assert.equal(options.tag, "warning-1");
+  // Made inside the sandbox, so compared by value.
+  assert.equal(JSON.stringify(options.data), JSON.stringify({ url: "/c/14.91,79.99" }));
+
+  const notification = { data: options.data, close: () => {} };
+  await w.dispatch("notificationclick", { notification });
+  assert.deepEqual(w.opened, [`${ORIGIN}/c/14.91,79.99`]);
+});
+
+test("tapping an alert focuses the place's page when it is already open", async () => {
+  let focused = false;
+  w.windows.push({ url: `${ORIGIN}/c/14.91,79.99`, focused: false, focus: async () => void (focused = true) });
+  await w.dispatch("notificationclick", { notification: { data: { url: "/c/14.91,79.99" }, close: () => {} } });
+  assert.ok(focused);
+  assert.deepEqual(w.opened, []);
+});
+
+test("an alert that cannot be read still shows, and a link to another site opens mugilu instead", async () => {
+  await w.dispatch("push", {
+    data: {
+      json: () => {
+        throw new SyntaxError("bad");
+      },
+    },
+  });
+  assert.equal(w.shown[0].title, "mugilu");
+  await w.dispatch("notificationclick", { notification: { data: { url: "https://evil.example/" }, close: () => {} } });
+  assert.deepEqual(w.opened, [`${ORIGIN}/`]);
 });
