@@ -27,15 +27,17 @@ function shortTime(t: string): string {
   return m ? `${m[1]}, ${m[2]}` : t;
 }
 
-/** Official warnings active at a point, via SACHET's location-wise endpoint. */
-export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40): Promise<Warning[]> {
+/** Official warnings active at a point, via SACHET's location-wise endpoint. The
+ *  2.5 s default suits a page render; the hourly alerts check allows longer,
+ *  since it shares the cron's few open connections with the other jobs. */
+export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40, timeoutMs = 2500): Promise<Warning[]> {
   const url = `${LOCATION_ALERTS_URL}?lat=${lat}&long=${lon}&radius=${radiusKm}`;
   try {
     const res = await fetch(url, {
       cf: { cacheTtl: 300, cacheEverything: true },
       // Tight bound on the /c cold path: SACHET is a slow gov API, and warnings
       // are an enrichment, don't let it hold up the whole page.
-      signal: AbortSignal.timeout(2500),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) return [];
     const body = (await res.json()) as { alerts?: RawAlert[] };

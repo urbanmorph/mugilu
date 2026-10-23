@@ -6,6 +6,7 @@ import { renderStationOg, renderConditionsOg, renderHomeOg } from "./og";
 import { faviconSvg, iconPng } from "./icon";
 import { ICONS, MANIFEST_PATH, webManifest } from "./install";
 import { SW_PATH, serviceWorker } from "./sw";
+import { handleSubscribe, handleUnsubscribe, runAlerts } from "./alerts";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
 import {
@@ -56,6 +57,9 @@ export interface Env {
   METRICS: D1Database;
   /** Anonymous behaviour event stream (Analytics Engine). No IP, no user id. */
   EVENTS?: AnalyticsEngineDataset;
+  /** Opt-in alerts (alerts.ts): mugilu's VAPID key pair. Both set turns alerts on; the private key is a secret (JWK). */
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
 }
 
 /** Standard cached, CORS-open API response for a given body + content-type.
@@ -103,6 +107,9 @@ async function edgeCache(
   ctx.waitUntil(cache.put(req, out.clone()));
   return out;
 }
+
+/** Whether opt-in alerts are set up (both VAPID keys present). */
+const alertsOn = (env: Env) => !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY);
 
 /** 400 with a JSON `{ error }` body (CORS-open), matching the API error shape. */
 /** The one message for a coordinate that fails parseLatLon (bad, or outside India). */
@@ -198,6 +205,9 @@ export default {
     if (url.pathname === "/apple-touch-icon.png") return iconPng();
     // PWA: web app manifest + its PNG icons (install.ts). Deterministic, so edge-cached.
     if (url.pathname === SW_PATH) return serviceWorker();
+    // Opt-in alerts for official warnings (alerts.ts).
+    if (url.pathname === "/push/subscribe" && alertsOn(env)) return handleSubscribe(req, env);
+    if (url.pathname === "/push/unsubscribe" && alertsOn(env)) return handleUnsubscribe(req, env);
     if (url.pathname === MANIFEST_PATH) {
       return edgeCache(req, ctx, () => cachedResponse(JSON.stringify(webManifest()), "application/manifest+json"));
     }
@@ -397,7 +407,10 @@ export default {
           "text/html; charset=utf-8",
         );
       }
-      return cachedResponse(renderConditionsPage(conditions, persona, canonical, lang), "text/html; charset=utf-8");
+      return cachedResponse(
+        renderConditionsPage(conditions, persona, canonical, lang, alertsOn(env) ? env.VAPID_PUBLIC_KEY : undefined),
+        "text/html; charset=utf-8",
+      );
     }
 
     // Conditions at a coordinate: /c/{lat},{lon}.{json,md,png}
@@ -584,6 +597,16 @@ export default {
           (e) => console.error("[warnings] failed:", e),
         ),
       );
+      if (alertsOn(env))
+        ctx.waitUntil(
+          runAlerts(env).then(
+            (r) =>
+              console.log(
+                `[alerts] ${r.points} places checked, ${r.found} warnings over them, ${r.sent} sent, ${r.failed} to retry, ${r.gone} gone`,
+              ),
+            (e) => console.error("[alerts] failed:", e),
+          ),
+        );
       ctx.waitUntil(
         collectFires(env).then(
           (r) => console.log(`[firms] ${r.count} detections`),

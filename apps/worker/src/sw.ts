@@ -9,6 +9,8 @@
 //     rendered with the reading's time) is shown;
 //   - any other page with no connection gets a small offline page, as a 503.
 // Data (.json/.md/.png), the API, POSTs and other sites go straight to the network.
+// It also shows opt-in alerts (alerts.ts): one notification per official
+// warning, which opens the place's page.
 
 import { LANGS, t, type Lang } from "./i18n";
 
@@ -83,6 +85,34 @@ async function page(event, url) {
     return (save && (await saved(key))) || offline(url.pathname);
   }
 }
+
+self.addEventListener('push', (event) => {
+  let m = {};
+  try {
+    m = (event.data && event.data.json()) || {};
+  } catch {}
+  event.waitUntil(
+    self.registration.showNotification(m.title || 'mugilu', {
+      body: m.body || '',
+      tag: m.tag,
+      data: { url: m.url || '/' },
+      icon: '/icon-192.png',
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  // Only ever a mugilu page.
+  const target = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin);
+  const url = target.origin === self.location.origin ? target.href : self.location.origin + '/';
+  event.waitUntil((async () => {
+    for (const client of await self.clients.matchAll({ type: 'window', includeUncontrolled: true })) {
+      if (client.url === url) return client.focus();
+    }
+    return self.clients.openWindow(url);
+  })());
+});
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
