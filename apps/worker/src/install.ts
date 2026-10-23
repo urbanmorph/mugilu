@@ -8,7 +8,7 @@
 // Not rendered on the chromeless kiosk display or the embed card.
 
 import { esc } from "./html";
-import { t, type Lang } from "./i18n";
+import { lp, t, type Lang } from "./i18n";
 
 /** Page backgrounds (BASE_CSS --bg), so the browser/app chrome blends with the page. */
 const BG_LIGHT = "#f8fafc";
@@ -31,19 +31,24 @@ const SCREENSHOTS = {
   "/screenshot-wide.webp": { sizes: "1280x800", form_factor: "wide" },
 } as const;
 
-export function webManifest() {
+/** The manifest for one language (/hi/manifest.webmanifest for Hindi). The id and
+ *  scope are the same in every language, so it is one app; it opens in the language
+ *  it was installed from. */
+export function webManifest(lang: Lang = "en") {
   return {
     name: "mugilu: India's open sky",
     short_name: "mugilu",
     id: "/",
-    start_url: "/",
+    start_url: lp("/", lang),
     scope: "/",
     display: "standalone",
-    description:
-      "Air, heat, rain, UV, dust and the official warning over any point in India, the single worst hazard named for you.",
+    description: t(
+      "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.",
+      lang,
+    ),
     theme_color: BG_LIGHT,
     background_color: BG_LIGHT,
-    lang: "en",
+    lang,
     icons: Object.entries(ICONS).map(([src, { size, maskable }]) => ({
       src,
       sizes: `${size}x${size}`,
@@ -59,9 +64,9 @@ export function webManifest() {
   };
 }
 
-/** <head> tags for every shell() page. */
-export const INSTALL_HEAD =
-  `<link rel="manifest" href="${MANIFEST_PATH}">` +
+/** <head> tags for every shell() page: the page language's manifest, and theme colours. */
+export const installHead = (lang: Lang) =>
+  `<link rel="manifest" href="${lp(MANIFEST_PATH, lang)}">` +
   `<meta name="theme-color" media="(prefers-color-scheme: light)" content="${BG_LIGHT}">` +
   `<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${BG_DARK}">`;
 

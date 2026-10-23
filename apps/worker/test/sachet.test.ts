@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { collectWarnings, getLocationAlerts, parseSachetRss, renderWarningsMarkdown } from "../src/sachet";
+import {
+  collectWarnings,
+  getLocationAlerts,
+  parseSachetRss,
+  renderWarningsMarkdown,
+  splitWarnings,
+} from "../src/sachet";
 
 test("renderWarningsMarkdown: lists active alerts, empty state when none", () => {
   const md = renderWarningsMarkdown({
@@ -124,4 +130,95 @@ test("collectWarnings: the ETag is only remembered once the snapshot is written"
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+// A square area around (lat 14.9, lon 80.0), as SACHET's area_json (GeoJSON, [lon, lat]).
+const square = (lat: number, lon: number, d = 0.1) =>
+  JSON.stringify({
+    type: "MultiPolygon",
+    coordinates: [
+      [
+        [
+          [lon - d, lat - d],
+          [lon + d, lat - d],
+          [lon + d, lat + d],
+          [lon - d, lat + d],
+          [lon - d, lat - d],
+        ],
+      ],
+    ],
+  });
+const alert = (identifier: number, area_json?: string) => ({ ...RESP.alerts[0], identifier, area_json });
+
+test("getLocationAlerts: says whether each warning's own area covers the point", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(
+      JSON.stringify({
+        alerts: [
+          alert(1, square(14.9, 80.0)), // over the point
+          alert(2, square(15.2, 80.0)), // ~33 km north: nearby, not over it
+          alert(3, undefined), // no area given
+          alert(4, '{"type":"MultiPolygon","coordinates":[]}'), // empty area
+          alert(5, "not json"),
+        ],
+      }),
+    )) as typeof fetch;
+  try {
+    const ws = await getLocationAlerts(14.9, 80.0);
+    assert.deepEqual(
+      ws.map((w) => [w.identifier, w.covers]),
+      [
+        ["1", true],
+        ["2", false],
+        ["3", undefined],
+        ["4", undefined],
+        ["5", undefined],
+      ],
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("getLocationAlerts: a hole in the area (an excluded district) is not covered", async () => {
+  const outer = [
+    [79.8, 14.7],
+    [80.2, 14.7],
+    [80.2, 15.1],
+    [79.8, 15.1],
+    [79.8, 14.7],
+  ];
+  const hole = [
+    [79.95, 14.85],
+    [80.05, 14.85],
+    [80.05, 14.95],
+    [79.95, 14.95],
+    [79.95, 14.85],
+  ];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(
+      JSON.stringify({ alerts: [alert(1, JSON.stringify({ type: "Polygon", coordinates: [outer, hole] }))] }),
+    )) as typeof fetch;
+  try {
+    assert.equal((await getLocationAlerts(14.9, 80.0))[0].covers, false);
+    assert.equal((await getLocationAlerts(15.0, 79.9))[0].covers, true);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("splitWarnings: over the spot (or area unknown, to be safe) vs nearby", () => {
+  const w = (identifier: string, covers?: boolean) =>
+    ({ identifier, covers }) as Parameters<typeof splitWarnings>[0][number];
+  const { here, nearby } = splitWarnings([w("a", true), w("b", false), w("c", undefined)]);
+  assert.deepEqual(
+    here.map((x) => x.identifier),
+    ["a", "c"],
+  );
+  assert.deepEqual(
+    nearby.map((x) => x.identifier),
+    ["b"],
+  );
 });

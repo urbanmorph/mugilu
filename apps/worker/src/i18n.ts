@@ -1239,6 +1239,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "mugilu अभी का आसमान दिखाता है, इसलिए इसे इंटरनेट कनेक्शन चाहिए। इस डिवाइस पर पहले खोली गई जगहों की आख़िरी रीडिंग सहेजी रहती है।",
       kn: "mugilu ಈಗಿನ ಆಕಾಶವನ್ನು ತೋರಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಇದಕ್ಕೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಬೇಕು. ಈ ಸಾಧನದಲ್ಲಿ ಹಿಂದೆ ತೆರೆದ ಸ್ಥಳಗಳ ಕೊನೆಯ ರೀಡಿಂಗ್ ಉಳಿದಿರುತ್ತದೆ.",
     },
+  "Nearby, not over this spot:": { hi: "पास में, इस जगह पर नहीं:", kn: "ಹತ್ತಿರದಲ್ಲಿ, ಈ ಸ್ಥಳದ ಮೇಲೆ ಅಲ್ಲ:" },
   "See your places": { hi: "अपनी जगहें देखें", kn: "ನಿಮ್ಮ ಸ್ಥಳಗಳನ್ನು ನೋಡಿ" },
   // Opt-in alerts (alerts.ts, alerts-ui.ts): drafted here, native review pending.
   "Official warning for X, until Y.": { hi: "X के लिए आधिकारिक चेतावनी, Y तक।", kn: "X ಗೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, Y ವರೆಗೆ." },

@@ -1,11 +1,19 @@
-import type { AirConditions, AirPollutants, Conditions, NearStation, NormalizedStation, Snapshot } from "./types";
+import type {
+  AirConditions,
+  AirPollutants,
+  Conditions,
+  NearStation,
+  NormalizedStation,
+  Snapshot,
+  Warning,
+} from "./types";
 import { findNearest } from "./near";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo } from "./openmeteo";
 import { computeAqi, aqiBand } from "./aqi";
 import { pollutantParts } from "./formats";
 import { nearestPlace } from "./place";
-import { getLocationAlerts } from "./sachet";
+import { getLocationAlerts, splitWarnings } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
 import { ambientRisk, ambientSummary, smokeLevel, PERSONA_LABEL } from "./score";
@@ -120,7 +128,9 @@ export async function buildConditions(
   // nothing has a reading.
   const nearest = snapshot ? pickStation(snapshot.stations, lat, lon) : undefined;
 
-  const [om, warnings] = await Promise.all([getOpenMeteo(lat, lon), getLocationAlerts(lat, lon)]);
+  const [om, found] = await Promise.all([getOpenMeteo(lat, lon), getLocationAlerts(lat, lon)]);
+  // Only warnings whose own area covers this spot are its warnings; the rest are nearby.
+  const { here: warnings, nearby } = splitWarnings(found);
 
   // Prefer a nearby measured station; beyond STATION_MAX_KM fall back to the
   // Open-Meteo model so air is filled for any coordinate, not just monitored
@@ -159,6 +169,7 @@ export async function buildConditions(
     visibility: om.visibility,
     smoke,
     warnings: warnings.length ? warnings : undefined,
+    nearby_warnings: nearby.length ? nearby : undefined,
     attribution: buildAttribution([
       air?.source,
       om.heat?.source,
@@ -166,7 +177,7 @@ export async function buildConditions(
       om.uv?.source,
       om.dust?.source,
       smoke && smoke.count > 0 ? "firms" : undefined,
-      warnings.length ? "sachet" : undefined,
+      found.length ? "sachet" : undefined,
     ]),
     disclaimer: DISCLAIMER,
   };
@@ -189,6 +200,13 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     out.push("## ⚠ Official warnings");
     for (const w of c.warnings) {
       out.push(`- **${w.event}** (${w.severity}${w.until ? `, until ${w.until}` : ""}): ${w.area} · ${w.issuer}`);
+    }
+    out.push("");
+  }
+  if (c.nearby_warnings?.length) {
+    out.push("## Nearby official warnings", "*Active within 40 km; their areas do not cover this spot.*");
+    for (const w of c.nearby_warnings) {
+      out.push(`- ${w.event} (${w.severity}${w.until ? `, until ${w.until}` : ""}): ${w.area} · ${w.issuer}`);
     }
     out.push("");
   }
@@ -280,6 +298,9 @@ const UNITS = {
  *  responses so a client or embed can self-throttle instead of guessing per-metric. */
 export const REFRESH_AFTER_SECONDS = 900;
 
+/** A warning as the API shows it: the internal area flag dropped, its source named. */
+const apiWarning = ({ covers: _covers, ...w }: Warning) => ({ ...w, source: "sachet" as const });
+
 /** Serialize the internal model into the stable, self-describing /c `.json` v1
  *  contract: a `schema` + `version` handle, a `units` map, machine-readable
  *  provenance (`kind`) and freshness (`as_of`) on every layer, consistent
@@ -319,7 +340,8 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
     wind: modelled(c.wind),
     visibility: modelled(c.visibility),
     smoke: c.smoke ? { kind: "observed" as const, ...c.smoke, window_h: 24, as_of: c.as_of } : null,
-    warnings: (c.warnings ?? []).map((w) => ({ ...w, source: "sachet" as const })),
+    warnings: (c.warnings ?? []).map(apiWarning),
+    nearby_warnings: (c.nearby_warnings ?? []).map(apiWarning),
     ambient: {
       risk_band: risk.band,
       level: risk.level,

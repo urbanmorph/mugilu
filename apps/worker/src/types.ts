@@ -154,6 +154,8 @@ export interface Warning {
   until: string; // short effective-end time
   identifier: string; // → FetchXMLFile for full CAP
   headline: string; // warning_message (may be localized)
+  /** Whether the alert's own area covers the point looked up; undefined when SACHET gave no usable area. */
+  covers?: boolean;
 }
 
 /** The assembled response for /c/{lat},{lon} (A4). Unfilled layers are null. */
@@ -176,6 +178,8 @@ export interface Conditions {
   smoke: SmokeConditions | null;
   /** Official NDMA/SACHET warnings active at this point. */
   warnings?: Warning[];
+  /** Active warnings within the lookup radius whose own area does not cover this spot. */
+  nearby_warnings?: Warning[];
   /** Ready-to-paste credit line for whatever sources contributed. */
   attribution: string;
   /** Always present, always relayed. */

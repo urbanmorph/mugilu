@@ -1,5 +1,6 @@
 import type { Warning } from "./types";
 import type { Env } from "./index";
+import { inRing, type Ring } from "./india";
 
 // NDMA SACHET: official disaster warnings (the IMD-replacement layer). The
 // location-wise endpoint does the point→alert spatial match for us, so /c
@@ -19,6 +20,33 @@ interface RawAlert {
   severity_color?: string;
   warning_message?: string;
   alert_source?: string;
+  area_json?: string; // the alert's area: GeoJSON (Multi)Polygon, mandal-level
+}
+
+/** Whether an alert's area (GeoJSON Polygon or MultiPolygon, holes respected)
+ *  covers the point; undefined when the area is missing or unreadable. */
+export function areaCovers(areaJson: unknown, lat: number, lon: number): boolean | undefined {
+  try {
+    const g = (typeof areaJson === "string" ? JSON.parse(areaJson) : areaJson) as {
+      type?: string;
+      coordinates?: unknown;
+    };
+    const polygons = (
+      g?.type === "Polygon" ? [g.coordinates] : g?.type === "MultiPolygon" ? g.coordinates : []
+    ) as Ring[][];
+    if (!Array.isArray(polygons) || !polygons.length) return undefined;
+    return polygons.some(
+      ([outer, ...holes]) => !!outer && inRing(outer, lon, lat) && !holes.some((h) => inRing(h, lon, lat)),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+/** Warnings over the spot, and those only nearby. An alert whose area is unknown
+ *  counts as over the spot: a warning is never hidden for lack of a polygon. */
+export function splitWarnings<W extends Pick<Warning, "covers">>(ws: W[]): { here: W[]; nearby: W[] } {
+  return { here: ws.filter((w) => w.covers !== false), nearby: ws.filter((w) => w.covers === false) };
 }
 
 /** "Sat Jun 27 14:00:00 IST 2026" → "Sat Jun 27, 14:00". */
@@ -51,6 +79,7 @@ export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40,
       until: a.effective_end_time ? shortTime(a.effective_end_time) : "",
       identifier: String(a.identifier ?? ""),
       headline: a.warning_message ?? "",
+      covers: areaCovers(a.area_json, lat, lon),
     }));
   } catch {
     return [];

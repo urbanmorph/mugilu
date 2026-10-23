@@ -174,3 +174,77 @@ test("serializeConditionsV1 + markdown: carry the persona's own step", async () 
     globalThis.fetch = realFetch;
   }
 });
+
+/** The same mocks, plus SACHET answering with these alerts. */
+function mockFetchWithAlerts(alerts: object[]): typeof fetch {
+  const base = mockFetch();
+  return (async (input: RequestInfo | URL) =>
+    String(input).includes("FetchLocationWiseAlerts")
+      ? new Response(JSON.stringify({ alerts }))
+      : base(input)) as typeof fetch;
+}
+const redAlert = (identifier: number, lat: number, lon: number) => ({
+  identifier,
+  disaster_type: "Heavy Rain",
+  severity: "WARNING",
+  severity_color: "red",
+  area_description: "a mandal",
+  alert_source: "IMD",
+  effective_end_time: "Fri Oct 23 18:00:00 IST 2026",
+  area_json: JSON.stringify({
+    type: "MultiPolygon",
+    coordinates: [
+      [
+        [
+          [lon - 0.05, lat - 0.05],
+          [lon + 0.05, lat - 0.05],
+          [lon + 0.05, lat + 0.05],
+          [lon - 0.05, lat + 0.05],
+          [lon - 0.05, lat - 0.05],
+        ],
+      ],
+    ],
+  }),
+});
+
+test("buildConditions: a warning over a neighbouring area is listed as nearby, and never raises the spot's risk", async () => {
+  const realFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = mockFetch();
+    const calm = await buildConditions(snap(), 12.9716, 77.5946);
+    globalThis.fetch = mockFetchWithAlerts([redAlert(7, 13.2, 77.6)]); // ~25 km north
+    const c = await buildConditions(snap(), 12.9716, 77.5946);
+    assert.equal(c.warnings, undefined);
+    assert.equal(c.nearby_warnings?.length, 1);
+    const v1 = serializeConditionsV1(c, "everyone") as Record<string, any>;
+    assert.deepEqual(v1.warnings, []);
+    assert.equal(v1.nearby_warnings.length, 1);
+    assert.equal(v1.nearby_warnings[0].source, "sachet");
+    assert.ok(!("covers" in v1.nearby_warnings[0]), "the internal flag is not part of the API");
+    assert.equal(
+      v1.ambient.risk_band,
+      (serializeConditionsV1(calm, "everyone") as Record<string, any>).ambient.risk_band,
+    );
+    const md = renderConditionsMarkdown(c);
+    assert.match(md, /## Nearby official warnings/);
+    assert.doesNotMatch(md, /## ⚠ Official warnings/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("buildConditions: a warning whose area covers the spot is the spot's warning", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetchWithAlerts([redAlert(8, 12.9716, 77.5946)]);
+  try {
+    const c = await buildConditions(snap(), 12.9716, 77.5946);
+    assert.equal(c.warnings?.length, 1);
+    assert.equal(c.nearby_warnings, undefined);
+    const v1 = serializeConditionsV1(c, "everyone") as Record<string, any>;
+    assert.equal(v1.warnings[0].event, "Heavy Rain");
+    assert.ok(!("covers" in v1.warnings[0]));
+    assert.deepEqual(v1.nearby_warnings, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
