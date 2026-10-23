@@ -1227,6 +1227,19 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   },
   "Tap Add.": { hi: "जोड़ें पर टैप करें।", kn: "ಸೇರಿಸಿ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ." },
   OK: { hi: "ठीक है", kn: "ಸರಿ" },
+  // Offline (sw.ts): drafted here, native review pending.
+  "No connection. This is the last reading saved on this device, from X. Conditions and warnings may have changed since.":
+    {
+      hi: "कनेक्शन नहीं है। यह इस डिवाइस पर सहेजी गई आख़िरी रीडिंग है, X की। तब से हालात और चेतावनियाँ बदल चुकी हो सकती हैं।",
+      kn: "ಸಂಪರ್ಕವಿಲ್ಲ. ಇದು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಿದ ಕೊನೆಯ ರೀಡಿಂಗ್, X ರದ್ದು. ಅಂದಿನಿಂದ ಪರಿಸ್ಥಿತಿ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಬದಲಾಗಿರಬಹುದು.",
+    },
+  "You are offline": { hi: "आप ऑफ़लाइन हैं", kn: "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ" },
+  "mugilu shows the sky right now, so it needs a connection. Places you have opened on this device keep their last reading.":
+    {
+      hi: "mugilu अभी का आसमान दिखाता है, इसलिए इसे इंटरनेट कनेक्शन चाहिए। इस डिवाइस पर पहले खोली गई जगहों की आख़िरी रीडिंग सहेजी रहती है।",
+      kn: "mugilu ಈಗಿನ ಆಕಾಶವನ್ನು ತೋರಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಇದಕ್ಕೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಬೇಕು. ಈ ಸಾಧನದಲ್ಲಿ ಹಿಂದೆ ತೆರೆದ ಸ್ಥಳಗಳ ಕೊನೆಯ ರೀಡಿಂಗ್ ಉಳಿದಿರುತ್ತದೆ.",
+    },
+  "See your places": { hi: "अपनी जगहें देखें", kn: "ನಿಮ್ಮ ಸ್ಥಳಗಳನ್ನು ನೋಡಿ" },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;
