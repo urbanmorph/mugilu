@@ -209,7 +209,7 @@ export default {
     if (url.pathname === "/push/subscribe" && alertsOn(env)) return handleSubscribe(req, env);
     if (url.pathname === "/push/unsubscribe" && alertsOn(env)) return handleUnsubscribe(req, env);
     if (url.pathname === MANIFEST_PATH) {
-      return edgeCache(req, ctx, () => cachedResponse(JSON.stringify(webManifest()), "application/manifest+json"));
+      return edgeCache(req, ctx, () => cachedResponse(JSON.stringify(webManifest(lang)), "application/manifest+json"));
     }
     const icon = ICONS[url.pathname as keyof typeof ICONS];
     if (icon) return edgeCache(req, ctx, () => iconPng(icon.size, icon.maskable));

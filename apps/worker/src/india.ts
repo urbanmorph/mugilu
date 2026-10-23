@@ -3,7 +3,7 @@ import outline from "../data/india.json";
 // India's outline: LGD state boundaries (via bharatlas, CC0/CC-BY-4.0) dissolved,
 // grown ~5 km so coasts and island reefs count, and simplified to ~20 KB. mugilu
 // covers India only; this is how a coordinate is checked against that.
-type Ring = [number, number][]; // [lon, lat]
+export type Ring = [number, number][]; // [lon, lat]
 const RINGS = (outline as unknown as { polygons: Ring[][] }).polygons.map(([ring]) => {
   let minLon = Infinity,
     maxLon = -Infinity,
@@ -19,7 +19,8 @@ const RINGS = (outline as unknown as { polygons: Ring[][] }).polygons.map(([ring
 });
 
 /** Even-odd ray cast: is the point inside the ring? */
-function inRing(ring: Ring, lon: number, lat: number): boolean {
+/** Whether a point is inside a ring (even-odd rule); also used for SACHET alert areas. */
+export function inRing(ring: Ring, lon: number, lat: number): boolean {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i];

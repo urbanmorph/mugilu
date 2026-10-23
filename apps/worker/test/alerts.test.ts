@@ -253,3 +253,15 @@ test("a long place name is cut short and stored as plain text", async () => {
   const [row] = await rows(e);
   assert.equal(String(row.label).length, 80);
 });
+
+test("a warning whose own area does not cover the place is not sent, even inside the lookup radius", async () => {
+  const e = env();
+  const f = fakes();
+  await subscribe(e, f.deps);
+  f.active.set("14.91,79.99", [warning("edge", { covers: false }), warning("over", { covers: true })]);
+  await runAlerts(e, f.deps);
+  assert.deepEqual(
+    f.sent.map((s) => s.message.tag),
+    ["warning-over"],
+  );
+});

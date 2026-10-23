@@ -197,6 +197,30 @@ test("pages: manifest + light/dark theme-color in the head; hidden install butto
   }
 });
 
+test("webManifest: one app in every language (same id and scope), opening in the language it was installed from", () => {
+  const en = webManifest();
+  assert.equal(en.start_url, "/");
+  assert.equal(en.lang, "en");
+  for (const lang of ["hi", "kn"] as const) {
+    const m = webManifest(lang);
+    assert.equal(m.id, "/");
+    assert.equal(m.scope, "/");
+    assert.equal(m.start_url, `/${lang}`);
+    assert.equal(m.lang, lang);
+    assert.notEqual(m.description, en.description, `${lang} description is translated`);
+    assert.deepEqual(m.icons, en.icons);
+  }
+});
+
+test("pages: each language links its own manifest", () => {
+  assert.match(renderHome(), /<link rel="manifest" href="\/manifest\.webmanifest">/);
+  assert.match(
+    renderHome(undefined, undefined, undefined, "hi"),
+    /<link rel="manifest" href="\/hi\/manifest\.webmanifest">/,
+  );
+  assert.match(renderAbout("kn"), /<link rel="manifest" href="\/kn\/manifest\.webmanifest">/);
+});
+
 test("pages: install strings follow the page language", () => {
   const hi = renderHome(undefined, undefined, undefined, "hi");
   assert.doesNotMatch(hi, />Install app</);

@@ -208,3 +208,54 @@ test("renderConditionsPage: a missing feels-like is not read as 0° 'dangerous c
   );
   assert.doesNotMatch(html, /dangerous cold/i);
 });
+
+test("renderConditionsPage: warnings over the spot stand out; nearby ones get one quiet line, marked as not over it", () => {
+  const w = (event: string, covers: boolean) => ({
+    event,
+    severity: "Severe",
+    color: "orange",
+    certainty: "",
+    area: "nlr-kavali Mandal",
+    issuer: "APSDMA",
+    until: "Fri Oct 23, 10:20",
+    identifier: event,
+    headline: "",
+    covers,
+  });
+  const html = renderConditionsPage(
+    conditions({ warnings: [w("Lightning", true)], nearby_warnings: [w("Heavy Rain", false)] }),
+  );
+  assert.match(html, /class="warn"[^>]*>[\s\S]*?Lightning/);
+  const nearby = html.match(/<p class="near-warn">([\s\S]*?)<\/p>/);
+  assert.ok(nearby, "a nearby line");
+  assert.match(nearby[1], /Nearby, not over this spot/);
+  assert.match(nearby[1], /Heavy Rain/);
+  const boxes = [...html.matchAll(/<div class="warn"[\s\S]*?<\/div><\/div>/g)].map((m) => m[0]);
+  assert.equal(boxes.length, 1, "one warning box: the one over the spot");
+  assert.doesNotMatch(boxes[0], /Heavy Rain/);
+  assert.doesNotMatch(renderConditionsPage(conditions()), /class="near-warn"/);
+});
+
+test("renderConditionsPage: many nearby warnings of one kind are counted, not repeated", () => {
+  const w = (identifier: string, event: string) => ({
+    event,
+    severity: "",
+    color: "yellow",
+    certainty: "",
+    area: "",
+    issuer: "",
+    until: "Fri Oct 23, 15:10",
+    identifier,
+    headline: "",
+    covers: false,
+  });
+  const html = renderConditionsPage(
+    conditions({
+      nearby_warnings: [w("1", "Lightning"), w("2", "Lightning"), w("3", "Lightning"), w("4", "Heavy Rain")],
+    }),
+  );
+  const line = html.match(/<p class="near-warn">([\s\S]*?)<\/p>/)![1];
+  assert.match(line, /Lightning \(3\)/);
+  assert.match(line, /Heavy Rain \(until Fri Oct 23, 15:10\)/);
+  assert.equal(line.match(/Lightning/g)!.length, 1);
+});

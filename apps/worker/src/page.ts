@@ -9,7 +9,7 @@ import { RISK_COLOR, BAND_COLOR } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
-import { INSTALL_CSS, INSTALL_HEAD, INSTALL_JS, installButton } from "./install";
+import { INSTALL_CSS, INSTALL_JS, installButton, installHead } from "./install";
 import { OFFLINE_NOTE_ID, SW_REGISTER } from "./sw";
 import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
 
@@ -308,7 +308,7 @@ ${VIEWPORT}
 <meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-${INSTALL_HEAD}
+${installHead(lang)}
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 ${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
@@ -353,6 +353,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .coord{font:500 .78rem/1.4 var(--mono);letter-spacing:.04em;color:var(--muted);margin:.4rem 0 0}
 .loc{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6.5vw,2.15rem);line-height:1.05;letter-spacing:-.01em;margin:.35rem 0 0}
 .when{color:var(--muted);font-size:.9rem;margin:.3rem 0 0}
+.near-warn{color:var(--muted);font-size:.85rem;margin:.6rem 0 0}
 .stale{margin:.8rem 0 0;padding:.6rem .8rem;border-radius:10px;background:color-mix(in srgb,var(--muted) 14%,transparent);font-size:.9rem}
 .warn{display:flex;gap:.65rem;align-items:flex-start;margin:1.3rem 0 0;padding:.8rem .95rem;background:color-mix(in srgb,var(--wc) 14%,var(--bg));border-left:3px solid var(--wc);border-radius:0 7px 7px 0}
 .warn .ic{color:var(--wc);flex:none;margin-top:1px}
@@ -507,6 +508,21 @@ function lyr(key: string, label: string, on: boolean, num: string, q: string, su
 function renderWarning(w: Warning): string {
   const meta = [w.severity, w.until ? `until ${w.until}` : ""].filter(Boolean).join(" · ");
   return `<div class="warn" style="--wc:${warnColor(w.color)}">${icon("warn")}<div><b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div></div>`;
+}
+
+/** Warnings active nearby whose areas do not cover this spot: one quiet line, never the red box. */
+function renderNearbyWarnings(ws: Warning[], lang: Lang): string {
+  // One entry per kind: a count when several areas nearby have it, else its end time.
+  const byEvent = new Map<string, Warning[]>();
+  for (const w of ws) byEvent.set(w.event, [...(byEvent.get(w.event) ?? []), w]);
+  const items = [...byEvent]
+    .map(([event, list]) => {
+      const one = list.length === 1 ? list[0] : undefined;
+      const detail = one ? (one.until ? `${t("until", lang)} ${one.until}` : "") : String(list.length);
+      return `${esc(event)}${detail ? ` (${esc(detail)})` : ""}`;
+    })
+    .join(" · ");
+  return `<p class="near-warn">${t("Nearby, not over this spot:", lang)} ${items}</p>`;
 }
 
 // Records this /c visit into the browser's "Your places" list (first-party,
@@ -727,6 +743,7 @@ export function renderConditionsPage(
     <p class="when">${t("the sky over this spot", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
     <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading saved on this device, from X. Conditions and warnings may have changed since.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
     ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
+    ${c.nearby_warnings?.length ? renderNearbyWarnings(c.nearby_warnings, lang) : ""}
     <section class="amb">
       <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="amb-head">${head}</p>

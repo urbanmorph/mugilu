@@ -197,7 +197,8 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
   let failed = 0;
   const gone = new Set<string>();
   for (const { lat, lon } of points) {
-    const warnings = (await deps.alertsAt(lat, lon)).filter((w) => w.identifier);
+    // Over the place itself: the 2 km lookup can catch an area's edge; its polygon decides.
+    const warnings = (await deps.alertsAt(lat, lon)).filter((w) => w.identifier && w.covers !== false);
     found += warnings.length;
     if (warnings.length) {
       const { results: rows } = await db
