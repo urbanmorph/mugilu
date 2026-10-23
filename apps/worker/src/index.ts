@@ -5,6 +5,7 @@ import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
 import { renderStationOg, renderConditionsOg, renderHomeOg } from "./og";
 import { faviconSvg, iconPng } from "./icon";
 import { ICONS, MANIFEST_PATH, webManifest } from "./install";
+import { SW_PATH, serviceWorker } from "./sw";
 import { findNearest, parseLatLon } from "./near";
 import { buildConditions, renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
 import {
@@ -196,6 +197,7 @@ export default {
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return iconPng();
     // PWA: web app manifest + its PNG icons (install.ts). Deterministic, so edge-cached.
+    if (url.pathname === SW_PATH) return serviceWorker();
     if (url.pathname === MANIFEST_PATH) {
       return edgeCache(req, ctx, () => cachedResponse(JSON.stringify(webManifest()), "application/manifest+json"));
     }

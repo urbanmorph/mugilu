@@ -10,6 +10,7 @@ import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 import { INSTALL_CSS, INSTALL_HEAD, INSTALL_JS, installButton } from "./install";
+import { OFFLINE_NOTE_ID, SW_REGISTER } from "./sw";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().
@@ -333,7 +334,7 @@ ${
 <main>${body}</main>
 <footer class="foot">${footerNav(lang)}</footer>
 ${canonical ? langSwitcher(canonical, lang) : ""}
-<script>${INSTALL_JS}</script>`
+<script>${INSTALL_JS}${SW_REGISTER}</script>`
 }
 <script>
 (function(){${relFn}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
@@ -351,6 +352,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .coord{font:500 .78rem/1.4 var(--mono);letter-spacing:.04em;color:var(--muted);margin:.4rem 0 0}
 .loc{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6.5vw,2.15rem);line-height:1.05;letter-spacing:-.01em;margin:.35rem 0 0}
 .when{color:var(--muted);font-size:.9rem;margin:.3rem 0 0}
+.stale{margin:.8rem 0 0;padding:.6rem .8rem;border-radius:10px;background:color-mix(in srgb,var(--muted) 14%,transparent);font-size:.9rem}
 .warn{display:flex;gap:.65rem;align-items:flex-start;margin:1.3rem 0 0;padding:.8rem .95rem;background:color-mix(in srgb,var(--wc) 14%,var(--bg));border-left:3px solid var(--wc);border-radius:0 7px 7px 0}
 .warn .ic{color:var(--wc);flex:none;margin-top:1px}
 .warn b{font-weight:700;font-size:.95rem;line-height:1.35}
@@ -720,6 +722,7 @@ export function renderConditionsPage(
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
     <p class="when">${t("the sky over this spot", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
+    <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading saved on this device, from X. Conditions and warnings may have changed since.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
     ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
     <section class="amb">
       <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>

@@ -1,5 +1,5 @@
 // "Install app": the web app manifest, the head tags that link it, and a small
-// header button (no service worker). Behaviour by platform:
+// header button (the offline worker is separate: sw.ts). Behaviour by platform:
 //   Chrome / Edge / Samsung Internet / Android -> the browser fires
 //     `beforeinstallprompt`; we keep it and call prompt() on tap.
 //   iPhone / iPad Safari -> no install API; the button opens a short
