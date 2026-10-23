@@ -21,7 +21,10 @@ import { sendPush, type PushTarget } from "./webpush";
 /** Places one browser can have alerts for (the saved-places list holds 12). */
 export const MAX_PLACES = 12;
 /** Places checked per hourly run (each is one SACHET lookup); the longest-unchecked go first. */
-export const POINTS_PER_RUN = 30;
+export const POINTS_PER_RUN = 15;
+/** Outbound requests (lookups + pushes) per hourly run. The Workers free plan allows 50 per
+ *  invocation, shared with the air refresh, warnings feed and fires (about 10 together). */
+export const REQUESTS_PER_RUN = 25;
 /** A SACHET lookup's time limit in the hourly run: it waits for a free connection behind the other cron jobs. */
 const LOOKUP_TIMEOUT_MS = 10_000;
 /** How close a warning's area must be to the place, in km. */
@@ -196,7 +199,11 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
   let found = 0;
   let failed = 0;
   const gone = new Set<string>();
+  let budget = REQUESTS_PER_RUN;
+  // Out of budget: stop; unsent alerts and this place (left unchecked, so first next run) wait an hour.
+  let spent = false;
   for (const { lat, lon } of points) {
+    if (budget-- <= 0) break;
     // Over the place itself: the 2 km lookup can catch an area's edge; its polygon decides.
     const warnings = (await deps.alertsAt(lat, lon)).filter((w) => w.identifier && w.covers !== false);
     found += warnings.length;
@@ -213,6 +220,10 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
             .bind(row.endpoint_hash, w.identifier)
             .first();
           if (had) continue;
+          if (budget-- <= 0) {
+            spent = true;
+            break;
+          }
           const status = await deps.send(row, alertMessage(w, row)).catch((e: Error) => {
             console.warn(`[alerts] send failed: ${e.message}`);
             return 0;
@@ -234,8 +245,10 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
             if (status) console.warn(`[alerts] push service ${new URL(row.endpoint).host} answered ${status}`);
           }
         }
+        if (spent) break;
       }
     }
+    if (spent) break;
     await db.prepare("UPDATE push_places SET checked_at = ? WHERE lat = ? AND lon = ?").bind(nowS, lat, lon).run();
   }
   await db
