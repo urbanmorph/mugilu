@@ -8,6 +8,7 @@ import {
   runAlerts,
   MAX_PLACES,
   POINTS_PER_RUN,
+  REQUESTS_PER_RUN,
   type AlertDeps,
 } from "../src/alerts";
 import type { Env } from "../src/index";
@@ -264,4 +265,26 @@ test("a warning whose own area does not cover the place is not sent, even inside
     f.sent.map((s) => s.message.tag),
     ["warning-over"],
   );
+});
+
+test("stays within the free plan: lookups and pushes together never exceed the run's request budget, and nothing is lost", async () => {
+  const e = env();
+  const f = fakes();
+  // More browsers on one place than one run can send to.
+  for (let i = 0; i < REQUESTS_PER_RUN + 10; i++) await subscribe(e, f.deps);
+  f.active.set("14.91,79.99", [warning("w1")]);
+  f.lookups.length = 0;
+  await runAlerts(e, f.deps, Date.UTC(2026, 9, 23, 4));
+  assert.ok(f.lookups.length + f.sent.length <= REQUESTS_PER_RUN, `${f.lookups.length} + ${f.sent.length}`);
+  assert.ok(f.sent.length > 0);
+  // The rest go out on the next runs, each browser once.
+  for (let h = 5; h < 9; h++) await runAlerts(e, f.deps, Date.UTC(2026, 9, 23, h));
+  assert.equal(f.sent.length, REQUESTS_PER_RUN + 10);
+  assert.equal(new Set(f.sent.map((s) => s.endpoint)).size, REQUESTS_PER_RUN + 10);
+});
+
+test("the budget leaves room for the hourly cron's other jobs", () => {
+  // Free plan: 50 outbound requests per run; air refresh, warnings and fires use about 10.
+  assert.ok(REQUESTS_PER_RUN <= 25);
+  assert.ok(POINTS_PER_RUN < REQUESTS_PER_RUN);
 });
