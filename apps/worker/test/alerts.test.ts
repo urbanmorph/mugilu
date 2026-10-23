@@ -9,6 +9,7 @@ import {
   MAX_PLACES,
   POINTS_PER_RUN,
   REQUESTS_PER_RUN,
+  LOOKUP_TIMEOUT_MS,
   type AlertDeps,
 } from "../src/alerts";
 import type { Env } from "../src/index";
@@ -283,8 +284,12 @@ test("stays within the free plan: lookups and pushes together never exceed the r
   assert.equal(new Set(f.sent.map((s) => s.endpoint)).size, REQUESTS_PER_RUN + 10);
 });
 
-test("the budget leaves room for the hourly cron's other jobs", () => {
-  // Free plan: 50 outbound requests per run; air refresh, warnings and fires use about 10.
-  assert.ok(REQUESTS_PER_RUN <= 25);
+test("the budget fits Workers Paid, and a slow SACHET can't run the cron past its time limit", () => {
+  // Workers Paid: 10,000 outbound requests per invocation, and a cron runs for at most 15 minutes.
+  assert.ok(REQUESTS_PER_RUN <= 1_000);
   assert.ok(POINTS_PER_RUN < REQUESTS_PER_RUN);
+  // Lookups run one after another: even if every one waits out its timeout, the run ends within 10 minutes.
+  assert.ok(POINTS_PER_RUN * LOOKUP_TIMEOUT_MS <= 10 * 60_000);
+  // And more than the free-plan sizing, so many places are checked every hour.
+  assert.ok(POINTS_PER_RUN >= 60);
 });

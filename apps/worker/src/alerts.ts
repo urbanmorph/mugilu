@@ -20,13 +20,15 @@ import { sendPush, type PushTarget } from "./webpush";
 
 /** Places one browser can have alerts for (the saved-places list holds 12). */
 export const MAX_PLACES = 12;
-/** Places checked per hourly run (each is one SACHET lookup); the longest-unchecked go first. */
-export const POINTS_PER_RUN = 15;
-/** Outbound requests (lookups + pushes) per hourly run. The Workers free plan allows 50 per
- *  invocation, shared with the air refresh, warnings feed and fires (about 10 together). */
-export const REQUESTS_PER_RUN = 25;
+/** Places checked per hourly run (each is one SACHET lookup, one after another); the
+ *  longest-unchecked go first, so with more places each is checked every few hours.
+ *  60 × the lookup timeout stays within 10 minutes, under a cron run's 15-minute limit. */
+export const POINTS_PER_RUN = 60;
+/** Outbound requests (lookups + pushes) per hourly run: well within Workers Paid's 10,000
+ *  per invocation, and gentle on SACHET, a government API. */
+export const REQUESTS_PER_RUN = 1_000;
 /** A SACHET lookup's time limit in the hourly run: it waits for a free connection behind the other cron jobs. */
-const LOOKUP_TIMEOUT_MS = 10_000;
+export const LOOKUP_TIMEOUT_MS = 10_000;
 /** How close a warning's area must be to the place, in km. */
 const RADIUS_KM = 2;
 /** How long a push service may hold an alert for a phone that is off: warnings here are mostly hours long. */
