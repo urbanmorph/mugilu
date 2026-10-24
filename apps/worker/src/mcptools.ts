@@ -2,6 +2,7 @@ import type { Env } from "./index";
 import type { NormalizedStation } from "./types";
 import { renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
 import { conditionsData, lookupConditions } from "./lookup";
+import { recordEvent, recordLookup, type Caller } from "./metrics";
 import { parsePersona } from "./score";
 import { buildSuggestions } from "./suggest";
 import { geocodeList } from "./geocode";
@@ -108,7 +109,7 @@ async function conditionsAt(
   args: Record<string, unknown>,
   env: Env,
   ctx: ExecutionContext,
-  ua: string | null,
+  caller: Caller,
 ): Promise<ToolResult> {
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
@@ -117,15 +118,16 @@ async function conditionsAt(
   const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
   // A named place owns its label (parity with /c/{slug}).
-  const { conditions } = await lookupConditions(env, ctx, {
+  const { conditions, usage } = await lookupConditions(env, ctx, {
     lat: loc.lat,
     lon: loc.lon,
     persona,
     fmt: "mcp",
-    ua,
     label: loc.label,
     data,
   });
+  ctx.waitUntil(recordLookup(env, usage, "mcp", caller));
+  recordEvent(env, usage, { format: "mcp", caller });
   return {
     content: [{ type: "text", text: renderConditionsMarkdown(conditions, persona) }],
     structuredContent: serializeConditionsV1(conditions, persona),
@@ -213,11 +215,11 @@ export async function callTool(
   args: Record<string, unknown>,
   env: Env,
   ctx: ExecutionContext,
-  ua: string | null,
+  caller: Caller,
 ): Promise<ToolResult | undefined> {
   switch (name) {
     case "conditions_at":
-      return conditionsAt(args, env, ctx, ua);
+      return conditionsAt(args, env, ctx, caller);
     case "search_place":
       return searchPlace(args, env);
     case "nearest_stations":

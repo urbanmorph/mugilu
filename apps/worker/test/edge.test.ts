@@ -39,16 +39,21 @@ test("edgeServe: a miss builds and stores; a hit skips the build and still recor
   const key = cacheKey(req);
   let builds = 0;
   const hits: unknown[] = [];
+  const served: { ms?: number; status: number }[] = [];
   const build = async () => (builds++, { res: page(), usage: { place: "X" } });
   const c1 = ctx();
-  const first = await edgeServe(req, c1.ctx, key, 300, build, (u) => hits.push(u), cache);
+  const first = await edgeServe(req, c1.ctx, key, 300, build, (u, how) => (hits.push(u), served.push(how)), cache);
   await c1.settle();
   const c2 = ctx();
-  const second = await edgeServe(req, c2.ctx, key, 300, build, (u) => hits.push(u), cache);
+  const second = await edgeServe(req, c2.ctx, key, 300, build, (u, how) => (hits.push(u), served.push(how)), cache);
   assert.equal(builds, 1);
+  assert.equal(typeof served[0].ms, "number", "a miss reports how long the build took");
+  assert.equal(served[0].status, 200);
+  assert.deepEqual(served[1], { status: 200 }, "a hit has no build time");
   assert.equal(await first.text(), "hi");
   assert.equal(await second.text(), "hi");
-  assert.deepEqual(hits, [{ place: "X" }], "usage recorded on the hit (the miss records in build)");
+  assert.equal(hits.length, 2, "usage recorded on the miss and on the hit");
+  assert.deepEqual(hits[1], { place: "X" });
   // the client sees the route's own headers, never the internal ones
   assert.equal(second.headers.get("cache-control"), "public, s-maxage=900");
   assert.equal(second.headers.get("x-mugilu-usage"), null);
@@ -148,4 +153,13 @@ test("edgeServe: a streamed body (an image render) is served and stored intact",
   await c.settle();
   assert.deepEqual([...new Uint8Array(await res.arrayBuffer())], [137, 80, 78, 71]);
   assert.equal((await store.get(req.url)!.arrayBuffer()).byteLength, 4);
+});
+
+test("edgeServe: a request that is never cached (HEAD) still records its usage", async () => {
+  const { cache } = fakeCache();
+  const head = new Request("https://mugilu.live/c/1,2", { method: "HEAD" });
+  const seen: unknown[] = [];
+  const build = async () => ({ res: page(), usage: { place: "Y" } });
+  await edgeServe(head, ctx().ctx, cacheKey(head), 300, build, (u) => seen.push(u), cache);
+  assert.deepEqual(seen, [{ place: "Y" }]);
 });

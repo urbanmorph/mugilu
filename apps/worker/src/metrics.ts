@@ -3,6 +3,7 @@ import type { Conditions } from "./types";
 import { ambientRisk } from "./score";
 import type { Persona } from "./score";
 import { stateAt } from "./place";
+import type { Lang } from "./i18n";
 
 // First-party, aggregate usage metrics (D1). The whole point is to learn what
 // India looks up and who builds on mugilu, WITHOUT tracking people: no IP, no
@@ -91,34 +92,87 @@ export function agentName(ua: string | null | undefined): string {
   return m ? m[1].slice(0, 40) : "";
 }
 
+/** Whether a request carries what a real browser sends when a person opens a page:
+ *  an Accept-Language, plus Fetch Metadata saying it is a page load (a navigation, or
+ *  a document / embed frame) or a script on our own page (the kiosk's refresh). A
+ *  crawler that copies a browser's User-Agent rarely sends these, so it stops
+ *  counting as a person. Read from the request only; nothing is stored. */
+export function browserSignal(h: Headers): boolean {
+  if (!h.get("accept-language")) return false;
+  const dest = h.get("sec-fetch-dest");
+  return (
+    h.get("sec-fetch-mode") === "navigate" ||
+    dest === "document" ||
+    dest === "iframe" ||
+    h.get("sec-fetch-site") === "same-origin"
+  );
+}
+
+/** Who a request is from, by kind only (never who): the User-Agent's class and named
+ *  agent, whether it looks like a real browser, and the page language it asked for. */
+export interface Caller {
+  cls: ClientClass;
+  agent: string;
+  browser: boolean;
+  lang: Lang;
+}
+
+export function requestCaller(req: Request, lang: Lang = "en"): Caller {
+  const ua = req.headers.get("user-agent");
+  return { cls: clientClass(ua), agent: agentName(ua), browser: browserSignal(req.headers), lang };
+}
+
+/** A person reading in a browser: the gate for every "human" count in D1. */
+export const isPerson = (c: Caller) => c.cls === "human" && c.browser;
+
+const BUMP = "INSERT INTO counters (name,n) VALUES (?,?) ON CONFLICT(name) DO UPDATE SET n=n+excluded.n";
+
+/** A statement adding `by` to a counter, for a batch that already writes. Names come
+ *  from fixed sets in code (formats, languages, tool names, sources), never input. */
+export const bumpStmt = (db: D1Database, name: string, by = 1) => db.prepare(BUMP).bind(name, by);
+
+/** Add to several counters in one write (zeros skipped). Best-effort. */
+export async function bump(env: Env, counts: Record<string, number>): Promise<void> {
+  const names = Object.keys(counts).filter((k) => counts[k] > 0);
+  if (!names.length) return;
+  try {
+    await env.METRICS.batch(names.map((k) => bumpStmt(env.METRICS, k, counts[k])));
+  } catch {
+    // best-effort: a metrics failure must never surface
+  }
+}
+
 /** Record one conditions lookup. Always bump the human/llm/bot class counter; the
- *  full per-place + per-format detail is written ONLY for humans, so the demand
- *  heatmap reflects real people (not crawlers walking the sitemap) and a burst of
- *  bot/LLM traffic can't burn the D1 write budget. Bot/LLM detail (format, agent,
- *  region) lives in Analytics Engine instead, cheap and built for the volume. */
+ *  per-place, per-format and per-language detail is written ONLY for a person in a
+ *  browser (isPerson), so the demand heatmap reflects real people (not crawlers
+ *  walking the sitemap, even ones posing as browsers) and a burst of bot/LLM traffic
+ *  can't burn the D1 write budget. MCP calls are agents by definition: never detail.
+ *  Bot/LLM detail lives in Analytics Engine instead, cheap and built for the volume.
+ *  `also` adds other counters to the same write. */
 export async function recordLookup(
   env: Env,
-  lat: number,
-  lon: number,
-  label: string | undefined,
+  u: Pick<UsageFacts, "lat" | "lon" | "place">,
   fmt: string,
-  ua: string | null,
+  caller: Caller,
+  also: string[] = [],
 ): Promise<void> {
-  const cls = clientClass(ua);
-  const bump = "INSERT INTO counters (name,n) VALUES (?,1) ON CONFLICT(name) DO UPDATE SET n=n+1";
+  const db = env.METRICS;
   try {
-    const stmts = [env.METRICS.prepare(bump).bind(`class:${cls}`)];
-    if (cls === "human") {
-      const { key, rlat, rlon } = gridKey(lat, lon);
+    const stmts = [`class:${caller.cls}`, ...also].map((k) => bumpStmt(db, k));
+    if (isPerson(caller) && fmt !== "mcp") {
+      const { key, rlat, rlon } = gridKey(u.lat, u.lon);
       stmts.push(
-        env.METRICS.prepare(
-          "INSERT INTO lookups (key,label,lat,lon,n,last) VALUES (?,?,?,?,1,unixepoch()) " +
-            "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch(), label=COALESCE(excluded.label,label)",
-        ).bind(key, label ?? null, rlat, rlon),
-        env.METRICS.prepare(bump).bind(`fmt:${fmt}`),
+        db
+          .prepare(
+            "INSERT INTO lookups (key,label,lat,lon,n,last) VALUES (?,?,?,?,1,unixepoch()) " +
+              "ON CONFLICT(key) DO UPDATE SET n=n+1, last=unixepoch(), label=COALESCE(excluded.label,label)",
+          )
+          .bind(key, u.place ?? null, rlat, rlon),
+        bumpStmt(db, `fmt:${fmt}`),
+        bumpStmt(db, `lang:${caller.lang}`),
       );
     }
-    await env.METRICS.batch(stmts);
+    await db.batch(stmts);
   } catch {
     // best-effort: a metrics failure must never surface to the visitor
   }
@@ -334,17 +388,43 @@ export function usageFacts(c: Conditions, persona: Persona): UsageFacts {
   };
 }
 
-/** One anonymous behaviour event per /c lookup: dimensions only (format, persona,
- *  the Ambient driver + band, region/state, air kind), no IP and no user id. Goes
- *  to Analytics Engine for time-series + breakdowns (queried via the AE SQL API).
- *  Synchronous + best-effort; the binding is optional. */
-export function recordEvent(env: Env, u: UsageFacts, format: string, ua: string | null): void {
+/** What an event adds to a lookup's facts: the surface, the caller, and (on a fresh
+ *  render) how long it took and its status; an MCP tool call names its tool. */
+export interface EventDims {
+  format: string;
+  caller: Caller;
+  tool?: string;
+  /** Milliseconds to build the response; absent on an edge-cache hit. */
+  ms?: number;
+  status?: number;
+}
+
+/** One anonymous behaviour event per lookup or MCP tool call: dimensions only, no IP
+ *  and no user id. Goes to Analytics Engine for time-series + breakdowns (queried via
+ *  the AE SQL API). Synchronous + best-effort; the binding is optional. Positions are
+ *  fixed (ops queries read them): blob1 format, 2 persona, 3 driver, 4 band, 5 state,
+ *  6 air, 7 class, 8 agent, 9 browser ("1"/"0"), 10 language, 11 MCP tool;
+ *  double1 level, 2 AQI, 3 feels-like, 4 build ms (-1 on a cache hit), 5 status. */
+export function recordEvent(env: Env, u: UsageFacts | null, e: EventDims): void {
   if (!env.EVENTS) return;
+  const c = e.caller;
   try {
     env.EVENTS.writeDataPoint({
-      blobs: [format, u.persona, u.driver, u.band, u.state, u.air, clientClass(ua), agentName(ua)],
-      doubles: [u.level, u.aqi, u.apparent],
-      indexes: [format],
+      blobs: [
+        e.format,
+        u?.persona ?? "",
+        u?.driver ?? "",
+        u?.band ?? "",
+        u?.state ?? "",
+        u?.air ?? "",
+        c.cls,
+        c.agent,
+        c.browser ? "1" : "0",
+        c.lang,
+        e.tool ?? "",
+      ],
+      doubles: [u?.level ?? -1, u?.aqi ?? -1, u?.apparent ?? -999, e.ms ?? -1, e.status ?? 0],
+      indexes: [e.format],
     });
   } catch {
     // best-effort: events must never affect a response

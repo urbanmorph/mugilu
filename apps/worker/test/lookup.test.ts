@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lookupConditions } from "../src/lookup";
+import { lookupConditions, recordUsage, type LookupFormat } from "../src/lookup";
+import { requestCaller } from "../src/metrics";
 import type { Env } from "../src/index";
 import { testD1 } from "./d1";
 
@@ -45,17 +46,37 @@ async function withFetch<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-function req(path: string, headers: Record<string, string> = {}): { req: Request; url: URL } {
+// What a browser sends when a person opens a page (metrics.browserSignal).
+const NAV = { "sec-fetch-mode": "navigate", "sec-fetch-dest": "document", "accept-language": "en-IN" };
+
+function req(path: string, headers: Record<string, string> = NAV): { req: Request; url: URL } {
   const url = new URL(`https://mugilu.live${path}`);
   return { req: new Request(url, { headers: { "user-agent": CHROME, ...headers } }), url };
 }
 
+const Q = { lat: 12.97, lon: 77.59, persona: "everyone" } as const;
+
+/** Builds a lookup and records it the way a route does. */
+async function lookupAndRecord(
+  s: ReturnType<typeof setup>,
+  fmt: LookupFormat,
+  r: { req: Request; url: URL },
+  extra: { persona?: "asthma"; label?: string; lang?: "hi" } = {},
+) {
+  const caller = requestCaller(r.req, extra.lang);
+  const out = await lookupConditions(s.env, s.ctx, { ...Q, ...extra, fmt });
+  recordUsage(s.env, s.ctx, out.usage, { fmt, caller, ...r });
+  return out;
+}
+
 test("lookupConditions: /embed records the lookup, the referrer AND the behaviour event, like the page", async () => {
   const s = setup();
-  const r = req("/embed/12.97,77.59", { referer: "https://news.example.com/story" });
-  const { conditions: c } = await withFetch(() =>
-    lookupConditions(s.env, s.ctx, { lat: 12.97, lon: 77.59, persona: "asthma", fmt: "embed", ua: CHROME, ...r }),
-  );
+  const r = req("/embed/12.97,77.59", {
+    ...NAV,
+    "sec-fetch-dest": "iframe",
+    referer: "https://news.example.com/story",
+  });
+  const { conditions: c } = await withFetch(() => lookupAndRecord(s, "embed", r, { persona: "asthma" }));
   await s.settle();
   assert.ok(c.heat, "conditions are built");
   assert.equal(s.events.length, 1, "one Analytics Engine event");
@@ -70,26 +91,10 @@ test("lookupConditions: /embed records the lookup, the referrer AND the behaviou
 
 test("lookupConditions: an API format counts the referrer under 'api'; the page does not", async () => {
   const s = setup();
-  const headers = { referer: "https://app.example.org/" };
+  const headers = { ...NAV, referer: "https://app.example.org/" };
   await withFetch(async () => {
-    const a = req("/c/12.97,77.59.json", headers);
-    await lookupConditions(s.env, s.ctx, {
-      lat: 12.97,
-      lon: 77.59,
-      persona: "everyone",
-      fmt: "json",
-      ua: CHROME,
-      ...a,
-    });
-    const b = req("/c/12.97,77.59", headers);
-    await lookupConditions(s.env, s.ctx, {
-      lat: 12.97,
-      lon: 77.59,
-      persona: "everyone",
-      fmt: "html",
-      ua: CHROME,
-      ...b,
-    });
+    await lookupAndRecord(s, "json", req("/c/12.97,77.59.json", headers));
+    await lookupAndRecord(s, "html", req("/c/12.97,77.59", headers));
   });
   await s.settle();
   assert.deepEqual(await s.rows("SELECT surface, n FROM referrers"), [{ surface: "api", n: 1 }]);
@@ -102,14 +107,7 @@ test("lookupConditions: an API format counts the referrer under 'api'; the page 
 test("lookupConditions: a kiosk is an event but not a place lookup; a label names the place", async () => {
   const s = setup();
   const { conditions: c } = await withFetch(() =>
-    lookupConditions(s.env, s.ctx, {
-      lat: 12.97,
-      lon: 77.59,
-      persona: "everyone",
-      fmt: "kiosk",
-      ua: CHROME,
-      label: "Bengaluru, Karnataka",
-    }),
+    lookupAndRecord(s, "kiosk", req("/c/bengaluru?kiosk"), { label: "Bengaluru, Karnataka" }),
   );
   await s.settle();
   assert.equal(c.place, "Bengaluru, Karnataka");
@@ -124,8 +122,7 @@ test("lookupConditions: a warm isolate reads each snapshot from R2 once, not per
     get: async (k: string) => (reads.push(k), null),
   };
   await withFetch(async () => {
-    for (let i = 0; i < 3; i++)
-      await lookupConditions(s.env, s.ctx, { lat: 12.97, lon: 77.59, persona: "everyone", fmt: "json", ua: CHROME });
+    for (let i = 0; i < 3; i++) await lookupConditions(s.env, s.ctx, { ...Q, fmt: "json" });
   });
   assert.deepEqual(reads.sort(), ["data/fires.json", "data/latest.json"]);
 });
@@ -150,7 +147,7 @@ test("lookupConditions: the upstream weather and warning calls do not wait for R
     return mock(input);
   }) as typeof fetch;
   try {
-    const p = lookupConditions(s.env, s.ctx, { lat: 12.9, lon: 77.5, persona: "everyone", fmt: "json", ua: CHROME });
+    const p = lookupConditions(s.env, s.ctx, { lat: 12.9, lon: 77.5, persona: "everyone", fmt: "json" });
     await new Promise((r) => setTimeout(r, 10));
     release();
     await p;
@@ -160,13 +157,42 @@ test("lookupConditions: the upstream weather and warning calls do not wait for R
   assert.ok(fetchedWhileR2Pending >= 3, `upstream calls started while R2 was pending (${fetchedWhileR2Pending})`);
 });
 
-test("lookupConditions: MCP records the lookup and event without a request", async () => {
+test("lookupConditions: builds the reading and records nothing itself (the route records it)", async () => {
   const s = setup();
-  await withFetch(() =>
-    lookupConditions(s.env, s.ctx, { lat: 12.97, lon: 77.59, persona: "everyone", fmt: "mcp", ua: CHROME }),
-  );
+  await withFetch(() => lookupConditions(s.env, s.ctx, { ...Q, fmt: "mcp" }));
   await s.settle();
-  assert.equal(s.events[0].blobs[0], "mcp");
-  assert.equal((await s.rows("SELECT * FROM lookups")).length, 1);
-  assert.equal((await s.rows("SELECT * FROM referrers")).length, 0);
+  assert.equal(s.events.length, 0);
+  assert.equal((await s.rows("SELECT * FROM counters")).length, 0);
+});
+
+test("recordUsage: a crawler with a browser User-Agent but no browser headers stays out of the human counts", async () => {
+  const s = setup();
+  await withFetch(() => lookupAndRecord(s, "html", req("/c/12.97,77.59", {})));
+  await s.settle();
+  assert.equal((await s.rows("SELECT * FROM lookups")).length, 0);
+  assert.deepEqual(await s.rows("SELECT name, n FROM counters"), [{ name: "class:human", n: 1 }]);
+  assert.equal(s.events[0].blobs[8], "0", "the event carries the missing browser signal");
+});
+
+test("recordUsage: the page language lands on the event and, for a person, a lang counter", async () => {
+  const s = setup();
+  await withFetch(() => lookupAndRecord(s, "html", req("/hi/c/12.97,77.59"), { lang: "hi" }));
+  await s.settle();
+  assert.equal(s.events[0].blobs[9], "hi");
+  const names = (await s.rows("SELECT name FROM counters")).map((x) => x.name);
+  assert.deepEqual(names.sort(), ["class:human", "fmt:html", "lang:hi"]);
+});
+
+test("recordUsage: a fresh render's time and status reach the event; a cache hit has none", async () => {
+  const s = setup();
+  const { usage } = await withFetch(() => lookupConditions(s.env, s.ctx, { ...Q, fmt: "html" }));
+  const r = req("/c/12.97,77.59");
+  const caller = requestCaller(r.req);
+  recordUsage(s.env, s.ctx, usage, { fmt: "html", caller, ...r, served: { ms: 420, status: 200 } });
+  recordUsage(s.env, s.ctx, usage, { fmt: "html", caller, ...r, served: { status: 200 } });
+  const doubles = (s.events as unknown as { doubles: number[] }[]).map((e) => e.doubles.slice(3));
+  assert.deepEqual(doubles, [
+    [420, 200],
+    [-1, 200],
+  ]);
 });

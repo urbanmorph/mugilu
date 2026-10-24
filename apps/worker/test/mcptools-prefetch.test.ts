@@ -2,6 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { callTool } from "../src/mcptools";
 import type { Env } from "../src/index";
+import type { Caller } from "../src/metrics";
+
+const AGENT: Caller = { cls: "llm", agent: "claude-user", browser: false, lang: "en" };
 
 // The place lookup (gazetteer) and the data the tool needs next (snapshot, fires)
 // are independent R2 reads: the second must not wait for the first.
@@ -25,7 +28,7 @@ test("conditions_at / nearest_stations: the snapshot read starts while the place
     const real = globalThis.fetch;
     globalThis.fetch = (async () => Response.json({ current: {} })) as unknown as typeof fetch;
     try {
-      const p = callTool(tool, { place: "12.97,77.59" }, env, { waitUntil() {} } as unknown as ExecutionContext, null);
+      const p = callTool(tool, { place: "12.97,77.59" }, env, { waitUntil() {} } as unknown as ExecutionContext, AGENT);
       await new Promise((r) => setTimeout(r, 10));
       release();
       await p;

@@ -33,7 +33,7 @@ import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
-import { topPlaces, topReferrers, counters, pruneReferrers, POPULAR_MIN } from "./metrics";
+import { topPlaces, topReferrers, counters, pruneReferrers, requestCaller, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
@@ -132,6 +132,10 @@ export default {
     // After the language strip, so /hi/refresh is gated like /refresh.
     const denied = adminGate(url.pathname, req, env);
     if (denied) return denied;
+
+    // Who the request is from, by kind only (metrics.ts): read from this request's
+    // own headers, so an edge-cache hit is classified like a fresh render.
+    const caller = requestCaller(req, lang);
 
     // Serve a response that is the same for every viewer from the edge cache, keyed on
     // the path as received (language prefix included) plus only `params`. A build
@@ -362,7 +366,6 @@ export default {
     ): Promise<Response> {
       const kiosk = !ext && url.searchParams.has("kiosk");
       const fmt: LookupFormat = kiosk ? "kiosk" : ((ext ?? "html") as LookupFormat);
-      const ua = req.headers.get("user-agent");
       // Same output for every viewer of this path + persona + kiosk flag: served from
       // the edge when warm (the CPU-heavy PNG render included), usage still recorded.
       const key = cacheKey(req, { as: persona === "everyone" ? undefined : persona, kiosk: kiosk ? "" : undefined });
@@ -374,21 +377,12 @@ export default {
         async () => {
           // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
-          const { conditions, usage } = await lookupConditions(env, ctx, {
-            lat,
-            lon,
-            persona,
-            fmt,
-            ua,
-            label: placeName,
-            req,
-            url,
-          });
+          const { conditions, usage } = await lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName });
           // A reading built while an upstream was down is served, never cached.
           const res = renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
           return { res, usage, store: !conditions.degraded };
         },
-        (usage) => recordUsage(env, ctx, usage, { fmt, ua, req, url }),
+        (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
       );
     }
 
@@ -473,21 +467,13 @@ export default {
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest(BAD_COORDS);
       const persona = parsePersona(url.searchParams.get("as"));
-      const ua = req.headers.get("user-agent");
       return edgeServe(
         req,
         ctx,
         cacheKey(req, { as: persona === "everyone" ? undefined : persona }),
         LIVE_EDGE_TTL,
         async () => {
-          const { conditions, usage } = await lookupConditions(env, ctx, {
-            ...coords,
-            persona,
-            fmt: "embed",
-            ua,
-            req,
-            url,
-          });
+          const { conditions, usage } = await lookupConditions(env, ctx, { ...coords, persona, fmt: "embed" });
           const res = cachedResponse(
             renderEmbed(conditions, persona, SITE_URL, lang),
             "text/html; charset=utf-8",
@@ -495,7 +481,7 @@ export default {
           );
           return { res, usage, store: !conditions.degraded };
         },
-        (usage) => recordUsage(env, ctx, usage, { fmt: "embed", ua, req, url }),
+        (usage, served) => recordUsage(env, ctx, usage, { fmt: "embed", caller, req, url, served }),
       );
     }
 
