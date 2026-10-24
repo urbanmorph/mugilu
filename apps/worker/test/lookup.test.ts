@@ -8,7 +8,8 @@ import { testD1 } from "./d1";
 const CHROME =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-// Open-Meteo answers; SACHET has nothing. R2 is empty (no snapshot, no fires).
+// Open-Meteo answers; SACHET has nothing. R2 holds an air snapshot with no stations
+// (so the reading is whole) and no fires.
 function mockFetch(): typeof fetch {
   return (async (input: RequestInfo | URL) => {
     const u = String(input);
@@ -22,12 +23,14 @@ function mockFetch(): typeof fetch {
   }) as typeof fetch;
 }
 
+const EMPTY_SNAPSHOT = { generated_at: new Date().toISOString(), station_count: 0, providers: [], stations: [] };
+
 function setup() {
   const events: { blobs: string[] }[] = [];
   const pending: Promise<unknown>[] = [];
   const METRICS = testD1();
   const env = {
-    OAQ_R2: { get: async () => null },
+    OAQ_R2: { get: async (key: string) => (key === "data/latest.json" ? { json: async () => EMPTY_SNAPSHOT } : null) },
     METRICS,
     EVENTS: { writeDataPoint: (e: { blobs: string[] }) => events.push(e) },
   } as unknown as Env;
@@ -163,6 +166,39 @@ test("lookupConditions: builds the reading and records nothing itself (the route
   await s.settle();
   assert.equal(s.events.length, 0);
   assert.equal((await s.rows("SELECT * FROM counters")).length, 0);
+});
+
+test("lookupConditions: each upstream that failed or timed out is counted, by source", async () => {
+  const s = setup();
+  const real = globalThis.fetch;
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const u = String(input);
+    if (u.includes("open-meteo")) throw new Error("timeout");
+    return new Response("down", { status: 503 }); // SACHET
+  }) as typeof fetch;
+  try {
+    const { conditions } = await lookupConditions(s.env, s.ctx, { ...Q, fmt: "html" });
+    assert.ok(conditions.degraded);
+  } finally {
+    globalThis.fetch = real;
+  }
+  await s.settle();
+  assert.deepEqual(await s.rows("SELECT name, n FROM counters ORDER BY name"), [
+    { name: "err:upstream:openmeteo", n: 1 },
+    { name: "err:upstream:sachet", n: 1 },
+  ]);
+});
+
+test("lookupConditions: an R2 read that fails is counted, and still fails the lookup", async () => {
+  const s = setup();
+  (s.env as unknown as { OAQ_R2: { get: () => Promise<null> } }).OAQ_R2 = {
+    get: async () => {
+      throw new Error("r2 down");
+    },
+  };
+  await assert.rejects(withFetch(() => lookupConditions(s.env, s.ctx, { ...Q, fmt: "html" })));
+  await s.settle();
+  assert.deepEqual(await s.rows("SELECT name, n FROM counters"), [{ name: "err:upstream:r2", n: 1 }]);
 });
 
 test("recordUsage: a crawler with a browser User-Agent but no browser headers stays out of the human counts", async () => {

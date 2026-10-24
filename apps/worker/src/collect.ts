@@ -2,6 +2,7 @@ import type { Env } from "./index";
 import { GRID_KEY, putJson } from "./snapshot";
 import type { Centroid, ConditionsPoint, ConditionsSnapshot } from "./types";
 import { getOpenMeteoBulk } from "./openmeteo";
+import { counted } from "./metrics";
 import centroids from "../data/centroids.json";
 
 // Districts only for the national weather grid (785 points), the right grain
@@ -27,12 +28,16 @@ export function hasCoverage(points: ConditionsPoint[]): boolean {
  */
 export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
   // Throttle ~12s/batch to keep any 60s window under Open-Meteo's minute limit.
-  const wx = await getOpenMeteoBulk(
-    GRID.map((c) => ({ lat: c.lat, lon: c.lon })),
-    12_000,
-  );
-  const points: ConditionsPoint[] = GRID.map((c, i) => ({ ...c, wx: wx[i] ?? {} }));
-  if (!hasCoverage(points)) throw new Error("[collect] too few grid points came back; kept the previous grid");
+  // A failed bulk call, or too few points answered, counts as err:upstream:openmeteo.
+  const points = await counted(env, "openmeteo", async () => {
+    const wx = await getOpenMeteoBulk(
+      GRID.map((c) => ({ lat: c.lat, lon: c.lon })),
+      12_000,
+    );
+    const pts: ConditionsPoint[] = GRID.map((c, i) => ({ ...c, wx: wx[i] ?? {} }));
+    if (!hasCoverage(pts)) throw new Error("[collect] too few grid points came back; kept the previous grid");
+    return pts;
+  });
 
   const snapshot: ConditionsSnapshot = {
     generated_at: new Date().toISOString(),

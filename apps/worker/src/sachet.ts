@@ -2,6 +2,7 @@ import type { Warning } from "./types";
 import type { Env } from "./index";
 import { WARNINGS_KEY, putJson } from "./snapshot";
 import { inRing, type Ring } from "./india";
+import { counted } from "./metrics";
 
 // NDMA SACHET: official disaster warnings (the IMD-replacement layer). The
 // location-wise endpoint does the point→alert spatial match for us, so /c
@@ -166,14 +167,19 @@ function pruneSeen(seen: Record<string, number>, now: number): Record<string, nu
  */
 export async function collectWarnings(env: Env): Promise<{ changed: boolean; count: number; archived: number }> {
   const etag = await env.OAQ_KV.get("sachet:etag");
-  const res = await fetch(FEED_URL, {
-    headers: etag ? { "If-None-Match": etag } : {},
-    signal: AbortSignal.timeout(8000),
+  // The feed call and its body are the upstream step (counted as err:upstream:sachet).
+  const body = await counted(env, "sachet", async () => {
+    const res = await fetch(FEED_URL, {
+      headers: etag ? { "If-None-Match": etag } : {},
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.status === 304) return null;
+    if (!res.ok) throw new Error(`sachet feed ${res.status}`);
+    return { text: await res.text(), etag: res.headers.get("etag") };
   });
-  if (res.status === 304) return { changed: false, count: 0, archived: 0 };
-  if (!res.ok) throw new Error(`sachet feed ${res.status}`);
+  if (!body) return { changed: false, count: 0, archived: 0 };
 
-  const alerts = parseSachetRss(await res.text());
+  const alerts = parseSachetRss(body.text);
 
   const snapshot: WarningsSnapshot = {
     generated_at: new Date().toISOString(),
@@ -201,8 +207,7 @@ export async function collectWarnings(env: Env): Promise<{ changed: boolean; cou
   await env.OAQ_KV.put("sachet:seen", JSON.stringify(pruneSeen(seen, now)));
   // Remember the ETag only now that the snapshot and archive are written: saved
   // earlier, a failed write would turn every later poll into a 304 on stale data.
-  const newEtag = res.headers.get("etag");
-  if (newEtag) await env.OAQ_KV.put("sachet:etag", newEtag);
+  if (body.etag) await env.OAQ_KV.put("sachet:etag", body.etag);
 
   return { changed: true, count: alerts.length, archived };
 }

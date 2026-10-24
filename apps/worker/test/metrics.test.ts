@@ -11,6 +11,7 @@ import {
   bump,
   pushActive,
   recordEntry,
+  counted,
   clientClass,
   agentName,
   browserSignal,
@@ -396,6 +397,18 @@ test("counters: grouped by what they measure (the part before the first colon)",
     mcp: { "tool:conditions_at": 4 },
     err: { "upstream:r2": 1 },
   });
+});
+
+test("counted: passes a result through; a failure is counted against its source, then rethrown", async () => {
+  const env = { METRICS: testD1() } as unknown as Env;
+  assert.equal(await counted(env, "openmeteo", async () => 7), 7);
+  await assert.rejects(
+    counted(env, "openmeteo", async () => {
+      throw new Error("429");
+    }),
+    /429/,
+  );
+  assert.deepEqual(await counters(env), { err: { "upstream:openmeteo": 1 } });
 });
 
 test("recordEntry: an installed-app launch (?src=pwa) by a person counts once; nothing else does", async () => {

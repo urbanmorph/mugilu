@@ -184,10 +184,14 @@ export interface Conditions {
   attribution: string;
   /** Always present, always relayed. */
   disclaimer: string;
-  /** Internal, never serialised: an upstream failed or timed out, or the air snapshot
-   *  is missing, so this reading may be incomplete and must not be cached as whole. */
-  degraded?: boolean;
+  /** Internal, never serialised: the upstreams that failed or timed out ("r2": the air
+   *  snapshot is missing), so this reading may be incomplete and must not be cached as
+   *  whole. Absent when nothing failed. */
+  degraded?: UpstreamSource[];
 }
+
+/** The upstreams mugilu depends on, for the err:upstream:<source> counters (a fixed set). */
+export type UpstreamSource = "oaq" | "openmeteo" | "sachet" | "firms" | "r2";
 
 // ── National conditions grid (the de-bias) ──────────────────────────────────
 // Heat/rain/UV/dust come from a model that covers everywhere, so they're sampled

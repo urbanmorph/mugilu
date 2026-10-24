@@ -7,6 +7,7 @@ import {
   renderWarningsMarkdown,
   splitWarnings,
 } from "../src/sachet";
+import { testD1 } from "./d1";
 
 test("renderWarningsMarkdown: lists active alerts, empty state when none", () => {
   const md = renderWarningsMarkdown({
@@ -130,6 +131,30 @@ test("collectWarnings: the ETag is only remembered once the snapshot is written"
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test("collectWarnings: a feed that fails is counted against SACHET; an unchanged feed is not a failure", async () => {
+  const METRICS = testD1();
+  const env = {
+    METRICS,
+    OAQ_KV: { get: async () => '"v1"', put: async () => {} },
+  } as unknown as Parameters<typeof collectWarnings>[0];
+  const realFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = (async () => new Response(null, { status: 304 })) as unknown as typeof fetch;
+    await collectWarnings(env);
+    globalThis.fetch = (async () => new Response("down", { status: 503 })) as unknown as typeof fetch;
+    await assert.rejects(collectWarnings(env));
+    globalThis.fetch = (async () => {
+      throw new Error("timeout");
+    }) as unknown as typeof fetch;
+    await assert.rejects(collectWarnings(env));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.deepEqual((await METRICS.prepare("SELECT name, n FROM counters").all()).results, [
+    { name: "err:upstream:sachet", n: 2 },
+  ]);
 });
 
 const rss = (...ids: string[]) =>

@@ -43,6 +43,14 @@ database_id = "fac62f6c-2641-4ba1-a1d1-39494ce5dee7"
 binding = "EVENTS"
 dataset = "mugilu_events"
 
+# Workers Logs: console output and uncaught errors, kept by Cloudflare and searchable
+# in the dashboard (the refresh health check and upstream failures log there). Every
+# invocation is kept (head_sampling_rate 1): at this traffic it is well inside Workers
+# Paid's included 20M log events a month. Lower it if traffic grows past that.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 [vars]
 OAQ_BROKER_URL = "https://us-central1-oaqdms.cloudfunctions.net/brokerData"
 OAQ_BASE_URL = "https://oaq.notf.in/v1"

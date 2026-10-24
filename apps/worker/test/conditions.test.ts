@@ -262,17 +262,17 @@ async function degradedWith(fail: "none" | "open-meteo" | "sachet", snapshot: Sn
     return ok(input);
   }) as typeof fetch;
   try {
-    return (await buildConditions(snapshot, 12.9716, 77.5946)).degraded ?? false;
+    return (await buildConditions(snapshot, 12.9716, 77.5946)).degraded;
   } finally {
     globalThis.fetch = realFetch;
   }
 }
 
-test("buildConditions: degraded when an upstream fails or the air snapshot is missing", async () => {
-  assert.equal(await degradedWith("none"), false);
-  assert.equal(await degradedWith("open-meteo"), true);
-  assert.equal(await degradedWith("sachet"), true);
-  assert.equal(await degradedWith("none", null), true);
+test("buildConditions: degraded, naming the source, when an upstream fails or the air snapshot is missing", async () => {
+  assert.equal(await degradedWith("none"), undefined);
+  assert.deepEqual(await degradedWith("open-meteo"), ["openmeteo"]);
+  assert.deepEqual(await degradedWith("sachet"), ["sachet"]);
+  assert.deepEqual(await degradedWith("none", null), ["r2"]);
 });
 
 test("serializeConditionsV1: the internal degraded flag never reaches the API", async () => {

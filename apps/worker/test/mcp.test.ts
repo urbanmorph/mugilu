@@ -213,6 +213,7 @@ test("mcp tools/call: counts each tool by name and each tool error; one event pe
   );
   assert.deepEqual(counts, {
     "class:llm": 1, // the conditions_at lookup, by client class
+    "err:upstream:r2": 1, // this test has no air snapshot in R2
     "mcp:err": 1,
     "mcp:tool:conditions_at": 2,
     "mcp:tool:search_place": 1,

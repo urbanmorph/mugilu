@@ -1,6 +1,7 @@
 import { haversineKm } from "./near";
 import type { Env } from "./index";
 import { FIRES_KEY, putJson } from "./snapshot";
+import { counted } from "./metrics";
 
 // NASA FIRMS: near-real-time fire / thermal-anomaly detections (VIIRS 375 m).
 // This is the fire / crop-burn smoke layer, seasonally the dominant air-health
@@ -92,9 +93,12 @@ export async function collectFires(env: Env): Promise<{ count: number; archived:
   const key = env.FIRMS_MAP_KEY;
   if (!key) throw new Error("FIRMS_MAP_KEY not set");
   const url = `${FIRMS_URL}/${key}/${SOURCE}/${INDIA_BBOX}/1`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`firms ${res.status}`);
-  const fires = parseFirmsCsv(await res.text());
+  // The FIRMS call, and a body that is not its CSV, are the upstream step (err:upstream:firms).
+  const fires = await counted(env, "firms", async () => {
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`firms ${res.status}`);
+    return parseFirmsCsv(await res.text());
+  });
   const snapshot: FiresSnapshot = {
     generated_at: new Date().toISOString(),
     count: fires.length,

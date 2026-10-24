@@ -3,6 +3,7 @@ import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
 import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { freshStations, LATEST_KEY, loadRawSnapshot, putJson } from "./snapshot";
+import { bump } from "./metrics";
 
 function num(x: unknown): number | undefined {
   if (typeof x === "number" && Number.isFinite(x)) return x;
@@ -186,6 +187,15 @@ export function carryForward(
   return [...fresh, ...previous.stations.filter((s) => lost.has(s.provider))];
 }
 
+/** Below this share of the previous snapshot's stations, a run is unhealthy. */
+const HEALTHY_SHARE = 0.5;
+
+/** Whether a run's fresh station count looks right: not empty, and not far below
+ *  the snapshot it replaces (when there is one). */
+export function snapshotHealthy(count: number, previousCount: number | undefined): boolean {
+  return count > 0 && (!previousCount || count >= previousCount * HEALTHY_SHARE);
+}
+
 export async function refreshLatest(env: Env): Promise<Snapshot> {
   const fresh: NormalizedStation[] = [];
   const failed: ProviderId[] = [];
@@ -202,7 +212,18 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
   // Stale stations (dead feeds, or carried readings past their age) are dropped
   // here too, so the stored snapshot, the archive and /data are clean; the
   // read-time filter in loadSnapshot covers a refresh that stalls.
-  const all = freshStations(carryForward(fresh, failed, failed.length ? await loadRawSnapshot(env) : null));
+  // The snapshot this run replaces: carried from when a provider failed (then a failed
+  // read fails the run, as before), and compared with for the health check.
+  const previous = failed.length ? await loadRawSnapshot(env) : await loadRawSnapshot(env).catch(() => null);
+  const all = freshStations(carryForward(fresh, failed, previous));
+  // Health: an empty run, or one far below the snapshot it replaces (a provider gone,
+  // or a second worker writing the same key), is counted and logged loudly.
+  const healthy = snapshotHealthy(all.length, previous?.station_count);
+  if (!healthy)
+    console.error(
+      `[refresh] SNAPSHOT HEALTH: ${all.length} fresh stations, previous snapshot had ${previous?.station_count ?? "none"}`,
+    );
+  await bump(env, { "err:upstream:oaq": failed.length, "err:snapshot:empty": healthy ? 0 : 1 });
   // Nothing fresh came back and there is nothing to carry: keep the last good
   // snapshot rather than overwrite it with an empty one.
   if (!all.length) throw new Error(`[refresh] no stations from ${providers.join(", ")}; kept the previous snapshot`);

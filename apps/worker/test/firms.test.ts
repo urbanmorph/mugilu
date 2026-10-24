@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseFirmsCsv, fireRiskAt } from "../src/firms";
+import { parseFirmsCsv, fireRiskAt, collectFires } from "../src/firms";
+import { testD1 } from "./d1";
 
 // VIIRS area CSV sample: two fires in Punjab (~30.12 N), one near Delhi.
 const CSV = `latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight
@@ -42,4 +43,21 @@ test("fireRiskAt: nothing within radius → zero, nearest null", () => {
   assert.equal(r.count, 0);
   assert.equal(r.frp_sum, 0);
   assert.equal(r.nearest_km, null);
+});
+
+test("collectFires: a FIRMS call that fails or answers with something else is counted against FIRMS", async () => {
+  const METRICS = testD1();
+  const env = { METRICS, FIRMS_MAP_KEY: "k" } as unknown as Parameters<typeof collectFires>[0];
+  const realFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = (async () => new Response("down", { status: 500 })) as unknown as typeof fetch;
+    await assert.rejects(collectFires(env));
+    globalThis.fetch = (async () => new Response("Invalid MAP_KEY.")) as unknown as typeof fetch;
+    await assert.rejects(collectFires(env));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.deepEqual((await METRICS.prepare("SELECT name, n FROM counters").all()).results, [
+    { name: "err:upstream:firms", n: 2 },
+  ]);
 });

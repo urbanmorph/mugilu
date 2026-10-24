@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleanStationName, carryForward, providerStations } from "../src/refresh";
+import { cleanStationName, carryForward, providerStations, snapshotHealthy } from "../src/refresh";
 import type { NormalizedStation, Snapshot } from "../src/types";
 
 test("cleanStationName with known city strips ', {city} …'", () => {
@@ -83,4 +83,13 @@ test("providerStations: an HTTP-200 body with no station list is a failure, not 
   assert.throws(() => providerStations({ error: "quota" }));
   assert.throws(() => providerStations({ stations: [] }));
   assert.throws(() => providerStations([]));
+});
+
+test("snapshotHealthy: an empty run, or one far below the snapshot it replaces, is unhealthy", () => {
+  assert.equal(snapshotHealthy(0, 900), false);
+  assert.equal(snapshotHealthy(0, undefined), false);
+  assert.equal(snapshotHealthy(400, 900), false, "under half the previous run");
+  assert.equal(snapshotHealthy(450, 900), true);
+  assert.equal(snapshotHealthy(1200, 900), true);
+  assert.equal(snapshotHealthy(5, undefined), true, "no previous snapshot to compare with");
 });

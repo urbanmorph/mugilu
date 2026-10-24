@@ -5,6 +5,7 @@ import type {
   NearStation,
   NormalizedStation,
   Snapshot,
+  UpstreamSource,
   Warning,
 } from "./types";
 import { findNearest } from "./near";
@@ -134,6 +135,10 @@ export async function buildConditions(
   }
 
   const as_of = new Date().toISOString();
+  const failed: UpstreamSource[] = [];
+  if (om.failed) failed.push("openmeteo");
+  if (alerts === null) failed.push("sachet");
+  if (!snapshot) failed.push("r2");
   return {
     location: { lat, lon },
     place: nearestPlace(lat, lon) ?? undefined,
@@ -161,7 +166,7 @@ export async function buildConditions(
     ]),
     disclaimer: DISCLAIMER,
     // Incomplete for a passing reason: callers must not cache it as whole.
-    ...(om.failed || alerts === null || !snapshot ? { degraded: true } : {}),
+    ...(failed.length ? { degraded: failed } : {}),
   };
 }
 

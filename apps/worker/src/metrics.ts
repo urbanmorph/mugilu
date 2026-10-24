@@ -1,5 +1,5 @@
 import type { Env } from "./index";
-import type { Conditions } from "./types";
+import type { Conditions, UpstreamSource } from "./types";
 import { ambientRisk } from "./score";
 import type { Persona } from "./score";
 import { stateAt } from "./place";
@@ -144,6 +144,22 @@ export async function bump(env: Env, counts: Record<string, number>): Promise<vo
     if (stmts.length) await env.METRICS.batch(stmts);
   } catch {
     // best-effort: a metrics failure must never surface
+  }
+}
+
+/** Count calls to upstreams that failed or timed out: err:upstream:<source>, from the
+ *  fixed UpstreamSource set. Best-effort. */
+export const upstreamFailed = (env: Env, sources: UpstreamSource[]) =>
+  bump(env, Object.fromEntries(sources.map((s) => [`err:upstream:${s}`, 1])));
+
+/** Run one upstream step of a scheduled job; a failure is counted against `source`,
+ *  then rethrown so the job fails as before. */
+export async function counted<T>(env: Env, source: UpstreamSource, step: () => Promise<T>): Promise<T> {
+  try {
+    return await step();
+  } catch (e) {
+    await upstreamFailed(env, [source]);
+    throw e;
   }
 }
 
