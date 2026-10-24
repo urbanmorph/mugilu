@@ -293,3 +293,30 @@ test("the budget fits Workers Paid, and a slow SACHET can't run the cron past it
   // And more than the free-plan sizing, so many places are checked every hour.
   assert.ok(POINTS_PER_RUN >= 60);
 });
+
+const tally = async (e: Env) => {
+  const r = await e.METRICS.prepare("SELECT name, n FROM counters WHERE name LIKE 'push:%'").all();
+  return Object.fromEntries((r.results as { name: string; n: number }[]).map((x) => [x.name, x.n]));
+};
+
+test("counts places turned on and off, alerts sent, and browsers gone, with no id kept", async () => {
+  const e = env();
+  const gone = subscription("updates.push.services.mozilla.com");
+  const f = fakes((endpoint) => (endpoint === gone.endpoint ? 410 : 201));
+  const { sub } = await subscribe(e, f.deps);
+  await subscribe(e, f.deps, sub); // the same place again: not a new subscription
+  await subscribe(e, f.deps, gone);
+  await subscribe(e, f.deps, sub, { lat: 13.0, lon: 77.6, label: "Bengaluru", lang: "en" });
+  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: sub.endpoint, lat: 13.0, lon: 77.6 }), e);
+  f.active.set("14.91,79.99", [warning("w1")]);
+  await runAlerts(e, f.deps);
+  assert.deepEqual(await tally(e), { "push:sub": 3, "push:unsub": 1, "push:sent": 1, "push:gone": 1 });
+});
+
+test("a run that sends nothing writes no counters", async () => {
+  const e = env();
+  const f = fakes();
+  await subscribe(e, f.deps);
+  await runAlerts(e, f.deps);
+  assert.deepEqual(await tally(e), { "push:sub": 1 });
+});

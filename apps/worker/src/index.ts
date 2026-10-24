@@ -33,7 +33,7 @@ import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
-import { topPlaces, topReferrers, counters, pruneReferrers, requestCaller, POPULAR_MIN } from "./metrics";
+import { topPlaces, topReferrers, counters, pushActive, pruneReferrers, requestCaller, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
@@ -248,14 +248,17 @@ export default {
 
     // Internal usage metrics for our own improvement, NOT public. Key-gated and
     // never cached. Aggregate, privacy-preserving (rounded coords, no IP). The
-    // public only ever sees these via the server-rendered home "Popular".
+    // public only ever sees these via the server-rendered home "Popular". `counters`
+    // is grouped (class, fmt, lang, entry, push, mcp, err); `push_active` is the
+    // alerts on right now, per language.
     if (url.pathname === "/api/counts") {
-      const [places, formats, referrers] = await Promise.all([
+      const [places, grouped, push_active, referrers] = await Promise.all([
         topPlaces(env, 50),
         counters(env),
+        pushActive(env),
         topReferrers(env, 50),
       ]);
-      return new Response(JSON.stringify({ places, formats, referrers }, null, 2), {
+      return new Response(JSON.stringify({ places, counters: grouped, push_active, referrers }, null, 2), {
         headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
       });
     }

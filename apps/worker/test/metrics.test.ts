@@ -8,6 +8,8 @@ import {
   usageFacts,
   topPlaces,
   counters,
+  bump,
+  pushActive,
   clientClass,
   agentName,
   browserSignal,
@@ -376,6 +378,38 @@ test("metrics are best-effort: a D1 failure never throws or surfaces", async () 
     },
   };
   await recordLookup({ METRICS: bad } as unknown as Env, { lat: 1, lon: 1, place: "x" }, "html", person); // must not throw
+  await bump({ METRICS: bad } as unknown as Env, { "err:upstream:oaq": 1 }); // must not throw
   assert.deepEqual(await topPlaces({ METRICS: bad } as unknown as Env), []);
   assert.deepEqual(await counters({ METRICS: bad } as unknown as Env), {});
+  assert.deepEqual(await pushActive({ METRICS: bad } as unknown as Env), []);
+});
+
+test("counters: grouped by what they measure (the part before the first colon)", async () => {
+  const env = { METRICS: testD1() } as unknown as Env;
+  await bump(env, { "class:human": 3, "fmt:html": 2, "lang:hi": 1, "mcp:tool:conditions_at": 4, "err:upstream:r2": 1 });
+  await bump(env, { "class:human": 1, embed: 0 }); // adds up; a zero writes nothing
+  assert.deepEqual(await counters(env), {
+    class: { human: 4 },
+    fmt: { html: 2 },
+    lang: { hi: 1 },
+    mcp: { "tool:conditions_at": 4 },
+    err: { "upstream:r2": 1 },
+  });
+});
+
+test("pushActive: browsers and places with alerts on, per language, from the rows themselves", async () => {
+  const METRICS = testD1();
+  const add = (hash: string, lat: number, lang: string) =>
+    METRICS.prepare(
+      "INSERT INTO push_places (endpoint_hash, endpoint, p256dh, auth, lat, lon, label, lang) VALUES (?,?,?,?,?,?,?,?)",
+    )
+      .bind(hash, "e", "k", "a", lat, 77, "x", lang)
+      .run();
+  await add("a", 12, "en");
+  await add("a", 13, "en");
+  await add("b", 12, "hi");
+  assert.deepEqual(await pushActive({ METRICS } as unknown as Env), [
+    { lang: "en", browsers: 1, places: 2 },
+    { lang: "hi", browsers: 1, places: 1 },
+  ]);
 });

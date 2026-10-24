@@ -131,12 +131,17 @@ const BUMP = "INSERT INTO counters (name,n) VALUES (?,?) ON CONFLICT(name) DO UP
  *  from fixed sets in code (formats, languages, tool names, sources), never input. */
 export const bumpStmt = (db: D1Database, name: string, by = 1) => db.prepare(BUMP).bind(name, by);
 
+/** Statements adding to several counters (zeros skipped), for a batch. */
+export const bumpStmts = (db: D1Database, counts: Record<string, number>) =>
+  Object.entries(counts)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => bumpStmt(db, k, n));
+
 /** Add to several counters in one write (zeros skipped). Best-effort. */
 export async function bump(env: Env, counts: Record<string, number>): Promise<void> {
-  const names = Object.keys(counts).filter((k) => counts[k] > 0);
-  if (!names.length) return;
   try {
-    await env.METRICS.batch(names.map((k) => bumpStmt(env.METRICS, k, counts[k])));
+    const stmts = bumpStmts(env.METRICS, counts);
+    if (stmts.length) await env.METRICS.batch(stmts);
   } catch {
     // best-effort: a metrics failure must never surface
   }
@@ -431,14 +436,42 @@ export function recordEvent(env: Env, u: UsageFacts | null, e: EventDims): void 
   }
 }
 
-/** Format/embed/api tallies for /api/counts. */
-export async function counters(env: Env): Promise<Record<string, number>> {
+/** Every counter for /api/counts, grouped by what it measures (the part before the
+ *  first colon: class, fmt, lang, entry, push, mcp, err); a name with no colon goes
+ *  under "other". */
+export async function counters(env: Env): Promise<Record<string, Record<string, number>>> {
   try {
-    const r = await env.METRICS.prepare("SELECT name, n FROM counters").all<{ name: string; n: number }>();
-    const out: Record<string, number> = {};
-    for (const row of r.results ?? []) out[row.name] = row.n;
+    const r = await env.METRICS.prepare("SELECT name, n FROM counters ORDER BY name").all<{
+      name: string;
+      n: number;
+    }>();
+    const out: Record<string, Record<string, number>> = {};
+    for (const { name, n } of r.results ?? []) {
+      const at = name.indexOf(":");
+      const [group, key] = at < 0 ? ["other", name] : [name.slice(0, at), name.slice(at + 1)];
+      (out[group] ??= {})[key] = n;
+    }
     return out;
   } catch {
     return {};
+  }
+}
+
+export interface PushActive {
+  lang: string;
+  browsers: number;
+  places: number;
+}
+
+/** Alerts on right now, per language: browsers and the places they chose. Counted
+ *  from the subscription rows themselves (no separate identifier). */
+export async function pushActive(env: Env): Promise<PushActive[]> {
+  try {
+    const r = await env.METRICS.prepare(
+      "SELECT lang, COUNT(DISTINCT endpoint_hash) AS browsers, COUNT(*) AS places FROM push_places GROUP BY lang ORDER BY lang",
+    ).all<PushActive>();
+    return r.results ?? [];
+  } catch {
+    return [];
   }
 }

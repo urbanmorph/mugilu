@@ -17,6 +17,7 @@ import { indianPoint } from "./india";
 import { LANGS, lp, t, type Lang } from "./i18n";
 import { getLocationAlerts } from "./sachet";
 import { sendPush, type PushTarget } from "./webpush";
+import { bumpStmt, bumpStmts } from "./metrics";
 
 /** Places one browser can have alerts for (the saved-places list holds 12). */
 export const MAX_PLACES = 12;
@@ -124,6 +125,8 @@ export async function handleSubscribe(req: Request, env: Env, deps: AlertDeps = 
   // Warnings already over the place were on the page the person was reading: not sent again.
   const current = await deps.alertsAt(lat, lon);
   await db.batch([
+    // A place newly turned on (not the same one again), for the push:* totals.
+    ...(known?.here ? [] : [bumpStmt(db, "push:sub")]),
     db
       .prepare(
         `INSERT INTO push_places (endpoint_hash, endpoint, p256dh, auth, lat, lon, label, lang) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -150,22 +153,25 @@ export async function handleUnsubscribe(req: Request, env: Env): Promise<Respons
   if (typeof body.endpoint !== "string") return json({ error: "bad request" }, 400);
   const hash = await hashOf(body.endpoint);
   const db = env.METRICS;
-  if (body.lat !== undefined && body.lon !== undefined) {
-    await db
-      .prepare("DELETE FROM push_places WHERE endpoint_hash = ? AND lat = ? AND lon = ?")
-      .bind(hash, round(Number(body.lat)), round(Number(body.lon)))
-      .run();
-  } else {
-    await forget(db, hash);
-  }
+  const one = body.lat !== undefined && body.lon !== undefined;
+  await db.batch([
+    ...(one
+      ? [
+          db
+            .prepare("DELETE FROM push_places WHERE endpoint_hash = ? AND lat = ? AND lon = ?")
+            .bind(hash, round(Number(body.lat)), round(Number(body.lon))),
+        ]
+      : forget(db, hash)),
+    bumpStmt(db, "push:unsub"),
+  ]);
   return json({ ok: true });
 }
 
-const forget = (db: D1Database, hash: string) =>
-  db.batch([
-    db.prepare("DELETE FROM push_places WHERE endpoint_hash = ?").bind(hash),
-    db.prepare("DELETE FROM push_sent WHERE endpoint_hash = ?").bind(hash),
-  ]);
+/** The statements that forget a browser: its places and what it was sent. */
+const forget = (db: D1Database, hash: string) => [
+  db.prepare("DELETE FROM push_places WHERE endpoint_hash = ?").bind(hash),
+  db.prepare("DELETE FROM push_sent WHERE endpoint_hash = ?").bind(hash),
+];
 
 interface Row extends PushTarget {
   endpoint_hash: string;
@@ -232,7 +238,7 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
           });
           if (status === 404 || status === 410) {
             gone.add(row.endpoint_hash);
-            await forget(db, row.endpoint_hash);
+            await db.batch(forget(db, row.endpoint_hash));
             break;
           }
           // Anything else that is not a success (busy, down, no answer) is tried again next run.
@@ -253,9 +259,11 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
     if (spent) break;
     await db.prepare("UPDATE push_places SET checked_at = ? WHERE lat = ? AND lon = ?").bind(nowS, lat, lon).run();
   }
-  await db
-    .prepare("DELETE FROM push_sent WHERE sent_at < ?")
-    .bind(nowS - SENT_KEPT_SECONDS)
-    .run();
+  // The run's totals ride the same write as the cleanup: alerts delivered, and browsers
+  // whose push address no longer exists (gone, unlike push:unsub, is not a choice).
+  await db.batch([
+    db.prepare("DELETE FROM push_sent WHERE sent_at < ?").bind(nowS - SENT_KEPT_SECONDS),
+    ...bumpStmts(db, { "push:sent": sent, "push:gone": gone.size }),
+  ]);
   return { points: points.length, found, sent, failed, gone: gone.size };
 }
