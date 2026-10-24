@@ -1,7 +1,7 @@
 import type { Env } from "./index";
 import type { NormalizedStation } from "./types";
 import { renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
-import { lookupConditions } from "./lookup";
+import { conditionsData, lookupConditions } from "./lookup";
 import { parsePersona } from "./score";
 import { buildSuggestions } from "./suggest";
 import { geocodeList } from "./geocode";
@@ -113,6 +113,7 @@ async function conditionsAt(
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
   const persona = parsePersona(str(args.persona) || null);
+  const data = conditionsData(env); // the lookup below needs them: read while we resolve
   const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
   // A named place owns its label (parity with /c/{slug}).
@@ -123,6 +124,7 @@ async function conditionsAt(
     fmt: "mcp",
     ua,
     label: loc.label,
+    data,
   });
   return {
     content: [{ type: "text", text: renderConditionsMarkdown(conditions, persona) }],
@@ -147,11 +149,13 @@ async function searchPlace(args: Record<string, unknown>, env: Env): Promise<Too
 async function nearestStations(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
+  const snapshot = loadSnapshot(env); // read it while we resolve the place
+  snapshot.catch(() => {}); // awaited below; this only covers an early return
   const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not resolve "${place}".`);
   const nRaw = Number(args.n ?? 5);
   const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 20) : 5;
-  const snap = await loadSnapshot(env);
+  const snap = await snapshot;
   if (!snap) return err("No air snapshot available yet.");
   const stations = findNearest(snap.stations, loc.lat, loc.lon, n);
   const text = listText(

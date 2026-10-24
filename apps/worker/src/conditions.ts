@@ -90,18 +90,24 @@ export const DISCLAIMER =
  * adapter already nulls any layer whose upstream fails.
  */
 export async function buildConditions(
-  snapshot: Snapshot | null,
+  snapshotIn: Snapshot | null | Promise<Snapshot | null>,
   lat: number,
   lon: number,
-  fires: FiresSnapshot | null = null,
+  firesIn: FiresSnapshot | null | Promise<FiresSnapshot | null> = null,
 ): Promise<Conditions> {
+  // The snapshots (R2) and the upstreams (Open-Meteo, SACHET) are independent: all
+  // four are in flight together, so a cold R2 read never delays the weather call.
+  const [snapshot, fires, om, found] = await Promise.all([
+    snapshotIn,
+    firesIn,
+    getOpenMeteo(lat, lon),
+    getLocationAlerts(lat, lon),
+  ]);
   // Nearest station that actually has a reading, from ANY provider via OAQ,
   // preferring CPCB when one is about as near (pickStation). The very closest
   // is often null, so don't stop there; fall back to overall nearest only if
   // nothing has a reading.
   const nearest = snapshot ? pickStation(snapshot.stations, lat, lon) : undefined;
-
-  const [om, found] = await Promise.all([getOpenMeteo(lat, lon), getLocationAlerts(lat, lon)]);
   // Only warnings whose own area covers this spot are its warnings; the rest are nearby.
   const { here: warnings, nearby } = splitWarnings(found);
 

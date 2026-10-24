@@ -1,5 +1,6 @@
 import type { Env } from "./index";
-import type { Conditions } from "./types";
+import type { Conditions, Snapshot } from "./types";
+import type { FiresSnapshot } from "./firms";
 import type { Persona } from "./score";
 import { buildConditions } from "./conditions";
 import { loadFires, loadSnapshot } from "./snapshot";
@@ -12,6 +13,11 @@ import { recordEvent, recordLookup, recordReferrer } from "./metrics";
 /** Which surface served the lookup. Also the format recorded in the usage metrics. */
 export type LookupFormat = "html" | "kiosk" | "json" | "md" | "png" | "embed" | "mcp";
 
+interface ConditionsData {
+  snapshot: Promise<Snapshot | null>;
+  fires: Promise<FiresSnapshot | null>;
+}
+
 interface LookupInput {
   lat: number;
   lon: number;
@@ -20,6 +26,8 @@ interface LookupInput {
   ua: string | null;
   /** A named place owns its label (so /c/bengaluru reads "Bengaluru", not a ward). */
   label?: string;
+  /** Snapshot reads already started for this request (conditionsData). */
+  data?: ConditionsData;
   /** The web request, for the referrer of a "build on it" surface (API formats, /embed). */
   req?: Request;
   url?: URL;
@@ -34,9 +42,20 @@ const REFERRER_SURFACE: Partial<Record<LookupFormat, string>> = {
   embed: "embed",
 };
 
+/** The R2 snapshots a lookup reads. A caller with other work first (resolving a
+ *  place) starts them here and passes them in, so the reads overlap that work. A
+ *  failure surfaces where they are awaited; the no-op catch only keeps an early
+ *  return from leaving a rejection unhandled. */
+export function conditionsData(env: Env): ConditionsData {
+  const d = { snapshot: loadSnapshot(env), fires: loadFires(env) };
+  d.snapshot.catch(() => {});
+  d.fires.catch(() => {});
+  return d;
+}
+
 export async function lookupConditions(env: Env, ctx: ExecutionContext, q: LookupInput): Promise<Conditions> {
-  const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
-  const conditions = await buildConditions(snap, q.lat, q.lon, fires);
+  const d = q.data ?? conditionsData(env);
+  const conditions = await buildConditions(d.snapshot, q.lat, q.lon, d.fires);
   if (q.label) conditions.place = q.label;
   recordUsage(env, ctx, conditions, q);
   return conditions;
