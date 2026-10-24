@@ -141,7 +141,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "कोहरा (दृश्यता, m)",
     kn: "ಮಂಜು (ಗೋಚರತೆ, m)",
   },
-  "Smoke (fires &lt;100 km)": {
+  "Smoke (fires <100 km)": {
     hi: "धुआं (100 km के भीतर आग)",
     kn: "ಹೊಗೆ (100 km ಒಳಗಿನ ಬೆಂಕಿ)",
   },
@@ -1032,6 +1032,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   "scan for this on your phone": {
     hi: "अपने फ़ोन पर देखने के लिए इसे स्कैन करें",
     kn: "ನಿಮ್ಮ ಫೋನಿನಲ್ಲಿ ನೋಡಲು ಇದನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
+  },
+  // The lowercase level word (dust tile, wet-bulb read); same as "Severe".
+  severe: {
+    hi: "गंभीर",
+    kn: "ತೀವ್ರ",
   },
   "severe dust": {
     hi: "गंभीर धूल",

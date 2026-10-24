@@ -1,10 +1,25 @@
-import type { Conditions, Warning, AirPollutants } from "./types";
+import type { Conditions, Warning, AirPollutants, NormalizedStation } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
 import { SOURCES } from "./sources";
 import { esc } from "./html";
-import { ambientRisk, ambientSummary, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
+import {
+  airLevelOf,
+  ambientRisk,
+  ambientSummary,
+  coldLevelOf,
+  dustLevelOf,
+  fogLevelOf,
+  heatLevelOf,
+  smokeLevel,
+  windLevelOf,
+  PERSONAS,
+  PERSONA_LABEL,
+  RISK_BANDS,
+  SMOKE_WORD,
+  THRESHOLD_ROWS,
+} from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
@@ -58,19 +73,17 @@ function uvWord(index: number | undefined): string {
   return "extreme";
 }
 
-function dustWord(ug: number | undefined): string {
-  if (ug == null) return "n/a";
-  if (ug < 20) return "low";
-  if (ug < 50) return "moderate";
-  return "high";
-}
+// The words below name the same levels the Ambient read uses (score.ts THRESHOLDS),
+// so a tile can never call dust "high" while the read says it is fine.
 
+/** Dust's risk band (low / moderate / high / severe), the word on its tile and hero. */
+const dustBand = (ug: number): RiskBand => RISK_BANDS[dustLevelOf(ug)];
+
+/** Wind word: the hazard levels, plus "breezy" for a sub-hazard 20+ km/h. */
 function windWord(gust: number): string {
-  if (gust >= 88) return "storm-force";
-  if (gust >= 62) return "gale";
-  if (gust >= 40) return "strong";
-  if (gust >= 20) return "breezy";
-  return "calm";
+  const level = windLevelOf(gust);
+  if (level) return ["strong", "gale", "storm-force"][level - 1];
+  return gust >= 20 ? "breezy" : "calm";
 }
 
 /** 8-point compass label for the direction wind blows FROM. */
@@ -78,10 +91,10 @@ function compassDir(deg: number): string {
   return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(deg / 45) % 8];
 }
 
+/** Visibility word: the fog levels, then the sub-hazard haze below 5 km. */
 function visWord(meters: number): string {
-  if (meters < 200) return "dense fog";
-  if (meters < 500) return "thick fog";
-  if (meters < 1000) return "fog";
+  const level = fogLevelOf(meters);
+  if (level) return ["fog", "thick fog", "dense fog"][level - 1];
   if (meters < 2000) return "misty";
   if (meters < 5000) return "hazy";
   return "clear";
@@ -96,39 +109,26 @@ function pollutantLine(p: AirPollutants): string {
 }
 
 function heatPhrase(apparent: number, wetBulb?: number): string {
-  if (wetBulb != null && wetBulb >= 28) return "dangerous humid heat";
-  if (apparent >= 45) return "extreme heat";
-  if (apparent >= 40) return "severe heat";
-  if (apparent >= 35) return "very hot";
-  if (apparent <= 0) return "dangerous cold";
-  if (apparent <= 5) return "very cold";
-  if (apparent <= 10) return "cold";
+  if (wetBulb != null && heatLevelOf({ wet_bulb_c: wetBulb }) >= 2) return "dangerous humid heat";
+  const hot = heatLevelOf({ apparent_c: apparent });
+  if (hot) return ["very hot", "severe heat", "extreme heat"][hot - 1];
+  const cold = coldLevelOf(apparent);
+  if (cold) return ["cold", "very cold", "dangerous cold"][cold - 1];
   return "warm";
 }
 
-function dustPhrase(d: number): string {
-  if (d >= 500) return "severe dust";
-  if (d >= 150) return "high dust";
-  if (d >= 50) return "moderate dust";
-  return "light dust";
-}
+const DUST_PHRASE: Record<RiskBand, string> = {
+  low: "light dust",
+  moderate: "moderate dust",
+  high: "high dust",
+  severe: "severe dust",
+};
 
 // Risk band of each highlight, so the hero can wear the severity of what it
-// shows. Same cutoffs as score.ts (apparent/wet-bulb, dust µg/m³, CPCB band),
-// mapped to the four-step risk palette the /c page uses.
-const RISK_RANK: Record<RiskBand, number> = { low: 0, moderate: 1, high: 2, severe: 3 };
-function heatBand(apparent?: number, wb?: number): RiskBand {
-  if ((apparent != null && apparent >= 45) || (wb != null && wb >= 31)) return "severe";
-  if ((apparent != null && apparent >= 40) || (wb != null && wb >= 28)) return "high";
-  if ((apparent != null && apparent >= 35) || (wb != null && wb >= 26)) return "moderate";
-  return "low";
-}
-function dustBand(d: number): RiskBand {
-  return d >= 500 ? "severe" : d >= 150 ? "high" : d >= 80 ? "moderate" : "low";
-}
-function airBand(b: string): RiskBand {
-  return b === "severe" || b === "vpoor" ? "severe" : b === "poor" ? "high" : b === "moderate" ? "moderate" : "low";
-}
+// shows, mapped to the four-step risk palette the /c page uses.
+const heatBand = (apparent?: number, wb?: number): RiskBand =>
+  RISK_BANDS[heatLevelOf({ apparent_c: apparent, wet_bulb_c: wb })];
+const airBand = (b: NormalizedStation["band"]): RiskBand => RISK_BANDS[airLevelOf(b) ?? 0];
 
 /** The "right now in India" hero. Heat- and dust-led from the 4-hourly grid,
  *  plus a worst-air row from the hourly snapshot, each row state-qualified (so
@@ -144,7 +144,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
   // "feels 41°": in Kannada/Hindi the verb follows the number ("41° ಅನಿಸುತ್ತದೆ").
   const feels = (c: number) => (lang === "en" ? `feels ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`);
   const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
-    if (RISK_RANK[band] > RISK_RANK[worst]) worst = band;
+    if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
     return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
   };
   if (h.hottest) {
@@ -164,7 +164,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
         dustBand(h.dustiest.dust_ug_m3),
         h.dustiest.lat,
         h.dustiest.lon,
-        `${icon("dust")}${t("Dustiest", lang)}: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${t(dustPhrase(h.dustiest.dust_ug_m3), lang)}`,
+        `${icon("dust")}${t("Dustiest", lang)}: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${t(DUST_PHRASE[dustBand(h.dustiest.dust_ug_m3)], lang)}`,
         meta?.gridAsOf,
       ),
     );
@@ -484,13 +484,14 @@ const COND_NOUN: Record<string, string> = {
   none: "sky",
 };
 
-/** Wet-bulb survivability read: ~31 is the theoretical limit, >=28 is severe. */
-function wetBulb(wb: number): [string, string] {
-  if (wb >= 31) return ["dangerous", RISK_COLOR.severe];
-  if (wb >= 28) return ["severe", RISK_COLOR.high];
-  if (wb >= 26) return ["caution", RISK_COLOR.moderate];
-  return ["safe", "var(--muted)"];
-}
+/** Wet-bulb survivability read (~31 is the theoretical limit): word + colour per level. */
+const WET_BULB: [string, string][] = [
+  ["safe", "var(--muted)"],
+  ["caution", RISK_COLOR.moderate],
+  ["severe", RISK_COLOR.high],
+  ["dangerous", RISK_COLOR.severe],
+];
+const wetBulb = (wb: number) => WET_BULB[heatLevelOf({ wet_bulb_c: wb })];
 
 /** An inline good->severe scale with a marker at the reading's position (0..1).
  *  `calm` swaps the gradient for a neutral sky track (for non-hazard rows). */
@@ -647,7 +648,7 @@ export function renderConditionsPage(
         t("Dust", lang),
         risk.driver === "Dust",
         String(Math.round(c.dust.dust_ug_m3)),
-        `<span class="qa nu">µg/m³</span> <b>${t(dustWord(c.dust.dust_ug_m3), lang)}</b>`,
+        `<span class="qa nu">µg/m³</span> <b>${t(dustBand(c.dust.dust_ug_m3), lang)}</b>`,
         "",
         scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500),
       ),
@@ -985,7 +986,7 @@ export function renderKioskPage(
     tiles.push(tile("UV", String(Math.round(c.uv.index)), uvWord(c.uv.index), risk.driver === "UV"));
   if (c.dust?.dust_ug_m3 != null)
     tiles.push(
-      tile("Dust", String(Math.round(c.dust.dust_ug_m3)), dustWord(c.dust.dust_ug_m3), risk.driver === "Dust"),
+      tile("Dust", String(Math.round(c.dust.dust_ug_m3)), dustBand(c.dust.dust_ug_m3), risk.driver === "Dust"),
     );
   if (c.rain?.probability_pct != null)
     tiles.push(tile("Rain", `${Math.round(c.rain.probability_pct)}%`, "rain chance", risk.driver === "Rain"));
@@ -1136,7 +1137,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
     reads.push(`<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${uvWord(c.uv.index)}</span></div>`);
   if (c.dust?.dust_ug_m3 != null)
     reads.push(
-      `<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>dust ${dustWord(c.dust.dust_ug_m3)}</span></div>`,
+      `<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>dust ${dustBand(c.dust.dust_ug_m3)}</span></div>`,
     );
   if (c.smoke && smokeLevel(c.smoke) != null)
     reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>fires &lt;100km</span></div>`);
@@ -1486,8 +1487,7 @@ const METHOD_CSS = `
 /** Glass-box methodology: how the Ambient read is computed, with the public
  *  thresholds (the "Algorithmic transparency" PDGI commitment, made auditable). */
 export function renderMethodology(lang: Lang = "en"): string {
-  const row = (h: string, c1: string, c2: string, c3: string) =>
-    `<tr><td>${h}</td><td>${c1}</td><td>${c2}</td><td>${c3}</td></tr>`;
+  const row = (...cells: string[]) => `<tr>${cells.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`;
   // Prose: English keeps its inline markup; hi/kn render the reviewed translated text
   // (proper nouns + acronyms Latin). Precomputed to avoid nested template literals.
   const onePara =
@@ -1531,16 +1531,7 @@ export function renderMethodology(lang: Lang = "en"): string {
   <table class="mtab">
   <thead><tr><th>${t("Hazard", lang)}</th><th>${t("Caution", lang)}</th><th>${t("High", lang)}</th><th>${t("Severe", lang)}</th></tr></thead>
   <tbody>
-  ${row(t("Air (AQI)", lang), "101–200", "201–300", "301+")}
-  ${row(t("Heat (feels-like)", lang), "35°", "40°", "45°")}
-  ${row(t("Heat (wet-bulb)", lang), "26°", "28°", "31°")}
-  ${row(t("Heat (WBGT)", lang), "30°", "32°", "35°")}
-  ${row(t("Cold (feels-like)", lang), "≤10°", "≤5°", "≤0°")}
-  ${row(t("Wind (gusts, km/h)", lang), "40", "62", "88")}
-  ${row(t("Fog (visibility, m)", lang), "&lt;1000", "&lt;500", "&lt;200")}
-  ${row(t("Smoke (fires &lt;100 km)", lang), "3+", "25+", "60+")}
-  ${row(t("UV (index)", lang), "6–10", "-", "11+")}
-  ${row(t("Dust (µg/m³)", lang), "80", "150", "500")}
+  ${THRESHOLD_ROWS.map((r) => row(t(r.hazard, lang), ...r.cells)).join("\n  ")}
   </tbody>
   </table>
   </div>

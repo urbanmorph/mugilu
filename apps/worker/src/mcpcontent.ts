@@ -2,6 +2,7 @@
 // (user-initiated templated workflows). Static content, no per-request work.
 
 import { sourcesMarkdown } from "./sources";
+import { THRESHOLD_ROWS } from "./score";
 
 export const RESOURCES = [
   {
@@ -46,16 +47,7 @@ Each hazard is scored 0-3 (none / caution / high / severe). The worst one become
 Pick a vulnerability (asthma, elderly, child, outdoor, heart) and the hazards that group feels more keenly are bumped up one level (an asthmatic sees moderate air as "high"). A second "also watch" line surfaces a secondary trigger.
 
 ## The thresholds (caution / high / severe)
-- Air (CPCB AQI): 101-200 / 201-300 / 301+
-- Heat (feels-like C): 35 / 40 / 45
-- Heat (wet-bulb C): 26 / 28 / 31
-- Heat (WBGT C): 30 / 32 / 35
-- Cold (feels-like C): <=10 / <=5 / <=0
-- Wind (gusts km/h): 40 / 62 / 88
-- Fog (visibility m): <1000 / <500 / <200
-- Smoke (fires within 100 km, 24h): 3+ / 25+ / 60+
-- UV (index): 6-10 / - / 11+
-- Dust (ug/m3): 80 / 150 / 500
+${THRESHOLD_ROWS.map((r) => `- ${r.hazard}: ${r.cells.join(" / ")}`).join("\n")}
 
 Heat takes the worst of feels-like, wet-bulb and WBGT.
 
