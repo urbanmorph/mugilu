@@ -4,6 +4,7 @@ import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type
 import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { freshStations, LATEST_KEY, loadRawSnapshot, putJson } from "./snapshot";
 import { bump } from "./metrics";
+import { reason } from "./logs";
 
 function num(x: unknown): number | undefined {
   if (typeof x === "number" && Number.isFinite(x)) return x;
@@ -134,7 +135,7 @@ async function fetchProvider(env: Env, provider: ProviderId): Promise<UpstreamSt
     console.log(`[ratelimit] ${provider} used=${used} remaining=${remaining} limit=${limit}`);
   }
   if (!res.ok) {
-    throw new Error(`provider ${provider} fetch failed: ${res.status} ${await res.text().catch(() => "")}`);
+    throw new Error(`provider ${provider} fetch failed: HTTP ${res.status}`);
   }
   return providerStations(await res.json());
 }
@@ -167,7 +168,7 @@ export async function providerIds(env: Env): Promise<ProviderId[]> {
       console.warn(`[refresh] providers.json: HTTP ${res.status}`);
     }
   } catch (e) {
-    console.error("[refresh] providers.json:", e);
+    console.error(`[refresh] providers.json: ${reason(e)}`);
   }
   // An id we don't know yet still flows through: it gets a generic credit line
   // and display name until it is added to ProviderId.
@@ -206,7 +207,7 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
       for (const raw of raws) fresh.push(normalize(p, raw));
     } catch (e) {
       failed.push(p);
-      console.error(`[refresh] provider ${p}:`, e);
+      console.error(`[refresh] provider ${p}: ${reason(e)}`);
     }
   }
   // Stale stations (dead feeds, or carried readings past their age) are dropped

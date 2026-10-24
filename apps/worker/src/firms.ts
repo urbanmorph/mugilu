@@ -43,7 +43,7 @@ export function parseFirmsCsv(csv: string): FireDetection[] {
     iDn = at("daynight");
   // No lat/lon header means FIRMS sent an error (bad key, outage) with HTTP 200:
   // throw so the caller keeps the last snapshot instead of writing "no fires".
-  if (iLat < 0 || iLon < 0) throw new Error(`firms: not a FIRMS CSV (${csv.slice(0, 80)})`);
+  if (iLat < 0 || iLon < 0) throw new Error("firms: not a FIRMS CSV");
   const out: FireDetection[] = [];
   for (let i = 1; i < lines.length; i++) {
     const c = lines[i].split(",");

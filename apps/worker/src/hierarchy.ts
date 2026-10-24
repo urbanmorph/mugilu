@@ -1,6 +1,7 @@
 import type { Env } from "./index";
 import { getSignature, signUrl } from "./handshake";
 import { providerIds } from "./refresh";
+import { reason } from "./logs";
 
 /**
  * Daily job: fetch meta/providers.json and per-provider meta/hierarchy.json,
@@ -26,7 +27,7 @@ export async function refreshHierarchy(env: Env): Promise<{ providers: number; h
       }
       hierarchies[p] = await hRes.json();
     } catch (e) {
-      console.error(`[hierarchy] ${p}:`, e);
+      console.error(`[hierarchy] ${p}: ${reason(e)}`);
     }
   }
 

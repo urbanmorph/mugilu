@@ -8,6 +8,7 @@ import type {
   Wx,
   AirPollutants,
 } from "./types";
+import { reason } from "./logs";
 
 // Open-Meteo adapter (A3). One zero-key fetch to each of the forecast and
 // air-quality endpoints fills the heat / rain / uv / dust layers of the
@@ -57,7 +58,7 @@ async function fetchCurrent(url: string): Promise<OmResponse> {
   // Time-boxed: this is on the page's request path, so a slow upstream nulls its
   // layer (getOpenMeteo tolerates a failed call) instead of hanging the page.
   const res = await fetch(url, { cf: { cacheTtl: 900, cacheEverything: true }, signal: AbortSignal.timeout(4000) });
-  if (!res.ok) throw new Error(`open-meteo ${res.status}: ${url}`);
+  if (!res.ok) throw new Error(`open-meteo ${res.status}`);
   return (await res.json()) as OmResponse;
 }
 
@@ -115,7 +116,7 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     const vis = num(c.visibility);
     out.visibility = vis != null ? { meters: vis, source: "open-meteo" } : null;
   } else if (forecast.status === "rejected") {
-    console.error("[open-meteo] forecast failed:", forecast.reason);
+    console.error(`[open-meteo] forecast failed: ${reason(forecast.reason)}`);
   }
 
   if (air.status === "fulfilled" && air.value.current) {
@@ -137,7 +138,7 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     // Only offer a model fill when at least one PM value is present (PM drives AQI).
     out.airModel = pm25 != null || pm10 != null ? { pm25, pm10, o3, no2, so2, co, nh3 } : null;
   } else if (air.status === "rejected") {
-    console.error("[open-meteo] air-quality failed:", air.reason);
+    console.error(`[open-meteo] air-quality failed: ${reason(air.reason)}`);
   }
 
   return out;

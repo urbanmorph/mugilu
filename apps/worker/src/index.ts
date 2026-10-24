@@ -52,6 +52,7 @@ import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { Conditions, NormalizedStation } from "./types";
+import { reason } from "./logs";
 
 export interface Env {
   OAQ_KV: KVNamespace;
@@ -626,13 +627,13 @@ export default {
       ctx.waitUntil(
         refreshLatest(env).then(
           (snap) => console.log(`[refresh] ${snap.station_count} stations`),
-          (e) => console.error("[refresh] failed:", e),
+          (e) => console.error(`[refresh] failed: ${reason(e)}`),
         ),
       );
       ctx.waitUntil(
         collectWarnings(env).then(
           (r) => console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
-          (e) => console.error("[warnings] failed:", e),
+          (e) => console.error(`[warnings] failed: ${reason(e)}`),
         ),
       );
       if (alertsOn(env))
@@ -642,13 +643,13 @@ export default {
               console.log(
                 `[alerts] ${r.points} places checked, ${r.found} warnings over them, ${r.sent} sent, ${r.failed} to retry, ${r.gone} gone`,
               ),
-            (e) => console.error("[alerts] failed:", e),
+            (e) => console.error(`[alerts] failed: ${reason(e)}`),
           ),
         );
       ctx.waitUntil(
         collectFires(env).then(
           (r) => console.log(`[firms] ${r.count} detections`),
-          (e) => console.error("[firms] failed:", e),
+          (e) => console.error(`[firms] failed: ${reason(e)}`),
         ),
       );
     }
@@ -657,7 +658,7 @@ export default {
       ctx.waitUntil(
         collectConditions(env).then(
           (s) => console.log(`[collect] ${s.point_count} points`),
-          (e) => console.error("[collect] failed:", e),
+          (e) => console.error(`[collect] failed: ${reason(e)}`),
         ),
       );
     }
@@ -666,10 +667,10 @@ export default {
       ctx.waitUntil(
         refreshHierarchy(env).then(
           (r) => console.log(`[hierarchy] providers=${r.providers} hierarchies=${r.hierarchies}`),
-          (e) => console.error("[hierarchy] failed:", e),
+          (e) => console.error(`[hierarchy] failed: ${reason(e)}`),
         ),
       );
-      ctx.waitUntil(pruneReferrers(env).catch((e) => console.error("[referrers] prune failed:", e)));
+      ctx.waitUntil(pruneReferrers(env).catch((e) => console.error(`[referrers] prune failed: ${reason(e)}`)));
     }
   },
 };

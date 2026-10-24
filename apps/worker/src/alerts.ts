@@ -18,6 +18,7 @@ import { LANGS, lp, t, type Lang } from "./i18n";
 import { getLocationAlerts } from "./sachet";
 import { sendPush, type PushTarget } from "./webpush";
 import { bumpStmt, bumpStmts } from "./metrics";
+import { reason } from "./logs";
 
 /** Places one browser can have alerts for (the saved-places list holds 12). */
 export const MAX_PLACES = 12;
@@ -236,7 +237,7 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
             break;
           }
           const status = await deps.send(row, alertMessage(w, row)).catch((e: Error) => {
-            console.warn(`[alerts] send failed: ${e.message}`);
+            console.warn(`[alerts] send failed: ${reason(e)}`);
             return 0;
           });
           if (status === 404 || status === 410) {
