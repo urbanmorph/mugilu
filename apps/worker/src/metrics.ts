@@ -159,11 +159,11 @@ export async function recordLookup(
   u: Pick<UsageFacts, "lat" | "lon" | "place">,
   fmt: string,
   caller: Caller,
-  also: string[] = [],
+  also: Record<string, number> = {},
 ): Promise<void> {
   const db = env.METRICS;
   try {
-    const stmts = [`class:${caller.cls}`, ...also].map((k) => bumpStmt(db, k));
+    const stmts = bumpStmts(db, { [`class:${caller.cls}`]: 1, ...also });
     if (isPerson(caller) && fmt !== "mcp") {
       const { key, rlat, rlon } = gridKey(u.lat, u.lon);
       stmts.push(

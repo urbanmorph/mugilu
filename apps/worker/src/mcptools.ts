@@ -2,7 +2,7 @@ import type { Env } from "./index";
 import type { NormalizedStation } from "./types";
 import { renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
 import { conditionsData, lookupConditions } from "./lookup";
-import { recordEvent, recordLookup, type Caller } from "./metrics";
+import { bump, recordEvent, recordLookup, type Caller, type UsageFacts } from "./metrics";
 import { parsePersona } from "./score";
 import { buildSuggestions } from "./suggest";
 import { geocodeList } from "./geocode";
@@ -109,7 +109,7 @@ async function conditionsAt(
   args: Record<string, unknown>,
   env: Env,
   ctx: ExecutionContext,
-  caller: Caller,
+  onUsage: (u: UsageFacts) => void,
 ): Promise<ToolResult> {
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
@@ -126,8 +126,7 @@ async function conditionsAt(
     label: loc.label,
     data,
   });
-  ctx.waitUntil(recordLookup(env, usage, "mcp", caller));
-  recordEvent(env, usage, { format: "mcp", caller });
+  onUsage(usage);
   return {
     content: [{ type: "text", text: renderConditionsMarkdown(conditions, persona) }],
     structuredContent: serializeConditionsV1(conditions, persona),
@@ -209,7 +208,25 @@ async function nationalNow(args: Record<string, unknown>, env: Env): Promise<Too
   return { content: [{ type: "text", text: lines.join("\n") || "No national snapshot yet." }], structuredContent: out };
 }
 
-/** Dispatch a tools/call. Returns undefined for an unknown tool name. */
+type Run = (
+  args: Record<string, unknown>,
+  env: Env,
+  ctx: ExecutionContext,
+  onUsage: (u: UsageFacts) => void,
+) => Promise<ToolResult>;
+
+/** Each tool's handler. Its keys are the only names a usage counter can carry. */
+const RUN: Record<string, Run> = {
+  conditions_at: conditionsAt,
+  search_place: (args, env) => searchPlace(args, env),
+  nearest_stations: (args, env) => nearestStations(args, env),
+  active_warnings: (args, env) => activeWarnings(args, env),
+  national_now: (args, env) => nationalNow(args, env),
+};
+
+/** Dispatch a tools/call and record it: a counter per tool and one for errors (D1),
+ *  plus one anonymous event naming the tool (with the reading's facts for
+ *  conditions_at). Returns undefined for an unknown tool name, which records nothing. */
 export async function callTool(
   name: string,
   args: Record<string, unknown>,
@@ -217,18 +234,17 @@ export async function callTool(
   ctx: ExecutionContext,
   caller: Caller,
 ): Promise<ToolResult | undefined> {
-  switch (name) {
-    case "conditions_at":
-      return conditionsAt(args, env, ctx, caller);
-    case "search_place":
-      return searchPlace(args, env);
-    case "nearest_stations":
-      return nearestStations(args, env);
-    case "active_warnings":
-      return activeWarnings(args, env);
-    case "national_now":
-      return nationalNow(args, env);
-    default:
-      return undefined;
+  if (!Object.hasOwn(RUN, name)) return undefined;
+  let usage: UsageFacts | undefined;
+  let failed = true; // until the tool returns a result that is not an error
+  try {
+    const result = await RUN[name](args, env, ctx, (u) => (usage = u));
+    failed = !!result.isError;
+    return result;
+  } finally {
+    const counts = { [`mcp:tool:${name}`]: 1, "mcp:err": failed ? 1 : 0 };
+    // A reading also counts by client class, in the same write.
+    ctx.waitUntil(usage ? recordLookup(env, usage, "mcp", caller, counts) : bump(env, counts));
+    recordEvent(env, usage ?? null, { format: "mcp", caller, tool: name });
   }
 }
