@@ -11,6 +11,7 @@ import type {
 import { findNearest } from "./near";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo } from "./openmeteo";
+import { compareWithNormal, heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
 import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { pollutantParts } from "./formats";
 import { nearestPlace } from "./place";
@@ -134,6 +135,9 @@ export async function buildConditions(
     smoke = { count: r.count, frp_sum: r.frp_sum, nearest_km: r.nearest_km, radius_km: 100, source: "firms" };
   }
 
+  // Today's high vs the normal here. No normal for this cell yet is expected, not a
+  // failure, so it never marks the reading degraded; a failed forecast call already does.
+  const heatVsNormal = compareWithNormal(lat, lon, om.todayMax);
   const as_of = new Date().toISOString();
   const failed: UpstreamSource[] = [];
   if (om.failed) failed.push("openmeteo");
@@ -147,6 +151,7 @@ export async function buildConditions(
     air_as_of: air?.station && nearest?.ts ? new Date(nearest.ts).toISOString() : as_of,
     air,
     heat: om.heat,
+    heat_vs_normal: heatVsNormal,
     rain: om.rain,
     uv: om.uv,
     dust: om.dust,
@@ -158,6 +163,7 @@ export async function buildConditions(
     attribution: buildAttribution([
       air?.source,
       om.heat?.source,
+      heatVsNormal?.source,
       om.rain?.source,
       om.uv?.source,
       om.dust?.source,
@@ -223,6 +229,8 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (c.heat.humidity_pct != null) out.push(`- Humidity: ${c.heat.humidity_pct}%`);
     if (c.heat.wet_bulb_c != null) out.push(`- Wet-bulb: ${c.heat.wet_bulb_c} °C`);
     if (c.heat.wbgt_c != null) out.push(`- Heat stress (WBGT): ${c.heat.wbgt_c} °C`);
+    if (heatVsNormalShown(c.heat_vs_normal))
+      out.push(`- ${heatVsNormalLine(c.heat_vs_normal, "en")} *${NORMALS_LABEL}*`);
     out.push("");
   }
   if (c.rain && (c.rain.precipitation_mm != null || c.rain.probability_pct != null)) {
@@ -271,6 +279,9 @@ const UNITS = {
   apparent_c: "C",
   wet_bulb_c: "C",
   wbgt_c: "C",
+  today_max_c: "C",
+  normal_max_c: "C",
+  anomaly_c: "C",
   wind: "km/h",
   visibility: "m",
   distance_km: "km",
@@ -321,6 +332,8 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
         }
       : null,
     heat: modelled(c.heat),
+    // Additive in v1: today's high vs the 1991-2020 normal here, null where unknown.
+    heat_vs_normal: modelled(c.heat_vs_normal ?? null),
     rain: modelled(c.rain),
     uv: modelled(c.uv),
     dust: modelled(c.dust),

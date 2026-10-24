@@ -25,6 +25,11 @@ export const AIR_SOURCE = `${shorts.slice(0, -1).join(", ")} and ${shorts.at(-1)
 export const SOURCES: { layer: string; text: string; names: string[] }[] = [
   { layer: "Air", text: AIR_SOURCE, names: ["CPCB", "Airnet", "Aurassure", "AirView+", "OAQ"] },
   { layer: "Heat, rain, UV, dust, wind", text: "Open-Meteo (CC-BY 4.0)", names: ["Open-Meteo"] },
+  {
+    layer: "Heat compared with normal",
+    text: "1991-2020 normals of ERA5 reanalysis (Copernicus Climate Change Service) via Open-Meteo",
+    names: ["ERA5", "Copernicus"],
+  },
   { layer: "Official warnings", text: "NDMA / IMD (SACHET)", names: ["NDMA", "IMD", "SACHET"] },
   { layer: "Fire / crop-burn smoke", text: "NASA FIRMS (VIIRS)", names: ["NASA FIRMS"] },
   {
@@ -47,6 +52,8 @@ export const providerName = (p: ProviderId): string => AIR_PROVIDERS[p]?.name ??
 const SOURCE_CREDIT: Record<string, string> = {
   ...Object.fromEntries(Object.entries(AIR_PROVIDERS).map(([id, p]) => [id, `${p.short} via OAQ`])),
   "open-meteo": "Open-Meteo (CC-BY 4.0)",
+  // The heat normals (heatnormals.ts): the Copernicus licence asks for this credit.
+  era5: "ERA5 (Copernicus C3S) normals",
   sachet: "NDMA / IMD (SACHET)",
   firms: "NASA FIRMS",
 };

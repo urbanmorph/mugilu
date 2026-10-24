@@ -14,6 +14,46 @@ const FORECAST = {
 };
 const AIR = { current: { uv_index: 0, dust: 3, aerosol_optical_depth: 0.16 } };
 
+/** Serve FORECAST (or `forecast`) and AIR by URL, recording each URL fetched. */
+function stubFetch(forecast: object = FORECAST): { urls: string[]; restore: () => void } {
+  const realFetch = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    const body = String(input).includes("air-quality") ? AIR : forecast;
+    return new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
+  }) as typeof fetch;
+  return { urls, restore: () => (globalThis.fetch = realFetch) };
+}
+
+test("getOpenMeteo: today's daily max, local date and elevation ride on the same forecast call", async () => {
+  const stub = stubFetch({
+    ...FORECAST,
+    elevation: 914,
+    daily: { time: ["2026-05-25"], temperature_2m_max: [33.4] },
+  });
+  try {
+    const r = await getOpenMeteo(12.97, 77.59);
+    assert.equal(stub.urls.length, 2, "no extra request");
+    assert.match(
+      stub.urls.find((u) => u.includes("/forecast"))!,
+      /daily=temperature_2m_max&forecast_days=1/,
+    );
+    assert.deepEqual(r.todayMax, { date: "2026-05-25", max_c: 33.4, elevation_m: 914 });
+  } finally {
+    stub.restore();
+  }
+});
+
+test("getOpenMeteo: no daily block means no todayMax", async () => {
+  const stub = stubFetch();
+  try {
+    assert.equal((await getOpenMeteo(12.97, 77.59)).todayMax, null);
+  } finally {
+    stub.restore();
+  }
+});
+
 test("getOpenMeteo: parses forecast + air-quality into the schema", async () => {
   const realFetch = globalThis.fetch;
   globalThis.fetch = (async (input: RequestInfo | URL) => {

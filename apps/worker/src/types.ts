@@ -1,3 +1,5 @@
+import type { HeatVsNormal } from "./heatnormals";
+
 export type ProviderId = "cpcb" | "airnet" | "aurassure" | "airview";
 
 // Providers we always pull. OAQ serves some (airview) before listing them in
@@ -169,6 +171,9 @@ export interface Conditions {
   air_as_of?: string;
   air: AirConditions | null;
   heat: HeatConditions | null;
+  /** Today's modelled high against the 1991-2020 normal here; null where there is
+   *  no forecast high or no normal yet (heatnormals.ts). */
+  heat_vs_normal?: HeatVsNormal | null;
   rain: RainConditions | null;
   uv: UvConditions | null;
   dust: DustConditions | null;

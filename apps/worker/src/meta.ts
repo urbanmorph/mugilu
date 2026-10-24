@@ -133,7 +133,7 @@ export function openApiSpec(siteUrl: string): object {
             ref,
           ],
           responses: ok(
-            "A versioned conditions object: air, heat, rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), and an ambient read.",
+            "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), and an ambient read.",
           ),
         },
       },

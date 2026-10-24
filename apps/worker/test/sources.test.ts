@@ -55,6 +55,12 @@ test("buildAttribution: dedupes credits, falls back to the raw id, and is never 
   assert.equal(buildAttribution([]), "via mugilu");
 });
 
+test("sources: the heat normals are a named source, credited to ERA5 and Copernicus", () => {
+  const era5 = SOURCES.find((s) => s.names.includes("ERA5"));
+  assert.ok(era5 && era5.names.includes("Copernicus") && era5.text.includes("1991-2020"));
+  assert.match(buildAttribution(["era5"]), /ERA5 \(Copernicus C3S\)/);
+});
+
 test("sources: the FAQ and about credits are translated for hi and kn", () => {
   for (const lang of ["hi", "kn"] as Lang[])
     for (const en of [SOURCES_FAQ, SOURCES_ABOUT]) assert.notEqual(t(en, lang), en, lang);

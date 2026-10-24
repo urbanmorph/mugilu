@@ -254,6 +254,12 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "CPCB (भारत सरकार), Airnet (CSTEP), Aurassure, और Google AirView+, {oaq} ब्रोकर के माध्यम से।",
     kn: "CPCB (ಭಾರತ ಸರ್ಕಾರ), Airnet (CSTEP), Aurassure, ಮತ್ತು Google AirView+, {oaq} ಬ್ರೋಕರ್ ಮೂಲಕ.",
   },
+  // /terms heat-normals credit (Bhashini draft, hand-fixed: names kept Latin). Native review pending.
+  "Heat compared with normal": { hi: "सामान्य से तुलना में गर्मी", kn: "ಸಾಮಾನ್ಯಕ್ಕೆ ಹೋಲಿಸಿದರೆ ಬಿಸಿಲು" },
+  "1991-2020 normals from {era5} reanalysis (Copernicus Climate Change Service), via Open-Meteo.": {
+    hi: "1991-2020 के सामान्य तापमान, Open-Meteo के माध्यम से {era5} पुनः विश्लेषण (Copernicus Climate Change Service) से।",
+    kn: "1991-2020ರ ಸಾಮಾನ್ಯ ತಾಪಮಾನಗಳು, Open-Meteo ಮೂಲಕ {era5} ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus Climate Change Service).",
+  },
   "{ometeo}, licensed CC-BY 4.0.": {
     hi: "{ometeo}, CC-BY 4.0 के तहत लाइसेंस प्राप्त।",
     kn: "{ometeo}, CC-BY 4.0 ಅಡಿಯಲ್ಲಿ ಪರವಾನಗಿ ಪಡೆದಿದೆ.",
@@ -378,10 +384,10 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "वायु",
     kn: "ವಾಯುಗುಣ",
   },
-  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.":
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.":
     {
-      hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं; जीवन के खोए वर्ष AQLI विधि से आते हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
-      kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ; ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳು AQLI ವಿಧಾನದಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
+      hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है, और आज की गर्मी की तुलना के लिए 1991-2020 के सामान्य तापमान Open-Meteo के माध्यम से ERA5 पुनः विश्लेषण (Copernicus) से आते हैं; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं; जीवन के खोए वर्ष AQLI विधि से आते हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
+      kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ, ಮತ್ತು ಇಂದಿನ ಬಿಸಿಲನ್ನು ಹೋಲಿಸಲು ಬಳಸುವ 1991-2020ರ ಸಾಮಾನ್ಯ ತಾಪಮಾನಗಳು Open-Meteo ಮೂಲಕ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) ಬರುತ್ತವೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ; ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳು AQLI ವಿಧಾನದಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
     },
   "Air is dangerous. Stay indoors if you can.": {
     hi: "वायु गुणवत्ता खतरनाक है। यदि आप कर सकते हैं तो घर के अंदर रहें।",
@@ -1004,10 +1010,10 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "mugilu आपके सटीक स्थान पर सबसे खराब खतरे का नाम लेता है और स्पष्ट रूप से बताता है कि क्या करना हैः अस्थमा, वृद्ध वयस्क, बच्चे, बाहरी श्रमिक या हृदय की स्थिति। यह केवल जानकारी के लिए है, चिकित्सा या सुरक्षा सलाह के लिए नहीं; आधिकारिक चेतावनियों के लिए, NDMA और IMD से परामर्श करें।",
       kn: "mugilu ನಿಮ್ಮ ನಿಖರವಾದ ಸ್ಥಳದ ಮೇಲೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸಿ, ಏನು ಮಾಡಬೇಕು ಎಂಬುದನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳುತ್ತಾನೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ: ಆಸ್ತಮಾ, ಹಿರಿಯ ವಯಸ್ಕರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು ಅಥವಾ ಹೃದಯ ಸ್ಥಿತಿ. ಇದು ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಗಳಿಗಾಗಿ ಅಲ್ಲ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ.",
     },
-  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.":
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.":
     {
-      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता है। यह दूसरों के काम पर खड़ा है और उन्हें श्रेय देता हैः वायु गुणवत्ता के लिए CPCB, Airnet, Aurassure और Google AirView+ (OAQ ब्रोकर के माध्यम से), मौसम के लिए Open-Meteo, चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से), आग के धुएं के लिए NASA FIRMS, स्थानों और भारत के मानचित्र के लिए OpenStreetMap, GeoNames और bharatlas, और जीवन के खोए वर्षों के लिए AQLI विधि। कोड MIT लाइसेंस के तहत खुला है; डेटा प्रत्येक स्रोत के अपने नियमों को बनाए रखता है।",
-      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB, Airnet, Aurassure ಮತ್ತು Google AirView+ (OAQ ಬ್ರೋಕರ್ ಮೂಲಕ), ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ), ಬೆಂಕಿಯ ಹೊಗೆಗಾಗಿ NASA FIRMS, ಸ್ಥಳಗಳು ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ OpenStreetMap, GeoNames ಮತ್ತು bharatlas, ಮತ್ತು ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳಿಗಾಗಿ AQLI ವಿಧಾನ. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ತೆರೆದಿರುತ್ತದೆ; ದತ್ತಾಂಶವು ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ.",
+      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता है। यह दूसरों के काम पर खड़ा है और उन्हें श्रेय देता हैः वायु गुणवत्ता के लिए CPCB, Airnet, Aurassure और Google AirView+ (OAQ ब्रोकर के माध्यम से), मौसम के लिए Open-Meteo, गर्मी के सामान्य तापमान के लिए ERA5 पुनः विश्लेषण (Copernicus), चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से), आग के धुएं के लिए NASA FIRMS, स्थानों और भारत के मानचित्र के लिए OpenStreetMap, GeoNames और bharatlas, और जीवन के खोए वर्षों के लिए AQLI विधि। कोड MIT लाइसेंस के तहत खुला है; डेटा प्रत्येक स्रोत के अपने नियमों को बनाए रखता है।",
+      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB, Airnet, Aurassure ಮತ್ತು Google AirView+ (OAQ ಬ್ರೋಕರ್ ಮೂಲಕ), ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಬಿಸಿಲಿನ ಸಾಮಾನ್ಯ ತಾಪಮಾನಕ್ಕಾಗಿ ERA5 ಮರುವಿಶ್ಲೇಷಣೆ (Copernicus), ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ), ಬೆಂಕಿಯ ಹೊಗೆಗಾಗಿ NASA FIRMS, ಸ್ಥಳಗಳು ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ OpenStreetMap, GeoNames ಮತ್ತು bharatlas, ಮತ್ತು ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳಿಗಾಗಿ AQLI ವಿಧಾನ. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ತೆರೆದಿರುತ್ತದೆ; ದತ್ತಾಂಶವು ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ.",
     },
   none: {
     hi: "कोई नहीं",
@@ -1403,6 +1409,27 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   "Or a timestamped image:": {
     hi: "या टाइमस्टैम्प के साथ एक छवि:",
     kn: "ಅಥವಾ ಟೈಮ್‌ಸ್ಟ್ಯಾಂಪ್ ಹೊಂದಿರುವ ಚಿತ್ರ:",
+  },
+  // Heat compared with normal (heatnormals.ts). Bhashini draft from concrete samples
+  // ("41°C ... 5°C ... late May"), templated by hand: "modelled" as अनुमानित / ಅಂದಾಜು like
+  // the "modelled" label, °C kept compact, ERA5/Open-Meteo kept Latin, ತಾಪಮಾನ
+  // (temperature) as elsewhere here. Native review pending.
+  // {t}/{d} are whole °C; {period} is one of the three locative phrases below, with a
+  // localised month name from Intl.
+  "Today's modelled high of {t}°C is {d}°C above normal for {period} here.": {
+    hi: "यहाँ आज का अनुमानित अधिकतम तापमान {t}°C है, जो {period} सामान्य से {d}°C अधिक है।",
+    kn: "ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನ {t}°C, ಈ ಸ್ಥಳದಲ್ಲಿ {period} ಸಾಮಾನ್ಯಕ್ಕಿಂತ {d}°C ಹೆಚ್ಚು.",
+  },
+  "Today's modelled high of {t}°C is {d}°C below normal for {period} here.": {
+    hi: "यहाँ आज का अनुमानित अधिकतम तापमान {t}°C है, जो {period} सामान्य से {d}°C कम है।",
+    kn: "ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನ {t}°C, ಈ ಸ್ಥಳದಲ್ಲಿ {period} ಸಾಮಾನ್ಯಕ್ಕಿಂತ {d}°C ಕಡಿಮೆ.",
+  },
+  "early {month}": { hi: "{month} की शुरुआत में", kn: "{month} ತಿಂಗಳ ಆರಂಭದಲ್ಲಿ" },
+  "mid {month}": { hi: "{month} के मध्य में", kn: "{month} ತಿಂಗಳ ಮಧ್ಯದಲ್ಲಿ" },
+  "late {month}": { hi: "{month} के अंत में", kn: "{month} ತಿಂಗಳ ಕೊನೆಯಲ್ಲಿ" },
+  "Today's high is modelled (Open-Meteo); the normal is 1991-2020 ERA5 reanalysis.": {
+    hi: "आज का अधिकतम तापमान एक मॉडल अनुमान है (Open-Meteo); सामान्य तापमान 1991-2020 के ERA5 पुनः विश्लेषण से है।",
+    kn: "ಇಂದಿನ ಗರಿಷ್ಠ ತಾಪಮಾನ ಮಾದರಿ ಅಂದಾಜು (Open-Meteo); ಸಾಮಾನ್ಯ ತಾಪಮಾನ 1991-2020ರ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ.",
   },
 };
 export function t(en: string, lang: Lang): string {
