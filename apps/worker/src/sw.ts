@@ -73,8 +73,9 @@ const offline = (path) =>
 async function page(event, url) {
   // The installed app's launch marker (?src=pwa) does not change the page: the
   // saved copy is the same one, so the app opens offline from the home saved at install.
+  // Any other query is kept exactly as opened (re-serialising would turn ?flag into ?flag=).
   const bare = new URL(url);
-  bare.searchParams.delete('src');
+  if (bare.searchParams.has('src')) bare.searchParams.delete('src');
   const key = bare.pathname + bare.search;
   const save = isPlace(url.pathname) || isHome(url.pathname);
   try {

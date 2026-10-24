@@ -218,10 +218,10 @@ type Run = (
 /** Each tool's handler. Its keys are the only names a usage counter can carry. */
 const RUN: Record<string, Run> = {
   conditions_at: conditionsAt,
-  search_place: (args, env) => searchPlace(args, env),
-  nearest_stations: (args, env) => nearestStations(args, env),
-  active_warnings: (args, env) => activeWarnings(args, env),
-  national_now: (args, env) => nationalNow(args, env),
+  search_place: searchPlace,
+  nearest_stations: nearestStations,
+  active_warnings: activeWarnings,
+  national_now: nationalNow,
 };
 
 /** Dispatch a tools/call and record it: a counter per tool and one for errors (D1),

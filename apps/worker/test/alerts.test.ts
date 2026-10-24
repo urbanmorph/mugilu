@@ -308,6 +308,9 @@ test("counts places turned on and off, alerts sent, and browsers gone, with no i
   await subscribe(e, f.deps, gone);
   await subscribe(e, f.deps, sub, { lat: 13.0, lon: 77.6, label: "Bengaluru", lang: "en" });
   await handleUnsubscribe(post("/push/unsubscribe", { endpoint: sub.endpoint, lat: 13.0, lon: 77.6 }), e);
+  // turning off a place that is not on, or a browser we never had, changes nothing: not counted
+  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: sub.endpoint, lat: 13.0, lon: 77.6 }), e);
+  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: subscription().endpoint }), e);
   f.active.set("14.91,79.99", [warning("w1")]);
   await runAlerts(e, f.deps);
   assert.deepEqual(await tally(e), { "push:sub": 3, "push:unsub": 1, "push:sent": 1, "push:gone": 1 });

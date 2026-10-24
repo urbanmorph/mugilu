@@ -154,15 +154,18 @@ export async function handleUnsubscribe(req: Request, env: Env): Promise<Respons
   const hash = await hashOf(body.endpoint);
   const db = env.METRICS;
   const one = body.lat !== undefined && body.lon !== undefined;
+  const [where, args] = one
+    ? ["endpoint_hash = ? AND lat = ? AND lon = ?", [hash, round(Number(body.lat)), round(Number(body.lon))]]
+    : ["endpoint_hash = ?", [hash]];
   await db.batch([
-    ...(one
-      ? [
-          db
-            .prepare("DELETE FROM push_places WHERE endpoint_hash = ? AND lat = ? AND lon = ?")
-            .bind(hash, round(Number(body.lat)), round(Number(body.lon))),
-        ]
-      : forget(db, hash)),
-    bumpStmt(db, "push:unsub"),
+    // push:unsub only when there was something to turn off (checked before the delete).
+    db
+      .prepare(
+        `INSERT INTO counters (name, n) SELECT 'push:unsub', 1 WHERE EXISTS (SELECT 1 FROM push_places WHERE ${where})
+         ON CONFLICT (name) DO UPDATE SET n = n + 1`,
+      )
+      .bind(...args),
+    ...(one ? [db.prepare(`DELETE FROM push_places WHERE ${where}`).bind(...args)] : forget(db, hash)),
   ]);
   return json({ ok: true });
 }
