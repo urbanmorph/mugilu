@@ -299,21 +299,33 @@ const tally = async (e: Env) => {
   return Object.fromEntries((r.results as { name: string; n: number }[]).map((x) => [x.name, x.n]));
 };
 
-test("counts places turned on and off, alerts sent, and browsers gone, with no id kept", async () => {
+const BENGALURU = { lat: 13.0, lon: 77.6, label: "Bengaluru", lang: "en" };
+const MYSURU = { lat: 12.3, lon: 76.65, label: "Mysuru", lang: "en" };
+const activePlaces = async (e: Env) =>
+  ((await e.METRICS.prepare("SELECT COUNT(*) AS n FROM push_places").first()) as { n: number }).n;
+
+test("every push counter is in places, so sub - unsub - gone tracks the places with alerts on", async () => {
   const e = env();
   const gone = subscription("updates.push.services.mozilla.com");
   const f = fakes((endpoint) => (endpoint === gone.endpoint ? 410 : 201));
   const { sub } = await subscribe(e, f.deps);
-  await subscribe(e, f.deps, sub); // the same place again: not a new subscription
+  await subscribe(e, f.deps, sub); // the same place again: not a new place
+  await subscribe(e, f.deps, sub, BENGALURU);
   await subscribe(e, f.deps, gone);
-  await subscribe(e, f.deps, sub, { lat: 13.0, lon: 77.6, label: "Bengaluru", lang: "en" });
-  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: sub.endpoint, lat: 13.0, lon: 77.6 }), e);
-  // turning off a place that is not on, or a browser we never had, changes nothing: not counted
-  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: sub.endpoint, lat: 13.0, lon: 77.6 }), e);
+  await subscribe(e, f.deps, gone, BENGALURU);
+  const other = (await subscribe(e, f.deps, undefined, BENGALURU)).sub;
+  await subscribe(e, f.deps, other, MYSURU);
+  // one place off, then a whole browser off (its 2 places)
+  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: sub.endpoint, ...BENGALURU }), e);
+  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: other.endpoint }), e);
+  // turning off a place that is not on, or a browser we never had, removes nothing: not counted
+  await handleUnsubscribe(post("/push/unsubscribe", { endpoint: sub.endpoint, ...BENGALURU }), e);
   await handleUnsubscribe(post("/push/unsubscribe", { endpoint: subscription().endpoint }), e);
   f.active.set("14.91,79.99", [warning("w1")]);
-  await runAlerts(e, f.deps);
-  assert.deepEqual(await tally(e), { "push:sub": 3, "push:unsub": 1, "push:sent": 1, "push:gone": 1 });
+  await runAlerts(e, f.deps); // `gone` answers 410: both its places are removed
+  const t = await tally(e);
+  assert.deepEqual(t, { "push:sub": 6, "push:unsub": 3, "push:sent": 1, "push:gone": 2 });
+  assert.equal(t["push:sub"] - t["push:unsub"] - t["push:gone"], await activePlaces(e));
 });
 
 test("a run that sends nothing writes no counters", async () => {
@@ -322,4 +334,24 @@ test("a run that sends nothing writes no counters", async () => {
   await subscribe(e, f.deps);
   await runAlerts(e, f.deps);
   assert.deepEqual(await tally(e), { "push:sub": 1 });
+});
+
+test("alerts already sent stay counted when a run fails partway", async () => {
+  const e = env();
+  const f = fakes();
+  await subscribe(e, f.deps);
+  await subscribe(e, f.deps, undefined, BENGALURU);
+  // the first place checked (Bengaluru) has a warning; the second check breaks
+  f.active.set("13,77.6", [warning("w1")]);
+  const alertsAt = f.deps.alertsAt;
+  let calls = 0;
+  const deps = {
+    ...f.deps,
+    alertsAt: async (lat: number, lon: number) => {
+      if (calls++ > 0) throw new Error("D1 or SACHET broke");
+      return alertsAt(lat, lon);
+    },
+  };
+  await assert.rejects(runAlerts(e, deps));
+  assert.equal((await tally(e))["push:sent"], 1);
 });

@@ -17,7 +17,7 @@ import { indianPoint } from "./india";
 import { LANGS, lp, t, type Lang } from "./i18n";
 import { getLocationAlerts } from "./sachet";
 import { sendPush, type PushTarget } from "./webpush";
-import { bumpStmt, bumpStmts } from "./metrics";
+import { bumpStmt } from "./metrics";
 import { reason } from "./logs";
 
 /** Places one browser can have alerts for (the saved-places list holds 12). */
@@ -154,25 +154,33 @@ export async function handleUnsubscribe(req: Request, env: Env): Promise<Respons
   if (typeof body.endpoint !== "string") return json({ error: "bad request" }, 400);
   const hash = await hashOf(body.endpoint);
   const db = env.METRICS;
-  const one = body.lat !== undefined && body.lon !== undefined;
-  const [where, args] = one
-    ? ["endpoint_hash = ? AND lat = ? AND lon = ?", [hash, round(Number(body.lat)), round(Number(body.lon))]]
-    : ["endpoint_hash = ?", [hash]];
-  await db.batch([
-    // push:unsub only when there was something to turn off (checked before the delete).
-    db
-      .prepare(
-        `INSERT INTO counters (name, n) SELECT 'push:unsub', 1 WHERE EXISTS (SELECT 1 FROM push_places WHERE ${where})
-         ON CONFLICT (name) DO UPDATE SET n = n + 1`,
-      )
-      .bind(...args),
-    ...(one ? [db.prepare(`DELETE FROM push_places WHERE ${where}`).bind(...args)] : forget(db, hash)),
-  ]);
+  if (body.lat !== undefined && body.lon !== undefined) {
+    const where = "endpoint_hash = ? AND lat = ? AND lon = ?";
+    const args = [hash, round(Number(body.lat)), round(Number(body.lon))];
+    await db.batch([
+      countPlaces(db, "push:unsub", where, args),
+      db.prepare(`DELETE FROM push_places WHERE ${where}`).bind(...args),
+    ]);
+  } else {
+    await db.batch(forget(db, hash, "push:unsub"));
+  }
   return json({ ok: true });
 }
 
-/** The statements that forget a browser: its places and what it was sent. */
-const forget = (db: D1Database, hash: string) => [
+/** Adds to a push:* counter the places about to be removed (run before the delete, in
+ *  its batch), so every push counter is in places: sub - unsub - gone = places on. */
+const countPlaces = (db: D1Database, name: string, where: string, args: unknown[]) =>
+  db
+    .prepare(
+      `INSERT INTO counters (name, n) SELECT ?, COUNT(*) FROM push_places WHERE ${where} HAVING COUNT(*) > 0
+       ON CONFLICT (name) DO UPDATE SET n = n + excluded.n`,
+    )
+    .bind(name, ...args);
+
+/** The statements that forget a browser (its places and what it was sent), after
+ *  counting its places under `counter`. */
+const forget = (db: D1Database, hash: string, counter: "push:unsub" | "push:gone") => [
+  countPlaces(db, counter, "endpoint_hash = ?", [hash]),
   db.prepare("DELETE FROM push_places WHERE endpoint_hash = ?").bind(hash),
   db.prepare("DELETE FROM push_sent WHERE endpoint_hash = ?").bind(hash),
 ];
@@ -241,16 +249,20 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
             return 0;
           });
           if (status === 404 || status === 410) {
+            // Its places are counted as push:gone (not a choice, unlike push:unsub) as they go.
             gone.add(row.endpoint_hash);
-            await db.batch(forget(db, row.endpoint_hash));
+            await db.batch(forget(db, row.endpoint_hash, "push:gone"));
             break;
           }
           // Anything else that is not a success (busy, down, no answer) is tried again next run.
           if (status >= 200 && status < 300) {
-            await db
-              .prepare("INSERT OR IGNORE INTO push_sent (endpoint_hash, alert_id, sent_at) VALUES (?, ?, ?)")
-              .bind(row.endpoint_hash, w.identifier, nowS)
-              .run();
+            // Counted with the record of it, so a run that fails later keeps the count.
+            await db.batch([
+              db
+                .prepare("INSERT OR IGNORE INTO push_sent (endpoint_hash, alert_id, sent_at) VALUES (?, ?, ?)")
+                .bind(row.endpoint_hash, w.identifier, nowS),
+              bumpStmt(db, "push:sent"),
+            ]);
             sent++;
           } else {
             failed++;
@@ -263,11 +275,9 @@ export async function runAlerts(env: Env, deps: AlertDeps = liveDeps(env), now =
     if (spent) break;
     await db.prepare("UPDATE push_places SET checked_at = ? WHERE lat = ? AND lon = ?").bind(nowS, lat, lon).run();
   }
-  // The run's totals ride the same write as the cleanup: alerts delivered, and browsers
-  // whose push address no longer exists (gone, unlike push:unsub, is not a choice).
-  await db.batch([
-    db.prepare("DELETE FROM push_sent WHERE sent_at < ?").bind(nowS - SENT_KEPT_SECONDS),
-    ...bumpStmts(db, { "push:sent": sent, "push:gone": gone.size }),
-  ]);
+  await db
+    .prepare("DELETE FROM push_sent WHERE sent_at < ?")
+    .bind(nowS - SENT_KEPT_SECONDS)
+    .run();
   return { points: points.length, found, sent, failed, gone: gone.size };
 }
