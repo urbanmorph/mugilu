@@ -205,8 +205,6 @@ export function smokeLevel(s: SmokeConditions | null | undefined): number | null
   const level = Math.max(atOrAbove(s.count, THRESHOLDS.smokeCount), atOrAbove(s.frp_sum, THRESHOLDS.smokeFrp));
   return level || null;
 }
-/** Plain word for a smoke level (1/2/3); index 0 is unused. */
-export const SMOKE_WORD = ["", "some", "notable", "heavy"];
 
 function warnLevel(c: Conditions): number | null {
   if (!c.warnings?.length) return null;
@@ -373,20 +371,28 @@ const HAZARD_NOUN: Record<string, string> = {
 /** The persona callout (option A): surface the persona's OWN top trigger when
  *  it's elevated (high+) but isn't the headline driver, so an asthmatic on a
  *  severe-heat day still hears the air is bad, without the heat being buried.
- *  Returns null for "everyone" or when the driver already is their concern. */
-export function personaAlso(risk: AmbientRisk): string | null {
+ *  Returns null for "everyone" or when the driver already is their concern.
+ *  `tr` translates each piece (the template, persona, hazard and band) for a page. */
+export function personaAlso(risk: AmbientRisk, tr: (en: string) => string = (en) => en): string | null {
   if (risk.persona === "everyone") return null;
   const sensitive = SENSITIVE[risk.persona] ?? [];
   const top = risk.hazards
     .filter((h) => sensitive.includes(h.hazard) && h.hazard !== risk.driver && h.level >= 2)
     .sort((a, b) => b.level - a.level)[0];
   if (!top) return null;
-  return `For ${PERSONA_LABEL[risk.persona].toLowerCase()}, also watch: ${HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()} is ${top.band}.`;
+  return tr("For {persona}, also watch: {hazard} is {band}.")
+    .replace("{persona}", tr(PERSONA_LABEL[risk.persona]).toLowerCase())
+    .replace("{hazard}", tr(HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()))
+    .replace("{band}", tr(top.band));
 }
 
-/** Everything a renderer says about the Ambient read, in English (renderers
- *  translate): the hazard as it is, the persona's own step, and the persona's
- *  other elevated trigger. One place, so every surface tells personas the same. */
-export function ambientSummary(risk: AmbientRisk): { meaning: string; action: string | null; also: string | null } {
-  return { meaning: ambientMeaning(risk), action: personaAction(risk), also: personaAlso(risk) };
+/** Everything a renderer says about the Ambient read (in English, or translated by
+ *  `tr`): the hazard as it is, the persona's own step, and the persona's other
+ *  elevated trigger. One place, so every surface tells personas the same. */
+export function ambientSummary(
+  risk: AmbientRisk,
+  tr: (en: string) => string = (en) => en,
+): { meaning: string; action: string | null; also: string | null } {
+  const action = personaAction(risk);
+  return { meaning: tr(ambientMeaning(risk)), action: action && tr(action), also: personaAlso(risk, tr) };
 }

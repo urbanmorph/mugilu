@@ -1283,6 +1283,127 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "अगर आप किसी जगह के लिए अलर्ट चालू करते हैं, तो mugilu वह जगह (लगभग 1 किमी तक) और आपके ब्राउज़र का पुश पता रखता है, केवल उस जगह की आधिकारिक चेतावनियाँ भेजने के लिए, और अलर्ट बंद करने पर इन्हें मिटा देता है।",
       kn: "ನೀವು ಒಂದು ಸ್ಥಳಕ್ಕೆ ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿದರೆ, mugilu ಆ ಸ್ಥಳವನ್ನು (ಸುಮಾರು 1 ಕಿಮೀ ವರೆಗೆ) ಮತ್ತು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಪುಶ್ ವಿಳಾಸವನ್ನು ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ, ಆ ಸ್ಥಳದ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಕಳುಹಿಸಲು ಮಾತ್ರ, ಮತ್ತು ಅಲರ್ಟ್‌ಗಳನ್ನು ಆಫ್ ಮಾಡಿದಾಗ ಅವುಗಳನ್ನು ಅಳಿಸುತ್ತದೆ.",
     },
+  // /c strata, warnings, kiosk and embed detail (2026-10). Compared against a Bhashini
+  // pass; kept whichever read better with the reviewed vocabulary above (Bhashini
+  // transliterates proper nouns and breaks the X / {…} slots, so slotted strings are
+  // hand-drafted). Pending native review. X is a number/time slot; {…} are filled by
+  // the renderer.
+  "For {persona}, also watch: {hazard} is {band}.": {
+    hi: "{persona} के लिए ध्यान दें: {hazard} भी {band} स्तर पर है।",
+    kn: "{persona}: ಗಮನಿಸಿ, {hazard} ಕೂಡ {band} ಮಟ್ಟದಲ್ಲಿದೆ.",
+  },
+  "the sun": {
+    hi: "धूप",
+    kn: "ಸೂರ್ಯನ ಬಿಸಿಲು",
+  },
+  "the official warning": {
+    hi: "आधिकारिक चेतावनी",
+    kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ",
+  },
+  actual: {
+    hi: "वास्तविक",
+    kn: "ನಿಜವಾದ",
+  },
+  humidity: {
+    hi: "आर्द्रता",
+    kn: "ತೇವಾಂಶ",
+  },
+  "wet-bulb": {
+    hi: "वेट-बल्ब",
+    kn: "ತೇವ-ಬಲ್ಬ್",
+  },
+  "from X": {
+    hi: "X दिशा से",
+    kn: "X ದಿಕ್ಕಿನಿಂದ",
+  },
+  "X km/h steady": {
+    hi: "X km/h स्थिर",
+    kn: "X km/h ಸ್ಥಿರ",
+  },
+  "nearest X km": {
+    hi: "निकटतम X km",
+    kn: "ಹತ್ತಿರದ್ದು X km",
+  },
+  "X MW total": {
+    hi: "कुल X MW",
+    kn: "ಒಟ್ಟು X MW",
+  },
+  "fires within 100 km": {
+    hi: "100 km के भीतर आग",
+    kn: "100 km ಒಳಗಿನ ಬೆಂಕಿ",
+  },
+  "some burning": {
+    hi: "कुछ आग",
+    kn: "ಸ್ವಲ್ಪ ಬೆಂಕಿ",
+  },
+  "notable burning": {
+    hi: "उल्लेखनीय आग",
+    kn: "ಗಮನಾರ್ಹ ಬೆಂಕಿ",
+  },
+  "heavy burning": {
+    hi: "भारी आग",
+    kn: "ಭಾರೀ ಬೆಂಕಿ",
+  },
+  "X mm falling now": {
+    hi: "अभी X mm बारिश",
+    kn: "ಈಗ X mm ಮಳೆ",
+  },
+  now: {
+    hi: "अभी",
+    kn: "ಈಗ",
+  },
+  "until X": {
+    hi: "X तक",
+    kn: "X ವರೆಗೆ",
+  },
+  "Official warning": {
+    hi: "आधिकारिक चेतावनी",
+    kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ",
+  },
+  "+X more": {
+    hi: "+X और",
+    kn: "+X ಇನ್ನಷ್ಟು",
+  },
+  "Reading the sky": {
+    hi: "आसमान पढ़ रहे हैं",
+    kn: "ಆಕಾಶವನ್ನು ಓದುತ್ತಿದೆ",
+  },
+  "Checking the air": {
+    hi: "वायु गुणवत्ता की जाँच कर रहे हैं",
+    kn: "ವಾಯು ಗುಣಮಟ್ಟ ಪರಿಶೀಲಿಸುತ್ತಿದೆ",
+  },
+  "Gauging the heat": {
+    hi: "गर्मी माप रहे हैं",
+    kn: "ಬಿಸಿಲನ್ನು ಅಳೆಯುತ್ತಿದೆ",
+  },
+  "Watching for warnings": {
+    hi: "चेतावनियों पर नज़र रख रहे हैं",
+    kn: "ಎಚ್ಚರಿಕೆಗಳ ಮೇಲೆ ನಿಗಾ ಇಡುತ್ತಿದೆ",
+  },
+  "Catching the wind": {
+    hi: "हवा का रुख देख रहे हैं",
+    kn: "ಗಾಳಿಯನ್ನು ಗಮನಿಸುತ್ತಿದೆ",
+  },
+  "Looking up": {
+    hi: "आसमान की ओर देख रहे हैं",
+    kn: "ಆಕಾಶವನ್ನು ನೋಡುತ್ತಿದೆ",
+  },
+  "as of X": {
+    hi: "X के अनुसार",
+    kn: "X ರಂತೆ",
+  },
+  "Embed this": {
+    hi: "इसे अपनी वेबसाइट पर एम्बेड करें",
+    kn: "ಇದನ್ನು ನಿಮ್ಮ ಜಾಲತಾಣದಲ್ಲಿ ಅಳವಡಿಸಿಕೊಳ್ಳಿ",
+  },
+  "Live widget (iframe):": {
+    hi: "लाइव विजेट (iframe):",
+    kn: "ಲೈವ್ ವಿಜೆಟ್ (iframe):",
+  },
+  "Or a timestamped image:": {
+    hi: "या टाइमस्टैम्प के साथ एक छवि:",
+    kn: "ಅಥವಾ ಟೈಮ್‌ಸ್ಟ್ಯಾಂಪ್ ಹೊಂದಿರುವ ಚಿತ್ರ:",
+  },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;
