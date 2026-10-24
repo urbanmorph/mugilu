@@ -39,7 +39,9 @@ export function webManifest(lang: Lang = "en") {
     name: "mugilu: India's open sky",
     short_name: "mugilu",
     id: "/",
-    start_url: lp("/", lang),
+    // ?src=pwa marks a launch of the installed app (metrics: entry:pwa). The server and
+    // the edge cache ignore it, and the offline worker saves the page without it.
+    start_url: `${lp("/", lang)}?src=pwa`,
     scope: "/",
     display: "standalone",
     description: t(

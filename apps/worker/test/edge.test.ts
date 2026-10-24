@@ -27,6 +27,8 @@ test("cacheKey: keeps the path (language prefix included) and only the params th
   const req = new Request("https://mugilu.live/kn/c/12.97,77.59?ref=x&utm_source=y&as=asthma&kiosk&v=123");
   assert.equal(cacheKey(req, { kiosk: "", as: "asthma" }).url, "https://mugilu.live/kn/c/12.97,77.59?as=asthma&kiosk");
   assert.equal(cacheKey(req).url, "https://mugilu.live/kn/c/12.97,77.59");
+  // the installed-app launch marker never splits the cache
+  assert.equal(cacheKey(new Request("https://mugilu.live/hi?src=pwa")).url, "https://mugilu.live/hi");
   // the same output from differently ordered or decorated URLs shares one entry
   const a = cacheKey(new Request("https://mugilu.live/c/x.png?b=1&as=child"), { as: "child" });
   const b = cacheKey(new Request("https://mugilu.live/c/x.png?as=child&cachebust=9"), { as: "child" });

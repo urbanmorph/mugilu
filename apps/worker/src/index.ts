@@ -33,7 +33,16 @@ import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
-import { topPlaces, topReferrers, counters, pushActive, pruneReferrers, requestCaller, POPULAR_MIN } from "./metrics";
+import {
+  topPlaces,
+  topReferrers,
+  counters,
+  pushActive,
+  pruneReferrers,
+  recordEntry,
+  requestCaller,
+  POPULAR_MIN,
+} from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
@@ -136,6 +145,8 @@ export default {
     // Who the request is from, by kind only (metrics.ts): read from this request's
     // own headers, so an edge-cache hit is classified like a fresh render.
     const caller = requestCaller(req, lang);
+    // The installed app's launch (?src=pwa, install.ts), counted on any route, hit or miss.
+    if (url.searchParams.has("src")) ctx.waitUntil(recordEntry(env, url, caller));
 
     // Serve a response that is the same for every viewer from the edge cache, keyed on
     // the path as received (language prefix included) plus only `params`. A build

@@ -171,6 +171,17 @@ test("the home page is saved when the worker installs, so the installed app open
   assert.equal(await text(fresh.page("/")), "home /");
 });
 
+test("the installed app's start URL (?src=pwa) opens the saved home offline, and saves no second copy", async () => {
+  const fresh = makeWorker();
+  await fresh.lifecycle("install");
+  await fresh.page("/hi?src=pwa"); // online: the launch is fetched as is, so it is counted
+  assert.ok(fresh.state.fetched.includes("/hi?src=pwa"));
+  assert.deepEqual(fresh.saved().sort(), ["/", "/hi"]);
+  fresh.state.online = false;
+  assert.equal(await text(fresh.page("/?src=pwa")), "home /");
+  assert.equal(await text(fresh.page("/hi?src=pwa")), "home /hi");
+});
+
 test("keeps the last reading of the 20 most recently opened places, and no more", async () => {
   for (let i = 0; i < 22; i++) await w.page(`/c/place-${i}`);
   await w.page("/c/place-0"); // opened again: now the most recent

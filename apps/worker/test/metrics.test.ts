@@ -10,6 +10,7 @@ import {
   counters,
   bump,
   pushActive,
+  recordEntry,
   clientClass,
   agentName,
   browserSignal,
@@ -395,6 +396,16 @@ test("counters: grouped by what they measure (the part before the first colon)",
     mcp: { "tool:conditions_at": 4 },
     err: { "upstream:r2": 1 },
   });
+});
+
+test("recordEntry: an installed-app launch (?src=pwa) by a person counts once; nothing else does", async () => {
+  const env = { METRICS: testD1() } as unknown as Env;
+  const at = (q: string) => new URL(`https://mugilu.live/hi${q}`);
+  await recordEntry(env, at("?src=pwa"), person);
+  await recordEntry(env, at("?src=pwa"), { ...person, browser: false }); // a script replaying the URL
+  await recordEntry(env, at("?src=other"), person); // only the one known value
+  await recordEntry(env, at(""), person);
+  assert.deepEqual(await counters(env), { entry: { pwa: 1 } });
 });
 
 test("pushActive: browsers and places with alerts on, per language, from the rows themselves", async () => {

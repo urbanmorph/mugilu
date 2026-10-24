@@ -71,7 +71,11 @@ const offline = (path) =>
   new Response(OFFLINE[langOf(path)], { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
 async function page(event, url) {
-  const key = url.pathname + url.search;
+  // The installed app's launch marker (?src=pwa) does not change the page: the
+  // saved copy is the same one, so the app opens offline from the home saved at install.
+  const bare = new URL(url);
+  bare.searchParams.delete('src');
+  const key = bare.pathname + bare.search;
   const save = isPlace(url.pathname) || isHome(url.pathname);
   try {
     const response = (await event.preloadResponse) || (await fetch(event.request));

@@ -147,6 +147,13 @@ export async function bump(env: Env, counts: Record<string, number>): Promise<vo
   }
 }
 
+/** Count a launch of the installed app: its start URL carries ?src=pwa (install.ts).
+ *  Only that one value, and only for a person in a browser, so a replayed URL or a
+ *  crawler does not inflate it. */
+export async function recordEntry(env: Env, url: URL, caller: Caller): Promise<void> {
+  if (url.searchParams.get("src") === "pwa" && isPerson(caller)) await bump(env, { "entry:pwa": 1 });
+}
+
 /** Record one conditions lookup. Always bump the human/llm/bot class counter; the
  *  per-place, per-format and per-language detail is written ONLY for a person in a
  *  browser (isPerson), so the demand heatmap reflects real people (not crawlers
