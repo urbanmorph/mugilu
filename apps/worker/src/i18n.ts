@@ -1404,6 +1404,27 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "या टाइमस्टैम्प के साथ एक छवि:",
     kn: "ಅಥವಾ ಟೈಮ್‌ಸ್ಟ್ಯಾಂಪ್ ಹೊಂದಿರುವ ಚಿತ್ರ:",
   },
+  // Heat compared with normal (heatnormals.ts). Bhashini draft from concrete samples
+  // ("41°C ... 5°C ... late May"), templated by hand: "modelled" as अनुमानित / ಅಂದಾಜು like
+  // the "modelled" label, °C kept compact, ERA5/Open-Meteo kept Latin, ತಾಪಮಾನ
+  // (temperature) as elsewhere here. Native review pending.
+  // {t}/{d} are whole °C; {period} is one of the three locative phrases below, with a
+  // localised month name from Intl.
+  "Today's modelled high of {t}°C is {d}°C above normal for {period} here.": {
+    hi: "यहाँ आज का अनुमानित अधिकतम तापमान {t}°C है, जो {period} सामान्य से {d}°C अधिक है।",
+    kn: "ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನ {t}°C, ಈ ಸ್ಥಳದಲ್ಲಿ {period} ಸಾಮಾನ್ಯಕ್ಕಿಂತ {d}°C ಹೆಚ್ಚು.",
+  },
+  "Today's modelled high of {t}°C is {d}°C below normal for {period} here.": {
+    hi: "यहाँ आज का अनुमानित अधिकतम तापमान {t}°C है, जो {period} सामान्य से {d}°C कम है।",
+    kn: "ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನ {t}°C, ಈ ಸ್ಥಳದಲ್ಲಿ {period} ಸಾಮಾನ್ಯಕ್ಕಿಂತ {d}°C ಕಡಿಮೆ.",
+  },
+  "early {month}": { hi: "{month} की शुरुआत में", kn: "{month} ತಿಂಗಳ ಆರಂಭದಲ್ಲಿ" },
+  "mid {month}": { hi: "{month} के मध्य में", kn: "{month} ತಿಂಗಳ ಮಧ್ಯದಲ್ಲಿ" },
+  "late {month}": { hi: "{month} के अंत में", kn: "{month} ತಿಂಗಳ ಕೊನೆಯಲ್ಲಿ" },
+  "Today's high is modelled (Open-Meteo); the normal is 1991-2020 ERA5 reanalysis.": {
+    hi: "आज का अधिकतम तापमान एक मॉडल अनुमान है (Open-Meteo); सामान्य तापमान 1991-2020 के ERA5 पुनः विश्लेषण से है।",
+    kn: "ಇಂದಿನ ಗರಿಷ್ಠ ತಾಪಮಾನ ಮಾದರಿ ಅಂದಾಜು (Open-Meteo); ಸಾಮಾನ್ಯ ತಾಪಮಾನ 1991-2020ರ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ.",
+  },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;

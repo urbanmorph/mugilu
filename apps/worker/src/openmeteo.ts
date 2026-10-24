@@ -27,8 +27,17 @@ export interface OpenMeteoConditions {
   /** Modelled air pollutants, the gap-filler when no ground station is near.
    *  co is in mg/m³ (CPCB unit); the rest in µg/m³. */
   airModel: AirPollutants | null;
+  /** Today's modelled daily maximum here, the local date it is for, and the
+   *  point's elevation: the inputs to the heat-compared-with-normal read. */
+  todayMax: TodayMax | null;
   /** A call failed or returned no reading, so some layers are missing for that reason. */
   failed: boolean;
+}
+
+export interface TodayMax {
+  date: string;
+  max_c: number;
+  elevation_m?: number;
 }
 
 /** Simplified WBGT (shade) from temperature + humidity (Australian BoM):
@@ -42,6 +51,8 @@ function wbgt(t?: number, rh?: number): number | undefined {
 
 interface OmResponse {
   current?: Record<string, unknown>;
+  daily?: { time?: string[]; temperature_2m_max?: unknown[] };
+  elevation?: number;
 }
 
 /** Round to ~1 km grid so nearby points share a cache key and one upstream call. */
@@ -72,7 +83,10 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
   const forecastUrl =
     `${FORECAST_URL}?${coords}&current=` +
     "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation,precipitation_probability," +
-    "wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility";
+    "wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility" +
+    // Today's high, for the heat-compared-with-normal read: the same request with
+    // one more variable (11, which Open-Meteo counts as 1.1 calls).
+    "&daily=temperature_2m_max&forecast_days=1";
   const airUrl =
     `${AIR_QUALITY_URL}?${coords}&current=` +
     "pm2_5,pm10,ozone,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide,ammonia,uv_index,dust,aerosol_optical_depth";
@@ -87,8 +101,16 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     wind: null,
     visibility: null,
     airModel: null,
+    todayMax: null,
     failed: [forecast, air].some((r) => r.status === "rejected" || !r.value.current),
   };
+
+  if (forecast.status === "fulfilled") {
+    const { daily, elevation } = forecast.value;
+    const max = num(daily?.temperature_2m_max?.[0]);
+    const date = daily?.time?.[0];
+    if (max != null && date) out.todayMax = { date, max_c: max, elevation_m: num(elevation) };
+  }
 
   if (forecast.status === "fulfilled" && forecast.value.current) {
     const c = forecast.value.current;

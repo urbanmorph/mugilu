@@ -1,0 +1,3 @@
+{"source":"ERA5 reanalysis (contains modified Copernicus Climate Change Service information) via Open-Meteo (archive-api, models=era5, CC-BY 4.0), daily maximum 2 m temperature","baseline":"1991-2020","smoothing":"21-day circular mean, sampled at 52 week centres","format":"node 'lat,lon' -> [elevation_m, 52 weekly normals in tenths of °C]","step":1,"nodes":{
+
+}}
