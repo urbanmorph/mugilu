@@ -1,6 +1,7 @@
 import type { Env } from "./index";
 import type { NormalizedStation } from "./types";
-import { buildConditions, renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
+import { renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
+import { lookupConditions } from "./lookup";
 import { parsePersona } from "./score";
 import { buildSuggestions } from "./suggest";
 import { geocodeList } from "./geocode";
@@ -8,8 +9,7 @@ import { findNearest } from "./near";
 import { composeHighlights } from "./highlights";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadFires, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
-import { recordLookup, recordEvent } from "./metrics";
+import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 
 // The MCP tool surface (Phase 2). Each tool is a thin adapter over an existing
 // internal function, no new data logic. Read-only; all live/India-only.
@@ -115,11 +115,15 @@ async function conditionsAt(
   const persona = parsePersona(str(args.persona) || null);
   const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
-  const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
-  const conditions = await buildConditions(snap, loc.lat, loc.lon, fires);
-  if (loc.label) conditions.place = loc.label; // a named place owns its label (parity with /c/{slug})
-  ctx.waitUntil(recordLookup(env, loc.lat, loc.lon, conditions.place, "mcp", ua));
-  recordEvent(env, conditions, persona, "mcp", ua);
+  // A named place owns its label (parity with /c/{slug}).
+  const conditions = await lookupConditions(env, ctx, {
+    lat: loc.lat,
+    lon: loc.lon,
+    persona,
+    fmt: "mcp",
+    ua,
+    label: loc.label,
+  });
   return {
     content: [{ type: "text", text: renderConditionsMarkdown(conditions, persona) }],
     structuredContent: serializeConditionsV1(conditions, persona),

@@ -8,7 +8,8 @@ import { ICONS, MANIFEST_PATH, webManifest } from "./install";
 import { SW_PATH, serviceWorker } from "./sw";
 import { handleSubscribe, handleUnsubscribe, runAlerts } from "./alerts";
 import { findNearest, parseLatLon } from "./near";
-import { buildConditions, renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
+import { renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
+import { lookupConditions, type LookupFormat } from "./lookup";
 import {
   renderConditionsPage,
   renderKioskPage,
@@ -32,13 +33,13 @@ import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import type { WarningsSnapshot } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
-import { recordLookup, recordReferrer, recordEvent, topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
+import { topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadFires, loadSnapshot } from "./snapshot";
+import { loadSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { NormalizedStation } from "./types";
@@ -356,11 +357,19 @@ export default {
         const hit = await caches.default.match(req);
         if (hit) return hit;
       }
-      const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
-      const conditions = await buildConditions(snap, lat, lon, fires);
+      const kiosk = !ext && url.searchParams.has("kiosk");
       // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
       // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
-      if (placeName) conditions.place = placeName;
+      const conditions = await lookupConditions(env, ctx, {
+        lat,
+        lon,
+        persona,
+        fmt: kiosk ? "kiosk" : ((ext ?? "html") as LookupFormat),
+        ua: req.headers.get("user-agent"),
+        label: placeName,
+        req,
+        url,
+      });
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
       // with /c/lucknow for the same place. Arbitrary points stay self-canonical.
@@ -369,16 +378,6 @@ export default {
         const s = slugForName(conditions.place.split(",")[0]);
         if (s) canonical = `${SITE_URL}/c/${s}`;
       }
-      const ua = req.headers.get("user-agent");
-      const kiosk = !ext && url.searchParams.has("kiosk");
-      const fmt = kiosk ? "kiosk" : (ext ?? "html");
-      // A kiosk is one persistent display refreshing itself, not demand: keep it out
-      // of the D1 place heatmap (and its write budget). Analytics Engine still counts
-      // it via fmt, so display adoption stays visible.
-      if (!kiosk) ctx.waitUntil(recordLookup(env, lat, lon, conditions.place, ext ?? "html", ua));
-      // API formats (.json/.md/.png) are a "build on it" surface. Capture who.
-      if (ext) ctx.waitUntil(recordReferrer(env, "api", req, url));
-      recordEvent(env, conditions, persona, fmt, ua); // anonymous behaviour event
       if (ext === "png") {
         const og = renderConditionsOg(conditions, persona);
         // Buffer the image bytes before caching: the streaming render cannot be
@@ -452,12 +451,14 @@ export default {
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest(BAD_COORDS);
       const persona = parsePersona(url.searchParams.get("as"));
-      const [snap, fires] = await Promise.all([loadSnapshot(env), loadFires(env)]);
-      const conditions = await buildConditions(snap, coords.lat, coords.lon, fires);
-      ctx.waitUntil(
-        recordLookup(env, coords.lat, coords.lon, conditions.place, "embed", req.headers.get("user-agent")),
-      );
-      ctx.waitUntil(recordReferrer(env, "embed", req, url));
+      const conditions = await lookupConditions(env, ctx, {
+        ...coords,
+        persona,
+        fmt: "embed",
+        ua: req.headers.get("user-agent"),
+        req,
+        url,
+      });
       return cachedResponse(
         renderEmbed(conditions, persona, SITE_URL, lang),
         "text/html; charset=utf-8",
