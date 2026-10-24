@@ -1,7 +1,10 @@
 // Run with: pnpm -C apps/worker test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeAqi, aqiBand, subIndex } from "../src/aqi";
+import { computeAqi, aqiBand, subIndex, lifeYearsLost, AQI_BAND_LABEL } from "../src/aqi";
+import { renderConditionsPage } from "../src/page";
+import { renderStationMarkdown } from "../src/formats";
+import type { Conditions, NormalizedStation } from "../src/types";
 
 // Reference values from CPCB breakpoints
 // https://cpcb.nic.in/National-Air-Quality-Index/
@@ -111,4 +114,37 @@ test("subIndex: monotonic across every pollutant's whole range (no holes, no dip
       prev = s!;
     }
   }
+});
+
+test("lifeYearsLost: AQLI 0.098 yr per µg/m³ above the WHO 5 µg/m³ guideline", () => {
+  assert.equal(lifeYearsLost(25), 1.96);
+  assert.equal(lifeYearsLost(4), 0); // below the guideline: no loss, never negative
+  assert.equal(lifeYearsLost(undefined), null);
+  assert.equal(lifeYearsLost(NaN), null);
+});
+
+test("AQI band labels: CPCB's names, the same on the page and in the Markdown", () => {
+  assert.equal(AQI_BAND_LABEL.satisfactory, "Satisfactory");
+  assert.equal(AQI_BAND_LABEL.vpoor, "Very Poor");
+  const c = {
+    location: { lat: 12.97, lon: 77.59 },
+    as_of: "2026-06-26T14:05:00.000Z",
+    air: { aqi: 57, band: "satisfactory", pollutants: {}, yll: null, station: null, source: "open-meteo" },
+    heat: null,
+    attribution: "",
+    disclaimer: "",
+  } as unknown as Conditions;
+  assert.match(renderConditionsPage(c), /AQI<\/span> <b[^>]*>Satisfactory<\/b>/);
+  const s = {
+    name: "X",
+    city: "Y",
+    provider: "cpcb",
+    lat: 28.6,
+    lon: 77.2,
+    aqi: 350,
+    band: "vpoor",
+    pollutants: {},
+    yll: null,
+  };
+  assert.match(renderStationMarkdown(s as unknown as NormalizedStation, c.as_of, "https://mugilu.live"), /Very Poor/);
 });

@@ -49,6 +49,24 @@ export function computeAqi(p: NormalizedStation["pollutants"]): number | null {
   return Math.max(...subs);
 }
 
+/** CPCB's names for its AQI bands, on every surface (pages, Markdown, share images). */
+export const AQI_BAND_LABEL: Record<NormalizedStation["band"], string> = {
+  good: "Good",
+  satisfactory: "Satisfactory",
+  moderate: "Moderate",
+  poor: "Poor",
+  vpoor: "Very Poor",
+  severe: "Severe",
+  unknown: "n/a",
+};
+
+/** AQLI years of life lost if this PM2.5 persisted as the annual average: 0.098 yr
+ *  per µg/m³ (Ebenstein et al. 2017 PNAS) above the WHO 2021 guideline (5 µg/m³). */
+export function lifeYearsLost(pm25: number | undefined): number | null {
+  if (pm25 === undefined || !Number.isFinite(pm25)) return null;
+  return +(Math.max(0, pm25 - 5) * 0.098).toFixed(2);
+}
+
 export function aqiBand(aqi: number | null): NormalizedStation["band"] {
   if (aqi === null || !Number.isFinite(aqi)) return "unknown";
   if (aqi <= 50) return "good";

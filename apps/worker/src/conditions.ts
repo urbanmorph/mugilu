@@ -10,7 +10,7 @@ import type {
 import { findNearest } from "./near";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo } from "./openmeteo";
-import { computeAqi, aqiBand } from "./aqi";
+import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { pollutantParts } from "./formats";
 import { nearestPlace } from "./place";
 import { getLocationAlerts, splitWarnings } from "./sachet";
@@ -54,12 +54,6 @@ function measuredAir(s: NearStation): AirConditions {
     station: { id: s.id, name: s.name, city: s.city, distance_km: s.distance_km },
     source: s.provider,
   };
-}
-
-// AQLI: years of life lost if this PM2.5 persisted as the annual average.
-// Same coefficient (0.098 yr per µg/m³, Ebenstein et al. 2017) the stations use.
-function lifeYearsLost(pm25: number | undefined): number | null {
-  return pm25 == null ? null : +(Math.max(0, pm25 - 5) * 0.098).toFixed(2);
 }
 
 /** Air modelled by Open-Meteo when no station is near; CPCB AQI computed in-app. */

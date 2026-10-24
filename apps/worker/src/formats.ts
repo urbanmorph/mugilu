@@ -1,15 +1,6 @@
 import type { NormalizedStation, Snapshot, AirPollutants } from "./types";
 import { AIR_SOURCE, providerName } from "./sources";
-
-const BAND_LABELS: Record<NormalizedStation["band"], string> = {
-  good: "Good",
-  satisfactory: "Satisfactory",
-  moderate: "Moderate",
-  poor: "Poor",
-  vpoor: "Very Poor",
-  severe: "Severe",
-  unknown: "n/a",
-};
+import { AQI_BAND_LABEL } from "./aqi";
 
 function n(v: number | undefined | null): string {
   return v === undefined || v === null || !Number.isFinite(v) ? "n/a" : String(v);
@@ -65,7 +56,7 @@ function row(s: NormalizedStation, rank: number): string {
     s.provider,
     n(s.pollutants.pm25),
     n(s.aqi),
-    BAND_LABELS[s.band],
+    AQI_BAND_LABEL[s.band],
   ];
   return `| ${c.join(" | ")} |`;
 }
@@ -140,7 +131,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
           (s) =>
             `| ${s.name.replace(/\|/g, "\\|")} | ${s.provider} | ${n(s.pollutants.pm25)} | ${n(
               s.aqi,
-            )} | ${BAND_LABELS[s.band]} |`,
+            )} | ${AQI_BAND_LABEL[s.band]} |`,
         ),
         "",
       ].join("\n");
@@ -163,7 +154,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
  * Render a single station page as Markdown with YAML frontmatter.
  */
 export function renderStationMarkdown(s: NormalizedStation, generatedAt: string, siteUrl: string): string {
-  const bandLabel = BAND_LABELS[s.band];
+  const bandLabel = AQI_BAND_LABEL[s.band];
   const lines = [
     "---",
     `station_id: ${s.id}`,

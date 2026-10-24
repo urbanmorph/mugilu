@@ -2,6 +2,7 @@ import type { Conditions, Warning, AirPollutants, NormalizedStation } from "./ty
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
+import { AQI_BAND_LABEL } from "./aqi";
 import { SOURCES } from "./sources";
 import { esc } from "./html";
 import {
@@ -38,16 +39,6 @@ import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
 // rules (--hair); a condition- or sky-tinted atmospheric backdrop; and the
 // inline Lucide-style line icons in ICON/icon(), never emoji. Tokens live in
 // BASE_CSS :root and reach home, /c, about, terms and 404 alike.
-
-const BAND_LABEL: Record<string, string> = {
-  good: "Good",
-  satisfactory: "Fine",
-  moderate: "Moderate",
-  poor: "Poor",
-  vpoor: "Very poor",
-  severe: "Severe",
-  unknown: "n/a",
-};
 
 /** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
 function isHttpUrl(u: string): boolean {
@@ -175,7 +166,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
         airBand(h.worstAir.band),
         h.worstAir.lat,
         h.worstAir.lon,
-        `${icon("air")}${t("Worst air", lang)}: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
+        `${icon("air")}${t("Worst air", lang)}: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(AQI_BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
         meta?.airAsOf,
       ),
     );
@@ -569,7 +560,7 @@ export function renderConditionsPage(
   const place = esc(placeName);
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
-  const bandLabel = BAND_LABEL[band] ?? "n/a";
+  const bandLabel = AQI_BAND_LABEL[band] ?? "n/a";
   const condColor = RISK_COLOR[risk.band];
 
   // Persona toggles (understated text, not chips).
@@ -968,7 +959,7 @@ export function renderKioskPage(
       tile(
         "Air",
         String(c.air.aqi),
-        BAND_LABEL[c.air.band ?? "unknown"] ?? "n/a",
+        AQI_BAND_LABEL[c.air.band ?? "unknown"] ?? "n/a",
         risk.driver === "Air",
         BAND_COLOR[c.air.band ?? "unknown"] ?? BAND_COLOR.unknown,
       ),
@@ -1129,7 +1120,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const reads: string[] = [];
   if (c.air?.aqi != null)
     reads.push(
-      `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${BAND_LABEL[c.air.band] ?? ""}</span></div>`,
+      `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${AQI_BAND_LABEL[c.air.band] ?? ""}</span></div>`,
     );
   if (c.heat?.apparent_c != null)
     reads.push(`<div class="eread"><b>${round(c.heat.apparent_c)}°</b><span>feels like</span></div>`);

@@ -1,15 +1,8 @@
 import type { Env } from "./index";
 import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
-import { computeAqi, aqiBand } from "./aqi";
+import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { freshStations, LATEST_KEY, loadRawSnapshot } from "./snapshot";
-
-// AQLI coefficient from Ebenstein et al. 2017 PNAS (0.098 yr per µg/m³)
-// above the WHO 2021 annual PM2.5 guideline (5 µg/m³).
-function lifeYearsLost(pm25: number | undefined): number | null {
-  if (pm25 === undefined || !Number.isFinite(pm25)) return null;
-  return +(Math.max(0, pm25 - 5) * 0.098).toFixed(2);
-}
 
 function num(x: unknown): number | undefined {
   if (typeof x === "number" && Number.isFinite(x)) return x;

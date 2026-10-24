@@ -4,20 +4,11 @@ import { ambientRisk, ambientMeaning, smokeLevel } from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
 import { esc } from "./html";
-
-const BAND_LABELS: Record<NormalizedStation["band"], string> = {
-  good: "Good",
-  satisfactory: "Satisfactory",
-  moderate: "Moderate",
-  poor: "Poor",
-  vpoor: "Very Poor",
-  severe: "Severe",
-  unknown: "n/a",
-};
+import { AQI_BAND_LABEL } from "./aqi";
 
 export function renderStationOg(s: NormalizedStation, generatedAt: string): Response {
   const band = BAND_COLOR[s.band];
-  const bandLabel = BAND_LABELS[s.band];
+  const bandLabel = AQI_BAND_LABEL[s.band];
   const aqi = s.aqi !== null ? String(s.aqi) : "n/a";
   const name = s.name.length > 34 ? s.name.slice(0, 32) + "…" : s.name;
   const city = s.city || "India";
