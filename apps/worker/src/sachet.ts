@@ -1,5 +1,6 @@
 import type { Warning } from "./types";
 import type { Env } from "./index";
+import { WARNINGS_KEY, putJson } from "./snapshot";
 import { inRing, type Ring } from "./india";
 
 // NDMA SACHET: official disaster warnings (the IMD-replacement layer). The
@@ -169,9 +170,7 @@ export async function collectWarnings(env: Env): Promise<{ changed: boolean; cou
     count: alerts.length,
     alerts,
   };
-  await env.OAQ_R2.put("data/warnings.json", JSON.stringify(snapshot), {
-    httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=300" },
-  });
+  await putJson(env, WARNINGS_KEY, JSON.stringify(snapshot), "public, max-age=300");
 
   const now = Date.now();
   const seen = readSeen(await env.OAQ_KV.get("sachet:seen"), now);

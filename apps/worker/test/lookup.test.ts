@@ -117,6 +117,19 @@ test("lookupConditions: a kiosk is an event but not a place lookup; a label name
   assert.equal((await s.rows("SELECT * FROM lookups")).length, 0);
 });
 
+test("lookupConditions: a warm isolate reads each snapshot from R2 once, not per request", async () => {
+  const s = setup();
+  const reads: string[] = [];
+  (s.env as unknown as { OAQ_R2: { get: (k: string) => Promise<null> } }).OAQ_R2 = {
+    get: async (k: string) => (reads.push(k), null),
+  };
+  await withFetch(async () => {
+    for (let i = 0; i < 3; i++)
+      await lookupConditions(s.env, s.ctx, { lat: 12.97, lon: 77.59, persona: "everyone", fmt: "json", ua: CHROME });
+  });
+  assert.deepEqual(reads.sort(), ["data/fires.json", "data/latest.json"]);
+});
+
 test("lookupConditions: MCP records the lookup and event without a request", async () => {
   const s = setup();
   await withFetch(() =>

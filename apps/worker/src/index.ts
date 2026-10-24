@@ -30,7 +30,6 @@ import { geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
-import type { WarningsSnapshot } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
 import { topPlaces, topReferrers, counters, pruneReferrers, POPULAR_MIN } from "./metrics";
@@ -39,7 +38,7 @@ import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadSnapshot } from "./snapshot";
+import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { NormalizedStation } from "./types";
@@ -306,13 +305,11 @@ export default {
     // National active warnings: the SACHET archive made readable, not just
     // point-queried on /c. /warnings (HTML) · /warnings.json · /warnings.md
     if (url.pathname === "/warnings" || url.pathname === "/warnings.json" || url.pathname === "/warnings.md") {
-      const obj = await env.OAQ_R2.get("data/warnings.json");
-      // .json returns the stored payload verbatim (no parse + re-serialize).
+      const snap = await loadWarningsSnapshot(env);
       if (url.pathname === "/warnings.json") {
-        if (!obj) return new Response("no warnings snapshot yet", { status: 503 });
-        return cachedResponse(await obj.text(), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
+        if (!snap) return new Response("no warnings snapshot yet", { status: 503 });
+        return cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
       }
-      const snap = obj ? ((await obj.json()) as WarningsSnapshot) : null;
       if (url.pathname === "/warnings.md") {
         return cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8", REFRESH_AFTER_SECONDS);
       }

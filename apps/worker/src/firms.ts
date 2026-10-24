@@ -1,5 +1,6 @@
 import { haversineKm } from "./near";
 import type { Env } from "./index";
+import { FIRES_KEY, putJson } from "./snapshot";
 
 // NASA FIRMS: near-real-time fire / thermal-anomaly detections (VIIRS 375 m).
 // This is the fire / crop-burn smoke layer, seasonally the dominant air-health
@@ -99,9 +100,7 @@ export async function collectFires(env: Env): Promise<{ count: number; archived:
     count: fires.length,
     fires,
   };
-  await env.OAQ_R2.put("data/fires.json", JSON.stringify(snapshot), {
-    httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=900" },
-  });
+  await putJson(env, FIRES_KEY, JSON.stringify(snapshot), "public, max-age=900");
   // Archive a daily snapshot (the moat). Date stamp in UTC; overwrite within the
   // day so the latest, fullest day's set is what's kept.
   const day = snapshot.generated_at.slice(0, 10);

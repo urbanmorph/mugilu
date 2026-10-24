@@ -1,4 +1,5 @@
 import type { Env } from "./index";
+import { GRID_KEY, putJson } from "./snapshot";
 import type { Centroid, ConditionsPoint, ConditionsSnapshot } from "./types";
 import { getOpenMeteoBulk } from "./openmeteo";
 import centroids from "../data/centroids.json";
@@ -39,8 +40,6 @@ export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
     points,
   };
 
-  await env.OAQ_R2.put("data/conditions.json", JSON.stringify(snapshot), {
-    httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=300" },
-  });
+  await putJson(env, GRID_KEY, JSON.stringify(snapshot), "public, max-age=300");
   return snapshot;
 }
