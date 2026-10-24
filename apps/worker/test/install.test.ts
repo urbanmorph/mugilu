@@ -127,7 +127,7 @@ test("webManifest: installable fields, 192 + 512 'any' icons and a separate mask
   assert.equal(m.name.includes("mugilu"), true);
   assert.equal(m.short_name, "mugilu");
   assert.equal(m.id, "/");
-  assert.equal(m.start_url, "/");
+  assert.equal(m.start_url, "/?src=pwa"); // the launch marker (metrics: entry:pwa)
   assert.equal(m.scope, "/");
   assert.equal(m.display, "standalone");
   assert.ok(m.description.length > 20);
@@ -199,13 +199,13 @@ test("pages: manifest + light/dark theme-color in the head; hidden install butto
 
 test("webManifest: one app in every language (same id and scope), opening in the language it was installed from", () => {
   const en = webManifest();
-  assert.equal(en.start_url, "/");
+  assert.equal(en.start_url, "/?src=pwa");
   assert.equal(en.lang, "en");
   for (const lang of ["hi", "kn"] as const) {
     const m = webManifest(lang);
     assert.equal(m.id, "/");
     assert.equal(m.scope, "/");
-    assert.equal(m.start_url, `/${lang}`);
+    assert.equal(m.start_url, `/${lang}?src=pwa`);
     assert.equal(m.lang, lang);
     assert.notEqual(m.description, en.description, `${lang} description is translated`);
     assert.deepEqual(m.icons, en.icons);

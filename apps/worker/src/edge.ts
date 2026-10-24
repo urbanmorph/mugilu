@@ -6,7 +6,8 @@
 //
 // Usage metrics still count a hit: the miss stores the lookup's usage facts on the
 // cached copy (an internal header, stripped before any response leaves), and a hit
-// hands them to `onHit` to record against the current request.
+// hands them to `onUsage` to record against the current request (whose own headers
+// decide who it is from).
 
 export interface CacheLike {
   match(req: Request): Promise<Response | undefined>;
@@ -30,7 +31,16 @@ export function cacheKey(req: Request, params: Record<string, string | undefined
   return new Request(`${u.origin}${u.pathname}${qs ? `?${qs}` : ""}`);
 }
 
-/** Serve from the edge when warm, else build, serve and store for `ttlSeconds`. */
+/** How a response was served, for the usage event: its status and, when it was built
+ *  rather than taken from the edge, how long the build took (ms, wall clock: in a
+ *  Worker that is the upstream and storage waits, not CPU). */
+export interface Served {
+  status: number;
+  ms?: number;
+}
+
+/** Serve from the edge when warm, else build, serve and store for `ttlSeconds`.
+ *  `onUsage` records the lookup's usage facts, on a build and on a hit alike. */
 export async function edgeServe<U>(
   req: Request,
   ctx: ExecutionContext,
@@ -39,17 +49,23 @@ export async function edgeServe<U>(
   // `store: false` serves the response but keeps it out of the cache (e.g. a reading
   // built while an upstream was down, which must not be shown to everyone for minutes).
   build: () => Promise<{ res: Response; usage?: U; store?: boolean }>,
-  onHit?: (usage: U) => void,
+  onUsage?: (usage: U, served: Served) => void,
   cache: CacheLike = caches.default,
 ): Promise<Response> {
-  if (req.method !== "GET") return (await build()).res;
+  const fresh = async () => {
+    const t0 = Date.now();
+    const b = await build();
+    if (b.usage !== undefined) onUsage?.(b.usage, { status: b.res.status, ms: Date.now() - t0 });
+    return b;
+  };
+  if (req.method !== "GET") return (await fresh()).res;
 
   const hit = await cache.match(key);
   if (hit) {
     const facts = hit.headers.get(USAGE);
-    if (facts && onHit) {
+    if (facts && onUsage) {
       try {
-        onHit(JSON.parse(decodeURIComponent(facts)) as U);
+        onUsage(JSON.parse(decodeURIComponent(facts)) as U, { status: hit.status });
       } catch {
         // best-effort: a bad entry never breaks the response
       }
@@ -63,7 +79,7 @@ export async function edgeServe<U>(
     return new Response(hit.body, { status: hit.status, headers });
   }
 
-  const { res, usage, store = true } = await build();
+  const { res, usage, store = true } = await fresh();
   if (!store || res.status !== 200 || res.headers.has("set-cookie")) return res;
   // Buffer once so the served and stored copies are independent: a streamed image
   // render cannot be tee'd into the cache safely (it deadlocks).

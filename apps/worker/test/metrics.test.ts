@@ -8,8 +8,15 @@ import {
   usageFacts,
   topPlaces,
   counters,
+  bump,
+  pushActive,
+  recordEntry,
+  counted,
   clientClass,
   agentName,
+  browserSignal,
+  requestCaller,
+  type Caller,
   registrableHost,
   pruneReferrers,
   REFERRER_CAP,
@@ -92,20 +99,71 @@ function cond(): Conditions {
   } as unknown as Conditions;
 }
 
+// A browser navigation: Sec-Fetch-Mode navigate + Accept-Language, as every real
+// browser sends when a person opens a page; a scripted fetch sends neither.
+const NAV = { "sec-fetch-mode": "navigate", "sec-fetch-dest": "document", "accept-language": "en-IN,en;q=0.9" };
+const browserReq = (headers: Record<string, string> = NAV, ua = CHROME) =>
+  new Request("https://mugilu.live/c/1,2", { headers: { "user-agent": ua, ...headers } });
+const person: Caller = { cls: "human", agent: "", browser: true, lang: "en" };
+
+test("browserSignal: a page navigation or an embed frame with a language is a browser", () => {
+  assert.equal(browserSignal(browserReq().headers), true);
+  const frame = { "sec-fetch-mode": "navigate", "sec-fetch-dest": "iframe", "accept-language": "hi" };
+  assert.equal(browserSignal(browserReq(frame).headers), true);
+  // a service worker's fetch of a navigation keeps the document destination
+  const sw = { "sec-fetch-mode": "same-origin", "sec-fetch-dest": "document", "accept-language": "kn" };
+  assert.equal(browserSignal(browserReq(sw).headers), true);
+});
+
+test("browserSignal: the kiosk's own same-origin refresh counts; scripts and crawlers do not", () => {
+  const kioskRefresh = { "sec-fetch-mode": "cors", "sec-fetch-site": "same-origin", "accept-language": "en" };
+  assert.equal(browserSignal(browserReq(kioskRefresh).headers), true);
+  // a crawler that copies a Chrome User-Agent but sends no Fetch Metadata
+  assert.equal(browserSignal(browserReq({ "accept-language": "en" }).headers), false);
+  // a navigation with no Accept-Language (headless tools often omit it)
+  assert.equal(browserSignal(browserReq({ "sec-fetch-mode": "navigate" }).headers), false);
+  // a cross-site fetch from someone else's page is not a person reading ours
+  const crossFetch = { "sec-fetch-mode": "cors", "sec-fetch-site": "cross-site", "accept-language": "en" };
+  assert.equal(browserSignal(browserReq(crossFetch).headers), false);
+});
+
+test("requestCaller: class and agent from the User-Agent, the browser flag, the page language", () => {
+  assert.deepEqual(requestCaller(browserReq(), "hi"), { cls: "human", agent: "", browser: true, lang: "hi" });
+  assert.deepEqual(requestCaller(browserReq({}, "GPTBot/1.1")), {
+    cls: "llm",
+    agent: "gptbot",
+    browser: false,
+    lang: "en",
+  });
+});
+
 test("recordEvent: writes anonymous dimensions to Analytics Engine (format/persona/region/class)", () => {
   let captured: { blobs?: unknown[]; doubles?: unknown[]; indexes?: unknown[] } | null = null;
   const env = { EVENTS: { writeDataPoint: (e: typeof captured) => (captured = e) } } as unknown as Env;
-  recordEvent(env, usageFacts(cond(), "asthma"), "json", "GPTBot/1.1"); // an API hit from an LLM agent
+  const bot = requestCaller(browserReq({}, "GPTBot/1.1"));
+  recordEvent(env, usageFacts(cond(), "asthma"), { format: "json", caller: bot }); // an API hit from an LLM agent
   assert.equal(captured!.blobs![0], "json"); // format
   assert.equal(captured!.blobs![1], "asthma"); // persona
-  assert.equal(captured!.blobs![4], "Punjab"); // region from stateAt — no precise coord, no IP
+  assert.equal(captured!.blobs![4], "Punjab"); // region from stateAt, no precise coord, no IP
   assert.equal(captured!.blobs![6], "llm"); // client class (human / llm / bot)
   assert.equal(captured!.blobs![7], "gptbot"); // the specific named agent
+  assert.equal(captured!.blobs![8], "0"); // no browser signal
+  assert.equal(captured!.blobs![9], "en"); // page language
   assert.equal(captured!.indexes![0], "json");
 });
 
+test("recordEvent: the browser flag, the language, and the existing doubles in their places", () => {
+  let captured: { blobs?: unknown[]; doubles?: unknown[] } | null = null;
+  const env = { EVENTS: { writeDataPoint: (e: typeof captured) => (captured = e) } } as unknown as Env;
+  recordEvent(env, usageFacts(cond(), "everyone"), { format: "html", caller: { ...person, lang: "kn" } });
+  assert.equal(captured!.blobs![8], "1");
+  assert.equal(captured!.blobs![9], "kn");
+  assert.deepEqual(captured!.doubles!.slice(0, 3), [usageFacts(cond(), "everyone").level, 104, 38]);
+});
+
 test("recordEvent: no-op when the binding is absent, and best-effort on failure", () => {
-  assert.doesNotThrow(() => recordEvent({} as unknown as Env, usageFacts(cond(), "everyone"), "html", CHROME)); // no EVENTS binding
+  const ev = { format: "html", caller: person } as const;
+  assert.doesNotThrow(() => recordEvent({} as unknown as Env, usageFacts(cond(), "everyone"), ev)); // no EVENTS binding
   const bad = {
     EVENTS: {
       writeDataPoint: () => {
@@ -113,7 +171,7 @@ test("recordEvent: no-op when the binding is absent, and best-effort on failure"
       },
     },
   } as unknown as Env;
-  assert.doesNotThrow(() => recordEvent(bad, usageFacts(cond(), "everyone"), "html", null));
+  assert.doesNotThrow(() => recordEvent(bad, usageFacts(cond(), "everyone"), ev));
 });
 
 function req(headers: Record<string, string> = {}): Request {
@@ -154,24 +212,42 @@ function mockDB(rows: Record<string, unknown[]> = {}) {
   };
 }
 
-test("recordLookup: a HUMAN gets full detail — rounded place row, format + class", async () => {
+const LUDHIANA = { lat: 30.94, lon: 75.86, place: "Ludhiana, Punjab" };
+
+test("recordLookup: a person in a browser gets full detail: rounded place row, format, class, language", async () => {
   const { db, calls } = mockDB();
-  await recordLookup({ METRICS: db } as unknown as Env, 30.94, 75.86, "Ludhiana, Punjab", "html", CHROME);
+  await recordLookup({ METRICS: db } as unknown as Env, LUDHIANA, "html", { ...person, lang: "hi" });
   const lookup = calls.find((c) => /INSERT INTO lookups/.test(c.sql));
   assert.ok(lookup, "writes a lookup row");
   // the ROUNDED grid key + coords, never the precise 30.94/75.86
   assert.deepEqual(lookup!.args.slice(0, 4), ["30.9,75.9", "Ludhiana, Punjab", 30.9, 75.9]);
   const tallies = calls.filter((c) => /INSERT INTO counters/.test(c.sql)).map((c) => c.args[0]);
-  assert.ok(tallies.includes("fmt:html"), "tallies the format");
-  assert.ok(tallies.includes("class:human"), "tallies the client class");
+  assert.deepEqual(tallies.sort(), ["class:human", "fmt:html", "lang:hi"]);
 });
 
-test("recordLookup: a bot/LLM writes ONLY the class counter — no place row, no format (D1 budget + clean heatmap)", async () => {
+test("recordLookup: a bot/LLM writes ONLY the class counter: no place row, no format (D1 budget + clean heatmap)", async () => {
   const { db, calls } = mockDB();
-  await recordLookup({ METRICS: db } as unknown as Env, 28.6, 77.2, "Delhi", "html", "GPTBot/1.1");
+  const llm: Caller = { cls: "llm", agent: "gptbot", browser: false, lang: "en" };
+  await recordLookup({ METRICS: db } as unknown as Env, LUDHIANA, "html", llm);
   assert.ok(!calls.some((c) => /INSERT INTO lookups/.test(c.sql)), "a crawler never lands in the demand heatmap");
   const tallies = calls.filter((c) => /INSERT INTO counters/.test(c.sql)).map((c) => c.args[0]);
   assert.deepEqual(tallies, ["class:llm"]); // exactly one write: the class counter
+});
+
+test("recordLookup: a browser User-Agent without a browser's request headers is not counted as a person", async () => {
+  const { db, calls } = mockDB();
+  await recordLookup({ METRICS: db } as unknown as Env, LUDHIANA, "html", { ...person, browser: false });
+  assert.ok(!calls.some((c) => /INSERT INTO lookups/.test(c.sql)));
+  const tallies = calls.filter((c) => /INSERT INTO counters/.test(c.sql)).map((c) => c.args[0]);
+  assert.deepEqual(tallies, ["class:human"], "the class total still covers all traffic");
+});
+
+test("recordLookup: an MCP call never writes a human format counter (fmt:mcp is gone)", async () => {
+  const { db, calls } = mockDB();
+  await recordLookup({ METRICS: db } as unknown as Env, LUDHIANA, "mcp", { ...person });
+  const tallies = calls.filter((c) => /INSERT INTO counters/.test(c.sql)).map((c) => c.args[0]);
+  assert.ok(!tallies.includes("fmt:mcp"));
+  assert.ok(!calls.some((c) => /INSERT INTO lookups/.test(c.sql)), "agent calls stay out of the human heatmap");
 });
 
 test("topPlaces: returns most-looked-up places, gated by a cumulative threshold", async () => {
@@ -303,7 +379,61 @@ test("metrics are best-effort: a D1 failure never throws or surfaces", async () 
       throw new Error("d1 down");
     },
   };
-  await recordLookup({ METRICS: bad } as unknown as Env, 1, 1, "x", "html", null); // must not throw
+  await recordLookup({ METRICS: bad } as unknown as Env, { lat: 1, lon: 1, place: "x" }, "html", person); // must not throw
+  await bump({ METRICS: bad } as unknown as Env, { "err:upstream:oaq": 1 }); // must not throw
   assert.deepEqual(await topPlaces({ METRICS: bad } as unknown as Env), []);
   assert.deepEqual(await counters({ METRICS: bad } as unknown as Env), {});
+  assert.deepEqual(await pushActive({ METRICS: bad } as unknown as Env), []);
+});
+
+test("counters: grouped by what they measure (the part before the first colon)", async () => {
+  const env = { METRICS: testD1() } as unknown as Env;
+  await bump(env, { "class:human": 3, "fmt:html": 2, "lang:hi": 1, "mcp:tool:conditions_at": 4, "err:upstream:r2": 1 });
+  await bump(env, { "class:human": 1, embed: 0 }); // adds up; a zero writes nothing
+  assert.deepEqual(await counters(env), {
+    class: { human: 4 },
+    fmt: { html: 2 },
+    lang: { hi: 1 },
+    mcp: { "tool:conditions_at": 4 },
+    err: { "upstream:r2": 1 },
+  });
+});
+
+test("counted: passes a result through; a failure is counted against its source, then rethrown", async () => {
+  const env = { METRICS: testD1() } as unknown as Env;
+  assert.equal(await counted(env, "openmeteo", async () => 7), 7);
+  await assert.rejects(
+    counted(env, "openmeteo", async () => {
+      throw new Error("429");
+    }),
+    /429/,
+  );
+  assert.deepEqual(await counters(env), { err: { "upstream:openmeteo": 1 } });
+});
+
+test("recordEntry: an installed-app launch (?src=pwa) by a person counts once; nothing else does", async () => {
+  const env = { METRICS: testD1() } as unknown as Env;
+  const at = (q: string) => new URL(`https://mugilu.live/hi${q}`);
+  await recordEntry(env, at("?src=pwa"), person);
+  await recordEntry(env, at("?src=pwa"), { ...person, browser: false }); // a script replaying the URL
+  await recordEntry(env, at("?src=other"), person); // only the one known value
+  await recordEntry(env, at(""), person);
+  assert.deepEqual(await counters(env), { entry: { pwa: 1 } });
+});
+
+test("pushActive: browsers and places with alerts on, per language, from the rows themselves", async () => {
+  const METRICS = testD1();
+  const add = (hash: string, lat: number, lang: string) =>
+    METRICS.prepare(
+      "INSERT INTO push_places (endpoint_hash, endpoint, p256dh, auth, lat, lon, label, lang) VALUES (?,?,?,?,?,?,?,?)",
+    )
+      .bind(hash, "e", "k", "a", lat, 77, "x", lang)
+      .run();
+  await add("a", 12, "en");
+  await add("a", 13, "en");
+  await add("b", 12, "hi");
+  assert.deepEqual(await pushActive({ METRICS } as unknown as Env), [
+    { lang: "en", browsers: 1, places: 2 },
+    { lang: "hi", browsers: 1, places: 1 },
+  ]);
 });

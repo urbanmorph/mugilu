@@ -1,5 +1,5 @@
 import type { Env } from "./index";
-import { recordMcpClient } from "./metrics";
+import { recordMcpClient, requestCaller } from "./metrics";
 import { TOOLS, callTool } from "./mcptools";
 import { RESOURCES, readResource, PROMPTS, getPrompt } from "./mcpcontent";
 import { SOURCES } from "./sources";
@@ -83,7 +83,7 @@ export async function handleMcp(req: Request, env: Env, ctx: ExecutionContext): 
         const name = typeof params.name === "string" ? params.name : "";
         const args = (params.arguments as Record<string, unknown>) ?? {};
         try {
-          const result = await callTool(name, args, env, ctx, req.headers.get("user-agent"));
+          const result = await callTool(name, args, env, ctx, requestCaller(req));
           if (!result) return err(id, INVALID_PARAMS, `Unknown tool: ${name}`);
           return ok(id, result);
         } catch {

@@ -43,6 +43,21 @@ database_id = "fac62f6c-2641-4ba1-a1d1-39494ce5dee7"
 binding = "EVENTS"
 dataset = "mugilu_events"
 
+# Workers Logs: what the code prints (console.*), kept by Cloudflare and searchable
+# in the dashboard (the refresh health check and upstream failures log there). The
+# automatic per-request "invocation" log is OFF: it would store every request URL,
+# typed searches and exact coordinates included (test/wrangler-config.test.ts checks).
+# Our own lines carry no URLs, coordinates, bodies or secrets (test/logs.test.ts).
+# head_sampling_rate 1 keeps every line: few are written, well inside Workers Paid's
+# included 20M log events a month.
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = false
+
 [vars]
 OAQ_BROKER_URL = "https://us-central1-oaqdms.cloudfunctions.net/brokerData"
 OAQ_BASE_URL = "https://oaq.notf.in/v1"

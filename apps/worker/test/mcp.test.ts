@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { handleMcp } from "../src/mcp";
 import type { Env } from "../src/index";
+import { testD1 } from "./d1";
 
 const env = {} as Env;
 const ctx = { waitUntil() {} } as unknown as ExecutionContext;
@@ -166,4 +167,66 @@ test("mcp tools/call: search_place with a coordinate resolves with no network", 
   assert.notEqual(j.result.isError, true);
   assert.equal(j.result.structuredContent.places[0].lat, 12.97);
   assert.match(j.result.content[0].text, /12\.97/);
+});
+
+/** An env with real D1 counters and a captured event stream, for the usage tests. */
+function usageEnv() {
+  const events: { blobs: string[]; doubles: number[] }[] = [];
+  const pending: Promise<unknown>[] = [];
+  const METRICS = testD1();
+  const env = {
+    OAQ_R2: { get: async () => null },
+    METRICS,
+    EVENTS: { writeDataPoint: (e: (typeof events)[0]) => events.push(e) },
+  } as unknown as Env;
+  const ctx = { waitUntil: (p: Promise<unknown>) => pending.push(p) } as unknown as ExecutionContext;
+  const tools = async (...calls: [string, Record<string, unknown>][]) => {
+    const real = globalThis.fetch;
+    globalThis.fetch = (async () => Response.json({ current: {} })) as unknown as typeof fetch;
+    try {
+      for (const [name, args] of calls) {
+        const body = { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } };
+        const req = new Request("https://mugilu.live/mcp", {
+          method: "POST",
+          body: JSON.stringify(body),
+          headers: { "content-type": "application/json", "user-agent": "claude-user/1.0" },
+        });
+        await handleMcp(req, env, ctx);
+      }
+    } finally {
+      globalThis.fetch = real;
+    }
+    await Promise.all(pending);
+    const rows = await METRICS.prepare("SELECT name, n FROM counters ORDER BY name").all();
+    return Object.fromEntries((rows.results as { name: string; n: number }[]).map((r) => [r.name, r.n]));
+  };
+  return { events, tools };
+}
+
+test("mcp tools/call: counts each tool by name and each tool error; one event per call names the tool", async () => {
+  const u = usageEnv();
+  const counts = await u.tools(
+    ["search_place", { query: "12.97,77.59" }],
+    ["conditions_at", { place: "12.97,77.59" }],
+    ["conditions_at", {}], // no place: an error result
+    ["nope", {}], // unknown: not a tool, never a counter
+  );
+  assert.deepEqual(counts, {
+    "class:llm": 1, // the conditions_at lookup, by client class
+    "err:upstream:r2": 1, // this test has no air snapshot in R2
+    "mcp:err": 1,
+    "mcp:tool:conditions_at": 2,
+    "mcp:tool:search_place": 1,
+  });
+  assert.deepEqual(
+    u.events.map((e) => [e.blobs[0], e.blobs[10]]),
+    [
+      ["mcp", "search_place"],
+      ["mcp", "conditions_at"],
+      ["mcp", "conditions_at"],
+    ],
+  );
+  // the conditions lookup's own facts ride its tool event (persona, air kind)
+  assert.equal(u.events[1].blobs[1], "everyone");
+  assert.equal(u.events[0].blobs[1], "", "a tool with no reading has no lookup facts");
 });

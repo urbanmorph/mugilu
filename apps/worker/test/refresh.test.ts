@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleanStationName, carryForward, providerStations } from "../src/refresh";
+import { cleanStationName, carryForward, providerStations, snapshotHealth, HEALTH_KEY } from "../src/refresh";
+import type { Env } from "../src/index";
 import type { NormalizedStation, Snapshot } from "../src/types";
 
 test("cleanStationName with known city strips ', {city} …'", () => {
@@ -83,4 +84,55 @@ test("providerStations: an HTTP-200 body with no station list is a failure, not 
   assert.throws(() => providerStations({ error: "quota" }));
   assert.throws(() => providerStations({ stations: [] }));
   assert.throws(() => providerStations([]));
+});
+
+function healthEnv() {
+  const kv = new Map<string, string>();
+  const env = {
+    OAQ_KV: { get: async (k: string) => kv.get(k) ?? null, put: async (k: string, v: string) => void kv.set(k, v) },
+  } as unknown as Env;
+  const errors: string[] = [];
+  const run = async (fresh: number) => {
+    const real = console.error;
+    console.error = (...a: unknown[]) => void errors.push(a.join(" "));
+    try {
+      return await snapshotHealth(env, fresh);
+    } finally {
+      console.error = real;
+    }
+  };
+  return { kv, run, errors };
+}
+
+test("snapshotHealth: the first run sets the baseline of stations fetched fresh", async () => {
+  const h = healthEnv();
+  assert.equal(await h.run(900), true);
+  assert.equal(h.kv.get(HEALTH_KEY), "900");
+  assert.deepEqual(h.errors, []);
+});
+
+test("snapshotHealth: a sustained drop is flagged on every run, against the last healthy baseline", async () => {
+  const h = healthEnv();
+  await h.run(900);
+  assert.equal(await h.run(400), false, "under half the baseline");
+  assert.equal(await h.run(300), false, "still down: still flagged, the baseline does not follow it down");
+  assert.equal(h.kv.get(HEALTH_KEY), "900");
+  assert.equal(h.errors.length, 2);
+  assert.match(h.errors[0], /SNAPSHOT HEALTH: 400 stations fetched fresh this run, baseline 900/);
+});
+
+test("snapshotHealth: recovery is healthy and moves the baseline", async () => {
+  const h = healthEnv();
+  await h.run(900);
+  await h.run(100);
+  assert.equal(await h.run(860), true);
+  assert.equal(h.kv.get(HEALTH_KEY), "860");
+});
+
+test("snapshotHealth: every provider failed (nothing fresh, even if stations were carried) is unhealthy", async () => {
+  const h = healthEnv();
+  assert.equal(await h.run(0), false, "even with no baseline yet");
+  await h.run(900);
+  assert.equal(await h.run(0), false);
+  assert.equal(h.kv.get(HEALTH_KEY), "900");
 });

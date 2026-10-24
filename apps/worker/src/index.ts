@@ -33,7 +33,16 @@ import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
-import { topPlaces, topReferrers, counters, pruneReferrers, POPULAR_MIN } from "./metrics";
+import {
+  topPlaces,
+  topReferrers,
+  counters,
+  pushActive,
+  pruneReferrers,
+  recordEntry,
+  requestCaller,
+  POPULAR_MIN,
+} from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
@@ -43,6 +52,7 @@ import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { Conditions, NormalizedStation } from "./types";
+import { reason } from "./logs";
 
 export interface Env {
   OAQ_KV: KVNamespace;
@@ -132,6 +142,12 @@ export default {
     // After the language strip, so /hi/refresh is gated like /refresh.
     const denied = adminGate(url.pathname, req, env);
     if (denied) return denied;
+
+    // Who the request is from, by kind only (metrics.ts): read from this request's
+    // own headers, so an edge-cache hit is classified like a fresh render.
+    const caller = requestCaller(req, lang);
+    // The installed app's launch (?src=pwa, install.ts), counted on any route, hit or miss.
+    if (url.searchParams.has("src")) ctx.waitUntil(recordEntry(env, url, caller));
 
     // Serve a response that is the same for every viewer from the edge cache, keyed on
     // the path as received (language prefix included) plus only `params`. A build
@@ -244,14 +260,17 @@ export default {
 
     // Internal usage metrics for our own improvement, NOT public. Key-gated and
     // never cached. Aggregate, privacy-preserving (rounded coords, no IP). The
-    // public only ever sees these via the server-rendered home "Popular".
+    // public only ever sees these via the server-rendered home "Popular". `counters`
+    // is grouped (class, fmt, lang, entry, push, mcp, err); `push_active` is the
+    // alerts on right now, per language.
     if (url.pathname === "/api/counts") {
-      const [places, formats, referrers] = await Promise.all([
+      const [places, grouped, push_active, referrers] = await Promise.all([
         topPlaces(env, 50),
         counters(env),
+        pushActive(env),
         topReferrers(env, 50),
       ]);
-      return new Response(JSON.stringify({ places, formats, referrers }, null, 2), {
+      return new Response(JSON.stringify({ places, counters: grouped, push_active, referrers }, null, 2), {
         headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
       });
     }
@@ -362,7 +381,6 @@ export default {
     ): Promise<Response> {
       const kiosk = !ext && url.searchParams.has("kiosk");
       const fmt: LookupFormat = kiosk ? "kiosk" : ((ext ?? "html") as LookupFormat);
-      const ua = req.headers.get("user-agent");
       // Same output for every viewer of this path + persona + kiosk flag: served from
       // the edge when warm (the CPU-heavy PNG render included), usage still recorded.
       const key = cacheKey(req, { as: persona === "everyone" ? undefined : persona, kiosk: kiosk ? "" : undefined });
@@ -374,21 +392,12 @@ export default {
         async () => {
           // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
-          const { conditions, usage } = await lookupConditions(env, ctx, {
-            lat,
-            lon,
-            persona,
-            fmt,
-            ua,
-            label: placeName,
-            req,
-            url,
-          });
+          const { conditions, usage } = await lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName });
           // A reading built while an upstream was down is served, never cached.
           const res = renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
           return { res, usage, store: !conditions.degraded };
         },
-        (usage) => recordUsage(env, ctx, usage, { fmt, ua, req, url }),
+        (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
       );
     }
 
@@ -473,21 +482,13 @@ export default {
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest(BAD_COORDS);
       const persona = parsePersona(url.searchParams.get("as"));
-      const ua = req.headers.get("user-agent");
       return edgeServe(
         req,
         ctx,
         cacheKey(req, { as: persona === "everyone" ? undefined : persona }),
         LIVE_EDGE_TTL,
         async () => {
-          const { conditions, usage } = await lookupConditions(env, ctx, {
-            ...coords,
-            persona,
-            fmt: "embed",
-            ua,
-            req,
-            url,
-          });
+          const { conditions, usage } = await lookupConditions(env, ctx, { ...coords, persona, fmt: "embed" });
           const res = cachedResponse(
             renderEmbed(conditions, persona, SITE_URL, lang),
             "text/html; charset=utf-8",
@@ -495,7 +496,7 @@ export default {
           );
           return { res, usage, store: !conditions.degraded };
         },
-        (usage) => recordUsage(env, ctx, usage, { fmt: "embed", ua, req, url }),
+        (usage, served) => recordUsage(env, ctx, usage, { fmt: "embed", caller, req, url, served }),
       );
     }
 
@@ -626,13 +627,13 @@ export default {
       ctx.waitUntil(
         refreshLatest(env).then(
           (snap) => console.log(`[refresh] ${snap.station_count} stations`),
-          (e) => console.error("[refresh] failed:", e),
+          (e) => console.error(`[refresh] failed: ${reason(e)}`),
         ),
       );
       ctx.waitUntil(
         collectWarnings(env).then(
           (r) => console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
-          (e) => console.error("[warnings] failed:", e),
+          (e) => console.error(`[warnings] failed: ${reason(e)}`),
         ),
       );
       if (alertsOn(env))
@@ -642,13 +643,13 @@ export default {
               console.log(
                 `[alerts] ${r.points} places checked, ${r.found} warnings over them, ${r.sent} sent, ${r.failed} to retry, ${r.gone} gone`,
               ),
-            (e) => console.error("[alerts] failed:", e),
+            (e) => console.error(`[alerts] failed: ${reason(e)}`),
           ),
         );
       ctx.waitUntil(
         collectFires(env).then(
           (r) => console.log(`[firms] ${r.count} detections`),
-          (e) => console.error("[firms] failed:", e),
+          (e) => console.error(`[firms] failed: ${reason(e)}`),
         ),
       );
     }
@@ -657,7 +658,7 @@ export default {
       ctx.waitUntil(
         collectConditions(env).then(
           (s) => console.log(`[collect] ${s.point_count} points`),
-          (e) => console.error("[collect] failed:", e),
+          (e) => console.error(`[collect] failed: ${reason(e)}`),
         ),
       );
     }
@@ -666,10 +667,10 @@ export default {
       ctx.waitUntil(
         refreshHierarchy(env).then(
           (r) => console.log(`[hierarchy] providers=${r.providers} hierarchies=${r.hierarchies}`),
-          (e) => console.error("[hierarchy] failed:", e),
+          (e) => console.error(`[hierarchy] failed: ${reason(e)}`),
         ),
       );
-      ctx.waitUntil(pruneReferrers(env).catch((e) => console.error("[referrers] prune failed:", e)));
+      ctx.waitUntil(pruneReferrers(env).catch((e) => console.error(`[referrers] prune failed: ${reason(e)}`)));
     }
   },
 };

@@ -3,6 +3,8 @@ import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
 import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { freshStations, LATEST_KEY, loadRawSnapshot, putJson } from "./snapshot";
+import { bump } from "./metrics";
+import { reason } from "./logs";
 
 function num(x: unknown): number | undefined {
   if (typeof x === "number" && Number.isFinite(x)) return x;
@@ -133,7 +135,7 @@ async function fetchProvider(env: Env, provider: ProviderId): Promise<UpstreamSt
     console.log(`[ratelimit] ${provider} used=${used} remaining=${remaining} limit=${limit}`);
   }
   if (!res.ok) {
-    throw new Error(`provider ${provider} fetch failed: ${res.status} ${await res.text().catch(() => "")}`);
+    throw new Error(`provider ${provider} fetch failed: HTTP ${res.status}`);
   }
   return providerStations(await res.json());
 }
@@ -166,7 +168,7 @@ export async function providerIds(env: Env): Promise<ProviderId[]> {
       console.warn(`[refresh] providers.json: HTTP ${res.status}`);
     }
   } catch (e) {
-    console.error("[refresh] providers.json:", e);
+    console.error(`[refresh] providers.json: ${reason(e)}`);
   }
   // An id we don't know yet still flows through: it gets a generic credit line
   // and display name until it is added to ProviderId.
@@ -186,6 +188,29 @@ export function carryForward(
   return [...fresh, ...previous.stations.filter((s) => lost.has(s.provider))];
 }
 
+/** KV: how many stations the last healthy run fetched fresh (the health baseline). */
+export const HEALTH_KEY = "refresh:fresh-baseline";
+/** Below this share of the baseline, a run is unhealthy. */
+const HEALTHY_SHARE = 0.5;
+
+/**
+ * The air snapshot's health check: the stations this run fetched fresh (carried-forward
+ * ones excluded) against the last healthy run's count. Nothing fresh, or under half the
+ * baseline, is unhealthy and logged loudly, on every run while it lasts: the baseline
+ * moves only on healthy runs, so a sustained drop keeps being flagged. A drop that is
+ * meant to stay (a provider retired) is accepted by deleting the KV key.
+ */
+export async function snapshotHealth(env: Env, freshCount: number): Promise<boolean> {
+  const baseline = Number(await env.OAQ_KV.get(HEALTH_KEY)) || 0;
+  const healthy = freshCount > 0 && freshCount >= baseline * HEALTHY_SHARE;
+  if (healthy) await env.OAQ_KV.put(HEALTH_KEY, String(freshCount));
+  else
+    console.error(
+      `[refresh] SNAPSHOT HEALTH: ${freshCount} stations fetched fresh this run, baseline ${baseline || "none"}`,
+    );
+  return healthy;
+}
+
 export async function refreshLatest(env: Env): Promise<Snapshot> {
   const fresh: NormalizedStation[] = [];
   const failed: ProviderId[] = [];
@@ -196,13 +221,16 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
       for (const raw of raws) fresh.push(normalize(p, raw));
     } catch (e) {
       failed.push(p);
-      console.error(`[refresh] provider ${p}:`, e);
+      console.error(`[refresh] provider ${p}: ${reason(e)}`);
     }
   }
   // Stale stations (dead feeds, or carried readings past their age) are dropped
   // here too, so the stored snapshot, the archive and /data are clean; the
   // read-time filter in loadSnapshot covers a refresh that stalls.
   const all = freshStations(carryForward(fresh, failed, failed.length ? await loadRawSnapshot(env) : null));
+  // Health: what this run fetched fresh, against the baseline (snapshotHealth).
+  const healthy = await snapshotHealth(env, freshStations(fresh).length);
+  await bump(env, { "err:upstream:oaq": failed.length, "err:snapshot:empty": healthy ? 0 : 1 });
   // Nothing fresh came back and there is nothing to carry: keep the last good
   // snapshot rather than overwrite it with an empty one.
   if (!all.length) throw new Error(`[refresh] no stations from ${providers.join(", ")}; kept the previous snapshot`);

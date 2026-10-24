@@ -21,12 +21,12 @@ async function refreshSignature(env: Env): Promise<Signature> {
   const url = `${env.OAQ_BROKER_URL}?action=api_session&token=${encodeURIComponent(env.OAQ_API_KEY)}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!res.ok) {
-    throw new Error(`handshake failed: ${res.status} ${await res.text()}`);
+    throw new Error(`handshake failed: HTTP ${res.status}`);
   }
   const body = (await res.json()) as { baseUrl: string; signature: string };
   // Expires is embedded in the signature query string, e.g. "…&Expires=1775670642&…"
   const m = body.signature.match(/Expires=(\d+)/);
-  if (!m) throw new Error(`handshake response missing Expires: ${body.signature}`);
+  if (!m) throw new Error("handshake response missing Expires");
   const expires = Number(m[1]);
 
   const sig: Signature = {
