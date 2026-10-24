@@ -1,16 +1,5 @@
-import type { NormalizedStation, Snapshot, ProviderId, AirPollutants } from "./types";
-
-const PROVIDER_NAMES: Record<ProviderId, string> = {
-  cpcb: "Central Pollution Control Board, Government of India",
-  airnet: "Center for Study of Science, Technology and Policy (CSTEP)",
-  aurassure: "Aurassure University Clean Air Network",
-  airview: "Google AirView+",
-};
-
-// A provider OAQ adds before we name it here falls back to its id.
-function providerName(p: ProviderId): string {
-  return PROVIDER_NAMES[p] ?? p;
-}
+import type { NormalizedStation, Snapshot, AirPollutants } from "./types";
+import { AIR_SOURCE, providerName } from "./sources";
 
 const BAND_LABELS: Record<NormalizedStation["band"], string> = {
   good: "Good",
@@ -161,7 +150,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
   const foot = [
     "## Source",
     "",
-    `Data from CPCB, Airnet (CSTEP), Aurassure, and Google AirView+ via the OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
+    `Data from ${AIR_SOURCE}. Mirrored hourly. Licensed CC BY 4.0.`,
     "",
     `This document is an open-source mirror. See ${siteUrl}/about.`,
     "",

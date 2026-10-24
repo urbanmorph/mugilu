@@ -105,7 +105,7 @@ How mugilu follows the People's Digital Goods & Infrastructure principles is tra
 
 ## Data and attribution
 
-Air is mirrored from **[oaq.notf.in](https://oaq.notf.in)** (the Open Air Quality broker: **CPCB**, **Airnet** by [CSTEP](https://cstep.in), **Aurassure**, and **Google AirView+**) and OpenAQ. Weather, heat, UV, and dust come from **[Open-Meteo](https://open-meteo.com)** (CC-BY 4.0). Warnings come from **NDMA / SACHET** and **IMD**. Geography comes from **[bharatlas](https://bharatlas.com)**. Health-impact figures use the **[AQLI](https://aqli.epic.uchicago.edu/)** methodology (U Chicago EPIC). **Each source keeps its own licence** — see the per-page attribution and `/terms`.
+Air is mirrored from **[oaq.notf.in](https://oaq.notf.in)** (the Open Air Quality broker: **CPCB**, **Airnet** by [CSTEP](https://cstep.in), **Aurassure**, and **Google AirView+**), the only air feed. Weather, heat, UV, and dust come from **[Open-Meteo](https://open-meteo.com)** (CC-BY 4.0). Warnings come from **NDMA / SACHET** and **IMD**. Geography comes from **[bharatlas](https://bharatlas.com)**; place search from **OpenStreetMap** (ODbL) and **GeoNames** (CC-BY 4.0, via the Open-Meteo geocoder). Fire smoke comes from **NASA FIRMS**. Health-impact figures use the **[AQLI](https://aqli.epic.uchicago.edu/)** methodology (U Chicago EPIC). **Each source keeps its own licence**: see the per-page attribution and `/terms`.
 
 ## Contributing
 

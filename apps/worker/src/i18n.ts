@@ -250,9 +250,9 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "mugilu पर वापस",
     kn: "mugilu ಗೆ ಹಿಂತಿರುಗಿ",
   },
-  "CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker; plus OpenAQ.": {
-    hi: "CPCB (भारत सरकार), Airnet (CSTEP), Aurassure, और Google AirView+, {oaq} ब्रोकर के माध्यम से; साथ ही OpenAQ।",
-    kn: "CPCB (ಭಾರತ ಸರ್ಕಾರ), Airnet (CSTEP), Aurassure, ಮತ್ತು Google AirView+, {oaq} ಬ್ರೋಕರ್ ಮೂಲಕ; ಜೊತೆಗೆ OpenAQ.",
+  "CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker.": {
+    hi: "CPCB (भारत सरकार), Airnet (CSTEP), Aurassure, और Google AirView+, {oaq} ब्रोकर के माध्यम से।",
+    kn: "CPCB (ಭಾರತ ಸರ್ಕಾರ), Airnet (CSTEP), Aurassure, ಮತ್ತು Google AirView+, {oaq} ಬ್ರೋಕರ್ ಮೂಲಕ.",
   },
   "{ometeo}, licensed CC-BY 4.0.": {
     hi: "{ometeo}, CC-BY 4.0 के तहत लाइसेंस प्राप्त।",
@@ -262,9 +262,9 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "SACHET के माध्यम से NDMA / IMD।",
     kn: "SACHET ಮೂಲಕ NDMA / IMD.",
   },
-  "place search from {osm} contributors (ODbL); admin boundaries from {bharatlas}.": {
-    hi: "{osm} योगदानकर्ताओं से स्थान खोज (ODbL); {bharatlas} से प्रशासनिक सीमाएँ।",
-    kn: "{osm} ಕೊಡುಗೆದಾರರಿಂದ ಸ್ಥಳ ಹುಡುಕಾಟ (ODbL); {bharatlas} ನಿಂದ ಆಡಳಿತ ಗಡಿಗಳು.",
+  "place search from {osm} contributors (ODbL) and {geonames} (CC-BY 4.0); admin boundaries from {bharatlas}.": {
+    hi: "{osm} योगदानकर्ताओं (ODbL) और {geonames} (CC-BY 4.0) से स्थान खोज; {bharatlas} से प्रशासनिक सीमाएँ।",
+    kn: "{osm} ಕೊಡುಗೆದಾರರು (ODbL) ಮತ್ತು {geonames} (CC-BY 4.0) ನಿಂದ ಸ್ಥಳ ಹುಡುಕಾಟ; {bharatlas} ನಿಂದ ಆಡಳಿತ ಗಡಿಗಳು.",
   },
   "years of life lost uses the {aqli} methodology (U Chicago EPIC).": {
     hi: "जीवन के खोए वर्ष {aqli} पद्धति का उपयोग करते हैं (U Chicago EPIC)।",
@@ -378,10 +378,10 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "वायु",
     kn: "ವಾಯುಗುಣ",
   },
-  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality broker and OpenAQ; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; geography from bharatlas. Each source keeps its own licence, and mugilu credits all of them.":
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.":
     {
-      hi: "वायु गुणवत्ता CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality broker और OpenAQ के माध्यम से; मौसम, गर्मी, UV और धूल से Open-Meteo; NDMA और IMD से आधिकारिक चेतावनियाँ; bharatlas से भूगोल। प्रत्येक स्रोत का अपना लाइसेंस होता है और mugilu उन सभी को श्रेय देता है।",
-      kn: "CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ ವಾಯು ಗುಣಮಟ್ಟದ ಮಾಹಿತಿ; Open Air Quality broker ಮತ್ತು OpenAQ ಮೂಲಕ ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ಮಾಹಿತಿ; NDMA ಮತ್ತು IMDಯಿಂದ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು; bharatlas‌ನಿಂದ ಭೌಗೋಳಿಕ ಮಾಹಿತಿ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
+      hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं; जीवन के खोए वर्ष AQLI विधि से आते हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
+      kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ; ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳು AQLI ವಿಧಾನದಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
     },
   "Air is dangerous. Stay indoors if you can.": {
     hi: "वायु गुणवत्ता खतरनाक है। यदि आप कर सकते हैं तो घर के अंदर रहें।",
@@ -1004,10 +1004,10 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "mugilu आपके सटीक स्थान पर सबसे खराब खतरे का नाम लेता है और स्पष्ट रूप से बताता है कि क्या करना हैः अस्थमा, वृद्ध वयस्क, बच्चे, बाहरी श्रमिक या हृदय की स्थिति। यह केवल जानकारी के लिए है, चिकित्सा या सुरक्षा सलाह के लिए नहीं; आधिकारिक चेतावनियों के लिए, NDMA और IMD से परामर्श करें।",
       kn: "mugilu ನಿಮ್ಮ ನಿಖರವಾದ ಸ್ಥಳದ ಮೇಲೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸಿ, ಏನು ಮಾಡಬೇಕು ಎಂಬುದನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳುತ್ತಾನೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ: ಆಸ್ತಮಾ, ಹಿರಿಯ ವಯಸ್ಕರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು ಅಥವಾ ಹೃದಯ ಸ್ಥಿತಿ. ಇದು ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಗಳಿಗಾಗಿ ಅಲ್ಲ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ.",
     },
-  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB and OpenAQ for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, and bharatlas for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.":
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.":
     {
-      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता है। यह दूसरों के काम पर खड़ा है और उन्हें श्रेय देता हैः वायु गुणवत्ता के लिए CPCB और OpenAQ, मौसम के लिए Open-Meteo, चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से) और भारत के मानचित्र के लिए bharatlas। कोड MIT लाइसेंस के तहत खुला है; डेटा प्रत्येक स्रोत के अपने नियमों को बनाए रखता है।",
-      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB ಮತ್ತು OpenAQ, ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ) ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ bharatlas. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ತೆರೆದಿರುತ್ತದೆ; ದತ್ತಾಂಶವು ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ.",
+      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता है। यह दूसरों के काम पर खड़ा है और उन्हें श्रेय देता हैः वायु गुणवत्ता के लिए CPCB, Airnet, Aurassure और Google AirView+ (OAQ ब्रोकर के माध्यम से), मौसम के लिए Open-Meteo, चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से), आग के धुएं के लिए NASA FIRMS, स्थानों और भारत के मानचित्र के लिए OpenStreetMap, GeoNames और bharatlas, और जीवन के खोए वर्षों के लिए AQLI विधि। कोड MIT लाइसेंस के तहत खुला है; डेटा प्रत्येक स्रोत के अपने नियमों को बनाए रखता है।",
+      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB, Airnet, Aurassure ಮತ್ತು Google AirView+ (OAQ ಬ್ರೋಕರ್ ಮೂಲಕ), ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ), ಬೆಂಕಿಯ ಹೊಗೆಗಾಗಿ NASA FIRMS, ಸ್ಥಳಗಳು ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ OpenStreetMap, GeoNames ಮತ್ತು bharatlas, ಮತ್ತು ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳಿಗಾಗಿ AQLI ವಿಧಾನ. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ತೆರೆದಿರುತ್ತದೆ; ದತ್ತಾಂಶವು ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ.",
     },
   none: {
     hi: "कोई नहीं",

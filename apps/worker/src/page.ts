@@ -2,6 +2,7 @@ import type { Conditions, Warning, AirPollutants } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
+import { SOURCES } from "./sources";
 import { esc } from "./html";
 import { ambientRisk, ambientSummary, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
 import type { Persona, RiskBand } from "./score";
@@ -1192,6 +1193,17 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 /** The About page: the origin story + the dual nature (for people, and as
  *  infrastructure). Person-first, jargon-free. The "Build on it" section is a
  *  stub that grows as the API / MCP land. */
+// The hand-written source credits on /about (its FAQ and "where it comes from"): translated
+// prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
+export const SOURCES_FAQ =
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.";
+export const SOURCES_ABOUT =
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.";
+
+/** English prose with each source name from SOURCES in bold. */
+const boldSourceNames = (text: string) =>
+  SOURCES.flatMap((s) => s.names).reduce((out, n) => out.split(n).join(`<b>${n}</b>`), esc(text));
+
 export function renderAbout(lang: Lang = "en"): string {
   // Q&A that ALSO ships as FAQPage structured data (answer-engine + SERP pickup);
   // the visible copy below and the schema are generated from this one list.
@@ -1206,7 +1218,7 @@ export function renderAbout(lang: Lang = "en"): string {
     },
     {
       q: "Where does mugilu's data come from?",
-      a: "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality broker and OpenAQ; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; geography from bharatlas. Each source keeps its own licence, and mugilu credits all of them.",
+      a: SOURCES_FAQ,
     },
     {
       q: "Is mugilu free?",
@@ -1237,13 +1249,7 @@ export function renderAbout(lang: Lang = "en"): string {
           "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.",
           lang,
         );
-  const wherePara =
-    lang === "en"
-      ? `mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: <b>CPCB</b> and <b>OpenAQ</b> for air, <b>Open-Meteo</b> for weather, <b>NDMA / IMD</b> (via SACHET) for warnings, and <b>bharatlas</b> for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.`
-      : t(
-          "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB and OpenAQ for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, and bharatlas for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.",
-          lang,
-        );
+  const wherePara = lang === "en" ? boldSourceNames(SOURCES_ABOUT) : t(SOURCES_ABOUT, lang);
   const freePara =
     lang === "en"
       ? `The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.`
@@ -1372,11 +1378,11 @@ export function renderTerms(lang: Lang = "en"): string {
 
   <h2 class="ah">${t("Sources &amp; credit", lang)}</h2>
   <ul class="alist on">
-    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker; plus OpenAQ.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
+    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
     <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: ${t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", `<a href="https://open-meteo.com">Open-Meteo</a>`)}</span></li>
     <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: ${t("NDMA / IMD via SACHET.", lang)}</span></li>
     <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>
-    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL) and {geonames} (CC-BY 4.0); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{geonames}", `<a href="https://www.geonames.org">GeoNames</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
     <li>${icon("heart")}<span class="t"><b>${t("Health impact", lang)}</b>: ${t("years of life lost uses the {aqli} methodology (U Chicago EPIC).", lang).replace("{aqli}", `<a href="https://aqli.epic.uchicago.edu">AQLI</a>`)}</span></li>
   </ul>
   <p class="alead2">${t("Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.", lang)}</p>
