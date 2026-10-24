@@ -1,26 +1,6 @@
-import type { NormalizedStation, Snapshot, ProviderId, AirPollutants } from "./types";
-
-const PROVIDER_NAMES: Record<ProviderId, string> = {
-  cpcb: "Central Pollution Control Board, Government of India",
-  airnet: "Center for Study of Science, Technology and Policy (CSTEP)",
-  aurassure: "Aurassure University Clean Air Network",
-  airview: "Google AirView+",
-};
-
-// A provider OAQ adds before we name it here falls back to its id.
-function providerName(p: ProviderId): string {
-  return PROVIDER_NAMES[p] ?? p;
-}
-
-const BAND_LABELS: Record<NormalizedStation["band"], string> = {
-  good: "Good",
-  satisfactory: "Satisfactory",
-  moderate: "Moderate",
-  poor: "Poor",
-  vpoor: "Very Poor",
-  severe: "Severe",
-  unknown: "n/a",
-};
+import type { NormalizedStation, Snapshot, AirPollutants } from "./types";
+import { AIR_SOURCE, providerName } from "./sources";
+import { AQI_BAND_LABEL } from "./aqi";
 
 function n(v: number | undefined | null): string {
   return v === undefined || v === null || !Number.isFinite(v) ? "n/a" : String(v);
@@ -76,7 +56,7 @@ function row(s: NormalizedStation, rank: number): string {
     s.provider,
     n(s.pollutants.pm25),
     n(s.aqi),
-    BAND_LABELS[s.band],
+    AQI_BAND_LABEL[s.band],
   ];
   return `| ${c.join(" | ")} |`;
 }
@@ -151,7 +131,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
           (s) =>
             `| ${s.name.replace(/\|/g, "\\|")} | ${s.provider} | ${n(s.pollutants.pm25)} | ${n(
               s.aqi,
-            )} | ${BAND_LABELS[s.band]} |`,
+            )} | ${AQI_BAND_LABEL[s.band]} |`,
         ),
         "",
       ].join("\n");
@@ -161,7 +141,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
   const foot = [
     "## Source",
     "",
-    `Data from CPCB, Airnet (CSTEP), Aurassure, and Google AirView+ via the OAQ Data Broker (https://oaq.notf.in). Mirrored hourly. Licensed CC BY 4.0.`,
+    `Data from ${AIR_SOURCE}. Mirrored hourly. Licensed CC BY 4.0.`,
     "",
     `This document is an open-source mirror. See ${siteUrl}/about.`,
     "",
@@ -174,7 +154,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
  * Render a single station page as Markdown with YAML frontmatter.
  */
 export function renderStationMarkdown(s: NormalizedStation, generatedAt: string, siteUrl: string): string {
-  const bandLabel = BAND_LABELS[s.band];
+  const bandLabel = AQI_BAND_LABEL[s.band];
   const lines = [
     "---",
     `station_id: ${s.id}`,

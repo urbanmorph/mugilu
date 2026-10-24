@@ -160,19 +160,80 @@ function sanitizeHost(s: string): string {
     .slice(0, 60);
 }
 
-/** The referring host, or a sanitised ?ref= value. Null if there's none, or it's
+// Two-label public suffixes we see in practice (India first). A host under one of
+// these keeps the name in front of it (paper.co.in), not just "co.in".
+const TWO_LEVEL_SUFFIXES = new Set([
+  "co.in",
+  "gov.in",
+  "nic.in",
+  "ac.in",
+  "edu.in",
+  "res.in",
+  "org.in",
+  "net.in",
+  "gen.in",
+  "firm.in",
+  "ind.in",
+  "co.uk",
+  "org.uk",
+  "ac.uk",
+  "gov.uk",
+  "com.au",
+  "org.au",
+  "co.nz",
+  "co.jp",
+  "com.sg",
+  "com.br",
+]);
+
+// Hosting platforms where each app gets its own subdomain: the adopter is that app,
+// so one label below the platform is kept (my-app.vercel.app, not vercel.app).
+const PLATFORM_SUFFIXES = new Set([
+  "lovable.app",
+  "lovableproject.com",
+  "github.io",
+  "pages.dev",
+  "vercel.app",
+  "netlify.app",
+  "workers.dev",
+  "web.app",
+  "firebaseapp.com",
+  "onrender.com",
+  "herokuapp.com",
+]);
+
+/** The adopter a host stands for, so the many preview / per-branch subdomains of one
+ *  site count once: the registrable domain (news.example.com -> example.com), or on a
+ *  hosting platform the app's own subdomain. Lovable's preview and project hosts of
+ *  one app (id-preview--<id>.lovable.app, id-preview-<hash>--<id>.lovable.app,
+ *  preview--<name>.lovable.app, <id>.lovableproject.com) all become <id>.lovable.app.
+ *  Values that are not domain names (localhost, an IP, a ?ref= or MCP client name)
+ *  stay as-is. */
+export function registrableHost(host: string): string {
+  if (!host.includes(".") || /^[\d.]+$/.test(host)) return host;
+  const labels = host.split(".").filter(Boolean);
+  const suffix = labels.slice(-2).join(".");
+  if (PLATFORM_SUFFIXES.has(suffix) && labels.length > 2) {
+    const app = labels[labels.length - 3].replace(/^(?:id-)?preview(?:-[a-z0-9]+)?--/, "");
+    return `${app}.${suffix === "lovableproject.com" ? "lovable.app" : suffix}`;
+  }
+  const keep = TWO_LEVEL_SUFFIXES.has(suffix) ? 3 : 2;
+  return labels.slice(-keep).join(".");
+}
+
+/** The referring site, or a sanitised ?ref= value. Null if there's none, or it's
  *  one of our own pages (not external adoption). */
 function referrerHost(req: Request, url: URL): string | null {
   const ref = url.searchParams.get("ref");
-  if (ref) return sanitizeHost(ref) || null;
-  const raw = req.headers.get("referer") || req.headers.get("origin");
-  if (!raw) return null;
+  const raw = ref ? null : req.headers.get("referer") || req.headers.get("origin");
+  let host: string;
   try {
-    const host = sanitizeHost(new URL(raw).hostname);
-    return !host || host === "mugilu.live" ? null : host;
+    host = ref ? sanitizeHost(ref) : raw ? sanitizeHost(new URL(raw).hostname) : "";
   } catch {
     return null;
   }
+  const site = host && registrableHost(host);
+  return !site || site === "mugilu.live" ? null : site;
 }
 
 /** Bump the per-surface, per-host adoption counter (best-effort, domain-level). */
@@ -199,6 +260,26 @@ export async function recordReferrer(env: Env, surface: string, req: Request, ur
 export async function recordMcpClient(env: Env, name: string): Promise<void> {
   const host = sanitizeHost(name);
   if (host) await bumpReferrer(env, "mcp", host);
+}
+
+/** Most referrer rows kept. Adoption is a long tail; past this the smallest go. */
+export const REFERRER_CAP = 1000;
+/** A row idle this long with fewer than REFERRER_KEEP_N hits is a one-off: dropped. */
+const REFERRER_IDLE_DAYS = 180;
+const REFERRER_KEEP_N = 10;
+
+/** Bound the referrers table (daily): it gained a row per new host forever. Drops
+ *  long-idle one-offs, then caps the table at the REFERRER_CAP biggest adopters. */
+export async function pruneReferrers(env: Env, now = Math.floor(Date.now() / 1000)): Promise<void> {
+  await env.METRICS.batch([
+    env.METRICS.prepare("DELETE FROM referrers WHERE last < ? AND n < ?").bind(
+      now - REFERRER_IDLE_DAYS * 86_400,
+      REFERRER_KEEP_N,
+    ),
+    env.METRICS.prepare(
+      "DELETE FROM referrers WHERE key NOT IN (SELECT key FROM referrers ORDER BY n DESC, last DESC LIMIT ?)",
+    ).bind(REFERRER_CAP),
+  ]);
 }
 
 export interface Referrer {

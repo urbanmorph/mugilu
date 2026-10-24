@@ -27,7 +27,7 @@ test("renderAbout: origin story + dual nature (people + infrastructure), credite
   // open + honest + credited
   assert.match(html, /MIT/);
   assert.match(html, /non-commercial/i);
-  assert.match(html, /CPCB|OpenAQ|IMD|NDMA/);
+  assert.match(html, /CPCB|IMD|NDMA/);
   // built-by block: urbanmorph + the GitHub star prompt
   assert.match(html, /urbanmorph/i);
   assert.match(html, /GitHub/);

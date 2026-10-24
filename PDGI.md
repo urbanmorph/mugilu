@@ -21,7 +21,7 @@ No account, no signup, no key. Every reading is open data in plain formats (JSON
 Evidence: keyless `/c/{lat},{lon}.{json,md}` and `/near`, the [MIT licence](./LICENSE), the single-worker architecture.
 
 ### Free software and the digital commons — ✅
-MIT code, and open data only: mugilu draws solely on free/open upstreams — CPCB and OpenAQ for air, Open-Meteo (CC-BY) for weather, NDMA/IMD via SACHET for warnings, bharatlas for geography. The data is never relicensed; each source keeps its own terms. Non-commercial, for good.
+MIT code, and open data only: mugilu draws solely on free/open upstreams: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo (CC-BY) for weather, NDMA/IMD via SACHET for warnings, bharatlas for geography. The data is never relicensed; each source keeps its own terms. Non-commercial, for good.
 Evidence: [LICENSE](./LICENSE), [/terms](https://mugilu.live/terms), the source list in [/about](https://mugilu.live/about).
 
 ### Privacy — ✅

@@ -247,14 +247,14 @@ test("renderTerms(kn): prose localized, source names + brand Latin, links preser
   assert.match(kn, /<html lang="kn">/);
   assert.match(kn, /ಷರತ್ತುಗಳು ಮತ್ತು ಮನ್ನಣೆ/); // "Terms & attribution" heading localized
   assert.match(kn, /ಗೌಪ್ಯತೆ/); // "Privacy" heading localized
-  assert.match(kn, /CPCB|OpenAQ|NASA FIRMS/); // source names stay Latin
+  assert.match(kn, /CPCB|NASA FIRMS/); // source names stay Latin
   assert.match(kn, /Cloudflare Web Analytics/); // brand kept Latin in the privacy note
   assert.match(kn, /github\.com\/urbanmorph\/mugilu">ರೆಪೊಸಿಟರಿ<\/a>/); // {repo} slot filled + localized text
   assert.match(kn, /mdshare\.live">mdshare<\/a>\.?/); // {md} commons link preserved
   assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ/); // reverted-vocab guard
   assert.doesNotMatch(kn, /\{repo\}|\{um\}|\{bl\}|\{md\}/); // no unfilled slot leaks
   assert.match(kn, /ಬ್ರೋಕರ್ ಮೂಲಕ/); // source-detail line localized (was English)
-  assert.doesNotMatch(kn, /broker; plus OpenAQ|admin boundaries from/); // no English detail leaks
+  assert.doesNotMatch(kn, /via the <a[^>]*>OAQ<\/a> broker|admin boundaries from/); // no English detail leaks
   assert.match(kn, /← mugilu ಗೆ ಹಿಂತಿರುಗಿ/); // back-link text localized
   // English is byte-for-byte the pre-i18n page: inline markup + entity + links intact
   const en = renderTerms("en");
@@ -318,7 +318,7 @@ test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots re
   assert.match(terms, /ब्रोकर के माध्यम से/); // source-detail line localized (hi)
   assert.match(about, /MCP सर्वर/); // "Build on it" detail localized (hi)
   assert.match(meth, /mugilu पर वापस/); // back-link localized (hi)
-  assert.doesNotMatch(terms, /broker; plus OpenAQ|admin boundaries from/); // no English detail leak
+  assert.doesNotMatch(terms, /via the <a[^>]*>OAQ<\/a> broker|admin boundaries from/); // no English detail leak
   assert.match(terms, /urbanmorph\/mugilu">रिपॉजिटरी<\/a>/); // {repo} slot filled + localized
   for (const html of [about, meth, terms]) {
     assert.doesNotMatch(html, /\{score\}|\{terms\}|\{repo\}|\{um\}|\{bl\}|\{md\}/); // no slot leaks

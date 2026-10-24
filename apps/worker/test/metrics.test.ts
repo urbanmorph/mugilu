@@ -1,6 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { recordLookup, recordReferrer, recordEvent, topPlaces, counters, clientClass, agentName } from "../src/metrics";
+import {
+  recordLookup,
+  recordReferrer,
+  recordMcpClient,
+  recordEvent,
+  topPlaces,
+  counters,
+  clientClass,
+  agentName,
+  registrableHost,
+  pruneReferrers,
+  REFERRER_CAP,
+} from "../src/metrics";
+import { testD1 } from "./d1";
 import type { Env } from "../src/index";
 import type { Conditions } from "../src/types";
 
@@ -205,6 +218,79 @@ test("recordReferrer: skips our own pages and empty referrers", async () => {
   );
   await recordReferrer(e, "api", req(), new URL("https://mugilu.live/c/1,2.json"));
   assert.equal(calls.length, 0); // nothing written for own-host or no-referrer
+});
+
+test("registrableHost: subdomains collapse to the registrable domain; hosting platforms keep the app", () => {
+  const uuid = "0b6f2c1e-9d1a-4b8e-8c3f-1a2b3c4d5e6f";
+  // every Lovable preview and project host of one app is one adopter
+  for (const h of [
+    `id-preview--${uuid}.lovable.app`,
+    `id-preview-1a2b3c--${uuid}.lovable.app`,
+    `${uuid}.lovableproject.com`,
+    `${uuid}.lovable.app`,
+  ])
+    assert.equal(registrableHost(h), `${uuid}.lovable.app`, h);
+  assert.equal(registrableHost("preview--air-app.lovable.app"), "air-app.lovable.app");
+  assert.equal(registrableHost("air-app.lovable.app"), "air-app.lovable.app");
+  // other platforms: one app per subdomain, never the platform as a whole
+  assert.equal(registrableHost("me.github.io"), "me.github.io");
+  assert.equal(registrableHost("feature-x.my-site.pages.dev"), "my-site.pages.dev");
+  assert.equal(registrableHost("app.vercel.app"), "app.vercel.app");
+  assert.equal(registrableHost("w.acct.workers.dev"), "acct.workers.dev");
+  for (const p of ["netlify.app", "web.app", "firebaseapp.com", "onrender.com", "herokuapp.com"])
+    assert.equal(registrableHost(`deep.app1.${p}`), `app1.${p}`, p);
+  assert.equal(registrableHost("news.example.com"), "example.com");
+  assert.equal(registrableHost("example.com"), "example.com");
+  // two-level public suffixes keep the name in front of them
+  assert.equal(registrableHost("www.city.gov.in"), "city.gov.in");
+  assert.equal(registrableHost("blog.paper.co.in"), "paper.co.in");
+  assert.equal(registrableHost("a.b.co.uk"), "b.co.uk");
+  // non-domains stay as they are
+  assert.equal(registrableHost("localhost"), "localhost");
+  assert.equal(registrableHost("claude-code"), "claude-code");
+  assert.equal(registrableHost("192.168.1.20"), "192.168.1.20");
+});
+
+test("recordReferrer: preview hosts of one app land in one row", async () => {
+  const METRICS = testD1();
+  const env = { METRICS } as unknown as Env;
+  const url = new URL("https://mugilu.live/embed/1,2");
+  for (const h of ["id-preview--aaa.lovable.app", "aaa.lovableproject.com", "id-preview--bbb.lovable.app"])
+    await recordReferrer(env, "embed", req({ referer: `https://${h}/` }), url);
+  const rows = (await METRICS.prepare("SELECT host, n FROM referrers").all()).results;
+  assert.deepEqual(rows, [
+    { host: "aaa.lovable.app", n: 2 },
+    { host: "bbb.lovable.app", n: 1 },
+  ]);
+});
+
+test("recordMcpClient: client names are kept whole", async () => {
+  const { db, calls } = mockDB();
+  await recordMcpClient({ METRICS: db } as unknown as Env, "claude-code");
+  assert.deepEqual(calls[0].args, ["mcp|claude-code", "claude-code", "mcp"]);
+});
+
+test("pruneReferrers: drops long-idle one-offs and caps the table, keeping the biggest adopters", async () => {
+  const METRICS = testD1();
+  const env = { METRICS } as unknown as Env;
+  const now = Math.floor(Date.parse("2026-10-24T00:00:00Z") / 1000);
+  const day = 86_400;
+  const ins = (host: string, n: number, last: number) =>
+    METRICS.prepare("INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,?,?)")
+      .bind(`api|${host}`, host, "api", n, last)
+      .run();
+  await ins("old-small.com", 2, now - 200 * day); // idle and small: dropped
+  await ins("old-big.com", 500, now - 200 * day); // idle but a real adopter: kept
+  await ins("recent-small.com", 1, now - 5 * day); // small but recent: kept
+  for (let i = 0; i < REFERRER_CAP + 5; i++) await ins(`h${i}.com`, 3 + i, now - day); // overflow
+  await pruneReferrers(env, now);
+  const hosts = new Set(
+    ((await METRICS.prepare("SELECT host FROM referrers").all()).results as { host: string }[]).map((r) => r.host),
+  );
+  assert.equal(hosts.size, REFERRER_CAP);
+  assert.ok(!hosts.has("old-small.com"));
+  assert.ok(hosts.has("old-big.com"));
+  assert.ok(!hosts.has("h0.com"), "the smallest rows go first when over the cap");
 });
 
 test("metrics are best-effort: a D1 failure never throws or surfaces", async () => {

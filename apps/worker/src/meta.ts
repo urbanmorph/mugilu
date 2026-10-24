@@ -1,4 +1,5 @@
 import { allSlugPlaces } from "./slugs";
+import { sourcesMarkdown } from "./sources";
 
 // Discoverability + agent front-door files: plain-text/XML siblings to the HTML
 // pages, so people, search engines, and LLM crawlers all find the same surface.
@@ -77,10 +78,8 @@ Markdown and /embed): polling faster returns identical data. If you display many
 places, that rate is per place. Readings are current, never a forecast.
 
 ## Sources
-Air: CPCB, Airnet (CSTEP), Aurassure, Google AirView+ via the OAQ broker, plus OpenAQ.
-Weather / heat / UV / dust: Open-Meteo (CC-BY 4.0).
-Official warnings: NDMA / IMD (SACHET). Geography: bharatlas.
-Health impact: AQLI methodology (U Chicago EPIC). Code: MIT.
+${sourcesMarkdown()}
+Code: MIT.
 `;
 }
 

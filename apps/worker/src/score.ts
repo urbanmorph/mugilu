@@ -24,7 +24,7 @@ export const PERSONA_LABEL: Record<Persona, string> = {
 };
 
 export type RiskBand = "low" | "moderate" | "high" | "severe";
-const BANDS: RiskBand[] = ["low", "moderate", "high", "severe"];
+export const RISK_BANDS: RiskBand[] = ["low", "moderate", "high", "severe"];
 const SCORE: Record<number, number> = { 0: 15, 1: 45, 2: 72, 3: 95 };
 
 // Hazards each persona is extra-sensitive to (bumped one level if already risky).
@@ -59,8 +59,9 @@ export interface AmbientRisk {
   hazards: HazardRisk[];
 }
 
-function airLevel(c: Conditions): number | null {
-  switch (c.air?.band) {
+/** Air's level from its CPCB band: moderate / poor / very poor and severe. */
+export function airLevelOf(band: string | undefined): number | null {
+  switch (band) {
     case "good":
     case "satisfactory":
       return 0;
@@ -76,27 +77,86 @@ function airLevel(c: Conditions): number | null {
   }
 }
 
-/** Hot-side thermal stress (0-3) from wet-bulb, feels-like and WBGT. */
-function heatLevel(c: Conditions): number {
-  const wb = c.heat?.wet_bulb_c;
-  const ap = c.heat?.apparent_c;
-  const wbgt = c.heat?.wbgt_c;
-  let lvl = 0;
-  if (wb != null) lvl = Math.max(lvl, wb >= 31 ? 3 : wb >= 28 ? 2 : wb >= 26 ? 1 : 0);
-  if (ap != null) lvl = Math.max(lvl, ap >= 45 ? 3 : ap >= 40 ? 2 : ap >= 35 ? 1 : 0);
-  // WBGT (simplified shade estimate; runs hot in dry heat), aligned to BoM's
-  // categories (35+ extreme, 32-34 very high, 30-31 high) so it contributes
-  // without over-escalating past the wet-bulb survivability read.
-  if (wbgt != null) lvl = Math.max(lvl, wbgt >= 35 ? 3 : wbgt >= 32 ? 2 : wbgt >= 30 ? 1 : 0);
-  return lvl;
+// ── The thresholds: the ONE source for every hazard cutoff ─────────────────────
+// Each list holds the caution / high / severe edges (levels 1, 2, 3). Rising
+// hazards count a value at or above an edge; falling ones (cold, fog) at or below
+// / below it. The page words, the home hero and both methodology tables read these.
+export const THRESHOLDS = {
+  /** °C feels-like; IMD heat-wave territory. */
+  apparent: [35, 40, 45],
+  /** °C wet-bulb; ~31 is the survivability limit. */
+  wetBulb: [26, 28, 31],
+  /** °C WBGT (simplified shade estimate; runs hot in dry heat), aligned to BoM's
+   *  categories (30-31 high, 32-34 very high, 35+ extreme) so it contributes
+   *  without over-escalating past the wet-bulb survivability read. */
+  wbgt: [30, 32, 35],
+  /** °C feels-like, at or below; IMD cold-wave territory for the plains, severe sub-zero. */
+  cold: [10, 5, 0],
+  /** km/h gusts; IMD squall + high-wind thresholds. */
+  wind: [40, 62, 88],
+  /** metres of visibility, below. */
+  fog: [1000, 500, 200],
+  /** µg/m³ dust. */
+  dust: [80, 150, 500],
+  /** UV index. Real but mitigable (shade/sunscreen/timing) and chronic, not acute-fatal,
+   *  so it caps at high: very-high 6-10 is a sun-care nudge, extreme 11+ is high. */
+  uv: [6, 11],
+  /** Active fires within 100 km in 24h, or their summed fire power (MW). */
+  smokeCount: [3, 25, 60],
+  smokeFrp: [20, 120, 350],
+} as const;
+
+/** How many edges a value reaches: 0 (none) to edges.length. */
+const atOrAbove = (v: number, edges: readonly number[]) => edges.filter((e) => v >= e).length;
+const atOrBelow = (v: number, edges: readonly number[]) => edges.filter((e) => v <= e).length;
+const below = (v: number, edges: readonly number[]) => edges.filter((e) => v < e).length;
+
+export const dustLevelOf = (ug: number) => atOrAbove(ug, THRESHOLDS.dust);
+
+/** Hot-side thermal stress (0-3): the worst of wet-bulb, feels-like and WBGT. */
+export function heatLevelOf(h: { apparent_c?: number; wet_bulb_c?: number; wbgt_c?: number }): number {
+  return Math.max(
+    h.wet_bulb_c != null ? atOrAbove(h.wet_bulb_c, THRESHOLDS.wetBulb) : 0,
+    h.apparent_c != null ? atOrAbove(h.apparent_c, THRESHOLDS.apparent) : 0,
+    h.wbgt_c != null ? atOrAbove(h.wbgt_c, THRESHOLDS.wbgt) : 0,
+  );
 }
 
-/** Cold-side stress (0-3) from feels-like (wind chill is already in apparent_c).
- *  Calibrated to IMD cold-wave territory for the plains; severe at sub-zero. */
+/** Cold-side stress (0-3) from feels-like (wind chill is already in apparent_c). */
+export const coldLevelOf = (apparent: number) => atOrBelow(apparent, THRESHOLDS.cold);
+export const windLevelOf = (gust: number) => atOrAbove(gust, THRESHOLDS.wind);
+export const fogLevelOf = (meters: number) => below(meters, THRESHOLDS.fog);
+
+/** The methodology table (caution / high / severe), built from THRESHOLDS so the
+ *  published numbers can never drift from the ones the code applies. Hazard labels
+ *  are i18n keys. */
+export const THRESHOLD_ROWS: { hazard: string; cells: [string, string, string] }[] = (() => {
+  const T = THRESHOLDS;
+  const deg = (e: readonly number[]) => e.map((x) => `${x}°`) as [string, string, string];
+  const plain = (e: readonly number[], pre = "", post = "") =>
+    e.map((x) => `${pre}${x}${post}`) as [string, string, string];
+  return [
+    // CPCB's own bands (airLevelOf): moderate / poor / very poor and severe.
+    { hazard: "Air (AQI)", cells: ["101–200", "201–300", "301+"] },
+    { hazard: "Heat (feels-like)", cells: deg(T.apparent) },
+    { hazard: "Heat (wet-bulb)", cells: deg(T.wetBulb) },
+    { hazard: "Heat (WBGT)", cells: deg(T.wbgt) },
+    { hazard: "Cold (feels-like)", cells: T.cold.map((x) => `≤${x}°`) as [string, string, string] },
+    { hazard: "Wind (gusts, km/h)", cells: plain(T.wind) },
+    { hazard: "Fog (visibility, m)", cells: plain(T.fog, "<") },
+    { hazard: "Smoke (fires <100 km)", cells: plain(T.smokeCount, "", "+") },
+    { hazard: "UV (index)", cells: [`${T.uv[0]}–${T.uv[1] - 1}`, `${T.uv[1]}+`, "-"] },
+    { hazard: "Dust (µg/m³)", cells: plain(T.dust) },
+  ];
+})();
+
+function heatLevel(c: Conditions): number {
+  return c.heat ? heatLevelOf(c.heat) : 0;
+}
+
 function coldLevel(c: Conditions): number {
   const ap = c.heat?.apparent_c;
-  if (ap == null) return 0;
-  return ap <= 0 ? 3 : ap <= 5 ? 2 : ap <= 10 ? 1 : 0;
+  return ap == null ? 0 : coldLevelOf(ap);
 }
 
 /** Thermal stress as ONE directional hazard. A point right now is either too hot
@@ -111,34 +171,26 @@ function thermalRisk(c: Conditions): [string, number] | null {
 
 function uvLevel(c: Conditions): number | null {
   const u = c.uv?.index;
-  if (u == null) return null;
-  // UV is real but mitigable (shade/sunscreen/timing) and chronic, not acute-
-  // fatal. So for the general population it caps at "high" only when extreme
-  // (11+); very-high 6–10 is "moderate", a sun-care nudge, not an emergency.
-  // Persona amplification escalates it for children / outdoor workers.
-  return u >= 11 ? 2 : u >= 6 ? 1 : 0;
+  // Persona amplification escalates UV for children / outdoor workers.
+  return u == null ? null : atOrAbove(u, THRESHOLDS.uv);
 }
 
 function dustLevel(c: Conditions): number | null {
   const d = c.dust?.dust_ug_m3;
-  if (d == null) return null;
-  return d >= 500 ? 3 : d >= 150 ? 2 : d >= 80 ? 1 : 0;
+  return d == null ? null : dustLevelOf(d);
 }
 
-/** Wind hazard from gusts (km/h): strong / gale-squall / storm-cyclonic, aligned
- *  to IMD squall + high-wind thresholds. Drives dust storms and falling hazards. */
+/** Wind hazard from gusts: strong / gale-squall / storm-cyclonic. Drives dust
+ *  storms and falling hazards. */
 function windLevel(c: Conditions): number | null {
   const g = c.wind?.gust_kmh ?? c.wind?.speed_kmh;
-  if (g == null) return null;
-  return g >= 88 ? 3 : g >= 62 ? 2 : g >= 40 ? 1 : 0;
+  return g == null ? null : windLevelOf(g);
 }
 
-/** Fog / low-visibility hazard (metres): dense fog is a major driving + health
- *  hazard in north-India winters. */
+/** Fog / low visibility: a major driving + health hazard in north-India winters. */
 function fogLevel(c: Conditions): number | null {
   const v = c.visibility?.meters;
-  if (v == null) return null;
-  return v < 200 ? 3 : v < 500 ? 2 : v < 1000 ? 1 : 0;
+  return v == null ? null : fogLevelOf(v);
 }
 
 // Fire/crop-burn smoke: active FIRMS detections (VIIRS) within 100km, last 24h.
@@ -149,13 +201,10 @@ function fogLevel(c: Conditions): number | null {
 // Exported as the single source for both "worth showing" (null) and the band,
 // so the renderers don't re-encode these literals.
 export function smokeLevel(s: SmokeConditions | null | undefined): number | null {
-  if (!s || (s.count < 3 && s.frp_sum < 20)) return null;
-  if (s.count >= 60 || s.frp_sum >= 350) return 3;
-  if (s.count >= 25 || s.frp_sum >= 120) return 2;
-  return 1;
+  if (!s) return null;
+  const level = Math.max(atOrAbove(s.count, THRESHOLDS.smokeCount), atOrAbove(s.frp_sum, THRESHOLDS.smokeFrp));
+  return level || null;
 }
-/** Plain word for a smoke level (1/2/3); index 0 is unused. */
-export const SMOKE_WORD = ["", "some", "notable", "heavy"];
 
 function warnLevel(c: Conditions): number | null {
   if (!c.warnings?.length) return null;
@@ -169,7 +218,7 @@ function warnLevel(c: Conditions): number | null {
 export function ambientRisk(c: Conditions, persona: Persona = "everyone"): AmbientRisk {
   const sensitive = SENSITIVE[persona] ?? [];
   const checks: Array<[string, number | null]> = [
-    ["Air", airLevel(c)],
+    ["Air", airLevelOf(c.air?.band)],
     thermalRisk(c) ?? ["Heat", null],
     ["UV", uvLevel(c)],
     ["Dust", dustLevel(c)],
@@ -183,7 +232,7 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
   for (const [hazard, level] of checks) {
     if (level == null) continue;
     const amped = sensitive.includes(hazard) && level >= 1 ? Math.min(3, level + 1) : level;
-    hazards.push({ hazard, level: amped, band: BANDS[amped], base: level });
+    hazards.push({ hazard, level: amped, band: RISK_BANDS[amped], base: level });
   }
 
   if (hazards.length === 0) {
@@ -256,7 +305,7 @@ const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
  *  renames CPCB moderate air "poor"; the persona's own step is personaAction. */
 export function ambientMeaning(risk: AmbientRisk): string {
   if (risk.band === "low") return "Conditions are good right now.";
-  return ADVICE[risk.driver]?.[BANDS[risk.base]] ?? "Take some care outdoors.";
+  return ADVICE[risk.driver]?.[RISK_BANDS[risk.base]] ?? "Take some care outdoors.";
 }
 
 // What a persona can do to cut its exposure when its own trigger drives the
@@ -322,20 +371,28 @@ const HAZARD_NOUN: Record<string, string> = {
 /** The persona callout (option A): surface the persona's OWN top trigger when
  *  it's elevated (high+) but isn't the headline driver, so an asthmatic on a
  *  severe-heat day still hears the air is bad, without the heat being buried.
- *  Returns null for "everyone" or when the driver already is their concern. */
-export function personaAlso(risk: AmbientRisk): string | null {
+ *  Returns null for "everyone" or when the driver already is their concern.
+ *  `tr` translates each piece (the template, persona, hazard and band) for a page. */
+export function personaAlso(risk: AmbientRisk, tr: (en: string) => string = (en) => en): string | null {
   if (risk.persona === "everyone") return null;
   const sensitive = SENSITIVE[risk.persona] ?? [];
   const top = risk.hazards
     .filter((h) => sensitive.includes(h.hazard) && h.hazard !== risk.driver && h.level >= 2)
     .sort((a, b) => b.level - a.level)[0];
   if (!top) return null;
-  return `For ${PERSONA_LABEL[risk.persona].toLowerCase()}, also watch: ${HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()} is ${top.band}.`;
+  return tr("For {persona}, also watch: {hazard} is {band}.")
+    .replace("{persona}", tr(PERSONA_LABEL[risk.persona]).toLowerCase())
+    .replace("{hazard}", tr(HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()))
+    .replace("{band}", tr(top.band));
 }
 
-/** Everything a renderer says about the Ambient read, in English (renderers
- *  translate): the hazard as it is, the persona's own step, and the persona's
- *  other elevated trigger. One place, so every surface tells personas the same. */
-export function ambientSummary(risk: AmbientRisk): { meaning: string; action: string | null; also: string | null } {
-  return { meaning: ambientMeaning(risk), action: personaAction(risk), also: personaAlso(risk) };
+/** Everything a renderer says about the Ambient read (in English, or translated by
+ *  `tr`): the hazard as it is, the persona's own step, and the persona's other
+ *  elevated trigger. One place, so every surface tells personas the same. */
+export function ambientSummary(
+  risk: AmbientRisk,
+  tr: (en: string) => string = (en) => en,
+): { meaning: string; action: string | null; also: string | null } {
+  const action = personaAction(risk);
+  return { meaning: tr(ambientMeaning(risk)), action: action && tr(action), also: personaAlso(risk, tr) };
 }

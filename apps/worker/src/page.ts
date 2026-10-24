@@ -1,9 +1,25 @@
-import type { Conditions, Warning, AirPollutants } from "./types";
+import type { Conditions, Warning, AirPollutants, NormalizedStation } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { pollutantParts } from "./formats";
+import { AQI_BAND_LABEL } from "./aqi";
+import { SOURCES } from "./sources";
 import { esc } from "./html";
-import { ambientRisk, ambientSummary, smokeLevel, SMOKE_WORD, PERSONAS, PERSONA_LABEL } from "./score";
+import {
+  airLevelOf,
+  ambientRisk,
+  ambientSummary,
+  coldLevelOf,
+  dustLevelOf,
+  fogLevelOf,
+  heatLevelOf,
+  smokeLevel,
+  windLevelOf,
+  PERSONAS,
+  PERSONA_LABEL,
+  RISK_BANDS,
+  THRESHOLD_ROWS,
+} from "./score";
 import type { Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
@@ -22,16 +38,6 @@ import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
 // rules (--hair); a condition- or sky-tinted atmospheric backdrop; and the
 // inline Lucide-style line icons in ICON/icon(), never emoji. Tokens live in
 // BASE_CSS :root and reach home, /c, about, terms and 404 alike.
-
-const BAND_LABEL: Record<string, string> = {
-  good: "Good",
-  satisfactory: "Fine",
-  moderate: "Moderate",
-  poor: "Poor",
-  vpoor: "Very poor",
-  severe: "Severe",
-  unknown: "n/a",
-};
 
 /** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
 function isHttpUrl(u: string): boolean {
@@ -57,19 +63,17 @@ function uvWord(index: number | undefined): string {
   return "extreme";
 }
 
-function dustWord(ug: number | undefined): string {
-  if (ug == null) return "n/a";
-  if (ug < 20) return "low";
-  if (ug < 50) return "moderate";
-  return "high";
-}
+// The words below name the same levels the Ambient read uses (score.ts THRESHOLDS),
+// so a tile can never call dust "high" while the read says it is fine.
 
+/** Dust's risk band (low / moderate / high / severe), the word on its tile and hero. */
+const dustBand = (ug: number): RiskBand => RISK_BANDS[dustLevelOf(ug)];
+
+/** Wind word: the hazard levels, plus "breezy" for a sub-hazard 20+ km/h. */
 function windWord(gust: number): string {
-  if (gust >= 88) return "storm-force";
-  if (gust >= 62) return "gale";
-  if (gust >= 40) return "strong";
-  if (gust >= 20) return "breezy";
-  return "calm";
+  const level = windLevelOf(gust);
+  if (level) return ["strong", "gale", "storm-force"][level - 1];
+  return gust >= 20 ? "breezy" : "calm";
 }
 
 /** 8-point compass label for the direction wind blows FROM. */
@@ -77,10 +81,10 @@ function compassDir(deg: number): string {
   return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(deg / 45) % 8];
 }
 
+/** Visibility word: the fog levels, then the sub-hazard haze below 5 km. */
 function visWord(meters: number): string {
-  if (meters < 200) return "dense fog";
-  if (meters < 500) return "thick fog";
-  if (meters < 1000) return "fog";
+  const level = fogLevelOf(meters);
+  if (level) return ["fog", "thick fog", "dense fog"][level - 1];
   if (meters < 2000) return "misty";
   if (meters < 5000) return "hazy";
   return "clear";
@@ -95,39 +99,29 @@ function pollutantLine(p: AirPollutants): string {
 }
 
 function heatPhrase(apparent: number, wetBulb?: number): string {
-  if (wetBulb != null && wetBulb >= 28) return "dangerous humid heat";
-  if (apparent >= 45) return "extreme heat";
-  if (apparent >= 40) return "severe heat";
-  if (apparent >= 35) return "very hot";
-  if (apparent <= 0) return "dangerous cold";
-  if (apparent <= 5) return "very cold";
-  if (apparent <= 10) return "cold";
+  if (wetBulb != null && heatLevelOf({ wet_bulb_c: wetBulb }) >= 2) return "dangerous humid heat";
+  const hot = heatLevelOf({ apparent_c: apparent });
+  if (hot) return ["very hot", "severe heat", "extreme heat"][hot - 1];
+  const cold = coldLevelOf(apparent);
+  if (cold) return ["cold", "very cold", "dangerous cold"][cold - 1];
   return "warm";
 }
 
-function dustPhrase(d: number): string {
-  if (d >= 500) return "severe dust";
-  if (d >= 150) return "high dust";
-  if (d >= 50) return "moderate dust";
-  return "light dust";
-}
+/** Fire activity nearby per smoke level (1-3); index 0 is unused. */
+const SMOKE_PHRASE = ["", "some burning", "notable burning", "heavy burning"];
+
+const DUST_PHRASE: Record<RiskBand, string> = {
+  low: "light dust",
+  moderate: "moderate dust",
+  high: "high dust",
+  severe: "severe dust",
+};
 
 // Risk band of each highlight, so the hero can wear the severity of what it
-// shows. Same cutoffs as score.ts (apparent/wet-bulb, dust µg/m³, CPCB band),
-// mapped to the four-step risk palette the /c page uses.
-const RISK_RANK: Record<RiskBand, number> = { low: 0, moderate: 1, high: 2, severe: 3 };
-function heatBand(apparent?: number, wb?: number): RiskBand {
-  if ((apparent != null && apparent >= 45) || (wb != null && wb >= 31)) return "severe";
-  if ((apparent != null && apparent >= 40) || (wb != null && wb >= 28)) return "high";
-  if ((apparent != null && apparent >= 35) || (wb != null && wb >= 26)) return "moderate";
-  return "low";
-}
-function dustBand(d: number): RiskBand {
-  return d >= 500 ? "severe" : d >= 150 ? "high" : d >= 80 ? "moderate" : "low";
-}
-function airBand(b: string): RiskBand {
-  return b === "severe" || b === "vpoor" ? "severe" : b === "poor" ? "high" : b === "moderate" ? "moderate" : "low";
-}
+// shows, mapped to the four-step risk palette the /c page uses.
+const heatBand = (apparent?: number, wb?: number): RiskBand =>
+  RISK_BANDS[heatLevelOf({ apparent_c: apparent, wet_bulb_c: wb })];
+const airBand = (b: NormalizedStation["band"]): RiskBand => RISK_BANDS[airLevelOf(b) ?? 0];
 
 /** The "right now in India" hero. Heat- and dust-led from the 4-hourly grid,
  *  plus a worst-air row from the hourly snapshot, each row state-qualified (so
@@ -143,7 +137,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
   // "feels 41°": in Kannada/Hindi the verb follows the number ("41° ಅನಿಸುತ್ತದೆ").
   const feels = (c: number) => (lang === "en" ? `feels ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`);
   const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
-    if (RISK_RANK[band] > RISK_RANK[worst]) worst = band;
+    if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
     return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
   };
   if (h.hottest) {
@@ -163,7 +157,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
         dustBand(h.dustiest.dust_ug_m3),
         h.dustiest.lat,
         h.dustiest.lon,
-        `${icon("dust")}${t("Dustiest", lang)}: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${t(dustPhrase(h.dustiest.dust_ug_m3), lang)}`,
+        `${icon("dust")}${t("Dustiest", lang)}: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${t(DUST_PHRASE[dustBand(h.dustiest.dust_ug_m3)], lang)}`,
         meta?.gridAsOf,
       ),
     );
@@ -174,7 +168,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
         airBand(h.worstAir.band),
         h.worstAir.lat,
         h.worstAir.lon,
-        `${icon("air")}${t("Worst air", lang)}: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
+        `${icon("air")}${t("Worst air", lang)}: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(AQI_BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
         meta?.airAsOf,
       ),
     );
@@ -483,13 +477,14 @@ const COND_NOUN: Record<string, string> = {
   none: "sky",
 };
 
-/** Wet-bulb survivability read: ~31 is the theoretical limit, >=28 is severe. */
-function wetBulb(wb: number): [string, string] {
-  if (wb >= 31) return ["dangerous", RISK_COLOR.severe];
-  if (wb >= 28) return ["severe", RISK_COLOR.high];
-  if (wb >= 26) return ["caution", RISK_COLOR.moderate];
-  return ["safe", "var(--muted)"];
-}
+/** Wet-bulb survivability read (~31 is the theoretical limit): word + colour per level. */
+const WET_BULB: [string, string][] = [
+  ["safe", "var(--muted)"],
+  ["caution", RISK_COLOR.moderate],
+  ["severe", RISK_COLOR.high],
+  ["dangerous", RISK_COLOR.severe],
+];
+const wetBulb = (wb: number) => WET_BULB[heatLevelOf({ wet_bulb_c: wb })];
 
 /** An inline good->severe scale with a marker at the reading's position (0..1).
  *  `calm` swaps the gradient for a neutral sky track (for non-hazard rows). */
@@ -505,9 +500,9 @@ function lyr(key: string, label: string, on: boolean, num: string, q: string, su
 }
 
 /** A pinned official warning, the most urgent thing on the page. */
-function renderWarning(w: Warning): string {
-  const meta = [w.severity, w.until ? `until ${w.until}` : ""].filter(Boolean).join(" · ");
-  return `<div class="warn" style="--wc:${warnColor(w.color)}">${icon("warn")}<div><b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">Official warning · ${esc(w.issuer)}</span></div></div>`;
+function renderWarning(w: Warning, lang: Lang): string {
+  const meta = [w.severity, w.until ? t("until X", lang).replace("X", w.until) : ""].filter(Boolean).join(" · ");
+  return `<div class="warn" style="--wc:${warnColor(w.color)}">${icon("warn")}<div><b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">${t("Official warning", lang)} · ${esc(w.issuer)}</span></div></div>`;
 }
 
 /** Warnings active nearby whose areas do not cover this spot: one quiet line, never the red box. */
@@ -518,7 +513,7 @@ function renderNearbyWarnings(ws: Warning[], lang: Lang): string {
   const items = [...byEvent]
     .map(([event, list]) => {
       const one = list.length === 1 ? list[0] : undefined;
-      const detail = one ? (one.until ? `${t("until", lang)} ${one.until}` : "") : String(list.length);
+      const detail = one ? (one.until ? t("until X", lang).replace("X", one.until) : "") : String(list.length);
       return `${esc(event)}${detail ? ` (${esc(detail)})` : ""}`;
     })
     .join(" · ");
@@ -560,14 +555,14 @@ export function renderConditionsPage(
   alertsKey?: string,
 ): string {
   const risk = ambientRisk(c, persona);
-  const say = ambientSummary(risk);
-  const meaning = t(say.meaning, lang);
+  const say = ambientSummary(risk, (en) => t(en, lang));
+  const { meaning } = say;
   const slug = `${c.location.lat},${c.location.lon}`;
   const placeName = placeLabel(c); // raw: shell() escapes the title
   const place = esc(placeName);
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
-  const bandLabel = BAND_LABEL[band] ?? "n/a";
+  const bandLabel = AQI_BAND_LABEL[band] ?? "n/a";
   const condColor = RISK_COLOR[risk.band];
 
   // Persona toggles (understated text, not chips).
@@ -590,7 +585,7 @@ export function renderConditionsPage(
     const marker = c.air.station
       ? `<i class="dot meas"></i>${t("measured", lang)} · ${c.air.station.distance_km} km`
       : `<i class="dot mod"></i>${t("modelled", lang)}`;
-    const aqli = c.air.yll != null ? ` · ~${c.air.yll} yrs life lost` : "";
+    const aqli = c.air.yll != null ? ` · ~${c.air.yll} ${t("years of life lost", lang)}` : "";
     const poll = pollutantLine(c.air.pollutants);
     strata.push(
       lyr(
@@ -605,10 +600,10 @@ export function renderConditionsPage(
     );
   }
   if (c.heat) {
-    let sub = `${round(c.heat.temp_c)}° actual · ${round(c.heat.humidity_pct)}% humidity`;
+    let sub = `${round(c.heat.temp_c)}° ${t("actual", lang)} · ${round(c.heat.humidity_pct)}% ${t("humidity", lang)}`;
     if (c.heat.wet_bulb_c != null) {
       const [wn, wc] = wetBulb(c.heat.wet_bulb_c);
-      sub += ` · wet-bulb ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b>`;
+      sub += ` · ${t("wet-bulb", lang)} ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b>`;
     }
     if (c.heat.wbgt_c != null) sub += ` · WBGT ${round(c.heat.wbgt_c)}°`;
     strata.push(
@@ -646,7 +641,7 @@ export function renderConditionsPage(
         t("Dust", lang),
         risk.driver === "Dust",
         String(Math.round(c.dust.dust_ug_m3)),
-        `<span class="qa nu">µg/m³</span> <b>${t(dustWord(c.dust.dust_ug_m3), lang)}</b>`,
+        `<span class="qa nu">µg/m³</span> <b>${t(dustBand(c.dust.dust_ug_m3), lang)}</b>`,
         "",
         scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500),
       ),
@@ -655,15 +650,16 @@ export function renderConditionsPage(
   if (c.wind && (c.wind.gust_kmh != null || c.wind.speed_kmh != null)) {
     const gust = c.wind.gust_kmh ?? c.wind.speed_kmh!;
     const dirParts: string[] = [];
-    if (c.wind.direction_deg != null) dirParts.push(`from ${compassDir(c.wind.direction_deg)}`);
-    if (c.wind.speed_kmh != null) dirParts.push(`${Math.round(c.wind.speed_kmh)} km/h steady`);
+    if (c.wind.direction_deg != null) dirParts.push(t("from X", lang).replace("X", compassDir(c.wind.direction_deg)));
+    if (c.wind.speed_kmh != null)
+      dirParts.push(t("X km/h steady", lang).replace("X", String(Math.round(c.wind.speed_kmh))));
     strata.push(
       lyr(
         "wind",
         t("Wind", lang),
         risk.driver === "Wind",
         String(Math.round(gust)),
-        `<span class="qa nu">km/h gusts</span> <b>${t(windWord(gust), lang)}</b>`,
+        `<span class="qa nu">km/h ${t("gusts", lang)}</span> <b>${t(windWord(gust), lang)}</b>`,
         dirParts.join(" · "),
         scaleBar(Math.min(gust, 100) / 100),
       ),
@@ -689,7 +685,7 @@ export function renderConditionsPage(
   if (c.smoke && smokeLvl != null) {
     const sub =
       c.smoke.nearest_km != null
-        ? `nearest ${c.smoke.nearest_km} km · ${c.smoke.frp_sum} MW total`
+        ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW total", lang).replace("X", String(c.smoke.frp_sum))}`
         : `${c.smoke.frp_sum} MW`;
     strata.push(
       lyr(
@@ -697,7 +693,7 @@ export function renderConditionsPage(
         t("Smoke", lang),
         risk.driver === "Smoke",
         String(c.smoke.count),
-        `<span class="qa nu">fires &lt;100 km</span> <b>${SMOKE_WORD[smokeLvl]} burning</b>`,
+        `<span class="qa nu">${t("fires within 100 km", lang)}</span> <b>${t(SMOKE_PHRASE[smokeLvl], lang)}</b>`,
         sub,
         scaleBar(Math.min(c.smoke.count, 100) / 100),
       ),
@@ -713,12 +709,14 @@ export function renderConditionsPage(
           false,
           `${c.rain.probability_pct}%`,
           `<span class="qa">${t("chance of rain", lang)}</span>`,
-          mm ? `${mm} mm falling now` : "",
+          mm ? t("X mm falling now", lang).replace("X", String(mm)) : "",
           scaleBar(c.rain.probability_pct / 100, true),
         ),
       );
     } else {
-      strata.push(lyr("rain", t("Rain", lang), false, String(mm), '<span class="qa nu">mm</span> <b>now</b>', ""));
+      strata.push(
+        lyr("rain", t("Rain", lang), false, String(mm), `<span class="qa nu">mm</span> <b>${t("now", lang)}</b>`, ""),
+      );
     }
   }
 
@@ -742,14 +740,14 @@ export function renderConditionsPage(
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
     <p class="when">${t("the sky over this spot", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
     <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading saved on this device, from X. Conditions and warnings may have changed since.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
-    ${c.warnings?.length ? c.warnings.map(renderWarning).join("") : ""}
+    ${c.warnings?.length ? c.warnings.map((w) => renderWarning(w, lang)).join("") : ""}
     ${c.nearby_warnings?.length ? renderNearbyWarnings(c.nearby_warnings, lang) : ""}
     <section class="amb">
       <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="amb-head">${head}</p>
       <p class="amb-say">${esc(meaning)}</p>
-      ${say.action ? `<p class="amb-act">${esc(t(say.action, lang))}</p>` : ""}
-      ${say.also ? `<p class="amb-also">${icon("users")}${esc(t(say.also, lang))}</p>` : ""}
+      ${say.action ? `<p class="amb-act">${esc(say.action)}</p>` : ""}
+      ${say.also ? `<p class="amb-also">${icon("users")}${esc(say.also)}</p>` : ""}
       <nav class="who" aria-label="${esc(t("Who is this for", lang))}">${pills}</nav>
     </section>
     <dl class="strata">${strata.join("")}</dl>
@@ -922,12 +920,26 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .kverb{font-size:3.2vmin;color:#cbd5e1;letter-spacing:.01em}
 @keyframes kspin{to{transform:rotate(360deg)}}`;
 
-const KIOSK_JS = `(function(){
+/** The loading verbs the kiosk cycles through while it refreshes. */
+const KIOSK_VERBS = [
+  "Reading the sky",
+  "Checking the air",
+  "Gauging the heat",
+  "Watching for warnings",
+  "Catching the wind",
+  "Looking up",
+];
+
+/** The kiosk's script, with its words in the page's language (X is the number). */
+const kioskJs = (lang: Lang) => {
+  const s = (en: string) => JSON.stringify(t(en, lang)).replace(/</g, "\\u003c");
+  return `(function(){
 var clkI,agoI,refT,vbT,n=0;
-var verbs=['Reading the sky','Checking the air','Gauging the heat','Watching for warnings','Catching the wind','Looking up'];
+var verbs=[${KIOSK_VERBS.map(s).join(",")}];
+var W={now:${s("just now")},min:${s("X min ago")},h:${s("X hours ago")},d:${s("X days ago")}};
+function ago(){var a=document.getElementById('ago');if(!a)return;var t=a.getAttribute('data-t');if(!t)return;var s=Math.max(0,(Date.now()-new Date(t).getTime())/1000);a.textContent=s<90?W.now:(s<3600?W.min.replace('X',Math.round(s/60)):s<86400?W.h.replace('X',Math.round(s/3600)):W.d.replace('X',Math.round(s/86400)));}
 function p(x){return x<10?'0'+x:''+x}
 function clock(){var c=document.getElementById('clk');if(c){var d=new Date();c.textContent=p(d.getHours())+':'+p(d.getMinutes());}}
-function ago(){var a=document.getElementById('ago');if(!a)return;var t=a.getAttribute('data-t');if(!t)return;var s=Math.max(0,(Date.now()-new Date(t).getTime())/1000);a.textContent=s<90?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago';}
 function fit(){var amb=document.querySelector('.kamb'),hd=amb&&amb.querySelector('.khead');if(!amb||!hd)return;hd.style.fontSize='';var s=parseFloat(getComputedStyle(hd).fontSize),g=0;while(amb.scrollHeight>amb.clientHeight+1&&s>24&&g++<40){s-=4;hd.style.fontSize=s+'px';}}
 var load=document.querySelector('.kload'),vb=load&&load.querySelector('.kverb');
 function showLoad(){if(!load)return;var i=0;(function nx(){if(vb)vb.textContent=verbs[i++%verbs.length]+'…';vbT=setTimeout(nx,1500);})();load.classList.add('on');}
@@ -939,6 +951,7 @@ lock();document.addEventListener('visibilitychange',function(){if(document.visib
 window.addEventListener('resize',fit);setTimeout(fit,300);
 start();
 })();`;
+};
 
 export function renderKioskPage(
   c: Conditions,
@@ -948,7 +961,7 @@ export function renderKioskPage(
   lang: Lang = "en",
 ): string {
   const risk = ambientRisk(c, persona);
-  const say = ambientSummary(risk);
+  const say = ambientSummary(risk, (en) => t(en, lang));
   const slug = `${c.location.lat},${c.location.lon}`;
   const placeName = placeLabel(c); // raw: shell() escapes the title
   const place = esc(placeName);
@@ -966,7 +979,7 @@ export function renderKioskPage(
       tile(
         "Air",
         String(c.air.aqi),
-        BAND_LABEL[c.air.band ?? "unknown"] ?? "n/a",
+        AQI_BAND_LABEL[c.air.band ?? "unknown"] ?? "n/a",
         risk.driver === "Air",
         BAND_COLOR[c.air.band ?? "unknown"] ?? BAND_COLOR.unknown,
       ),
@@ -984,14 +997,14 @@ export function renderKioskPage(
     tiles.push(tile("UV", String(Math.round(c.uv.index)), uvWord(c.uv.index), risk.driver === "UV"));
   if (c.dust?.dust_ug_m3 != null)
     tiles.push(
-      tile("Dust", String(Math.round(c.dust.dust_ug_m3)), dustWord(c.dust.dust_ug_m3), risk.driver === "Dust"),
+      tile("Dust", String(Math.round(c.dust.dust_ug_m3)), dustBand(c.dust.dust_ug_m3), risk.driver === "Dust"),
     );
   if (c.rain?.probability_pct != null)
     tiles.push(tile("Rain", `${Math.round(c.rain.probability_pct)}%`, "rain chance", risk.driver === "Rain"));
 
   const w0 = c.warnings?.[0];
   const warn = w0
-    ? `<div class="kwarn">${icon("warn")}<span><b>${esc(w0.event)}</b>${w0.until ? ` · until ${esc(w0.until)}` : ""} · ${esc(w0.issuer)}${c.warnings!.length > 1 ? ` · +${c.warnings!.length - 1} more` : ""}</span></div>`
+    ? `<div class="kwarn">${icon("warn")}<span><b>${esc(w0.event)}</b>${w0.until ? ` · ${t("until X", lang).replace("X", esc(w0.until))}` : ""} · ${esc(w0.issuer)}${c.warnings!.length > 1 ? ` · ${t("+X more", lang).replace("X", String(c.warnings!.length - 1))}` : ""}</span></div>`
     : "";
 
   const body = `
@@ -1004,8 +1017,8 @@ export function renderKioskPage(
     <main class="kamb">
       <p class="keye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="khead">${head}</p>
-      <p class="ksay">${esc(t(say.meaning, lang))}</p>
-      ${say.action ? `<p class="kact">${esc(t(say.action, lang))}</p>` : ""}
+      <p class="ksay">${esc(say.meaning)}</p>
+      ${say.action ? `<p class="kact">${esc(say.action)}</p>` : ""}
     </main>
     <section class="ktiles">${tiles.join("")}</section>
     <footer class="kfoot">
@@ -1013,8 +1026,8 @@ export function renderKioskPage(
       <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan for this<br>on your phone" : t("scan for this on your phone", lang)}</span></div>
     </footer>
   </div>
-  <div class="kload" aria-hidden="true"><div class="kspin"></div><p class="kverb">Reading the sky…</p></div>
-  <script>${KIOSK_JS}</script>`;
+  <div class="kload" aria-hidden="true"><div class="kspin"></div><p class="kverb">${t(KIOSK_VERBS[0], lang)}…</p></div>
+  <script>${kioskJs(lang)}</script>`;
 
   const css = KIOSK_CSS;
   const desc = `${c.place ?? slug}: a live wall-display of the whole sky over this spot, self-refreshing.`;
@@ -1118,27 +1131,32 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
 
 export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, lang: Lang = "en"): string {
   const risk = ambientRisk(c, persona);
-  const say = ambientSummary(risk);
+  const say = ambientSummary(risk, (en) => t(en, lang));
   const condColor = RISK_COLOR[risk.band];
   const slug = `${c.location.lat},${c.location.lon}`;
   const place = esc(placeLabel(c));
-  const head = risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
+  const head =
+    risk.band === "low"
+      ? t("All clear", lang)
+      : `${t(RISK_LABEL[risk.band], lang)} ${t(COND_NOUN[risk.driver] ?? "sky", lang)}`;
 
   const reads: string[] = [];
   if (c.air?.aqi != null)
     reads.push(
-      `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${BAND_LABEL[c.air.band] ?? ""}</span></div>`,
+      `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}</span></div>`,
     );
   if (c.heat?.apparent_c != null)
-    reads.push(`<div class="eread"><b>${round(c.heat.apparent_c)}°</b><span>feels like</span></div>`);
+    reads.push(`<div class="eread"><b>${round(c.heat.apparent_c)}°</b><span>${t("feels like", lang)}</span></div>`);
   if (c.uv?.index != null)
-    reads.push(`<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${uvWord(c.uv.index)}</span></div>`);
+    reads.push(
+      `<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${t(uvWord(c.uv.index), lang)}</span></div>`,
+    );
   if (c.dust?.dust_ug_m3 != null)
     reads.push(
-      `<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>dust ${dustWord(c.dust.dust_ug_m3)}</span></div>`,
+      `<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>${t("dust", lang)} ${t(dustBand(c.dust.dust_ug_m3), lang)}</span></div>`,
     );
   if (c.smoke && smokeLevel(c.smoke) != null)
-    reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>fires &lt;100km</span></div>`);
+    reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>${t("fires within 100 km", lang)}</span></div>`);
 
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
@@ -1147,15 +1165,15 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>
-    <div class="esay">${esc(t(say.meaning, lang))}</div>
-    ${say.action ? `<div class="eact">${esc(t(say.action, lang))}</div>` : ""}
+    <div class="esay">${esc(say.meaning)}</div>
+    ${say.action ? `<div class="eact">${esc(say.action)}</div>` : ""}
     <div class="ereads">${reads.join("")}</div>
-    <div class="efoot"><span>as of ${esc(istTime(c.as_of))}</span><span>mugilu.live →</span></div>
+    <div class="efoot"><span>${t("as of X", lang).replace("X", esc(istTime(c.as_of)))}</span><span>mugilu.live →</span></div>
     <div class="edisc">${esc(t(SHORT_DISCLAIMER, lang))}</div>
   </a>
-  <details class="ecode"><summary>Embed this</summary>
-    <p>Live widget (iframe):</p><pre>${esc(iframe)}</pre>
-    <p>Or a timestamped image:</p><pre>${esc(imgtag)}</pre>
+  <details class="ecode"><summary>${t("Embed this", lang)}</summary>
+    <p>${t("Live widget (iframe):", lang)}</p><pre>${esc(iframe)}</pre>
+    <p>${t("Or a timestamped image:", lang)}</p><pre>${esc(imgtag)}</pre>
   </details>
   <script>if(window.self!==window.top)document.documentElement.classList.add('framed')</script>
   </body></html>`;
@@ -1192,6 +1210,17 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 /** The About page: the origin story + the dual nature (for people, and as
  *  infrastructure). Person-first, jargon-free. The "Build on it" section is a
  *  stub that grows as the API / MCP land. */
+// The hand-written source credits on /about (its FAQ and "where it comes from"): translated
+// prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
+export const SOURCES_FAQ =
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.";
+export const SOURCES_ABOUT =
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.";
+
+/** English prose with each source name from SOURCES in bold. */
+const boldSourceNames = (text: string) =>
+  SOURCES.flatMap((s) => s.names).reduce((out, n) => out.split(n).join(`<b>${n}</b>`), esc(text));
+
 export function renderAbout(lang: Lang = "en"): string {
   // Q&A that ALSO ships as FAQPage structured data (answer-engine + SERP pickup);
   // the visible copy below and the schema are generated from this one list.
@@ -1206,7 +1235,7 @@ export function renderAbout(lang: Lang = "en"): string {
     },
     {
       q: "Where does mugilu's data come from?",
-      a: "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality broker and OpenAQ; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; geography from bharatlas. Each source keeps its own licence, and mugilu credits all of them.",
+      a: SOURCES_FAQ,
     },
     {
       q: "Is mugilu free?",
@@ -1237,13 +1266,7 @@ export function renderAbout(lang: Lang = "en"): string {
           "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.",
           lang,
         );
-  const wherePara =
-    lang === "en"
-      ? `mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: <b>CPCB</b> and <b>OpenAQ</b> for air, <b>Open-Meteo</b> for weather, <b>NDMA / IMD</b> (via SACHET) for warnings, and <b>bharatlas</b> for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.`
-      : t(
-          "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB and OpenAQ for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, and bharatlas for the map of India. The code is open under the MIT licence; the data keeps each source's own terms.",
-          lang,
-        );
+  const wherePara = lang === "en" ? boldSourceNames(SOURCES_ABOUT) : t(SOURCES_ABOUT, lang);
   const freePara =
     lang === "en"
       ? `The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.`
@@ -1372,11 +1395,11 @@ export function renderTerms(lang: Lang = "en"): string {
 
   <h2 class="ah">${t("Sources &amp; credit", lang)}</h2>
   <ul class="alist on">
-    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker; plus OpenAQ.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
+    <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
     <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: ${t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", `<a href="https://open-meteo.com">Open-Meteo</a>`)}</span></li>
     <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: ${t("NDMA / IMD via SACHET.", lang)}</span></li>
     <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>
-    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
+    <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL) and {geonames} (CC-BY 4.0); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{geonames}", `<a href="https://www.geonames.org">GeoNames</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
     <li>${icon("heart")}<span class="t"><b>${t("Health impact", lang)}</b>: ${t("years of life lost uses the {aqli} methodology (U Chicago EPIC).", lang).replace("{aqli}", `<a href="https://aqli.epic.uchicago.edu">AQLI</a>`)}</span></li>
   </ul>
   <p class="alead2">${t("Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.", lang)}</p>
@@ -1480,8 +1503,7 @@ const METHOD_CSS = `
 /** Glass-box methodology: how the Ambient read is computed, with the public
  *  thresholds (the "Algorithmic transparency" PDGI commitment, made auditable). */
 export function renderMethodology(lang: Lang = "en"): string {
-  const row = (h: string, c1: string, c2: string, c3: string) =>
-    `<tr><td>${h}</td><td>${c1}</td><td>${c2}</td><td>${c3}</td></tr>`;
+  const row = (...cells: string[]) => `<tr>${cells.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`;
   // Prose: English keeps its inline markup; hi/kn render the reviewed translated text
   // (proper nouns + acronyms Latin). Precomputed to avoid nested template literals.
   const onePara =
@@ -1525,16 +1547,7 @@ export function renderMethodology(lang: Lang = "en"): string {
   <table class="mtab">
   <thead><tr><th>${t("Hazard", lang)}</th><th>${t("Caution", lang)}</th><th>${t("High", lang)}</th><th>${t("Severe", lang)}</th></tr></thead>
   <tbody>
-  ${row(t("Air (AQI)", lang), "101–200", "201–300", "301+")}
-  ${row(t("Heat (feels-like)", lang), "35°", "40°", "45°")}
-  ${row(t("Heat (wet-bulb)", lang), "26°", "28°", "31°")}
-  ${row(t("Heat (WBGT)", lang), "30°", "32°", "35°")}
-  ${row(t("Cold (feels-like)", lang), "≤10°", "≤5°", "≤0°")}
-  ${row(t("Wind (gusts, km/h)", lang), "40", "62", "88")}
-  ${row(t("Fog (visibility, m)", lang), "&lt;1000", "&lt;500", "&lt;200")}
-  ${row(t("Smoke (fires &lt;100 km)", lang), "3+", "25+", "60+")}
-  ${row(t("UV (index)", lang), "6–10", "-", "11+")}
-  ${row(t("Dust (µg/m³)", lang), "80", "150", "500")}
+  ${THRESHOLD_ROWS.map((r) => row(t(r.hazard, lang), ...r.cells)).join("\n  ")}
   </tbody>
   </table>
   </div>
@@ -1589,7 +1602,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
   <article class="ax">
     <h1 class="ahero">${t("Active warnings", lang)}</h1>
     <p class="alead">${snap ? snap.count : 0} ${t("official NDMA / IMD alerts across India, right now.", lang)}</p>
-    <p class="wgen">${snap ? `as of ${esc(istTime(snap.generated_at))} · via SACHET` : ""}</p>
+    <p class="wgen">${snap ? `${t("as of X", lang).replace("X", esc(istTime(snap.generated_at)))} · via SACHET` : ""}</p>
     ${items}
     <p class="adisc">${disc}</p>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>

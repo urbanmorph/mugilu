@@ -10,7 +10,7 @@ import type {
 import { findNearest } from "./near";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo } from "./openmeteo";
-import { computeAqi, aqiBand } from "./aqi";
+import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { pollutantParts } from "./formats";
 import { nearestPlace } from "./place";
 import { getLocationAlerts, splitWarnings } from "./sachet";
@@ -18,6 +18,7 @@ import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
 import { ambientRisk, ambientSummary, smokeLevel, PERSONA_LABEL } from "./score";
 import type { Persona } from "./score";
+import { buildAttribution } from "./sources";
 
 // Stations within this many km of the nearest one count as equally near; among
 // them a CPCB reference monitor (full pollutant set) beats a low-cost sensor.
@@ -55,12 +56,6 @@ function measuredAir(s: NearStation): AirConditions {
   };
 }
 
-// AQLI: years of life lost if this PM2.5 persisted as the annual average.
-// Same coefficient (0.098 yr per µg/m³, Ebenstein et al. 2017) the stations use.
-function lifeYearsLost(pm25: number | undefined): number | null {
-  return pm25 == null ? null : +(Math.max(0, pm25 - 5) * 0.098).toFixed(2);
-}
-
 /** Air modelled by Open-Meteo when no station is near; CPCB AQI computed in-app. */
 function modelledAir(m: AirPollutants): AirConditions {
   const aqi = computeAqi(m);
@@ -87,28 +82,6 @@ function modelledAir(m: AirPollutants): AirConditions {
 export const DISCLAIMER =
   "Informational only, not for medical, emergency, or safety-critical decisions. " +
   "For official hazard warnings consult NDMA / IMD.";
-
-// Per-source credit lines. CPCB/Airnet/Aurassure/AirView+ reach us via the OAQ broker;
-// Open-Meteo is CC-BY 4.0 (attribution mandatory).
-const SOURCE_CREDIT: Record<string, string> = {
-  cpcb: "CPCB (Govt. of India) via OAQ",
-  airnet: "Airnet / CSTEP via OAQ",
-  aurassure: "Aurassure via OAQ",
-  airview: "Google AirView+ via OAQ",
-  "open-meteo": "Open-Meteo (CC-BY 4.0)",
-  sachet: "NDMA / IMD (SACHET)",
-  firms: "NASA FIRMS",
-};
-
-/** Build a deduped, ready-to-paste attribution line from contributing sources. */
-export function buildAttribution(sources: Array<string | undefined | null>): string {
-  const credits = new Set<string>();
-  for (const s of sources) {
-    if (s) credits.add(SOURCE_CREDIT[s] ?? s);
-  }
-  if (credits.size === 0) return "via mugilu";
-  return `Sources: ${[...credits].join(" · ")}, via mugilu`;
-}
 
 /**
  * Assemble the full conditions for a coordinate (A4): nearest-station air +
