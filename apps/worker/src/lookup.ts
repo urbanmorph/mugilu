@@ -9,7 +9,9 @@ import {
   recordEvent,
   recordLookup,
   recordReferrer,
+  upstreamCounts,
   upstreamFailed,
+  bump,
   usageFacts,
   type Caller,
   type UsageFacts,
@@ -60,8 +62,9 @@ export function conditionsData(env: Env): ConditionsData {
 }
 
 /** Builds the conditions and the usage facts to record for them (kept with an
- *  edge-cached copy so a cache hit records the same). Upstreams that failed or timed
- *  out are counted here, once per build (a cache hit built nothing). */
+ *  edge-cached copy so a cache hit records the same). The upstreams that failed ride
+ *  the facts (usage.failed) into the lookup's own D1 write; an R2 read that fails the
+ *  whole build is counted here, as nothing else will be written. */
 export async function lookupConditions(
   env: Env,
   ctx: ExecutionContext,
@@ -76,7 +79,6 @@ export async function lookupConditions(
     ctx.waitUntil(upstreamFailed(env, ["r2"]));
     throw e;
   }
-  if (conditions.degraded) ctx.waitUntil(upstreamFailed(env, conditions.degraded));
   if (q.label) conditions.place = q.label;
   return { conditions, usage: usageFacts(conditions, q.persona) };
 }
@@ -92,8 +94,11 @@ export function recordUsage(
 ): void {
   // A kiosk is one persistent display refreshing itself, not demand: keep it out of
   // the D1 place heatmap (and its write budget). The event still counts it, with the
-  // browser flag that tells a real screen from a bot loading ?kiosk.
-  if (q.fmt !== "kiosk") ctx.waitUntil(recordLookup(env, u, q.fmt, q.caller));
+  // browser flag that tells a real screen from a bot loading ?kiosk. Failed upstreams
+  // go in the lookup's write, or (kiosk) in one of their own.
+  const errors = upstreamCounts(u.failed);
+  if (q.fmt !== "kiosk") ctx.waitUntil(recordLookup(env, u, q.fmt, q.caller, errors));
+  else if (u.failed) ctx.waitUntil(bump(env, errors));
   const surface = REFERRER_SURFACE[q.fmt];
   if (surface) ctx.waitUntil(recordReferrer(env, surface, q.req, q.url));
   recordEvent(env, u, { format: q.fmt, caller: q.caller, ...q.served });

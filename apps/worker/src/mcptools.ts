@@ -2,7 +2,7 @@ import type { Env } from "./index";
 import type { NormalizedStation } from "./types";
 import { renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
 import { conditionsData, lookupConditions } from "./lookup";
-import { bump, recordEvent, recordLookup, type Caller, type UsageFacts } from "./metrics";
+import { bump, recordEvent, recordLookup, upstreamCounts, type Caller, type UsageFacts } from "./metrics";
 import { parsePersona } from "./score";
 import { buildSuggestions } from "./suggest";
 import { geocodeList } from "./geocode";
@@ -243,8 +243,12 @@ export async function callTool(
     return result;
   } finally {
     const counts = { [`mcp:tool:${name}`]: 1, "mcp:err": failed ? 1 : 0 };
-    // A reading also counts by client class, in the same write.
-    ctx.waitUntil(usage ? recordLookup(env, usage, "mcp", caller, counts) : bump(env, counts));
+    // A reading also counts by client class and its failed upstreams, in the same write.
+    ctx.waitUntil(
+      usage
+        ? recordLookup(env, usage, "mcp", caller, { ...counts, ...upstreamCounts(usage.failed) })
+        : bump(env, counts),
+    );
     recordEvent(env, usage ?? null, { format: "mcp", caller, tool: name });
   }
 }

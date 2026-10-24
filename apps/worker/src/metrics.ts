@@ -147,10 +147,13 @@ export async function bump(env: Env, counts: Record<string, number>): Promise<vo
   }
 }
 
-/** Count calls to upstreams that failed or timed out: err:upstream:<source>, from the
- *  fixed UpstreamSource set. Best-effort. */
-export const upstreamFailed = (env: Env, sources: UpstreamSource[]) =>
-  bump(env, Object.fromEntries(sources.map((s) => [`err:upstream:${s}`, 1])));
+/** The counters for upstreams that failed or timed out: err:upstream:<source>, from the
+ *  fixed UpstreamSource set. */
+export const upstreamCounts = (sources: UpstreamSource[] = []): Record<string, number> =>
+  Object.fromEntries(sources.map((s) => [`err:upstream:${s}`, 1]));
+
+/** Count failed upstreams in a write of their own (when no lookup write carries them). */
+export const upstreamFailed = (env: Env, sources: UpstreamSource[]) => bump(env, upstreamCounts(sources));
 
 /** Run one upstream step of a scheduled job; a failure is counted against `source`,
  *  then rethrown so the job fails as before. */
@@ -397,6 +400,9 @@ export interface UsageFacts {
   air: "measured" | "modelled" | "none";
   aqi: number;
   apparent: number;
+  /** The upstreams that failed for this build (conditions.degraded). A degraded reading
+   *  is never edge-cached, so a hit never replays these. */
+  failed?: UpstreamSource[];
 }
 
 export function usageFacts(c: Conditions, persona: Persona): UsageFacts {
@@ -413,6 +419,7 @@ export function usageFacts(c: Conditions, persona: Persona): UsageFacts {
     air: c.air ? (c.air.station ? "measured" : "modelled") : "none",
     aqi: c.air?.aqi ?? -1,
     apparent: c.heat?.apparent_c ?? -999,
+    ...(c.degraded ? { failed: c.degraded } : {}),
   };
 }
 

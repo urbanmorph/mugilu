@@ -168,25 +168,52 @@ test("lookupConditions: builds the reading and records nothing itself (the route
   assert.equal((await s.rows("SELECT * FROM counters")).length, 0);
 });
 
-test("lookupConditions: each upstream that failed or timed out is counted, by source", async () => {
-  const s = setup();
+/** Open-Meteo times out and SACHET is down: a degraded reading. */
+async function withBrokenUpstreams<T>(fn: () => Promise<T>): Promise<T> {
   const real = globalThis.fetch;
   globalThis.fetch = (async (input: RequestInfo | URL) => {
-    const u = String(input);
-    if (u.includes("open-meteo")) throw new Error("timeout");
+    if (String(input).includes("open-meteo")) throw new Error("timeout");
     return new Response("down", { status: 503 }); // SACHET
   }) as typeof fetch;
   try {
-    const { conditions } = await lookupConditions(s.env, s.ctx, { ...Q, fmt: "html" });
-    assert.ok(conditions.degraded);
+    return await fn();
   } finally {
     globalThis.fetch = real;
   }
+}
+
+test("recordUsage: each upstream that failed is counted by source, in the lookup's one D1 batch", async () => {
+  const s = setup();
+  let batches = 0;
+  const batch = s.env.METRICS.batch.bind(s.env.METRICS);
+  (s.env.METRICS as unknown as { batch: typeof batch }).batch = (stmts) => (batches++, batch(stmts));
+  const { conditions } = await withBrokenUpstreams(() => lookupAndRecord(s, "html", req("/c/12.97,77.59")));
+  assert.ok(conditions.degraded);
+  await s.settle();
+  assert.equal(batches, 1, "a degraded view is still one write");
+  assert.deepEqual(await s.rows("SELECT name, n FROM counters ORDER BY name"), [
+    { name: "class:human", n: 1 },
+    { name: "err:upstream:openmeteo", n: 1 },
+    { name: "err:upstream:sachet", n: 1 },
+    { name: "fmt:html", n: 1 },
+    { name: "lang:en", n: 1 },
+  ]);
+});
+
+test("recordUsage: a degraded kiosk (no place lookup) still counts its upstream failures", async () => {
+  const s = setup();
+  await withBrokenUpstreams(() => lookupAndRecord(s, "kiosk", req("/c/12.97,77.59?kiosk")));
   await s.settle();
   assert.deepEqual(await s.rows("SELECT name, n FROM counters ORDER BY name"), [
     { name: "err:upstream:openmeteo", n: 1 },
     { name: "err:upstream:sachet", n: 1 },
   ]);
+});
+
+test("recordUsage: an edge-cache hit replays a whole reading, so it never counts an upstream failure", async () => {
+  const s = setup();
+  const { usage } = await withFetch(() => lookupConditions(s.env, s.ctx, { ...Q, fmt: "html" }));
+  assert.equal(usage.failed, undefined, "a whole reading carries no failures onto the cached copy");
 });
 
 test("lookupConditions: an R2 read that fails is counted, and still fails the lookup", async () => {
