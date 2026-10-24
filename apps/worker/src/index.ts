@@ -33,7 +33,7 @@ import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import type { WarningsSnapshot } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
-import { topPlaces, topReferrers, counters, POPULAR_MIN } from "./metrics";
+import { topPlaces, topReferrers, counters, pruneReferrers, POPULAR_MIN } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
@@ -632,6 +632,7 @@ export default {
           (e) => console.error("[hierarchy] failed:", e),
         ),
       );
+      ctx.waitUntil(pruneReferrers(env).catch((e) => console.error("[referrers] prune failed:", e)));
     }
   },
 };

@@ -65,7 +65,7 @@ test("lookupConditions: /embed records the lookup, the referrer AND the behaviou
   const counters = (await s.rows("SELECT name FROM counters")).map((x) => x.name);
   assert.ok(counters.includes("fmt:embed"));
   const refs = await s.rows("SELECT host, surface FROM referrers");
-  assert.deepEqual(refs, [{ host: "news.example.com", surface: "embed" }]);
+  assert.deepEqual(refs, [{ host: "example.com", surface: "embed" }]);
 });
 
 test("lookupConditions: an API format counts the referrer under 'api'; the page does not", async () => {

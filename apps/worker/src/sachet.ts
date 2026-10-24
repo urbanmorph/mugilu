@@ -130,6 +130,24 @@ export function parseSachetRss(xml: string): FeedAlert[] {
     .filter((a) => a.identifier);
 }
 
+/** An alert id is forgotten once it has been out of the feed this long. Alerts run
+ *  for hours to days, so one that has been gone a month will not come back; the
+ *  archive copy stays. Without this the record grew by every alert ever issued. */
+const SEEN_DAYS = 30;
+
+/** The seen-ids record: id -> when it was last in the feed (ms). The old format was a
+ *  bare id list; its ids count as seen now, so none is archived again. */
+function readSeen(raw: string | null, now: number): Record<string, number> {
+  if (!raw) return {};
+  const parsed = JSON.parse(raw) as string[] | Record<string, number>;
+  return Array.isArray(parsed) ? Object.fromEntries(parsed.map((id) => [id, now])) : parsed;
+}
+
+function pruneSeen(seen: Record<string, number>, now: number): Record<string, number> {
+  const cutoff = now - SEEN_DAYS * 86_400_000;
+  return Object.fromEntries(Object.entries(seen).filter(([, last]) => last >= cutoff));
+}
+
 /**
  * Poll the national feed (ETag-cached), write the current active list, and
  * archive any alert we haven't seen before. Dedup is tracked in KV so an
@@ -155,20 +173,23 @@ export async function collectWarnings(env: Env): Promise<{ changed: boolean; cou
     httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=300" },
   });
 
-  const seenRaw = await env.OAQ_KV.get("sachet:seen");
-  const seen = new Set<string>(seenRaw ? (JSON.parse(seenRaw) as string[]) : []);
+  const now = Date.now();
+  const seen = readSeen(await env.OAQ_KV.get("sachet:seen"), now);
   let archived = 0;
   for (const a of alerts) {
-    if (seen.has(a.identifier)) continue;
-    await env.OAQ_R2.put(
-      `archive/sachet/${a.identifier}.json`,
-      JSON.stringify({ ...a, first_seen: snapshot.generated_at }),
-      { httpMetadata: { contentType: "application/json" } },
-    );
-    seen.add(a.identifier);
-    archived++;
+    if (!(a.identifier in seen)) {
+      await env.OAQ_R2.put(
+        `archive/sachet/${a.identifier}.json`,
+        JSON.stringify({ ...a, first_seen: snapshot.generated_at }),
+        { httpMetadata: { contentType: "application/json" } },
+      );
+      archived++;
+    }
+    seen[a.identifier] = now;
   }
-  if (archived) await env.OAQ_KV.put("sachet:seen", JSON.stringify([...seen]));
+  // Only a changed feed gets here (an unchanged one is a 304), so this is at most
+  // one KV write per feed change.
+  await env.OAQ_KV.put("sachet:seen", JSON.stringify(pruneSeen(seen, now)));
   // Remember the ETag only now that the snapshot and archive are written: saved
   // earlier, a failed write would turn every later poll into a 304 on stale data.
   const newEtag = res.headers.get("etag");

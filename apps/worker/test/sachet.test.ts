@@ -132,6 +132,54 @@ test("collectWarnings: the ETag is only remembered once the snapshot is written"
   }
 });
 
+const rss = (...ids: string[]) =>
+  `<rss><channel>${ids.map((id) => `<item><guid>${id}</guid><title>t</title></item>`).join("")}</channel></rss>`;
+
+function feedEnv(seen?: string) {
+  const kv = new Map<string, string>(seen ? [["sachet:seen", seen]] : []);
+  const archived: string[] = [];
+  const env = {
+    OAQ_KV: { get: async (k: string) => kv.get(k) ?? null, put: async (k: string, v: string) => void kv.set(k, v) },
+    OAQ_R2: { put: async (k: string) => void (k.startsWith("archive/") && archived.push(k)) },
+  } as unknown as Parameters<typeof collectWarnings>[0];
+  return { env, kv, archived };
+}
+
+async function poll(env: Parameters<typeof collectWarnings>[0], body: string, now: number) {
+  const realFetch = globalThis.fetch;
+  const realNow = Date.now;
+  globalThis.fetch = (async () => new Response(body)) as unknown as typeof fetch;
+  Date.now = () => now;
+  try {
+    return await collectWarnings(env);
+  } finally {
+    globalThis.fetch = realFetch;
+    Date.now = realNow;
+  }
+}
+
+const DAY = 86_400_000;
+
+test("collectWarnings: the seen-ids record forgets alerts gone from the feed for SEEN_DAYS", async () => {
+  const { env, kv, archived } = feedEnv();
+  const t0 = Date.parse("2026-10-01T00:00:00Z");
+  await poll(env, rss("a", "b"), t0);
+  assert.deepEqual(archived, ["archive/sachet/a.json", "archive/sachet/b.json"]);
+  // "a" leaves the feed; "b" stays active past the window, so it must be kept.
+  await poll(env, rss("b", "c"), t0 + 40 * DAY);
+  const seen = JSON.parse(kv.get("sachet:seen")!);
+  assert.deepEqual(Object.keys(seen).sort(), ["b", "c"]);
+  assert.equal(archived.length, 3, "b is not archived twice");
+});
+
+test("collectWarnings: a legacy array record is read, and nothing is re-archived", async () => {
+  const { env, kv, archived } = feedEnv(JSON.stringify(["a", "b"]));
+  await poll(env, rss("a"), Date.parse("2026-10-01T00:00:00Z"));
+  assert.deepEqual(archived, []);
+  const seen = JSON.parse(kv.get("sachet:seen")!);
+  assert.deepEqual(Object.keys(seen).sort(), ["a", "b"]); // b kept: its age is unknown, it starts now
+});
+
 // A square area around (lat 14.9, lon 80.0), as SACHET's area_json (GeoJSON, [lon, lat]).
 const square = (lat: number, lon: number, d = 0.1) =>
   JSON.stringify({
