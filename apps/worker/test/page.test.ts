@@ -26,6 +26,41 @@ function conditions(overrides: Partial<Conditions> = {}): Conditions {
   };
 }
 
+const HOT_VS_NORMAL = {
+  today_max_c: 41,
+  normal_max_c: 36,
+  anomaly_c: 5,
+  notable: true,
+  date: "2026-05-25",
+  period: "late May",
+  baseline: "1991-2020 normals",
+  source: "era5",
+};
+
+test("renderConditionsPage: a notable high vs normal is said on the heat layer, labelled as modelled", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T06:00:00Z") }); // the high's own day, IST
+  const html = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }));
+  assert.match(html, /Today's modelled high of 41°C is 5°C above normal for late May here\./);
+  assert.match(html, /Today's high is modelled \(Open-Meteo\); the normal is 1991-2020 ERA5 reanalysis\./);
+  const hi = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }), "everyone", undefined, "hi");
+  assert.match(hi, /आज का अनुमानित अधिकतम तापमान 41°C है, जो मई के अंत में सामान्य से 5°C अधिक है/);
+  assert.doesNotMatch(hi, /Today.s high/);
+  const kn = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }), "everyone", undefined, "kn");
+  assert.match(kn, /ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನ 41°C, ಈ ಸ್ಥಳದಲ್ಲಿ ಮೇ ತಿಂಗಳ ಕೊನೆಯಲ್ಲಿ ಸಾಮಾನ್ಯಕ್ಕಿಂತ 5°C ಹೆಚ್ಚು/);
+});
+
+test("renderConditionsPage: a notable high from yesterday (cached past IST midnight) is not shown", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T18:40:00Z") }); // 00:10 IST on the 26th
+  assert.doesNotMatch(renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL })), /above normal/);
+});
+
+test("renderConditionsPage: a small difference from normal stays quiet", () => {
+  const html = renderConditionsPage(
+    conditions({ heat_vs_normal: { ...HOT_VS_NORMAL, today_max_c: 37, anomaly_c: 1, notable: false } }),
+  );
+  assert.doesNotMatch(html, /above normal|1991-2020/);
+});
+
 test("renderConditionsPage: a valid HTML document with the brand and place", () => {
   const html = renderConditionsPage(conditions());
   assert.match(html, /^<!doctype html>/i);

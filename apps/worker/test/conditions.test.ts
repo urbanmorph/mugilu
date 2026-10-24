@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildConditions, pickStation, renderConditionsMarkdown, serializeConditionsV1 } from "../src/conditions";
 import type { NormalizedStation, Snapshot } from "../src/types";
+import type { HeatVsNormal } from "../src/heatnormals";
 
 test("serializeConditionsV1: a stable, self-describing /c v1 contract", async () => {
   const realFetch = globalThis.fetch;
@@ -122,6 +123,90 @@ test("renderConditionsMarkdown: includes air, heat, attribution and disclaimer",
     assert.match(md, /## Heat/);
     assert.match(md, /Wet-bulb: 20/);
     assert.match(md, /not for medical/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("buildConditions: today's high is compared with Bengaluru's late-May normal (real bundled normals)", async () => {
+  const realFetch = globalThis.fetch;
+  const forecast = { ...FORECAST, elevation: 914, daily: { time: ["2026-05-25"], temperature_2m_max: [36.2] } };
+  globalThis.fetch = (async (input: RequestInfo | URL) =>
+    new Response(JSON.stringify(String(input).includes("air-quality") ? AIR : forecast), {
+      headers: { "content-type": "application/json" },
+    })) as typeof fetch;
+  try {
+    const c = await buildConditions(null, 12.97, 77.59);
+    const h = c.heat_vs_normal!;
+    assert.equal(h.today_max_c, 36);
+    assert.ok(h.normal_max_c >= 29 && h.normal_max_c <= 35, `Bengaluru late-May normal ${h.normal_max_c}`);
+    assert.equal(h.anomaly_c, 36 - h.normal_max_c);
+    assert.equal(h.period, "late May");
+    assert.match(c.attribution, /ERA5 \(Copernicus C3S\)/, "ERA5's licence asks for a Copernicus credit");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("buildConditions: no daily max from the forecast, no comparison", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch();
+  try {
+    const c = await buildConditions(null, 12.97, 77.59);
+    assert.equal(c.heat_vs_normal, null);
+    assert.doesNotMatch(c.attribution, /ERA5/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+const HOT: HeatVsNormal = {
+  today_max_c: 41,
+  normal_max_c: 36,
+  anomaly_c: 5,
+  notable: true,
+  date: "2026-05-25",
+  period: "late May",
+  baseline: "1991-2020 normals",
+  source: "era5",
+};
+
+test("serializeConditionsV1: heat_vs_normal is an additive, modelled layer (null when absent)", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch();
+  try {
+    const c = await buildConditions(null, 12.97, 77.59);
+    assert.equal((serializeConditionsV1(c, "everyone") as Record<string, any>).heat_vs_normal, null);
+    const v1 = serializeConditionsV1({ ...c, heat_vs_normal: HOT }, "everyone") as Record<string, any>;
+    assert.deepEqual(v1.heat_vs_normal, { kind: "modelled", ...HOT, as_of: c.as_of });
+    assert.equal(v1.units.anomaly_c, "C");
+    assert.equal(v1.heat.kind, "modelled", "the heat layer is unchanged");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("renderConditionsMarkdown: a notable difference from normal is said, labelled as modelled; a small one stays quiet", async (t) => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch();
+  try {
+    const c = await buildConditions(null, 12.97, 77.59);
+    t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T06:00:00Z") }); // the high's own day, IST
+    const md = renderConditionsMarkdown({ ...c, heat_vs_normal: HOT });
+    assert.match(md, /Today's modelled high of 41°C is 5°C above normal for late May here/);
+    assert.match(md, /Today's high is modelled \(Open-Meteo\); the normal is 1991-2020 ERA5 reanalysis\./);
+    assert.doesNotMatch(md, /heatwave|heat wave/i);
+    assert.doesNotMatch(md, /—/);
+    const cool = renderConditionsMarkdown({ ...c, heat_vs_normal: { ...HOT, today_max_c: 31, anomaly_c: -5 } });
+    assert.match(cool, /Today's modelled high of 31°C is 5°C below normal for late May here/);
+    const quiet = renderConditionsMarkdown({ ...c, heat_vs_normal: { ...HOT, anomaly_c: 1, notable: false } });
+    t.mock.timers.setTime(new Date("2026-05-25T18:40:00Z").getTime()); // 00:10 IST, the next day
+    assert.doesNotMatch(
+      renderConditionsMarkdown({ ...c, heat_vs_normal: HOT }),
+      /normal/,
+      "yesterday's high is not today's",
+    );
+    assert.doesNotMatch(quiet, /normal/);
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -273,6 +358,23 @@ test("buildConditions: degraded, naming the source, when an upstream fails or th
   assert.deepEqual(await degradedWith("open-meteo"), ["openmeteo"]);
   assert.deepEqual(await degradedWith("sachet"), ["sachet"]);
   assert.deepEqual(await degradedWith("none", null), ["r2"]);
+});
+
+test("buildConditions: a place with no normal yet is complete, not degraded (so it can be edge-cached)", async () => {
+  const realFetch = globalThis.fetch;
+  const forecast = { ...FORECAST, elevation: 16, daily: { time: ["2026-05-25"], temperature_2m_max: [31] } };
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const u = String(input);
+    if (u.includes("sachet")) return Response.json({ alerts: [] });
+    return Response.json(u.includes("air-quality") ? AIR : forecast);
+  }) as typeof fetch;
+  try {
+    const c = await buildConditions(snap(), 11.67, 92.73); // Port Blair: off the built grid
+    assert.equal(c.heat_vs_normal, null);
+    assert.equal(c.degraded, undefined);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });
 
 test("serializeConditionsV1: the internal degraded flag never reaches the API", async () => {

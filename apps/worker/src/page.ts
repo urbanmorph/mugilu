@@ -28,6 +28,7 @@ import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 import { INSTALL_CSS, INSTALL_JS, installButton, installHead } from "./install";
 import { OFFLINE_NOTE_ID, SW_REGISTER } from "./sw";
 import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
+import { heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().
@@ -378,6 +379,8 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .lyr .q .qa.nu{text-transform:none;letter-spacing:.01em}
 .lyr .sub{color:var(--muted);font-size:.82rem;line-height:1.5}
 .lyr .sub .poll{display:inline-block;margin-top:.15rem;font-size:.78rem;opacity:.82;font-variant-numeric:tabular-nums}
+.lyr .sub .hvn{display:inline-block;margin-top:.3rem;color:var(--ink)}
+.lyr .sub .hvn small{display:block;color:var(--muted);font-size:.74rem}
 .lyr .scale{position:relative;height:5px;border-radius:3px;margin:.55rem 0 .15rem;max-width:14rem;background:linear-gradient(90deg,#16a34a,#84cc16 22%,#eab308 45%,#f97316 70%,#dc2626);opacity:.85}
 .lyr .scale.calm{background:color-mix(in srgb,var(--sky) 50%,var(--line));opacity:1}
 .lyr .scale i{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2.5px var(--bg);transform:translate(-50%,-50%)}
@@ -606,6 +609,11 @@ export function renderConditionsPage(
       sub += ` · ${t("wet-bulb", lang)} ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b>`;
     }
     if (c.heat.wbgt_c != null) sub += ` · WBGT ${round(c.heat.wbgt_c)}°`;
+    // Today's high vs the normal here: said only when it stands out (and is still
+    // today's, in IST), always labelled.
+    if (heatVsNormalShown(c.heat_vs_normal)) {
+      sub += `<br><span class="hvn">${heatVsNormalLine(c.heat_vs_normal, lang)}<small>${t(NORMALS_LABEL, lang)}</small></span>`;
+    }
     strata.push(
       lyr(
         "heat",
@@ -1213,9 +1221,9 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
 export const SOURCES_FAQ =
-  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.";
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.";
 export const SOURCES_ABOUT =
-  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.";
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.";
 
 /** English prose with each source name from SOURCES in bold. */
 const boldSourceNames = (text: string) =>
@@ -1397,6 +1405,7 @@ export function renderTerms(lang: Lang = "en"): string {
   <ul class="alist on">
     <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
     <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: ${t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", `<a href="https://open-meteo.com">Open-Meteo</a>`)}</span></li>
+    <li>${icon("heat")}<span class="t"><b>${t("Heat compared with normal", lang)}</b>: ${t("1991-2020 normals from {era5} reanalysis (Copernicus Climate Change Service), via Open-Meteo.", lang).replace("{era5}", `<a href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels">ERA5</a>`)}</span></li>
     <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: ${t("NDMA / IMD via SACHET.", lang)}</span></li>
     <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>
     <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL) and {geonames} (CC-BY 4.0); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{geonames}", `<a href="https://www.geonames.org">GeoNames</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
