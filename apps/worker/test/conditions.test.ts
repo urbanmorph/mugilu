@@ -248,3 +248,40 @@ test("buildConditions: a warning whose area covers the spot is the spot's warnin
     globalThis.fetch = realFetch;
   }
 });
+
+// A reading built while an upstream failed must say so, so it is never cached as
+// if complete (a SACHET timeout would otherwise hide a warning for every viewer).
+async function degradedWith(fail: "none" | "open-meteo" | "sachet", snapshot: Snapshot | null = snap()) {
+  const realFetch = globalThis.fetch;
+  const ok = mockFetch();
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const u = String(input);
+    if (fail === "sachet" && u.includes("sachet")) return new Response("down", { status: 503 });
+    if (fail === "open-meteo" && u.includes("open-meteo")) throw new Error("timeout");
+    if (u.includes("sachet")) return Response.json({ alerts: [] });
+    return ok(input);
+  }) as typeof fetch;
+  try {
+    return (await buildConditions(snapshot, 12.9716, 77.5946)).degraded ?? false;
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+test("buildConditions: degraded when an upstream fails or the air snapshot is missing", async () => {
+  assert.equal(await degradedWith("none"), false);
+  assert.equal(await degradedWith("open-meteo"), true);
+  assert.equal(await degradedWith("sachet"), true);
+  assert.equal(await degradedWith("none", null), true);
+});
+
+test("serializeConditionsV1: the internal degraded flag never reaches the API", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch();
+  try {
+    const c = await buildConditions(null, 12.9716, 77.5946);
+    assert.ok(!("degraded" in serializeConditionsV1(c, "everyone")));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

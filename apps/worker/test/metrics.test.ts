@@ -5,6 +5,7 @@ import {
   recordReferrer,
   recordMcpClient,
   recordEvent,
+  usageFacts,
   topPlaces,
   counters,
   clientClass,
@@ -94,7 +95,7 @@ function cond(): Conditions {
 test("recordEvent: writes anonymous dimensions to Analytics Engine (format/persona/region/class)", () => {
   let captured: { blobs?: unknown[]; doubles?: unknown[]; indexes?: unknown[] } | null = null;
   const env = { EVENTS: { writeDataPoint: (e: typeof captured) => (captured = e) } } as unknown as Env;
-  recordEvent(env, cond(), "asthma", "json", "GPTBot/1.1"); // an API hit from an LLM agent
+  recordEvent(env, usageFacts(cond(), "asthma"), "json", "GPTBot/1.1"); // an API hit from an LLM agent
   assert.equal(captured!.blobs![0], "json"); // format
   assert.equal(captured!.blobs![1], "asthma"); // persona
   assert.equal(captured!.blobs![4], "Punjab"); // region from stateAt — no precise coord, no IP
@@ -104,7 +105,7 @@ test("recordEvent: writes anonymous dimensions to Analytics Engine (format/perso
 });
 
 test("recordEvent: no-op when the binding is absent, and best-effort on failure", () => {
-  assert.doesNotThrow(() => recordEvent({} as unknown as Env, cond(), "everyone", "html", CHROME)); // no EVENTS binding
+  assert.doesNotThrow(() => recordEvent({} as unknown as Env, usageFacts(cond(), "everyone"), "html", CHROME)); // no EVENTS binding
   const bad = {
     EVENTS: {
       writeDataPoint: () => {
@@ -112,7 +113,7 @@ test("recordEvent: no-op when the binding is absent, and best-effort on failure"
       },
     },
   } as unknown as Env;
-  assert.doesNotThrow(() => recordEvent(bad, cond(), "everyone", "html", null));
+  assert.doesNotThrow(() => recordEvent(bad, usageFacts(cond(), "everyone"), "html", null));
 });
 
 function req(headers: Record<string, string> = {}): Request {

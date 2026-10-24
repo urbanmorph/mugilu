@@ -53,7 +53,7 @@ function req(path: string, headers: Record<string, string> = {}): { req: Request
 test("lookupConditions: /embed records the lookup, the referrer AND the behaviour event, like the page", async () => {
   const s = setup();
   const r = req("/embed/12.97,77.59", { referer: "https://news.example.com/story" });
-  const c = await withFetch(() =>
+  const { conditions: c } = await withFetch(() =>
     lookupConditions(s.env, s.ctx, { lat: 12.97, lon: 77.59, persona: "asthma", fmt: "embed", ua: CHROME, ...r }),
   );
   await s.settle();
@@ -101,7 +101,7 @@ test("lookupConditions: an API format counts the referrer under 'api'; the page 
 
 test("lookupConditions: a kiosk is an event but not a place lookup; a label names the place", async () => {
   const s = setup();
-  const c = await withFetch(() =>
+  const { conditions: c } = await withFetch(() =>
     lookupConditions(s.env, s.ctx, {
       lat: 12.97,
       lon: 77.59,
@@ -115,6 +115,49 @@ test("lookupConditions: a kiosk is an event but not a place lookup; a label name
   assert.equal(c.place, "Bengaluru, Karnataka");
   assert.equal(s.events[0].blobs[0], "kiosk");
   assert.equal((await s.rows("SELECT * FROM lookups")).length, 0);
+});
+
+test("lookupConditions: a warm isolate reads each snapshot from R2 once, not per request", async () => {
+  const s = setup();
+  const reads: string[] = [];
+  (s.env as unknown as { OAQ_R2: { get: (k: string) => Promise<null> } }).OAQ_R2 = {
+    get: async (k: string) => (reads.push(k), null),
+  };
+  await withFetch(async () => {
+    for (let i = 0; i < 3; i++)
+      await lookupConditions(s.env, s.ctx, { lat: 12.97, lon: 77.59, persona: "everyone", fmt: "json", ua: CHROME });
+  });
+  assert.deepEqual(reads.sort(), ["data/fires.json", "data/latest.json"]);
+});
+
+test("lookupConditions: the upstream weather and warning calls do not wait for R2", async () => {
+  const s = setup();
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  let fetchedWhileR2Pending = 0;
+  let r2Done = false;
+  (s.env as unknown as { OAQ_R2: { get: () => Promise<null> } }).OAQ_R2 = {
+    get: async () => {
+      await gate;
+      r2Done = true;
+      return null;
+    },
+  };
+  const real = globalThis.fetch;
+  const mock = mockFetch();
+  globalThis.fetch = ((input: RequestInfo | URL) => {
+    if (!r2Done) fetchedWhileR2Pending++;
+    return mock(input);
+  }) as typeof fetch;
+  try {
+    const p = lookupConditions(s.env, s.ctx, { lat: 12.9, lon: 77.5, persona: "everyone", fmt: "json", ua: CHROME });
+    await new Promise((r) => setTimeout(r, 10));
+    release();
+    await p;
+  } finally {
+    globalThis.fetch = real;
+  }
+  assert.ok(fetchedWhileR2Pending >= 3, `upstream calls started while R2 was pending (${fetchedWhileR2Pending})`);
 });
 
 test("lookupConditions: MCP records the lookup and event without a request", async () => {

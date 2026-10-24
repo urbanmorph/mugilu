@@ -55,7 +55,7 @@ export function worstAirStation(stations: NormalizedStation[]): NationalHighligh
  *  home hero and the MCP national_now tool so they can't drift. */
 export async function composeHighlights(
   env: Env,
-): Promise<{ highlights: NationalHighlights; gridAsOf?: string; airAsOf?: string }> {
+): Promise<{ highlights: NationalHighlights; gridAsOf?: string; airAsOf?: string; complete: boolean }> {
   const [grid, snap] = await Promise.all([loadGrid(env), loadSnapshot(env)]);
   const highlights: NationalHighlights = grid ? nationalHighlights(grid.points) : {};
   if (snap) {
@@ -65,5 +65,6 @@ export async function composeHighlights(
       highlights.worstAir = worst;
     }
   }
-  return { highlights, gridAsOf: grid?.generated_at, airAsOf: snap?.generated_at };
+  // complete: both sources were there, so the picture is not partial for a passing reason.
+  return { highlights, gridAsOf: grid?.generated_at, airAsOf: snap?.generated_at, complete: !!(grid && snap) };
 }

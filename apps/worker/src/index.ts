@@ -9,7 +9,8 @@ import { SW_PATH, serviceWorker } from "./sw";
 import { handleSubscribe, handleUnsubscribe, runAlerts } from "./alerts";
 import { findNearest, parseLatLon } from "./near";
 import { renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
-import { lookupConditions, type LookupFormat } from "./lookup";
+import { lookupConditions, recordUsage, type LookupFormat } from "./lookup";
+import { cacheKey, edgeServe } from "./edge";
 import {
   renderConditionsPage,
   renderKioskPage,
@@ -30,7 +31,6 @@ import { geocodeList } from "./geocode";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
-import type { WarningsSnapshot } from "./sachet";
 import { collectFires } from "./firms";
 import { composeHighlights } from "./highlights";
 import { topPlaces, topReferrers, counters, pruneReferrers, POPULAR_MIN } from "./metrics";
@@ -39,10 +39,10 @@ import type { Persona } from "./score";
 import { placeBySlug, slugForName } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadSnapshot } from "./snapshot";
+import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
-import type { NormalizedStation } from "./types";
+import type { Conditions, NormalizedStation } from "./types";
 
 export interface Env {
   OAQ_KV: KVNamespace;
@@ -66,10 +66,11 @@ export interface Env {
 /** Standard cached, CORS-open API response for a given body + content-type.
  *  Pass `clientMaxAge` (seconds) on the "build-on" data surfaces (JSON, Markdown,
  *  /embed) so a browser, iframe or plain HTTP client also caches for that long, not
- *  just shared/CDN caches. Without it we only send `s-maxage`, which a browser
- *  ignores, so an embed or poller had no directive telling it "this only changes
- *  every 15 min" and could re-fetch every second for identical bytes. The human
- *  HTML pages deliberately omit it, so a manual reload always revalidates. */
+ *  shared caches. Without it a browser gets no max-age, so an embed or poller had no
+ *  directive telling it "this only changes every 15 min" and could re-fetch every
+ *  second for identical bytes. The human HTML pages deliberately omit it, so a manual
+ *  reload always revalidates (with the Worker, which may answer from its own edge
+ *  cache, edge.ts; `s-maxage` here is for any cache in front of that). */
 function cachedResponse(body: string, contentType: string, clientMaxAge?: number): Response {
   const cc = clientMaxAge
     ? `public, max-age=${clientMaxAge}, s-maxage=900, stale-while-revalidate=3600`
@@ -83,31 +84,17 @@ function cachedResponse(body: string, contentType: string, clientMaxAge?: number
   });
 }
 
-/** Serve a deterministic, render-heavy response from the Cloudflare edge cache:
- *  return the cached copy on a hit (skipping the work), else build it and store it.
- *  Used for the static front-door files and the OG image renders (workers-og is
- *  CPU-heavy and these get hammered by social crawlers on launch). NOT used for the
- *  conditions HTML/JSON/MD, which run per request so the demand, behaviour and
- *  crawler analytics stay intact (a cache hit would record nothing). */
-async function edgeCache(
-  req: Request,
-  ctx: ExecutionContext,
-  build: () => Response | Promise<Response>,
-): Promise<Response> {
-  const cache = caches.default;
-  const hit = await cache.match(req);
-  if (hit) return hit;
-  const res = await build();
-  if (res.status !== 200) return res;
-  // Buffer the body so the served and cached copies are independent. A streaming
-  // response (the workers-og image renders) cannot be cloned into the cache safely;
-  // tee-ing it deadlocks. arrayBuffer() drains the render once, then both copies are
-  // plain bytes.
-  const body = await res.arrayBuffer();
-  const out = new Response(body, { status: res.status, headers: res.headers });
-  ctx.waitUntil(cache.put(req, out.clone()));
-  return out;
-}
+// Edge-cache lifetimes (edge.ts), separate from the Cache-Control a client sees
+// (cachedResponse), which a hit restores. A hit on a conditions surface still records
+// its usage, so the demand, behaviour and adopter metrics count every request.
+/** Live data (conditions, embed, home, warnings, leaderboard, stations): the
+ *  weather upstream is itself cached 15 min and air/warnings move hourly. */
+const LIVE_EDGE_TTL = 300;
+/** Output fixed by the deployed code (front-door files, static pages, manifest):
+ *  short enough that a deploy shows within 15 minutes. */
+const STATIC_EDGE_TTL = 900;
+/** Rendered images that never change between deploys (icons, the share card). */
+const IMAGE_EDGE_TTL = 86_400;
 
 /** Whether opt-in alerts are set up (both VAPID keys present). */
 const alertsOn = (env: Env) => !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY);
@@ -146,6 +133,17 @@ export default {
     const denied = adminGate(url.pathname, req, env);
     if (denied) return denied;
 
+    // Serve a response that is the same for every viewer from the edge cache, keyed on
+    // the path as received (language prefix included) plus only `params`. A build
+    // that returns { store: false } (data missing for a passing reason) is served
+    // but not stored.
+    type Built = Response | { res: Response; store: boolean };
+    const cached = (ttl: number, build: () => Built | Promise<Built>, params?: Record<string, string | undefined>) =>
+      edgeServe(req, ctx, cacheKey(req, params), ttl, async () => {
+        const b = await build();
+        return b instanceof Response ? { res: b } : b;
+      });
+
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
     }
@@ -156,91 +154,92 @@ export default {
     }
 
     if (url.pathname === "/about") {
-      return cachedResponse(renderAbout(lang), "text/html; charset=utf-8");
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderAbout(lang), "text/html; charset=utf-8"));
     }
 
     // Glass-box methodology: how the Ambient read + thresholds work.
     if (url.pathname === "/methodology") {
-      return cachedResponse(renderMethodology(lang), "text/html; charset=utf-8");
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderMethodology(lang), "text/html; charset=utf-8"));
     }
 
     // "Put it on a screen" builder: pick a place, open the self-refreshing kiosk view.
     if (url.pathname === "/display") {
-      return cachedResponse(
-        renderDisplayBuilder(parsePersona(url.searchParams.get("as")), lang),
-        "text/html; charset=utf-8",
-      );
+      const as = parsePersona(url.searchParams.get("as"));
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderDisplayBuilder(as, lang), "text/html; charset=utf-8"), {
+        as: as === "everyone" ? undefined : as,
+      });
     }
 
     // Terms & attribution (the disclaimer in every API response points here).
     if (url.pathname === "/terms") {
-      return cachedResponse(renderTerms(lang), "text/html; charset=utf-8");
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderTerms(lang), "text/html; charset=utf-8"));
     }
 
     // The place directory: every named /c/{slug} page, grouped by state. A crawlable
     // index that gives search engines a path to all ~800 place pages (and readers a
     // way to browse), so they aren't discoverable only through the sitemap.
     if (url.pathname === "/places") {
-      return cachedResponse(renderPlaces(lang), "text/html; charset=utf-8");
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderPlaces(lang), "text/html; charset=utf-8"));
     }
 
     // Crawler + agent front-door files, built from the live route set. Edge-cached:
     // deterministic, and the sitemap (rebuilt each call) gets walked by crawlers.
     if (url.pathname === "/robots.txt") {
-      return edgeCache(req, ctx, () => cachedResponse(robotsTxt(SITE_URL), "text/plain; charset=utf-8"));
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(robotsTxt(SITE_URL), "text/plain; charset=utf-8"));
     }
     if (url.pathname === "/llms.txt") {
-      return edgeCache(req, ctx, () => cachedResponse(llmsTxt(SITE_URL), "text/plain; charset=utf-8"));
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(llmsTxt(SITE_URL), "text/plain; charset=utf-8"));
     }
     if (url.pathname === "/sitemap.xml") {
-      return edgeCache(req, ctx, () => cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8"));
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8"));
     }
     // OpenAPI spec for the REST API (also serves as ChatGPT Custom-GPT Actions).
     if (url.pathname === "/openapi.json") {
-      return edgeCache(req, ctx, () =>
+      return cached(STATIC_EDGE_TTL, () =>
         cachedResponse(JSON.stringify(openApiSpec(SITE_URL), null, 2), "application/json; charset=utf-8"),
       );
     }
 
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
-    if (url.pathname === "/apple-touch-icon.png") return iconPng();
-    // PWA: web app manifest + its PNG icons (install.ts). Deterministic, so edge-cached.
+    if (url.pathname === "/apple-touch-icon.png") return cached(IMAGE_EDGE_TTL, () => iconPng());
+    // The PWA service worker (sw.ts): no-cache, so an update reaches browsers at once.
     if (url.pathname === SW_PATH) return serviceWorker();
     // Opt-in alerts for official warnings (alerts.ts).
     if (url.pathname === "/push/subscribe" && alertsOn(env)) return handleSubscribe(req, env);
     if (url.pathname === "/push/unsubscribe" && alertsOn(env)) return handleUnsubscribe(req, env);
+    // PWA: web app manifest + its PNG icons (install.ts). Deterministic, so edge-cached.
     if (url.pathname === MANIFEST_PATH) {
-      return edgeCache(req, ctx, () => cachedResponse(JSON.stringify(webManifest(lang)), "application/manifest+json"));
+      return cached(STATIC_EDGE_TTL, () =>
+        cachedResponse(JSON.stringify(webManifest(lang)), "application/manifest+json"),
+      );
     }
     const icon = ICONS[url.pathname as keyof typeof ICONS];
-    if (icon) return edgeCache(req, ctx, () => iconPng(icon.size, icon.maskable));
+    if (icon) return cached(IMAGE_EDGE_TTL, () => iconPng(icon.size, icon.maskable));
     // Branded social-share card for the home + content pages (workers-og render).
-    if (url.pathname === "/og.png") return edgeCache(req, ctx, () => renderHomeOg());
+    if (url.pathname === "/og.png") return cached(IMAGE_EDGE_TTL, () => renderHomeOg());
 
     // Lookup-first home page. Heat/dust highlights come from the 4-hourly grid;
     // the worst-air row from the hourly snapshot (fresher), each stamped with
     // its own age, and the air point's state resolved from the grid.
     if (url.pathname === "/") {
-      const [hl, popular] = await Promise.all([
-        composeHighlights(env),
-        topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
-      ]);
-      // Only show the "Right now in India" hero when there's something in it.
-      const highlights =
-        hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
-      return cachedResponse(
-        renderHome(
-          url.searchParams.get("notfound") ?? undefined,
-          highlights,
-          {
-            gridAsOf: hl.gridAsOf,
-            airAsOf: hl.airAsOf,
-            popular,
-          },
-          lang,
-        ),
-        "text/html; charset=utf-8",
-      );
+      const notfound = url.searchParams.get("notfound") ?? undefined;
+      const home = async () => {
+        const [hl, popular] = await Promise.all([
+          composeHighlights(env),
+          topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
+        ]);
+        // Only show the "Right now in India" hero when there's something in it.
+        const highlights =
+          hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
+        const res = cachedResponse(
+          renderHome(notfound, highlights, { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular }, lang),
+          "text/html; charset=utf-8",
+        );
+        // A missing grid or air snapshot leaves the hero partial: served, not stored.
+        return { res, store: hl.complete };
+      };
+      // A "not found" echo carries the visitor's own search: built fresh, never stored.
+      return notfound === undefined ? cached(LIVE_EDGE_TTL, home) : (await home()).res;
     }
 
     // Internal usage metrics for our own improvement, NOT public. Key-gated and
@@ -278,45 +277,49 @@ export default {
     // India-ranked geocoding. Powers the intelligent search box. /suggest?q=…
     if (url.pathname === "/suggest") {
       const q = url.searchParams.get("q") ?? "";
-      const [snap, gaz] = await Promise.all([loadSnapshot(env), loadGazetteer(env)]);
-      const suggestions = await buildSuggestions(snap?.stations ?? [], q, geocodeList, 6, gaz);
-      return cachedResponse(JSON.stringify({ q, suggestions }), "application/json; charset=utf-8");
-    }
-
-    // Cached snapshot loader, used by /index.{json,md} and /s/*.json|.md.
-
-    // Leaderboard JSON.
-    if (url.pathname === "/index.json") {
-      const snap = await loadSnapshot(env);
-      if (!snap) return new Response("no snapshot yet", { status: 503 });
-      return cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
-    }
-
-    // Leaderboard Markdown.
-    if (url.pathname === "/index.md") {
-      const snap = await loadSnapshot(env);
-      if (!snap) return new Response("no snapshot yet", { status: 503 });
-      return cachedResponse(
-        renderSnapshotMarkdown(snap, SITE_URL),
-        "text/markdown; charset=utf-8",
-        REFRESH_AFTER_SECONDS,
+      return cached(
+        LIVE_EDGE_TTL,
+        async () => {
+          const [snap, gaz] = await Promise.all([loadSnapshot(env), loadGazetteer(env)]);
+          const suggestions = await buildSuggestions(snap?.stations ?? [], q, geocodeList, 6, gaz);
+          return cachedResponse(JSON.stringify({ q, suggestions }), "application/json; charset=utf-8");
+        },
+        { q },
       );
+    }
+
+    // Leaderboard JSON and Markdown.
+    if (url.pathname === "/index.json" || url.pathname === "/index.md") {
+      return cached(LIVE_EDGE_TTL, async () => {
+        const snap = await loadSnapshot(env);
+        if (!snap) return new Response("no snapshot yet", { status: 503 });
+        return url.pathname === "/index.json"
+          ? cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS)
+          : cachedResponse(
+              renderSnapshotMarkdown(snap, SITE_URL),
+              "text/markdown; charset=utf-8",
+              REFRESH_AFTER_SECONDS,
+            );
+      });
     }
 
     // National active warnings: the SACHET archive made readable, not just
     // point-queried on /c. /warnings (HTML) · /warnings.json · /warnings.md
     if (url.pathname === "/warnings" || url.pathname === "/warnings.json" || url.pathname === "/warnings.md") {
-      const obj = await env.OAQ_R2.get("data/warnings.json");
-      // .json returns the stored payload verbatim (no parse + re-serialize).
-      if (url.pathname === "/warnings.json") {
-        if (!obj) return new Response("no warnings snapshot yet", { status: 503 });
-        return cachedResponse(await obj.text(), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
-      }
-      const snap = obj ? ((await obj.json()) as WarningsSnapshot) : null;
-      if (url.pathname === "/warnings.md") {
-        return cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8", REFRESH_AFTER_SECONDS);
-      }
-      return cachedResponse(renderWarningsPage(snap, lang), "text/html; charset=utf-8");
+      return cached(LIVE_EDGE_TTL, async () => {
+        // A failed read is shown like a missing snapshot, and neither is stored: a
+        // cached "no alerts" page could hide a live warning from everyone.
+        const snap = await loadWarningsSnapshot(env).catch(() => null);
+        if (url.pathname === "/warnings.json") {
+          if (!snap) return new Response("no warnings snapshot yet", { status: 503 });
+          return cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
+        }
+        const res =
+          url.pathname === "/warnings.md"
+            ? cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8", REFRESH_AFTER_SECONDS)
+            : cachedResponse(renderWarningsPage(snap, lang), "text/html; charset=utf-8");
+        return { res, store: snap !== null };
+      });
     }
 
     // Nearest air-quality stations to a point, haversine over the snapshot
@@ -327,16 +330,22 @@ export default {
       const { lat, lon } = coords;
       const nRaw = Number(url.searchParams.get("n") ?? "5");
       const n = Number.isFinite(nRaw) ? Math.min(Math.max(1, Math.trunc(nRaw)), 50) : 5;
-      const snap = await loadSnapshot(env);
-      if (!snap) return new Response("no snapshot yet", { status: 503 });
-      const stations = findNearest(snap.stations, lat, lon, n);
-      return cachedResponse(
-        JSON.stringify(
-          { query: { lat, lon, n }, generated_at: snap.generated_at, count: stations.length, stations },
-          null,
-          2,
-        ),
-        "application/json; charset=utf-8",
+      return cached(
+        LIVE_EDGE_TTL,
+        async () => {
+          const snap = await loadSnapshot(env);
+          if (!snap) return new Response("no snapshot yet", { status: 503 });
+          const stations = findNearest(snap.stations, lat, lon, n);
+          return cachedResponse(
+            JSON.stringify(
+              { query: { lat, lon, n }, generated_at: snap.generated_at, count: stations.length, stations },
+              null,
+              2,
+            ),
+            "application/json; charset=utf-8",
+          );
+        },
+        { lat: String(lat), lon: String(lon), n: String(n) },
       );
     }
 
@@ -351,25 +360,46 @@ export default {
       canonicalPath: string,
       placeName?: string,
     ): Promise<Response> {
-      // The share-image render is deterministic and CPU-heavy (workers-og): serve it
-      // from the edge when warm, so social-crawler bursts on launch do not re-render.
-      if (ext === "png") {
-        const hit = await caches.default.match(req);
-        if (hit) return hit;
-      }
       const kiosk = !ext && url.searchParams.has("kiosk");
-      // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
-      // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
-      const conditions = await lookupConditions(env, ctx, {
-        lat,
-        lon,
-        persona,
-        fmt: kiosk ? "kiosk" : ((ext ?? "html") as LookupFormat),
-        ua: req.headers.get("user-agent"),
-        label: placeName,
+      const fmt: LookupFormat = kiosk ? "kiosk" : ((ext ?? "html") as LookupFormat);
+      const ua = req.headers.get("user-agent");
+      // Same output for every viewer of this path + persona + kiosk flag: served from
+      // the edge when warm (the CPU-heavy PNG render included), usage still recorded.
+      const key = cacheKey(req, { as: persona === "everyone" ? undefined : persona, kiosk: kiosk ? "" : undefined });
+      return edgeServe(
         req,
-        url,
-      });
+        ctx,
+        key,
+        LIVE_EDGE_TTL,
+        async () => {
+          // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
+          // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
+          const { conditions, usage } = await lookupConditions(env, ctx, {
+            lat,
+            lon,
+            persona,
+            fmt,
+            ua,
+            label: placeName,
+            req,
+            url,
+          });
+          // A reading built while an upstream was down is served, never cached.
+          const res = renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
+          return { res, usage, store: !conditions.degraded };
+        },
+        (usage) => recordUsage(env, ctx, usage, { fmt, ua, req, url }),
+      );
+    }
+
+    function renderConditions(
+      conditions: Conditions,
+      ext: string | undefined,
+      kiosk: boolean,
+      persona: Persona,
+      canonicalPath: string,
+      placeName?: string,
+    ): Response {
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
       // with /c/lucknow for the same place. Arbitrary points stay self-canonical.
@@ -378,15 +408,7 @@ export default {
         const s = slugForName(conditions.place.split(",")[0]);
         if (s) canonical = `${SITE_URL}/c/${s}`;
       }
-      if (ext === "png") {
-        const og = renderConditionsOg(conditions, persona);
-        // Buffer the image bytes before caching: the streaming render cannot be
-        // safely cloned into the cache (tee-ing it deadlocks).
-        const body = await og.arrayBuffer();
-        const out = new Response(body, { status: og.status, headers: og.headers });
-        ctx.waitUntil(caches.default.put(req, out.clone()));
-        return out;
-      }
+      if (ext === "png") return renderConditionsOg(conditions, persona);
       if (ext === "json")
         return cachedResponse(
           JSON.stringify(serializeConditionsV1(conditions, persona), null, 2),
@@ -451,18 +473,29 @@ export default {
       const coords = parseLatLon(latStr, lonStr);
       if (!coords) return badRequest(BAD_COORDS);
       const persona = parsePersona(url.searchParams.get("as"));
-      const conditions = await lookupConditions(env, ctx, {
-        ...coords,
-        persona,
-        fmt: "embed",
-        ua: req.headers.get("user-agent"),
+      const ua = req.headers.get("user-agent");
+      return edgeServe(
         req,
-        url,
-      });
-      return cachedResponse(
-        renderEmbed(conditions, persona, SITE_URL, lang),
-        "text/html; charset=utf-8",
-        REFRESH_AFTER_SECONDS,
+        ctx,
+        cacheKey(req, { as: persona === "everyone" ? undefined : persona }),
+        LIVE_EDGE_TTL,
+        async () => {
+          const { conditions, usage } = await lookupConditions(env, ctx, {
+            ...coords,
+            persona,
+            fmt: "embed",
+            ua,
+            req,
+            url,
+          });
+          const res = cachedResponse(
+            renderEmbed(conditions, persona, SITE_URL, lang),
+            "text/html; charset=utf-8",
+            REFRESH_AFTER_SECONDS,
+          );
+          return { res, usage, store: !conditions.degraded };
+        },
+        (usage) => recordUsage(env, ctx, usage, { fmt: "embed", ua, req, url }),
       );
     }
 
@@ -470,33 +503,37 @@ export default {
     const ogMatch = url.pathname.match(/^\/og\/s\/([^/]+)\/([^/.]+)\.png$/);
     if (ogMatch) {
       const [, provider, rawId] = ogMatch;
-      const snap = await loadSnapshot(env);
-      if (!snap) return new Response("no snapshot yet", { status: 503 });
-      const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
-      if (!station) return new Response("station not found", { status: 404 });
-      return renderStationOg(station, snap.generated_at);
+      // A CPU-heavy render: edge-cached, and query params cannot force a re-render.
+      return cached(LIVE_EDGE_TTL, async () => {
+        const snap = await loadSnapshot(env);
+        if (!snap) return new Response("no snapshot yet", { status: 503 });
+        const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
+        if (!station) return new Response("station not found", { status: 404 });
+        return renderStationOg(station, snap.generated_at);
+      });
     }
 
     // Per-station JSON / Markdown: /s/{provider}/{raw_id}.{json,md}
     const stationMatch = url.pathname.match(/^\/s\/([^/]+)\/([^/.]+)\.(json|md)$/);
     if (stationMatch) {
       const [, provider, rawId, ext] = stationMatch;
-      const snap = await loadSnapshot(env);
-      if (!snap) return new Response("no snapshot yet", { status: 503 });
-      const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
-      if (!station) return new Response("station not found", { status: 404 });
-      if (ext === "json") {
-        return cachedResponse(
-          JSON.stringify({ generated_at: snap.generated_at, station }),
-          "application/json; charset=utf-8",
-          REFRESH_AFTER_SECONDS,
-        );
-      }
-      return cachedResponse(
-        renderStationMarkdown(station, snap.generated_at, SITE_URL),
-        "text/markdown; charset=utf-8",
-        REFRESH_AFTER_SECONDS,
-      );
+      return cached(LIVE_EDGE_TTL, async () => {
+        const snap = await loadSnapshot(env);
+        if (!snap) return new Response("no snapshot yet", { status: 503 });
+        const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
+        if (!station) return new Response("station not found", { status: 404 });
+        return ext === "json"
+          ? cachedResponse(
+              JSON.stringify({ generated_at: snap.generated_at, station }),
+              "application/json; charset=utf-8",
+              REFRESH_AFTER_SECONDS,
+            )
+          : cachedResponse(
+              renderStationMarkdown(station, snap.generated_at, SITE_URL),
+              "text/markdown; charset=utf-8",
+              REFRESH_AFTER_SECONDS,
+            );
+      });
     }
 
     // Public R2 proxy for dev and for the build script. In production we'll

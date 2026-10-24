@@ -300,19 +300,50 @@ export async function topReferrers(env: Env, limit = 25): Promise<Referrer[]> {
   }
 }
 
+/** What the usage metrics take from one lookup: the point and its place label (the
+ *  D1 heatmap rounds the point), and the read's dimensions for the behaviour event.
+ *  Nothing about the person. Kept with an edge-cached copy so a hit records the same. */
+export interface UsageFacts {
+  lat: number;
+  lon: number;
+  place: string | null;
+  persona: Persona;
+  driver: string;
+  band: string;
+  level: number;
+  state: string;
+  air: "measured" | "modelled" | "none";
+  aqi: number;
+  apparent: number;
+}
+
+export function usageFacts(c: Conditions, persona: Persona): UsageFacts {
+  const risk = ambientRisk(c, persona);
+  return {
+    lat: c.location.lat,
+    lon: c.location.lon,
+    place: c.place ?? null,
+    persona,
+    driver: risk.driver.toLowerCase(),
+    band: risk.band,
+    level: risk.level,
+    state: stateAt(c.location.lat, c.location.lon) ?? "",
+    air: c.air ? (c.air.station ? "measured" : "modelled") : "none",
+    aqi: c.air?.aqi ?? -1,
+    apparent: c.heat?.apparent_c ?? -999,
+  };
+}
+
 /** One anonymous behaviour event per /c lookup: dimensions only (format, persona,
  *  the Ambient driver + band, region/state, air kind), no IP and no user id. Goes
  *  to Analytics Engine for time-series + breakdowns (queried via the AE SQL API).
  *  Synchronous + best-effort; the binding is optional. */
-export function recordEvent(env: Env, c: Conditions, persona: Persona, format: string, ua: string | null): void {
+export function recordEvent(env: Env, u: UsageFacts, format: string, ua: string | null): void {
   if (!env.EVENTS) return;
   try {
-    const risk = ambientRisk(c, persona);
-    const state = stateAt(c.location.lat, c.location.lon) ?? "";
-    const airKind = c.air ? (c.air.station ? "measured" : "modelled") : "none";
     env.EVENTS.writeDataPoint({
-      blobs: [format, persona, risk.driver.toLowerCase(), risk.band, state, airKind, clientClass(ua), agentName(ua)],
-      doubles: [risk.level, c.air?.aqi ?? -1, c.heat?.apparent_c ?? -999],
+      blobs: [format, u.persona, u.driver, u.band, u.state, u.air, clientClass(ua), agentName(ua)],
+      doubles: [u.level, u.aqi, u.apparent],
       indexes: [format],
     });
   } catch {

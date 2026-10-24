@@ -184,6 +184,9 @@ export interface Conditions {
   attribution: string;
   /** Always present, always relayed. */
   disclaimer: string;
+  /** Internal, never serialised: an upstream failed or timed out, or the air snapshot
+   *  is missing, so this reading may be incomplete and must not be cached as whole. */
+  degraded?: boolean;
 }
 
 // ── National conditions grid (the de-bias) ──────────────────────────────────

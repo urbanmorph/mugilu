@@ -2,7 +2,7 @@ import type { Env } from "./index";
 import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
 import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
-import { freshStations, LATEST_KEY, loadRawSnapshot } from "./snapshot";
+import { freshStations, LATEST_KEY, loadRawSnapshot, putJson } from "./snapshot";
 
 function num(x: unknown): number | undefined {
   if (typeof x === "number" && Number.isFinite(x)) return x;
@@ -240,9 +240,7 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
   // live leaderboard (/index), home hero and MCP national_now compute their slices from
   // this snapshot; the old pre-computed top-50 files were written but never read (legacy).
   const writes: Promise<unknown>[] = [
-    env.OAQ_R2.put(LATEST_KEY, JSON.stringify(snapshot, null, 2), {
-      httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=60" },
-    }),
+    putJson(env, LATEST_KEY, JSON.stringify(snapshot, null, 2), "public, max-age=60"),
     env.OAQ_R2.put("data/latest.min.json", JSON.stringify(snapshot), {
       httpMetadata: { contentType: "application/json", cacheControl: "public, max-age=60" },
     }),
