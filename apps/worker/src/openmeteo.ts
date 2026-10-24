@@ -26,6 +26,8 @@ export interface OpenMeteoConditions {
   /** Modelled air pollutants, the gap-filler when no ground station is near.
    *  co is in mg/m³ (CPCB unit); the rest in µg/m³. */
   airModel: AirPollutants | null;
+  /** A call failed or returned no reading, so some layers are missing for that reason. */
+  failed: boolean;
 }
 
 /** Simplified WBGT (shade) from temperature + humidity (Australian BoM):
@@ -84,6 +86,7 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     wind: null,
     visibility: null,
     airModel: null,
+    failed: [forecast, air].some((r) => r.status === "rejected" || !r.value.current),
   };
 
   if (forecast.status === "fulfilled" && forecast.value.current) {

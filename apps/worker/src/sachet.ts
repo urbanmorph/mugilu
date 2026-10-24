@@ -56,10 +56,16 @@ function shortTime(t: string): string {
   return m ? `${m[1]}, ${m[2]}` : t;
 }
 
-/** Official warnings active at a point, via SACHET's location-wise endpoint. The
+/** Official warnings active at a point, via SACHET's location-wise endpoint, or null
+ *  when SACHET failed or timed out (so a caller can tell "none" from "unknown"). The
  *  2.5 s default suits a page render; the hourly alerts check allows longer,
  *  since it shares the cron's few open connections with the other jobs. */
-export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40, timeoutMs = 2500): Promise<Warning[]> {
+export async function fetchLocationAlerts(
+  lat: number,
+  lon: number,
+  radiusKm = 40,
+  timeoutMs = 2500,
+): Promise<Warning[] | null> {
   const url = `${LOCATION_ALERTS_URL}?lat=${lat}&long=${lon}&radius=${radiusKm}`;
   try {
     const res = await fetch(url, {
@@ -68,7 +74,7 @@ export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40,
       // are an enrichment, don't let it hold up the whole page.
       signal: AbortSignal.timeout(timeoutMs),
     });
-    if (!res.ok) return [];
+    if (!res.ok) return null;
     const body = (await res.json()) as { alerts?: RawAlert[] };
     return (body.alerts ?? []).map((a) => ({
       event: a.disaster_type ?? "Alert",
@@ -83,9 +89,13 @@ export async function getLocationAlerts(lat: number, lon: number, radiusKm = 40,
       covers: areaCovers(a.area_json, lat, lon),
     }));
   } catch {
-    return [];
+    return null;
   }
 }
+
+/** fetchLocationAlerts, with a failure read as no warnings. */
+export const getLocationAlerts = async (...args: Parameters<typeof fetchLocationAlerts>): Promise<Warning[]> =>
+  (await fetchLocationAlerts(...args)) ?? [];
 
 // ── National warning feed: poll → serve current → archive history (the moat) ──
 // SACHET only ever exposes *currently active* alerts; once one expires it's gone.

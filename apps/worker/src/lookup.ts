@@ -4,7 +4,7 @@ import type { FiresSnapshot } from "./firms";
 import type { Persona } from "./score";
 import { buildConditions } from "./conditions";
 import { loadFires, loadSnapshot } from "./snapshot";
-import { recordEvent, recordLookup, recordReferrer } from "./metrics";
+import { recordEvent, recordLookup, recordReferrer, usageFacts, type UsageFacts } from "./metrics";
 
 // The one conditions pipeline every surface runs (the /c page and its .json/.md/.png
 // siblings, the kiosk, /embed, the MCP conditions_at tool): load the snapshots, build
@@ -53,21 +53,33 @@ export function conditionsData(env: Env): ConditionsData {
   return d;
 }
 
-export async function lookupConditions(env: Env, ctx: ExecutionContext, q: LookupInput): Promise<Conditions> {
+/** Builds the conditions and records the lookup. `usage` is what was recorded, kept
+ *  with an edge-cached copy so a cache hit records the same (recordUsage). */
+export async function lookupConditions(
+  env: Env,
+  ctx: ExecutionContext,
+  q: LookupInput,
+): Promise<{ conditions: Conditions; usage: UsageFacts }> {
   const d = q.data ?? conditionsData(env);
   const conditions = await buildConditions(d.snapshot, q.lat, q.lon, d.fires);
   if (q.label) conditions.place = q.label;
-  recordUsage(env, ctx, conditions, q);
-  return conditions;
+  const usage = usageFacts(conditions, q.persona);
+  recordUsage(env, ctx, usage, q);
+  return { conditions, usage };
 }
 
 /** Usage for one lookup: the place heatmap (D1), the adopter (D1) and the anonymous
  *  behaviour event (Analytics Engine). All best-effort, off the response path. */
-function recordUsage(env: Env, ctx: ExecutionContext, c: Conditions, q: LookupInput): void {
+export function recordUsage(
+  env: Env,
+  ctx: ExecutionContext,
+  u: UsageFacts,
+  q: Pick<LookupInput, "fmt" | "ua" | "req" | "url">,
+): void {
   // A kiosk is one persistent display refreshing itself, not demand: keep it out of
   // the D1 place heatmap (and its write budget). The event still counts it.
-  if (q.fmt !== "kiosk") ctx.waitUntil(recordLookup(env, q.lat, q.lon, c.place, q.fmt, q.ua));
+  if (q.fmt !== "kiosk") ctx.waitUntil(recordLookup(env, u.lat, u.lon, u.place ?? undefined, q.fmt, q.ua));
   const surface = REFERRER_SURFACE[q.fmt];
   if (surface && q.req && q.url) ctx.waitUntil(recordReferrer(env, surface, q.req, q.url));
-  recordEvent(env, c, q.persona, q.fmt, q.ua);
+  recordEvent(env, u, q.fmt, q.ua);
 }

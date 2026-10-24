@@ -34,5 +34,10 @@ export function iconPng(size = 180, maskable = false): Response {
     `<div style="display:flex;width:${size}px;height:${size}px;background:#0284c7;align-items:flex-end;justify-content:center;padding-bottom:${Math.round((size - px(72)) / 2 - px(4))}px;">` +
     `<div style="display:flex;align-items:flex-end;">${circle(52, -20)}${circle(72, -20)}${circle(44)}</div>` +
     `</div>`;
-  return new ImageResponse(html, { width: size, height: size, format: "png" });
+  // workers-og marks every image immutable for a year; these URLs are not versioned,
+  // so a changed icon would never reach a browser that has the old one. A day instead.
+  const img = new ImageResponse(html, { width: size, height: size, format: "png" });
+  const headers = new Headers(img.headers);
+  headers.set("cache-control", "public, max-age=86400, s-maxage=604800");
+  return new Response(img.body, { status: img.status, headers });
 }

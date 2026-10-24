@@ -117,7 +117,7 @@ async function conditionsAt(
   const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
   // A named place owns its label (parity with /c/{slug}).
-  const conditions = await lookupConditions(env, ctx, {
+  const { conditions } = await lookupConditions(env, ctx, {
     lat: loc.lat,
     lon: loc.lon,
     persona,

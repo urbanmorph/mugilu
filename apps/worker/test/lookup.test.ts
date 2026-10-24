@@ -53,7 +53,7 @@ function req(path: string, headers: Record<string, string> = {}): { req: Request
 test("lookupConditions: /embed records the lookup, the referrer AND the behaviour event, like the page", async () => {
   const s = setup();
   const r = req("/embed/12.97,77.59", { referer: "https://news.example.com/story" });
-  const c = await withFetch(() =>
+  const { conditions: c } = await withFetch(() =>
     lookupConditions(s.env, s.ctx, { lat: 12.97, lon: 77.59, persona: "asthma", fmt: "embed", ua: CHROME, ...r }),
   );
   await s.settle();
@@ -101,7 +101,7 @@ test("lookupConditions: an API format counts the referrer under 'api'; the page 
 
 test("lookupConditions: a kiosk is an event but not a place lookup; a label names the place", async () => {
   const s = setup();
-  const c = await withFetch(() =>
+  const { conditions: c } = await withFetch(() =>
     lookupConditions(s.env, s.ctx, {
       lat: 12.97,
       lon: 77.59,

@@ -13,7 +13,7 @@ import { getOpenMeteo } from "./openmeteo";
 import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { pollutantParts } from "./formats";
 import { nearestPlace } from "./place";
-import { getLocationAlerts, splitWarnings } from "./sachet";
+import { fetchLocationAlerts, splitWarnings } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
 import { ambientRisk, ambientSummary, smokeLevel, PERSONA_LABEL } from "./score";
@@ -97,12 +97,13 @@ export async function buildConditions(
 ): Promise<Conditions> {
   // The snapshots (R2) and the upstreams (Open-Meteo, SACHET) are independent: all
   // four are in flight together, so a cold R2 read never delays the weather call.
-  const [snapshot, fires, om, found] = await Promise.all([
+  const [snapshot, fires, om, alerts] = await Promise.all([
     snapshotIn,
     firesIn,
     getOpenMeteo(lat, lon),
-    getLocationAlerts(lat, lon),
+    fetchLocationAlerts(lat, lon),
   ]);
+  const found = alerts ?? [];
   // Nearest station that actually has a reading, from ANY provider via OAQ,
   // preferring CPCB when one is about as near (pickStation). The very closest
   // is often null, so don't stop there; fall back to overall nearest only if
@@ -159,6 +160,8 @@ export async function buildConditions(
       found.length ? "sachet" : undefined,
     ]),
     disclaimer: DISCLAIMER,
+    // Incomplete for a passing reason: callers must not cache it as whole.
+    ...(om.failed || alerts === null || !snapshot ? { degraded: true } : {}),
   };
 }
 
