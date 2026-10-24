@@ -188,13 +188,27 @@ export function carryForward(
   return [...fresh, ...previous.stations.filter((s) => lost.has(s.provider))];
 }
 
-/** Below this share of the previous snapshot's stations, a run is unhealthy. */
+/** KV: how many stations the last healthy run fetched fresh (the health baseline). */
+export const HEALTH_KEY = "refresh:fresh-baseline";
+/** Below this share of the baseline, a run is unhealthy. */
 const HEALTHY_SHARE = 0.5;
 
-/** Whether a run's fresh station count looks right: not empty, and not far below
- *  the snapshot it replaces (when there is one). */
-export function snapshotHealthy(count: number, previousCount: number | undefined): boolean {
-  return count > 0 && (!previousCount || count >= previousCount * HEALTHY_SHARE);
+/**
+ * The air snapshot's health check: the stations this run fetched fresh (carried-forward
+ * ones excluded) against the last healthy run's count. Nothing fresh, or under half the
+ * baseline, is unhealthy and logged loudly, on every run while it lasts: the baseline
+ * moves only on healthy runs, so a sustained drop keeps being flagged. A drop that is
+ * meant to stay (a provider retired) is accepted by deleting the KV key.
+ */
+export async function snapshotHealth(env: Env, freshCount: number): Promise<boolean> {
+  const baseline = Number(await env.OAQ_KV.get(HEALTH_KEY)) || 0;
+  const healthy = freshCount > 0 && freshCount >= baseline * HEALTHY_SHARE;
+  if (healthy) await env.OAQ_KV.put(HEALTH_KEY, String(freshCount));
+  else
+    console.error(
+      `[refresh] SNAPSHOT HEALTH: ${freshCount} stations fetched fresh this run, baseline ${baseline || "none"}`,
+    );
+  return healthy;
 }
 
 export async function refreshLatest(env: Env): Promise<Snapshot> {
@@ -213,17 +227,9 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
   // Stale stations (dead feeds, or carried readings past their age) are dropped
   // here too, so the stored snapshot, the archive and /data are clean; the
   // read-time filter in loadSnapshot covers a refresh that stalls.
-  // The snapshot this run replaces: carried from when a provider failed (then a failed
-  // read fails the run, as before), and compared with for the health check.
-  const previous = failed.length ? await loadRawSnapshot(env) : await loadRawSnapshot(env).catch(() => null);
-  const all = freshStations(carryForward(fresh, failed, previous));
-  // Health: an empty run, or one far below the snapshot it replaces (a provider gone,
-  // or a second worker writing the same key), is counted and logged loudly.
-  const healthy = snapshotHealthy(all.length, previous?.station_count);
-  if (!healthy)
-    console.error(
-      `[refresh] SNAPSHOT HEALTH: ${all.length} fresh stations, previous snapshot had ${previous?.station_count ?? "none"}`,
-    );
+  const all = freshStations(carryForward(fresh, failed, failed.length ? await loadRawSnapshot(env) : null));
+  // Health: what this run fetched fresh, against the baseline (snapshotHealth).
+  const healthy = await snapshotHealth(env, freshStations(fresh).length);
   await bump(env, { "err:upstream:oaq": failed.length, "err:snapshot:empty": healthy ? 0 : 1 });
   // Nothing fresh came back and there is nothing to carry: keep the last good
   // snapshot rather than overwrite it with an empty one.
