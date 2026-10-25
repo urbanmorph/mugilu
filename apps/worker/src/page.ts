@@ -32,6 +32,7 @@ import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 import { INSTALL_CSS, INSTALL_JS, installButton, installHead } from "./install";
 import { OFFLINE_NOTE_ID, SW_REGISTER } from "./sw";
+import { FRESHEN } from "./freshen";
 import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
 import { heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
 
@@ -894,7 +895,7 @@ export function renderConditionsPage(
     : undefined;
   return shell(
     `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
-    body + PLACE_RECORDER + (alertsKey ? `<script>${ALERTS_JS}</script>` : ""),
+    body + PLACE_RECORDER + FRESHEN + (alertsKey ? `<script>${ALERTS_JS}</script>` : ""),
     css,
     desc,
     canonical,
@@ -1866,7 +1867,8 @@ export function renderHome(
     });
     render();
   })();
-  </script>`;
+  </script>
+  ${FRESHEN}`;
 
   // schema.org WebSite + SearchAction (enables a search box in results; credits the publisher).
   const site = ld({
