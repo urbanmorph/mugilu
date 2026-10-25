@@ -56,8 +56,9 @@ export function gauge(v: number, lo: number, hi: number, o: GaugeOpts = {}): str
 const LIMIT_SPAN = 2.5;
 
 /** One bar per pollutant against its CPCB standard; over-limit bars take the CPCB
- *  band colour of their own sub-index, so the one driving the AQI stands out. */
-export function pollutantBars(p: AirPollutants): string {
+ *  band colour of their own sub-index, so the one driving the AQI stands out.
+ *  `key` pollutants (the ones a persona should watch) are picked out. */
+export function pollutantBars(p: AirPollutants, key: readonly string[] = []): string {
   return pollutantParts(p)
     .map((x) => {
       const limit = cpcbLimit(x.key);
@@ -66,7 +67,7 @@ export function pollutantBars(p: AirPollutants): string {
       const colour = over ? BAND_COLOR[aqiBand(subIndex(x.key, x.value))] : "var(--muted)";
       const shown = x.key === "co" ? x.value : Math.round(x.value);
       return (
-        `<div class="pr${over ? " over" : ""}"><span>${x.label}</span>` +
+        `<div class="pr${over ? " over" : ""}${key.includes(x.key) ? " key" : ""}"><span>${x.label}</span>` +
         `<span class="pt" style="--gc:${colour}"><i class="pf" style="width:${at(x.value, 0, limit * LIMIT_SPAN)}%"></i><i class="pl"></i></span>` +
         `<b>${shown}</b></div>`
       );
@@ -139,12 +140,15 @@ export const GLYPH_CSS = `
 .g .gm{top:50%;width:11px;height:11px;border-radius:50%;background:var(--gc);box-shadow:0 0 0 2.5px var(--bg);transform:translate(-50%,-50%)}
 .gl{display:block;margin-top:.45rem;font-size:.8rem;color:var(--muted)}
 .gl b{color:var(--ink)}
+.gl.key{color:var(--ink);font-weight:600}
 .gl+.g{margin-top:.3rem}
 .prs{display:grid;gap:.3rem;margin:.6rem 0 .2rem;max-width:17rem}
-.pr{display:grid;grid-template-columns:3.1rem 1fr 2.6rem;align-items:center;gap:.5rem;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.pr{display:grid;grid-template-columns:3.9rem 1fr 2.6rem;align-items:center;gap:.5rem;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .pr b{font-weight:500;text-align:right}
 .pr.over{color:var(--ink)}
 .pr.over b{font-weight:700}
+.pr.key>span:first-child{color:var(--ink);font-weight:700}
+.pr.key>span:first-child::after{content:"";display:inline-block;width:5px;height:5px;margin-left:.3rem;border-radius:50%;background:var(--cond);vertical-align:.15em}
 .pt{position:relative;height:8px;border-radius:2px;background:var(--line)}
 .pt .pf{position:absolute;top:0;bottom:0;left:0;border-radius:2px;background:var(--gc)}
 .pt .pl{position:absolute;top:-3px;bottom:-3px;left:40%;width:0;border-left:1.5px dashed var(--ink)}

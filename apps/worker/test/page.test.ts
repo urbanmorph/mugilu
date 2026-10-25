@@ -296,7 +296,7 @@ test("renderConditionsPage: many nearby warnings of one kind are counted, not re
 });
 
 // The order the layers appear in, read from the rendered page.
-const layerOrder = (html: string) => [...html.matchAll(/<div class="lyr(?: on)?" data-k="([a-z]+)"/g)].map((m) => m[1]);
+const layerOrder = (html: string) => [...html.matchAll(/<div class="lyr[^"]*" data-k="([a-z]+)"/g)].map((m) => m[1]);
 
 test("renderConditionsPage: on a calm day, layers follow what people check first, sun beside heat, then rain", () => {
   const html = renderConditionsPage(
@@ -363,7 +363,7 @@ test("renderConditionsPage: laptops get two columns, the reading pinned beside t
 
 // The graphics on each layer (glyphs.ts), drawn against the limits the read uses.
 const layerHtml = (html: string, k: string) =>
-  html.match(new RegExp(`<div class="lyr(?: on)?" data-k="${k}">[\\s\\S]*?</dd></div>`))?.[0] ?? "";
+  html.match(new RegExp(`<div class="lyr[^"]*" data-k="${k}">[\\s\\S]*?</dd></div>`))?.[0] ?? "";
 
 test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit, not a line of numbers", () => {
   const html = renderConditionsPage(conditions({ air: { ...conditions().air!, pollutants: { pm25: 64, pm10: 218 } } }));
@@ -419,4 +419,31 @@ test("renderConditionsPage: wind gets a compass, rain drops, sun the UV steps, v
   assert.match(layerHtml(html, "fog"), /class="gf" style="left:0%;width:50%"/, "1 km halfway on 100 m-10 km");
   assert.match(layerHtml(html, "smoke"), /class="gm" style="left:42%"/);
   assert.doesNotMatch(html, /class="scale/, "the old gradient bars are gone");
+});
+
+// What each persona should look at on the right: their own layers tagged, the
+// reading that matters most to them picked out, the rest quieter.
+const tagged = (html: string) => layerOrder(html).filter((k) => /<span class="fy">/.test(layerHtml(html, k)));
+
+test("renderConditionsPage: a persona's own layers carry a 'for you' tag; the others are quieter", () => {
+  const c = conditions({ uv: { index: 7, source: "open-meteo" } });
+  assert.deepEqual(tagged(renderConditionsPage(c, "asthma")), ["air", "dust"]);
+  assert.deepEqual(tagged(renderConditionsPage(c, "child")).sort(), ["air", "dust", "heat", "sun"]);
+  assert.deepEqual(tagged(renderConditionsPage(c)), [], "everyone: no tags");
+  assert.match(renderConditionsPage(c, "asthma"), /<div class="lyr[^"]*\bquiet\b[^"]*" data-k="(fog|wind|rain)"|<div class="lyr quiet" data-k="heat"/);
+  assert.doesNotMatch(renderConditionsPage(c), /class="lyr[^"]*\bquiet\b/);
+  // The headline hazard (UV 7 here) is never quiet, even when it is not the persona's trigger.
+  assert.match(renderConditionsPage(c, "asthma"), /<div class="lyr on" data-k="sun"/);
+});
+
+test("renderConditionsPage: the reading that matters most to a persona is picked out", () => {
+  const air = { ...conditions().air!, pollutants: { pm25: 40, pm10: 90, no2: 20 } };
+  const heat = { temp_c: 38, humidity_pct: 40, apparent_c: 41, wet_bulb_c: 26, wbgt_c: 31, source: "open-meteo" };
+  const keys = (html: string) => [...html.matchAll(/<div class="pr[^"]*\bkey\b[^"]*"><span>([^<]+)/g)].map((m) => m[1]);
+  assert.deepEqual(keys(renderConditionsPage(conditions({ air }), "asthma")), ["PM2.5", "PM10"]);
+  assert.deepEqual(keys(renderConditionsPage(conditions({ air }), "heart")), ["PM2.5"]);
+  assert.deepEqual(keys(renderConditionsPage(conditions({ air }))), []);
+  assert.match(renderConditionsPage(conditions({ heat }), "outdoor"), /<span class="gl key">WBGT 31°/);
+  assert.match(renderConditionsPage(conditions({ heat }), "elderly"), /<span class="gl key">wet-bulb 26°/);
+  assert.doesNotMatch(renderConditionsPage(conditions({ heat })), /class="gl key"/);
 });

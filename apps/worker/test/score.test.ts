@@ -9,7 +9,9 @@ import {
   SENSITIVE,
   PERSONA_ACTION,
   ADVICE,
+  ambientSummary,
 } from "../src/score";
+import { t } from "../src/i18n";
 import type { Conditions } from "../src/types";
 
 test("personaAlso: surfaces an asthmatic's air trigger under a heat headline (option A)", () => {
@@ -200,8 +202,8 @@ const air = (band: "moderate" | "poor", aqi: number): Conditions["air"] => ({
 test("ambientMeaning: a persona bump keeps the CPCB description (moderate air is not called poor)", () => {
   const r = ambientRisk(cond({ air: air("moderate", 150) }), "asthma");
   assert.equal(r.band, "high"); // bumped for asthma...
-  assert.equal(ambientMeaning(r), ambientMeaning(ambientRisk(cond({ air: air("moderate", 150) }), "everyone")));
-  assert.doesNotMatch(ambientMeaning(r), /poor/i); // ...but still described as CPCB moderate
+  assert.match(ambientMeaning(r), /^The air is moderate\./); // ...but still described as CPCB moderate
+  assert.doesNotMatch(ambientMeaning(r), /poor/i);
 });
 
 test("personaAction: tells the persona what to do about their own trigger", () => {
@@ -260,5 +262,25 @@ test("Ambient and persona sentences are simplified English: short sentences, no 
     for (const sentence of s.split(/(?<=\.)\s+/)) {
       assert.ok(sentence.split(/\s+/).length <= 20, `at most 20 words: ${sentence}`);
     }
+  }
+});
+
+test("ambientMeaning: when a persona's trigger is raised for them, the read says so instead of the advice for most people", () => {
+  const moderateAir = cond({ air: air("moderate", 150) });
+  assert.equal(
+    ambientMeaning(ambientRisk(moderateAir, "asthma")),
+    "The air is moderate. For asthma & lungs, treat it as high.",
+  );
+  assert.equal(ambientMeaning(ambientRisk(moderateAir)), "The air is moderate. Most people can be outdoors as usual.");
+  // Not this persona's trigger: the everyday advice stands.
+  const uv = cond({ uv: { index: 7, source: "om" } });
+  assert.equal(ambientMeaning(ambientRisk(uv, "asthma")), ambientMeaning(ambientRisk(uv)));
+});
+
+test("ambientSummary: the persona's read is translated piece by piece, with no English left", () => {
+  const r = ambientRisk(cond({ air: air("moderate", 150) }), "asthma");
+  for (const lang of ["hi", "kn"] as const) {
+    const { meaning } = ambientSummary(r, (en) => t(en, lang));
+    assert.doesNotMatch(meaning, /[A-Za-z]{3,}/, `${lang}: ${meaning}`);
   }
 });
