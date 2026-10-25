@@ -1447,6 +1447,28 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "इस स्थान के लिए एक नाम टाइप करें (उदाहरण के लिए, घर या कार्यालय)",
     kn: "ಈ ಸ್ಥಳಕ್ಕೆ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ (ಉದಾಹರಣೆಗೆ, ಮನೆ ಅಥವಾ ಕಚೇರಿ)",
   },
+  // Persona read: the hazard's first sentence, then how this group should take it
+  // (sentences of the reviewed advice, split; the template and tag are new, pending
+  // native review).
+  "For {persona}, treat it as {band}.": {
+    hi: "{persona} के लिए इसे {band} मानें।",
+    kn: "{persona}: ಇದನ್ನು {band} ಎಂದು ಪರಿಗಣಿಸಿ.",
+  },
+  "for you": { hi: "आपके लिए", kn: "ನಿಮಗಾಗಿ" },
+  "The air is moderate.": { hi: "हवा मध्यम है।", kn: "ವಾಯು ಗುಣಮಟ್ಟ ಮಧ್ಯಮವಾಗಿದೆ." },
+  "The air is poor.": { hi: "वायु गुणवत्ता खराब है।", kn: "ಗಾಳಿಯ ಗುಣಮಟ್ಟ ಕೆಟ್ಟದಾಗಿದೆ." },
+  "It is warm.": { hi: "गर्मी है।", kn: "ಬೆಚ್ಚಗಿದೆ." },
+  "The heat is high.": { hi: "गर्मी अधिक है।", kn: "ಬಿಸಿಲು ಹೆಚ್ಚಾಗಿದೆ." },
+  "It is cold outside.": { hi: "बाहर ठण्ड है।", kn: "ಹೊರಗೆ ಚಳಿ ಇದೆ." },
+  "It is very cold.": { hi: "बहुत ठंड है।", kn: "ತುಂಬಾ ಚಳಿ ಇದೆ." },
+  "The sun is strong.": { hi: "धूप तेज़ है।", kn: "ಬಿಸಿಲು ಪ್ರಖರವಾಗಿದೆ." },
+  "The sun is very strong.": { hi: "सूर्य बहुत तेज है।", kn: "ಸೂರ್ಯ ಬಹಳ ಪ್ರಬಲನಾಗಿರುತ್ತಾನೆ." },
+  "There is a lot of dust.": { hi: "हवा धूल भरी है।", kn: "ಗಾಳಿಯಲ್ಲಿ ಧೂಳು ತುಂಬಿದೆ." },
+  "There are fires near here.": { hi: "पास में आग लगी हुई है।", kn: "ಹತ್ತಿರದಲ್ಲಿ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ." },
+  "There is a lot of burning near here.": {
+    hi: "पास में भारी आग लगी हुई है।",
+    kn: "ಹತ್ತಿರದಲ್ಲಿ ಭಾರೀ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ.",
+  },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;

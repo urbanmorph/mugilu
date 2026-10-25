@@ -366,6 +366,8 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .lyr dt{display:flex;align-items:center;align-self:start;gap:.5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
 .lyr dt .ic{flex:none}
 .lyr.on dt{color:var(--cond)}
+.lyr .fy{margin-left:.1rem;padding:.1rem .4rem;border-radius:999px;font:600 .66rem/1.3 var(--sans);letter-spacing:.03em;text-transform:none;color:var(--ink);background:color-mix(in srgb,var(--cond) 18%,transparent)}
+.lyr.quiet .num,.lyr.quiet .q{color:var(--muted)}
 .lyr dd{margin:0;display:flex;flex-direction:column;gap:.16rem;min-width:0}
 .lyr .num{font:700 2.2rem/1 var(--sans);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
 .lyr .q{font-size:.95rem;color:var(--ink)}
@@ -498,8 +500,21 @@ interface Layer {
   html: string;
 }
 
-function lyr(key: string, label: string, risk: AmbientRisk, num: string, q: string, sub: string, bar = ""): Layer {
-  const html = `<div class="lyr${isDriver(key, risk) ? " on" : ""}" data-k="${key}"><dt>${icon(key)}<span>${label}</span></dt><dd><span class="num">${num}</span><span class="q">${q}</span>${bar}${sub ? `<span class="sub">${sub}</span>` : ""}</dd></div>`;
+/** What every layer needs to know about the read: whose it is, and the words for
+ *  the persona's tag in the page's language. */
+interface LayerCtx {
+  risk: AmbientRisk;
+  forYou: string;
+}
+
+function lyr(key: string, label: string, ctx: LayerCtx, num: string, q: string, sub: string, bar = ""): Layer {
+  const { risk } = ctx;
+  // For a persona: their own layers tagged, the rest quieter, except the headline
+  // hazard, which stays at full strength (everyone: neither).
+  const own =
+    risk.persona === "everyone" ? "" : forPersona(key, risk) ? " mine" : isDriver(key, risk) ? "" : " quiet";
+  const tag = own === " mine" ? `<span class="fy">${ctx.forYou}</span>` : "";
+  const html = `<div class="lyr${isDriver(key, risk) ? " on" : ""}${own}" data-k="${key}"><dt>${icon(key)}<span>${label}</span>${tag}</dt><dd><span class="num">${num}</span><span class="q">${q}</span>${bar}${sub ? `<span class="sub">${sub}</span>` : ""}</dd></div>`;
   return { key, html };
 }
 
@@ -523,6 +538,29 @@ function rainLikely(c: Conditions): boolean {
   return (c.rain?.precipitation_mm ?? 0) > 0 || (c.rain?.probability_pct ?? 0) >= RAIN_LIKELY_PCT;
 }
 
+/** The hazard each layer reads right now (Heat or Cold for the thermal layer). */
+function layerHazards(k: string, risk: AmbientRisk) {
+  return risk.hazards.filter((h) => LAYER_HAZARDS[k]?.includes(h.hazard));
+}
+
+/** Whether this layer reads one of the persona's own triggers. */
+function forPersona(k: string, risk: AmbientRisk): boolean {
+  return layerHazards(k, risk).some((h) => SENSITIVE[risk.persona].includes(h.hazard));
+}
+
+/** The reading inside a layer each persona should look at first: the fine
+ *  particles that reach the lungs and heart (PM2.5; PM10 too for the airways),
+ *  wet-bulb for bodies that cool less well, and WBGT, the measure made for work
+ *  in the heat. */
+const KEY_READING: Record<Persona, { pollutants: string[]; heat?: "wbgt" | "wetbulb" }> = {
+  everyone: { pollutants: [] },
+  asthma: { pollutants: ["pm25", "pm10"] },
+  elderly: { pollutants: ["pm25"], heat: "wetbulb" },
+  child: { pollutants: ["pm25"] },
+  outdoor: { pollutants: ["pm25"], heat: "wbgt" },
+  heart: { pollutants: ["pm25"], heat: "wetbulb" },
+};
+
 /** Whether this layer is the Ambient read's headline hazard. */
 function isDriver(key: string, risk: AmbientRisk): boolean {
   return LAYER_HAZARDS[key]?.includes(risk.driver) ?? false;
@@ -533,11 +571,14 @@ function isDriver(key: string, risk: AmbientRisk): boolean {
  *  then what people check first. Rain carries no health level, so it counts as
  *  elevated only when it is falling or likely. */
 function orderLayers(layers: Layer[], risk: AmbientRisk, rainUp: boolean): Layer[] {
-  // The hazard each layer reads right now (Heat or Cold for the thermal layer).
-  const now = (k: string) => risk.hazards.filter((h) => LAYER_HAZARDS[k]?.includes(h.hazard));
-  const level = (k: string) => (k === "rain" ? Number(rainUp) : Math.max(0, ...now(k).map((h) => h.level)));
-  const mine = (k: string) => now(k).some((h) => SENSITIVE[risk.persona].includes(h.hazard));
-  const rank = (k: string) => [isDriver(k, risk) ? 0 : 1, -level(k), mine(k) ? 0 : 1, CARE_ORDER.indexOf(k)];
+  const level = (k: string) =>
+    k === "rain" ? Number(rainUp) : Math.max(0, ...layerHazards(k, risk).map((h) => h.level));
+  const rank = (k: string) => [
+    isDriver(k, risk) ? 0 : 1,
+    -level(k),
+    forPersona(k, risk) ? 0 : 1,
+    CARE_ORDER.indexOf(k),
+  ];
   return [...layers].sort((a, b) => {
     const ra = rank(a.key),
       rb = rank(b.key);
@@ -627,17 +668,19 @@ export function renderConditionsPage(
   // The readings, as strata. Each renders only when it has a value; the Ambient
   // driver's stratum is highlighted (icon + label in the condition colour).
   const strata: Layer[] = [];
+  const ctx: LayerCtx = { risk, forYou: t("for you", lang) };
+  const keyReading = KEY_READING[risk.persona];
   if (c.air) {
     const marker = c.air.station
       ? `<i class="dot meas"></i>${t("measured", lang)} · ${c.air.station.distance_km} km`
       : `<i class="dot mod"></i>${t("modelled", lang)}`;
     const aqli = c.air.yll != null ? `<br>${lifeBlocks(c.air.yll)}~${c.air.yll} ${t("years of life lost", lang)}` : "";
-    const bars = pollutantBars(c.air.pollutants);
+    const bars = pollutantBars(c.air.pollutants, keyReading.pollutants);
     strata.push(
       lyr(
         "air",
         t("Air", lang),
-        risk,
+        ctx,
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
         `<span class="qa">AQI</span> <b style="color:${bandColor}">${t(bandLabel, lang)}</b>`,
         `${marker}${aqli}`,
@@ -659,14 +702,14 @@ export function renderConditionsPage(
     } else {
       if (h.wet_bulb_c != null) {
         const [wn, wc] = wetBulb(h.wet_bulb_c);
-        bar += `<span class="gl">${t("wet-bulb", lang)} ${round(h.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b></span>`;
+        bar += `<span class="gl${keyReading.heat === "wetbulb" ? " key" : ""}">${t("wet-bulb", lang)} ${round(h.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b></span>`;
         bar += gauge(h.wet_bulb_c, 10, 35, {
           ticks: THRESHOLDS.wetBulb,
           level: heatLevelOf({ wet_bulb_c: h.wet_bulb_c }),
         });
       }
       if (h.wbgt_c != null) {
-        bar += `<span class="gl">WBGT ${round(h.wbgt_c)}°</span>`;
+        bar += `<span class="gl${keyReading.heat === "wbgt" ? " key" : ""}">WBGT ${round(h.wbgt_c)}°</span>`;
         bar += gauge(h.wbgt_c, 15, 40, { ticks: THRESHOLDS.wbgt, level: heatLevelOf({ wbgt_c: h.wbgt_c }) });
       }
     }
@@ -687,7 +730,7 @@ export function renderConditionsPage(
       lyr(
         "heat",
         t("Heat", lang),
-        risk,
+        ctx,
         `${round(h.apparent_c)}°`,
         // No feels-like, no phrase (never read a missing value as 0°, "dangerous cold").
         h.apparent_c != null
@@ -703,7 +746,7 @@ export function renderConditionsPage(
       lyr(
         "sun",
         t("Sun", lang),
-        risk,
+        ctx,
         String(Math.round(c.uv.index)),
         `<span class="qa">${t("UV index", lang)}</span> <b>${t(uvWord(c.uv.index), lang)}</b>`,
         "",
@@ -716,7 +759,7 @@ export function renderConditionsPage(
       lyr(
         "dust",
         t("Dust", lang),
-        risk,
+        ctx,
         String(Math.round(c.dust.dust_ug_m3)),
         `<span class="qa nu">µg/m³</span> <b>${t(dustBand(c.dust.dust_ug_m3), lang)}</b>`,
         "",
@@ -734,7 +777,7 @@ export function renderConditionsPage(
       lyr(
         "wind",
         t("Wind", lang),
-        risk,
+        ctx,
         String(Math.round(gust)),
         `<span class="qa nu">km/h ${t("gusts", lang)}</span> <b>${t(windWord(gust), lang)}</b>`,
         dirParts.join(" · "),
@@ -750,7 +793,7 @@ export function renderConditionsPage(
       lyr(
         "fog",
         t("Visibility", lang),
-        risk,
+        ctx,
         val,
         `<b>${t(visWord(m), lang)}</b>`,
         "",
@@ -768,7 +811,7 @@ export function renderConditionsPage(
       lyr(
         "smoke",
         t("Smoke", lang),
-        risk,
+        ctx,
         String(c.smoke.count),
         `<span class="qa nu">${t("fires within 100 km", lang)}</span> <b>${t(SMOKE_PHRASE[smokeLvl], lang)}</b>`,
         sub,
@@ -789,7 +832,7 @@ export function renderConditionsPage(
         lyr(
           "rain",
           t("Rain", lang),
-          risk,
+          ctx,
           `${c.rain.probability_pct}%`,
           `<span class="qa">${t("chance of rain", lang)}</span>`,
           mm ? t("X mm of rain now", lang).replace("X", String(mm)) : "",
@@ -798,7 +841,7 @@ export function renderConditionsPage(
       );
     } else {
       strata.push(
-        lyr("rain", t("Rain", lang), risk, String(mm), `<span class="qa nu">mm</span> <b>${t("now", lang)}</b>`, ""),
+        lyr("rain", t("Rain", lang), ctx, String(mm), `<span class="qa nu">mm</span> <b>${t("now", lang)}</b>`, ""),
       );
     }
   }

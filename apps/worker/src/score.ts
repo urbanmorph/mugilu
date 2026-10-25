@@ -302,10 +302,18 @@ export const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
 
 /** One plain sentence explaining the band and what to do (replaces the old verdict).
  *  Describes the hazard as it is (its unbumped level), so a persona bump never
- *  renames CPCB moderate air "poor"; the persona's own step is personaAction. */
-export function ambientMeaning(risk: AmbientRisk): string {
-  if (risk.band === "low") return "Conditions are good now.";
-  return ADVICE[risk.driver]?.[RISK_BANDS[risk.base]] ?? "Be careful outdoors.";
+ *  renames CPCB moderate air "poor". When the persona's own trigger is raised for
+ *  them, the advice for most people would contradict their headline, so the read
+ *  keeps the hazard's first sentence and says how this group should take it; their
+ *  own step is personaAction. `tr` translates each piece for a page. */
+export function ambientMeaning(risk: AmbientRisk, tr: (en: string) => string = (en) => en): string {
+  if (risk.band === "low") return tr("Conditions are good now.");
+  const advice = ADVICE[risk.driver]?.[RISK_BANDS[risk.base]];
+  if (!advice) return tr("Be careful outdoors.");
+  if (risk.persona === "everyone" || risk.level === risk.base) return tr(advice);
+  return `${tr(advice.slice(0, advice.indexOf(". ") + 1) || advice)} ${tr("For {persona}, treat it as {band}.")
+    .replace("{persona}", tr(PERSONA_LABEL[risk.persona]).toLowerCase())
+    .replace("{band}", tr(risk.band))}`;
 }
 
 // What a persona can do to cut its exposure when its own trigger drives the
@@ -394,5 +402,5 @@ export function ambientSummary(
   tr: (en: string) => string = (en) => en,
 ): { meaning: string; action: string | null; also: string | null } {
   const action = personaAction(risk);
-  return { meaning: tr(ambientMeaning(risk)), action: action && tr(action), also: personaAlso(risk, tr) };
+  return { meaning: ambientMeaning(risk, tr), action: action && tr(action), also: personaAlso(risk, tr) };
 }
