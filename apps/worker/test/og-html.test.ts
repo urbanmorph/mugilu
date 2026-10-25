@@ -47,3 +47,8 @@ test("conditionsOgHtml: every div with more than one child is a flex box (the im
     assert.match(m[1], /display:flex/, m[1]);
   }
 });
+
+test("conditionsOgHtml: the card is sized in pixels (the renderer resolves a % width against nothing, and the card shrinks)", () => {
+  const html = conditionsOgHtml(c, "everyone");
+  assert.match(html, /^<div style="display:flex;flex-direction:column;width:1200px;height:630px;/);
+});

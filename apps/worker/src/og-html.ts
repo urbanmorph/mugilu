@@ -49,7 +49,8 @@ function stat(b: Brief, c: Conditions, driver: boolean): string {
   );
 }
 
-/** The conditions image's markup (1200x630). */
+/** The conditions image's markup (1200x630, sized in pixels: Satori resolves a
+ *  percentage width against an unsized wrapper, and the card would shrink to its text). */
 export function conditionsOgHtml(c: Conditions, persona: Persona): string {
   const risk = ambientRisk(c, persona);
   const { hue, strength } = tintOf(risk);
@@ -75,7 +76,7 @@ export function conditionsOgHtml(c: Conditions, persona: Persona): string {
     .join("");
 
   return (
-    `<div style="display:flex;flex-direction:column;height:100%;width:100%;background-color:#0b1220;background-image:radial-gradient(circle at 100% 0%, ${rgba(hue, (strength * 1.1) / 100)}, ${rgba(hue, 0)} 70%);color:#e2e8f0;padding:56px 72px 48px;font-family:sans-serif;">` +
+    `<div style="display:flex;flex-direction:column;width:1200px;height:630px;background-color:#0b1220;background-image:radial-gradient(circle at 100% 0%, ${rgba(hue, (strength * 1.1) / 100)}, ${rgba(hue, 0)} 70%);color:#e2e8f0;padding:56px 72px 48px;font-family:sans-serif;">` +
     `<div style="display:flex;justify-content:space-between;font-size:28px;color:#94a3b8;">` +
     `<div style="display:flex;">mugilu · the sky over ${esc(place)}</div>` +
     `<div style="display:flex;color:#cbd5e1;">${esc(updated)}</div>` +
