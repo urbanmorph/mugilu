@@ -11,6 +11,12 @@ export const RISK_COLOR: Record<RiskBand, string> = {
   severe: "#dc2626",
 };
 
+/** A hazard level (0-3) as a colour: the risk ramp for 1-3, and `quiet` for 0 (a
+ *  muted token on the pages, a slate on the dark image). */
+export function levelColor(level: number, quiet = "var(--muted)"): string {
+  return [quiet, RISK_COLOR.moderate, RISK_COLOR.high, RISK_COLOR.severe][level] ?? quiet;
+}
+
 // CPCB AQI band colours (good -> severe), plus a neutral "unknown".
 export const BAND_COLOR: Record<string, string> = {
   good: "#16a34a",

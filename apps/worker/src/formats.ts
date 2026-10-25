@@ -1,23 +1,10 @@
 import type { NormalizedStation, Snapshot, AirPollutants } from "./types";
 import { AIR_SOURCE, providerName } from "./sources";
 import { AQI_BAND_LABEL } from "./aqi";
+import { istStamp } from "./html";
 
 function n(v: number | undefined | null): string {
   return v === undefined || v === null || !Number.isFinite(v) ? "n/a" : String(v);
-}
-
-function formatIst(iso: string): string {
-  return (
-    new Date(iso).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }) + " IST"
-  );
 }
 
 function plural(n: number, word: string): string {
@@ -102,7 +89,7 @@ export function renderSnapshotMarkdown(snap: Snapshot, siteUrl: string): string 
     "",
     "# India Air Quality Leaderboard",
     "",
-    `Updated **${formatIst(snap.generated_at)}**. ${snap.station_count} ${snap.station_count === 1 ? "station" : "stations"} ranked by CPCB AQI (worst first). Mirrored hourly from [oaq.notf.in](https://oaq.notf.in).`,
+    `Updated **${istStamp(snap.generated_at, true)}**. ${snap.station_count} ${snap.station_count === 1 ? "station" : "stations"} ranked by CPCB AQI (worst first). Mirrored hourly from [oaq.notf.in](https://oaq.notf.in).`,
     "",
     "## Worst 50",
     "",
@@ -171,7 +158,7 @@ export function renderStationMarkdown(s: NormalizedStation, generatedAt: string,
     `band: ${s.band}`,
     `yll_years: ${s.yll ?? "null"}`,
     `updated: ${generatedAt}`,
-    `updated_local: "${formatIst(generatedAt)}"`,
+    `updated_local: "${istStamp(generatedAt, true)}"`,
     `source: https://oaq.notf.in`,
     `mirror: ${siteUrl}/s/${s.provider}/${s.raw_id}`,
     "---",
@@ -179,8 +166,8 @@ export function renderStationMarkdown(s: NormalizedStation, generatedAt: string,
     `# ${s.name}: Air Quality`,
     "",
     s.aqi !== null
-      ? `Current AQI: **${s.aqi} (${bandLabel})** as of ${formatIst(generatedAt)}.`
-      : `No AQI available as of ${formatIst(generatedAt)}.`,
+      ? `Current AQI: **${s.aqi} (${bandLabel})** as of ${istStamp(generatedAt, true)}.`
+      : `No AQI available as of ${istStamp(generatedAt, true)}.`,
     "",
     `Located in ${s.city || "n/a"}${s.state ? `, ${s.state}` : ""}, India. Source: **${providerName(s.provider)}** via OAQ.`,
     "",

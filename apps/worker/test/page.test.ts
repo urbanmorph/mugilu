@@ -450,3 +450,13 @@ test("renderConditionsPage: the reading that matters most to a persona is picked
   assert.match(renderConditionsPage(conditions({ heat }), "elderly"), /<span class="gl key">wet-bulb 26°/);
   assert.doesNotMatch(renderConditionsPage(conditions({ heat })), /class="gl key"/);
 });
+
+test("renderEmbed: the card's readings follow the order every surface uses", () => {
+  const c = conditions({
+    heat: { temp_c: 45, humidity_pct: 20, apparent_c: 48, wet_bulb_c: 26, source: "open-meteo" },
+    uv: { index: 9, source: "open-meteo" },
+  });
+  const html = renderEmbed(c, "everyone", "https://mugilu.live");
+  const order = [...html.matchAll(/<div class="eread"><b[^>]*>[^<]*<\/b><span>([^<]+)/g)].map((m) => m[1]);
+  assert.match(order[0], /feels like/, order.join(" | "));
+});

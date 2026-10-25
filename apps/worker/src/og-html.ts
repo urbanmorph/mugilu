@@ -7,10 +7,11 @@
 // than one child must), and text sits in its own div.
 
 import type { Conditions } from "./types";
-import { ambientRisk, ambientMeaning, COND_NOUN, RISK_LABEL } from "./score";
+import { ambientRisk, ambientMeaning, headline } from "./score";
 import type { Persona } from "./score";
-import { BAND_COLOR, RISK_COLOR, tintOf } from "./palette";
-import { briefs, isDriver, type Brief } from "./readings";
+import { BAND_COLOR, RISK_COLOR, levelColor, tintOf } from "./palette";
+import { briefs, gaugePos, isDriver, placeLabel, type Brief } from "./readings";
+import { istStamp } from "./html";
 import { heatVsNormalLine, heatVsNormalShown } from "./heatnormals";
 
 /** Text for the image. Satori draws text as written and never decodes HTML
@@ -18,22 +19,17 @@ import { heatVsNormalLine, heatVsNormalShown } from "./heatnormals";
  *  brackets that could open a tag are dropped. */
 export const ogText = (s: string) => s.replace(/[<>]/g, "");
 
-/** Bar colour per level (0-3) on the dark card; level 0 is a quiet slate. */
-const LEVEL_FILL = ["#475569", RISK_COLOR.moderate, RISK_COLOR.high, RISK_COLOR.severe];
-
 /** "#f97316" at `a` (0-1) as rgba(), for the tint's gradient. */
 function rgba(hex: string, a: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${+a.toFixed(2)})`;
 }
 
-function pos(v: number, g: Brief["gauge"]): number {
-  const p = g.log ? Math.log(v / g.lo) / Math.log(g.hi / g.lo) : (v - g.lo) / (g.hi - g.lo);
-  return +(Math.max(0, Math.min(1, p)) * 100).toFixed(1);
-}
+const pos = (v: number, g: Brief["gauge"]) => gaugePos(v, g.lo, g.hi, g.log);
 
 function stat(b: Brief, c: Conditions, label: string): string {
-  const fill = b.key === "air" ? (BAND_COLOR[c.air?.band ?? "unknown"] ?? BAND_COLOR.unknown) : LEVEL_FILL[b.level];
+  const fill =
+    b.key === "air" ? (BAND_COLOR[c.air?.band ?? "unknown"] ?? BAND_COLOR.unknown) : levelColor(b.level, "#475569");
   const value = b.key === "heat" ? `feels ${b.value}` : b.value;
   const ticks = b.gauge.ticks
     .map(
@@ -58,18 +54,11 @@ function stat(b: Brief, c: Conditions, label: string): string {
 export function conditionsOgHtml(c: Conditions, persona: Persona): string {
   const risk = ambientRisk(c, persona);
   const { hue, strength } = tintOf(risk);
-  const placeRaw = c.place || c.air?.station?.city || `${c.location.lat}, ${c.location.lon}`;
+  const placeRaw = placeLabel(c);
   const place = placeRaw.length > 30 ? placeRaw.slice(0, 29) + "…" : placeRaw;
-  const head = risk.band === "low" ? "All clear" : `${RISK_LABEL[risk.band]} ${COND_NOUN[risk.driver] ?? "sky"}`;
-  const updated =
-    new Date(c.as_of).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }) + " IST";
+  const h = headline(risk);
+  const head = h.noun ? `${h.word} ${h.noun}` : h.word;
+  const updated = istStamp(c.as_of);
   const n = c.heat_vs_normal;
   const normal = heatVsNormalShown(n)
     ? `<div style="display:flex;font-size:26px;color:#cbd5e1;margin-top:14px;">${ogText(heatVsNormalLine(n, "en"))}</div>`

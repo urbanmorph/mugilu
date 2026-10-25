@@ -112,10 +112,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "खतरा",
     kn: "ಅಪಾಯ",
   },
-  Caution: {
-    hi: "सावधानी",
-    kn: "ಎಚ್ಚರಿಕೆ",
-  },
   "Air (AQI)": {
     hi: "वायु (AQI)",
     kn: "ವಾಯುಗುಣ (AQI)",
@@ -429,10 +425,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "अस्थमा और फेफड़े",
     kn: "ಆಸ್ತಮಾ ಮತ್ತು ಶ್ವಾಸಕೋಶ",
   },
-  "Asthma and lungs": {
-    hi: "अस्थमा और फेफड़े",
-    kn: "ಆಸ್ತಮಾ ಮತ್ತು ಶ್ವಾಸಕೋಶ",
-  },
   "Build on it": {
     hi: "इस पर निर्माण करें",
     kn: "ಅದರ ಮೇಲೆ ನಿರ್ಮಿಸಿ",
@@ -574,11 +566,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "इसका संचालन कैसे होता है",
     kn: "ಅದು ಹೇಗೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ",
   },
-  "Informational and educational only, not for medical, emergency, or safety-critical decisions. For official hazard warnings, consult NDMA and IMD directly.":
-    {
-      hi: "जानकारी और शिक्षा के लिए, न कि चिकित्सा, आपातकालीन या सुरक्षा-महत्वपूर्ण निर्णयों के लिए। आधिकारिक खतरे की चेतावनियों के लिए, NDMA और IMD से सीधे परामर्श करें।",
-      kn: "ಮಾಹಿತಿ ಮತ್ತು ಶಿಕ್ಷಣಕ್ಕಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಅಧಿಕೃತ ಅಪಾಯದ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, ಎನ್.ಡಿ.ಎಂ.ಎ ಮತ್ತು ಐ.ಎಂ.ಡಿ.ಯನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ.",
-    },
   "Informational only, not for medical, emergency, or safety-critical decisions. For official hazard warnings consult NDMA / IMD.":
     {
       hi: "जानकारी के लिए, न कि चिकित्सा, आपातकालीन या सुरक्षा-महत्वपूर्ण निर्णयों के लिए। आधिकारिक खतरे की चेतावनियों के लिए, NDMA और IMD से परामर्श करें।",
@@ -1029,10 +1016,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   rain: {
     hi: "बारिश",
     kn: "ಮಳೆ",
-  },
-  "rain chance": {
-    hi: "बारिश की संभावना",
-    kn: "ಮಳೆ ಸಾಧ್ಯತೆ",
   },
   safe: {
     hi: "सुरक्षित",

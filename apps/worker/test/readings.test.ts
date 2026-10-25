@@ -54,3 +54,31 @@ test("tintOf: the hue names the hazard, the strength its band; a calm read is cl
   for (const h of ["Air", "Heat", "Cold", "UV", "Dust", "Wind", "Fog", "Smoke", "Warning"])
     assert.ok(HAZARD_TINT[h], h);
 });
+
+test("headline: band word and hazard noun, or All clear; translated piece by piece", async () => {
+  const { headline } = await import("../src/score");
+  assert.deepEqual(headline({ band: "severe", driver: "Heat" }), { word: "Severe", noun: "heat" });
+  assert.deepEqual(headline({ band: "low", driver: "Air" }), { word: "All clear", noun: null });
+  assert.deepEqual(
+    headline({ band: "high", driver: "UV" }, (s) => s.toUpperCase()),
+    { word: "HIGH", noun: "SUN" },
+  );
+});
+
+test("placeLabel: the place, else the station's city, else the coordinate (an empty name falls through)", async () => {
+  const { placeLabel } = await import("../src/readings");
+  const at = { location: { lat: 12.97, lon: 77.59 } };
+  assert.equal(placeLabel({ ...at, place: "Bengaluru" } as Conditions), "Bengaluru");
+  assert.equal(
+    placeLabel({ ...at, place: "", air: { station: { city: "Mysuru" } } } as unknown as Conditions),
+    "Mysuru",
+  );
+  assert.equal(placeLabel(at as Conditions), "12.97,77.59");
+});
+
+test("istStamp: one IST format for images and Markdown; a missing time is empty, not an error", async () => {
+  const { istStamp } = await import("../src/html");
+  assert.equal(istStamp("2026-10-25T07:00:00Z"), "25 Oct, 12:30 IST");
+  assert.equal(istStamp("2026-10-25T07:00:00Z", true), "25 Oct 2026, 12:30 IST");
+  assert.equal(istStamp(""), "");
+});

@@ -64,6 +64,19 @@ export function orderByRisk<T extends { key: string }>(items: T[], risk: Ambient
   });
 }
 
+/** The place's display name, raw (escape it where it is written out): the resolved
+ *  place, else the nearest station's city, else the coordinate. */
+export function placeLabel(c: Conditions): string {
+  return c.place || c.air?.station?.city || `${c.location.lat},${c.location.lon}`;
+}
+
+/** Where v sits on lo..hi, as a percentage pinned to 0-100 (one decimal), on a log
+ *  scale for spans like 100 m-10 km. Shared by the page graphics and the image bars. */
+export function gaugePos(v: number, lo: number, hi: number, log = false): number {
+  const p = log ? Math.log(v / lo) / Math.log(hi / lo) : (v - lo) / (hi - lo);
+  return +(Math.max(0, Math.min(1, p)) * 100).toFixed(1);
+}
+
 /** Where a reading sits: its value, the span drawn, and the thresholds marked on it. */
 export interface Gauge {
   v: number;
@@ -82,7 +95,7 @@ export interface Brief {
   gauge: Gauge;
 }
 
-const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+export const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 
 /** Every reading present, short, in the order they matter now. */
 export function briefs(c: Conditions, risk: AmbientRisk): Brief[] {
