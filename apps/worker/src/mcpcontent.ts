@@ -41,15 +41,18 @@ const CONTENT: Record<string, string> = {
 mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. Every threshold below is public.
 
 ## One read, never an average
-Each hazard is scored 0-3 (none / caution / high / severe). The worst one becomes the Ambient, named in plain words ("Severe smoke", "High heat"). We never average. Averaging hides the thing that matters.
+Each hazard is scored 0-3 (low / moderate / high / severe). The worst one becomes the Ambient, named in plain words ("Severe smoke", "High heat"). The other readings follow in order of risk (ambient.order). We never average. Averaging hides the thing that matters.
 
 ## For who you are (persona)
-Pick a vulnerability (asthma, elderly, child, outdoor, heart) and the hazards that group feels more keenly are bumped up one level (an asthmatic sees moderate air as "high"). A second "also watch" line surfaces a secondary trigger.
+Pick a vulnerability (asthma, elderly, child, outdoor, heart) and the hazards that group feels more keenly are bumped up one level (an asthmatic sees moderate air as "high"). The read then says how that group should take it ("The air is moderate. For asthma & lungs, treat it as high."), and ambient.persona_layers marks that group's readings. A second "also watch" line surfaces a secondary trigger.
 
 ## The thresholds (caution / high / severe)
 ${THRESHOLD_ROWS.map((r) => `- ${r.hazard}: ${r.cells.join(" / ")}`).join("\n")}
 
 Heat takes the worst of feels-like, wet-bulb and WBGT.
+
+## Today against normal
+Where it stands out, today's modelled high is compared with the 1991-2020 ERA5 normal for that place and time of year (heat_vs_normal); pages show it only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.
 
 ## Sources
 ${sourcesMarkdown()}

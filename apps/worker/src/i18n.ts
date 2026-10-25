@@ -87,19 +87,22 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "एक ही रीडिंग, कभी औसत नहीं",
     kn: "ಒಂದೇ ಓದುವಿಕೆ, ಎಂದಿಗೂ ಸರಾಸರಿ ಅಲ್ಲ",
   },
-  'Each hazard is scored 0 to 3 (none, caution, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.':
+  // Methodology (2026-10): bands as the data names them, the order of risk, the persona
+  // sentence and today against normal. Built from the reviewed text; new sentences are
+  // drafts pending native review.
+  'Each hazard is scored 0 to 3 (low, moderate, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.':
     {
-      hi: 'प्रत्येक खतरे को 0 से 3 तक अंक दिए जाते हैं (कोई नहीं, सावधानी, अधिक, गंभीर)। हम सबसे बुरे को सरल शब्दों में नाम देकर दिखाते हैं ("गंभीर धुआं", "अधिक गर्मी"), क्या करना है इस पर एक वाक्य के साथ। औसत निकालने से जो मायने रखता है वह छिप जाएगा, इसलिए हम कभी औसत नहीं निकालते।',
-      kn: 'ಪ್ರತಿಯೊಂದು ಅಪಾಯಕ್ಕೂ 0 ರಿಂದ 3 ರವರೆಗೆ ಅಂಕ ನೀಡಲಾಗುತ್ತದೆ (ಅಪಾಯವಿಲ್ಲ · ಎಚ್ಚರಿಕೆ · ಹೆಚ್ಚು · ತೀವ್ರ). ನಾವು ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ಸರಳ ಪದಗಳಲ್ಲಿ ಹೆಸರಿಸಿ ತೋರಿಸುತ್ತೇವೆ ("ತೀವ್ರ ಹೊಗೆ", "ಹೆಚ್ಚು ಬಿಸಿಲು"), ಏನು ಮಾಡಬೇಕು ಎಂಬುದರ ಬಗ್ಗೆ ಒಂದೇ ವಾಕ್ಯದೊಂದಿಗೆ. ಸರಾಸರಿ ಮಾಡಿದರೆ ಮುಖ್ಯವಾದ ವಿಷಯ ಮರೆಯಾಗುತ್ತದೆ, ಆದ್ದರಿಂದ ನಾವು ಎಂದಿಗೂ ಸರಾಸರಿ ಮಾಡುವುದಿಲ್ಲ.',
+      hi: 'प्रत्येक खतरे को 0 से 3 तक अंक दिए जाते हैं (कम, मध्यम, अधिक, गंभीर)। हम सबसे बुरे को सरल शब्दों में नाम देकर दिखाते हैं ("गंभीर धुआं", "अधिक गर्मी"), क्या करना है इस पर एक वाक्य के साथ। बाकी रीडिंग जोखिम के क्रम में आती हैं। औसत निकालने से जो मायने रखता है वह छिप जाएगा, इसलिए हम कभी औसत नहीं निकालते।',
+      kn: 'ಪ್ರತಿಯೊಂದು ಅಪಾಯಕ್ಕೂ 0 ರಿಂದ 3 ರವರೆಗೆ ಅಂಕ ನೀಡಲಾಗುತ್ತದೆ (ಕಡಿಮೆ · ಮಧ್ಯಮ · ಹೆಚ್ಚು · ತೀವ್ರ). ನಾವು ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ಸರಳ ಪದಗಳಲ್ಲಿ ಹೆಸರಿಸಿ ತೋರಿಸುತ್ತೇವೆ ("ತೀವ್ರ ಹೊಗೆ", "ಹೆಚ್ಚು ಬಿಸಿಲು"), ಏನು ಮಾಡಬೇಕು ಎಂಬುದರ ಬಗ್ಗೆ ಒಂದೇ ವಾಕ್ಯದೊಂದಿಗೆ. ಉಳಿದ ಓದುವಿಕೆಗಳು ಅಪಾಯದ ಕ್ರಮದಲ್ಲಿ ಬರುತ್ತವೆ. ಸರಾಸರಿ ಮಾಡಿದರೆ ಮುಖ್ಯವಾದ ವಿಷಯ ಮರೆಯಾಗುತ್ತದೆ, ಆದ್ದರಿಂದ ನಾವು ಎಂದಿಗೂ ಸರಾಸರಿ ಮಾಡುವುದಿಲ್ಲ.',
     },
   "For who you are": {
     hi: "आप कौन हैं, उसके अनुसार",
     kn: "ನೀವು ಯಾರೆಂಬುದಕ್ಕೆ ತಕ್ಕಂತೆ",
   },
-  'Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn\'t the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle you choose: never inferred, never stored.':
+  'Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). The read then says how that group should take it ("The air is moderate. For asthma & lungs, treat it as high."), and the readings that matter to that group are tagged "for you". When your trigger isn\'t the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle you choose: never inferred, never stored.':
     {
-      hi: 'एक संवेदनशीलता चुनें (अस्थमा, वृद्ध, बच्चे, बाहर काम करने वाले, हृदय) और वह समूह जिन खतरों को अधिक तीव्रता से महसूस करता है उन्हें एक स्तर ऊपर कर दिया जाता है (इसलिए अस्थमा वाले को मध्यम वायु "अधिक" दिखती है)। जब आपकी समस्या मुख्य बात नहीं है पर फिर भी बढ़ी हुई है, तो एक दूसरी पंक्ति उसे सामने लाती है ("यह भी देखें: वायु अधिक है")। यह चुनाव आप स्वयं करते हैं: कभी अनुमान नहीं, कभी संग्रहीत नहीं।',
-      kn: 'ಒಂದು ದುರ್ಬಲತೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ (ಆಸ್ತಮಾ, ವೃದ್ಧರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು, ಹೃದಯ) ಮತ್ತು ಆ ಗುಂಪು ಹೆಚ್ಚು ತೀವ್ರವಾಗಿ ಅನುಭವಿಸುವ ಅಪಾಯಗಳನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸಲಾಗುತ್ತದೆ (ಆದ್ದರಿಂದ ಆಸ್ತಮಾ ಇರುವವರು ಮಧ್ಯಮ ಗಾಳಿಯನ್ನು "ಹೆಚ್ಚು" ಎಂದು ನೋಡುತ್ತಾರೆ). ನಿಮ್ಮ ಸಮಸ್ಯೆ ಮುಖ್ಯಾಂಶವಲ್ಲದಿದ್ದರೂ ಇನ್ನೂ ಹೆಚ್ಚಿದ್ದರೆ, ಎರಡನೇ ಸಾಲು ಅದನ್ನು ತೋರಿಸುತ್ತದೆ ("ಗಮನಿಸಿ: ಗಾಳಿ ಹೆಚ್ಚಿದೆ"). ಈ ಆಯ್ಕೆ ನೀವೇ ಮಾಡುವ ಒಂದು ಟಾಗಲ್: ಎಂದಿಗೂ ಊಹಿಸುವುದಿಲ್ಲ, ಎಂದಿಗೂ ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ.',
+      hi: 'एक संवेदनशीलता चुनें (अस्थमा, वृद्ध, बच्चे, बाहर काम करने वाले, हृदय) और वह समूह जिन खतरों को अधिक तीव्रता से महसूस करता है उन्हें एक स्तर ऊपर कर दिया जाता है (इसलिए अस्थमा वाले को मध्यम वायु "अधिक" दिखती है)। फिर रीडिंग बताती है कि उस समूह को इसे कैसे लेना चाहिए ("हवा मध्यम है। अस्थमा और फेफड़े के लिए इसे अधिक मानें।"), और उस समूह की अहम रीडिंग पर "आपके लिए" लिखा होता है। जब आपकी समस्या मुख्य बात नहीं है पर फिर भी बढ़ी हुई है, तो एक दूसरी पंक्ति उसे सामने लाती है ("यह भी देखें: वायु अधिक है")। यह चुनाव आप स्वयं करते हैं: कभी अनुमान नहीं, कभी संग्रहीत नहीं।',
+      kn: 'ಒಂದು ದುರ್ಬಲತೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ (ಆಸ್ತಮಾ, ವೃದ್ಧರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು, ಹೃದಯ) ಮತ್ತು ಆ ಗುಂಪು ಹೆಚ್ಚು ತೀವ್ರವಾಗಿ ಅನುಭವಿಸುವ ಅಪಾಯಗಳನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸಲಾಗುತ್ತದೆ (ಆದ್ದರಿಂದ ಆಸ್ತಮಾ ಇರುವವರು ಮಧ್ಯಮ ಗಾಳಿಯನ್ನು "ಹೆಚ್ಚು" ಎಂದು ನೋಡುತ್ತಾರೆ). ನಂತರ ಓದುವಿಕೆ ಆ ಗುಂಪು ಅದನ್ನು ಹೇಗೆ ಪರಿಗಣಿಸಬೇಕು ಎಂದು ಹೇಳುತ್ತದೆ ("ವಾಯು ಗುಣಮಟ್ಟ ಮಧ್ಯಮವಾಗಿದೆ. ಆಸ್ತಮಾ ಮತ್ತು ಶ್ವಾಸಕೋಶ: ಇದನ್ನು ಹೆಚ್ಚು ಎಂದು ಪರಿಗಣಿಸಿ."), ಮತ್ತು ಆ ಗುಂಪಿಗೆ ಮುಖ್ಯವಾದ ಓದುವಿಕೆಗಳಿಗೆ "ನಿಮಗಾಗಿ" ಎಂಬ ಗುರುತು ಇರುತ್ತದೆ. ನಿಮ್ಮ ಸಮಸ್ಯೆ ಮುಖ್ಯಾಂಶವಲ್ಲದಿದ್ದರೂ ಇನ್ನೂ ಹೆಚ್ಚಿದ್ದರೆ, ಎರಡನೇ ಸಾಲು ಅದನ್ನು ತೋರಿಸುತ್ತದೆ ("ಗಮನಿಸಿ: ಗಾಳಿ ಹೆಚ್ಚಿದೆ"). ಈ ಆಯ್ಕೆ ನೀವೇ ಮಾಡುವ ಒಂದು ಟಾಗಲ್: ಎಂದಿಗೂ ಊಹಿಸುವುದಿಲ್ಲ, ಎಂದಿಗೂ ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ.',
     },
   "The thresholds": {
     hi: "सीमाएँ",
@@ -1469,6 +1472,12 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "पास में भारी आग लगी हुई है।",
     kn: "ಹತ್ತಿರದಲ್ಲಿ ಭಾರೀ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ.",
   },
+  "Today against normal": { hi: "आज बनाम सामान्य", kn: "ಇಂದು ಮತ್ತು ಸಾಮಾನ್ಯ" },
+  "On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo. It shows only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.":
+    {
+      hi: "जिन दिनों यह अलग दिखता है, गर्मी की परत आज के अनुमानित अधिकतम तापमान की तुलना उस जगह और साल के उस समय के सामान्य अधिकतम तापमान से करती है, जो 1991-2020 के ERA5 पुनः विश्लेषण (Copernicus) से Open-Meteo के ज़रिए आता है। यह तभी दिखता है जब दोनों में 3 °C या अधिक का अंतर हो। यह लू की घोषणा नहीं है; वह केवल IMD करता है।",
+      kn: "ಅದು ಎದ್ದು ಕಾಣುವ ದಿನಗಳಲ್ಲಿ, ಬಿಸಿಲಿನ ಪದರವು ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನವನ್ನು ಆ ಸ್ಥಳ ಮತ್ತು ವರ್ಷದ ಆ ಸಮಯದ ಸಾಮಾನ್ಯ ಗರಿಷ್ಠ ತಾಪಮಾನದೊಂದಿಗೆ ಹೋಲಿಸುತ್ತದೆ; ಸಾಮಾನ್ಯ ತಾಪಮಾನ 1991-2020ರ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) Open-Meteo ಮೂಲಕ ಬರುತ್ತದೆ. ಎರಡರ ನಡುವೆ 3 °C ಅಥವಾ ಹೆಚ್ಚು ಅಂತರವಿದ್ದಾಗ ಮಾತ್ರ ಇದು ತೋರಿಸುತ್ತದೆ. ಇದು ಬಿಸಿಗಾಳಿ ಘೋಷಣೆಯಲ್ಲ; ಅದನ್ನು IMD ಮಾತ್ರ ಮಾಡುತ್ತದೆ.",
+    },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;

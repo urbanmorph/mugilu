@@ -1608,16 +1608,16 @@ export function renderMethodology(lang: Lang = "en"): string {
   // (proper nouns + acronyms Latin). Precomputed to avoid nested template literals.
   const onePara =
     lang === "en"
-      ? `Each hazard is scored 0–3 (none · caution · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.`
+      ? `Each hazard is scored 0–3 (low · moderate · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.`
       : t(
-          `Each hazard is scored 0 to 3 (none, caution, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. Averaging would hide the thing that matters, so we never average.`,
+          `Each hazard is scored 0 to 3 (low, moderate, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.`,
           lang,
         );
   const whoPara =
     lang === "en"
-      ? `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.`
+      ? `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). The read then says how that group should take it ("The air is moderate. For asthma &amp; lungs, treat it as high."), and the readings that matter to that group are tagged "for you". When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle <b>you</b> choose: never inferred, never stored.`
       : t(
-          `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle you choose: never inferred, never stored.`,
+          `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). The read then says how that group should take it ("The air is moderate. For asthma & lungs, treat it as high."), and the readings that matter to that group are tagged "for you". When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle you choose: never inferred, never stored.`,
           lang,
         );
   // The thresholds note carries two inline links; word order differs across languages,
@@ -1645,13 +1645,16 @@ export function renderMethodology(lang: Lang = "en"): string {
   <h2 class="ah">${t("The thresholds", lang)}</h2>
   <div class="mtab-wrap">
   <table class="mtab">
-  <thead><tr><th>${t("Hazard", lang)}</th><th>${t("Caution", lang)}</th><th>${t("High", lang)}</th><th>${t("Severe", lang)}</th></tr></thead>
+  <thead><tr><th>${t("Hazard", lang)}</th><th>${t("Moderate", lang)}</th><th>${t("High", lang)}</th><th>${t("Severe", lang)}</th></tr></thead>
   <tbody>
   ${THRESHOLD_ROWS.map((r) => row(t(r.hazard, lang), ...r.cells)).join("\n  ")}
   </tbody>
   </table>
   </div>
   <p class="atext">${threshNote}</p>
+
+  <h2 class="ah">${t("Today against normal", lang)}</h2>
+  <p class="atext">${t("On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo. It shows only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.", lang)}</p>
 
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
