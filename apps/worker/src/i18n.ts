@@ -587,10 +587,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "बाहर ठण्ड है। गर्म कपड़ों की परतें पहनें।",
     kn: "ಹೊರಗೆ ಚಳಿ ಇದೆ. ಬೆಚ್ಚಗಿನ ಬಟ್ಟೆಗಳ ಪದರಗಳನ್ನು ಧರಿಸಿ.",
   },
-  "It is warm. Keep water with you.": {
-    hi: "गर्मी है, इसलिए पानी अपने पास रखें।",
-    kn: "ಇದು ಬೆಚ್ಚಗಿರುತ್ತದೆ, ಆದ್ದರಿಂದ ನೀರನ್ನು ಸುಲಭವಾಗಿ ಸಿಗುವಂತೆ ಇಟ್ಟುಕೊಳ್ಳಿ.",
+  "It is very hot. Keep water with you.": {
+    hi: "बहुत गर्मी है। पानी अपने पास रखें।",
+    kn: "ತುಂಬಾ ಬಿಸಿಯಾಗಿದೆ. ನೀರನ್ನು ನಿಮ್ಮ ಬಳಿ ಇಟ್ಟುಕೊಳ್ಳಿ.",
   },
+
   "It is windy. Tie down or bring in loose items.": {
     hi: "हवा चल रही है। ढीले सामान को नीचे बांध दें ताकि वे उड़ न जाएं।",
     kn: "ಗಾಳಿ ಜೋರಾಗಿದೆ. ಸಡಿಲವಾದ ವಸ್ತುಗಳನ್ನು ಕಟ್ಟಿಕೊಳ್ಳಿ, ಆಗ ಅವು ಬೀಸಿ ಹೋಗುವುದಿಲ್ಲ.",
@@ -1009,9 +1010,9 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "कोई नहीं",
     kn: "ಅಪಾಯವಿಲ್ಲ",
   },
-  "official NDMA / IMD alerts across India, right now.": {
-    hi: "भारत भर में आधिकारिक NDMA / IMD अलर्ट, अभी।",
-    kn: "ಭಾರತದಾದ್ಯಂತ ಅಧಿಕೃತ ಸರ್ಕಾರಿ ಎಚ್ಚರಿಕೆಗಳು, ಈಗಲೇ.",
+  "The latest {n} official NDMA / IMD alerts across India.": {
+    hi: "भारत भर के ताज़ा {n} आधिकारिक NDMA / IMD अलर्ट।",
+    kn: "ಭಾರತದಾದ್ಯಂತದ ಇತ್ತೀಚಿನ {n} ಅಧಿಕೃತ NDMA / IMD ಎಚ್ಚರಿಕೆಗಳು.",
   },
   rain: {
     hi: "बारिश",
@@ -1443,7 +1444,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   "for you": { hi: "आपके लिए", kn: "ನಿಮಗಾಗಿ" },
   "The air is moderate.": { hi: "हवा मध्यम है।", kn: "ವಾಯು ಗುಣಮಟ್ಟ ಮಧ್ಯಮವಾಗಿದೆ." },
   "The air is poor.": { hi: "वायु गुणवत्ता खराब है।", kn: "ಗಾಳಿಯ ಗುಣಮಟ್ಟ ಕೆಟ್ಟದಾಗಿದೆ." },
-  "It is warm.": { hi: "गर्मी है।", kn: "ಬೆಚ್ಚಗಿದೆ." },
+  "It is very hot.": { hi: "बहुत गर्मी है।", kn: "ತುಂಬಾ ಬಿಸಿಯಾಗಿದೆ." },
   "The heat is high.": { hi: "गर्मी अधिक है।", kn: "ಬಿಸಿಲು ಹೆಚ್ಚಾಗಿದೆ." },
   "It is cold outside.": { hi: "बाहर ठण्ड है।", kn: "ಹೊರಗೆ ಚಳಿ ಇದೆ." },
   "It is very cold.": { hi: "बहुत ठंड है।", kn: "ತುಂಬಾ ಚಳಿ ಇದೆ." },
@@ -1461,6 +1462,12 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "जिन दिनों यह अलग दिखता है, गर्मी की परत आज के अनुमानित अधिकतम तापमान की तुलना उस जगह और साल के उस समय के सामान्य अधिकतम तापमान से करती है, जो 1991-2020 के ERA5 पुनः विश्लेषण (Copernicus) से Open-Meteo के ज़रिए आता है। यह तभी दिखता है जब दोनों में 3 °C या अधिक का अंतर हो। यह लू की घोषणा नहीं है; वह केवल IMD करता है।",
       kn: "ಅದು ಎದ್ದು ಕಾಣುವ ದಿನಗಳಲ್ಲಿ, ಬಿಸಿಲಿನ ಪದರವು ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನವನ್ನು ಆ ಸ್ಥಳ ಮತ್ತು ವರ್ಷದ ಆ ಸಮಯದ ಸಾಮಾನ್ಯ ಗರಿಷ್ಠ ತಾಪಮಾನದೊಂದಿಗೆ ಹೋಲಿಸುತ್ತದೆ; ಸಾಮಾನ್ಯ ತಾಪಮಾನ 1991-2020ರ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) Open-Meteo ಮೂಲಕ ಬರುತ್ತದೆ. ಎರಡರ ನಡುವೆ 3 °C ಅಥವಾ ಹೆಚ್ಚು ಅಂತರವಿದ್ದಾಗ ಮಾತ್ರ ಇದು ತೋರಿಸುತ್ತದೆ. ಇದು ಬಿಸಿಗಾಳಿ ಘೋಷಣೆಯಲ್ಲ; ಅದನ್ನು IMD ಮಾತ್ರ ಮಾಡುತ್ತದೆ.",
     },
+  // UI audit (2026-10): footer and nearby links, and the separate air-reading age.
+  // Drafts pending native review.
+  "Nearby:": { hi: "आस-पास:", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು:" },
+  "Nearby places": { hi: "आस-पास के स्थान", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು" },
+  "all places": { hi: "सभी स्थान", kn: "ಎಲ್ಲಾ ಸ್ಥಳಗಳು" },
+  "air reading": { hi: "वायु रीडिंग", kn: "ವಾಯು ಓದುವಿಕೆ" },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;
