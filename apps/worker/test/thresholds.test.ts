@@ -63,3 +63,26 @@ test("both methodology tables are generated from the thresholds the code uses", 
   const dust = THRESHOLD_ROWS.find((r) => r.hazard.startsWith("Dust"))!;
   assert.deepEqual(dust.cells, ["80", "150", "500"]);
 });
+
+test("methodology: the bands as the data names them, the persona sentence, the order of risk, and today against normal", () => {
+  const en = renderMethodology("en");
+  assert.match(en, /low · moderate · high · severe/);
+  assert.match(en, /For asthma &amp; lungs, treat it as high\./);
+  assert.match(en, /in order of risk/);
+  assert.match(en, /Today against normal/);
+  assert.match(en, /3 °C or more apart/);
+  assert.match(en, /<th>Moderate<\/th>/);
+  assert.doesNotMatch(en, /none · caution/);
+  for (const lang of ["hi", "kn"] as const) {
+    const page = renderMethodology(lang);
+    assert.doesNotMatch(page, /Today against normal|treat it as|in order of risk|3 °C or more apart/, lang);
+  }
+});
+
+test("methodology resource (MCP) says the same", () => {
+  const md = readResource("mugilu://methodology")!.contents[0].text as string;
+  assert.match(md, /low \/ moderate \/ high \/ severe/);
+  assert.match(md, /treat it as high/);
+  assert.match(md, /in order of risk/);
+  assert.match(md, /1991-2020/);
+});
