@@ -123,14 +123,14 @@ test("periodText: early (1-10), mid (11-20), late (21+) month, localised month n
 test("heatVsNormalLine: above / below in plain words, no em-dash, never 'heatwave'", () => {
   const f = file({ "28.5,77.5": 360 });
   const hot = compareWithNormal(28.5, 77.5, { date: MAY25, max_c: 41 }, f)!;
-  assert.equal(heatVsNormalLine(hot, "en"), "Today's modelled high of 41°C is 5°C above normal for late May here.");
+  assert.equal(heatVsNormalLine(hot, "en"), "The high today is 41°C. That is 5°C above normal for late May.");
   const cool = compareWithNormal(28.5, 77.5, { date: MAY25, max_c: 31 }, f)!;
-  assert.equal(heatVsNormalLine(cool, "en"), "Today's modelled high of 31°C is 5°C below normal for late May here.");
+  assert.equal(heatVsNormalLine(cool, "en"), "The high today is 31°C. That is 5°C below normal for late May.");
   for (const lang of ["hi", "kn"] as const) {
     const s = heatVsNormalLine(hot, lang);
     assert.match(s, /41/);
     assert.match(s, /5/);
-    assert.doesNotMatch(s, /Today's/, `${lang} is translated`);
+    assert.doesNotMatch(s, /high today/, `${lang} is translated`);
   }
   for (const s of [heatVsNormalLine(hot, "en"), heatVsNormalLine(cool, "en")]) {
     assert.doesNotMatch(s, /—|heat ?wave/i);

@@ -8,6 +8,7 @@ import {
   PERSONAS,
   SENSITIVE,
   PERSONA_ACTION,
+  ADVICE,
 } from "../src/score";
 import type { Conditions } from "../src/types";
 
@@ -205,9 +206,9 @@ test("ambientMeaning: a persona bump keeps the CPCB description (moderate air is
 
 test("personaAction: tells the persona what to do about their own trigger", () => {
   const asthma = ambientRisk(cond({ air: air("moderate", 150) }), "asthma");
-  assert.match(personaAction(asthma) ?? "", /exercise outdoors/i);
+  assert.match(personaAction(asthma) ?? "", /exercise hard outside/i);
   const heart = ambientRisk(cond({ air: air("poor", 250) }), "heart");
-  assert.match(personaAction(heart) ?? "", /exertion/i);
+  assert.match(personaAction(heart) ?? "", /hard physical activity/i);
 });
 
 test("personaAction: none for everyone, none when the driver is not the persona's trigger", () => {
@@ -227,7 +228,7 @@ test("heat advice: older adults are not told to just go indoors (hot homes kill 
 test("heat advice: even for everyone, dangerous heat points to somewhere cool, not just indoors", () => {
   const r = ambientRisk(cond({ heat: { apparent_c: 47, source: "om" } }), "everyone");
   assert.equal(r.band, "severe");
-  assert.match(ambientMeaning(r), /somewhere cool/i);
+  assert.match(ambientMeaning(r), /a cool place/i);
 });
 
 test("ambientRisk: outdoor workers feel air and dust (prolonged exposure), children feel dust", () => {
@@ -247,4 +248,17 @@ test("personaAction: exposure steps only, never medical advice (no medication, s
   const medical = /inhaler|medicine|medication|dose|doctor|hospital|symptom|chest pain|breathless|treat|diagnos|N95/i;
   for (const p of PERSONAS)
     for (const [h, said] of Object.entries(PERSONA_ACTION[p])) assert.doesNotMatch(said ?? "", medical, `${p}/${h}`);
+});
+
+test("Ambient and persona sentences are simplified English: short sentences, no contractions", () => {
+  const all = [
+    ...Object.values(ADVICE).flatMap((b) => Object.values(b)),
+    ...Object.values(PERSONA_ACTION).flatMap((a) => Object.values(a)),
+  ] as string[];
+  for (const s of all) {
+    assert.doesNotMatch(s, /\b\w+'(s|re|ll|t|ve|d)\b/, `no contractions: ${s}`);
+    for (const sentence of s.split(/(?<=\.)\s+/)) {
+      assert.ok(sentence.split(/\s+/).length <= 20, `at most 20 words: ${sentence}`);
+    }
+  }
 });

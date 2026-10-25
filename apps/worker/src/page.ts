@@ -1,8 +1,8 @@
-import type { Conditions, Warning, AirPollutants, NormalizedStation } from "./types";
+import type { Conditions, Warning, NormalizedStation } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
-import { pollutantParts } from "./formats";
 import { AQI_BAND_LABEL } from "./aqi";
+import { compass, drops, gauge, GLYPH_CSS, lifeBlocks, pollutantBars, uvSteps } from "./glyphs";
 import { SOURCES } from "./sources";
 import { esc } from "./html";
 import {
@@ -20,6 +20,7 @@ import {
   RISK_BANDS,
   SENSITIVE,
   THRESHOLD_ROWS,
+  THRESHOLDS,
 } from "./score";
 import type { AmbientRisk, Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR } from "./palette";
@@ -92,14 +93,6 @@ function visWord(meters: number): string {
   return "clear";
 }
 
-/** Compact pollutant breakdown for the air row (values only, rounded; precise
- *  units in the .json/.md siblings). Order/labels from the shared pollutantParts. */
-function pollutantLine(p: AirPollutants): string {
-  return pollutantParts(p)
-    .map((x) => `${x.label} ${x.key === "co" ? x.value : Math.round(x.value)}`)
-    .join(" · ");
-}
-
 function heatPhrase(apparent: number, wetBulb?: number): string {
   if (wetBulb != null && heatLevelOf({ wet_bulb_c: wetBulb }) >= 2) return "dangerous humid heat";
   const hot = heatLevelOf({ apparent_c: apparent });
@@ -137,7 +130,8 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
   const place = (name: string, state?: string) => esc(state ? `${name}, ${state}` : name);
   const age = (iso?: string) => (iso ? ` <span class="age">· ${relTime(iso)}</span>` : "");
   // "feels 41°": in Kannada/Hindi the verb follows the number ("41° ಅನಿಸುತ್ತದೆ").
-  const feels = (c: number) => (lang === "en" ? `feels ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`);
+  const feels = (c: number) =>
+    lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
   const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
     if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
     return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
@@ -176,7 +170,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
     );
   }
   return rows.length
-    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("Right now in India", lang)}</h2>${rows.join("")}</section>`
+    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("India now", lang)}</h2>${rows.join("")}</section>`
     : "";
 }
 
@@ -369,7 +363,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .who a.on{color:var(--ink);border-color:var(--cond)}
 .strata{margin:1.8rem 0 0;border-top:1px solid var(--hair)}
 .lyr{display:grid;grid-template-columns:5.4rem 1fr;gap:0 1rem;padding:1.05rem .1rem;border-bottom:1px solid var(--hair)}
-.lyr dt{display:flex;align-items:center;gap:.5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
+.lyr dt{display:flex;align-items:center;align-self:start;gap:.5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
 .lyr dt .ic{flex:none}
 .lyr.on dt{color:var(--cond)}
 .lyr dd{margin:0;display:flex;flex-direction:column;gap:.16rem;min-width:0}
@@ -379,12 +373,6 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 .lyr .q .qa{color:var(--muted);text-transform:uppercase;font-size:.72rem;letter-spacing:.05em}
 .lyr .q .qa.nu{text-transform:none;letter-spacing:.01em}
 .lyr .sub{color:var(--muted);font-size:.82rem;line-height:1.5}
-.lyr .sub .poll{display:inline-block;margin-top:.15rem;font-size:.78rem;opacity:.82;font-variant-numeric:tabular-nums}
-.lyr .sub .hvn{display:inline-block;margin-top:.3rem;color:var(--ink)}
-.lyr .sub .hvn small{display:block;color:var(--muted);font-size:.74rem}
-.lyr .scale{position:relative;height:5px;border-radius:3px;margin:.55rem 0 .15rem;max-width:14rem;background:linear-gradient(90deg,#16a34a,#84cc16 22%,#eab308 45%,#f97316 70%,#dc2626);opacity:.85}
-.lyr .scale.calm{background:color-mix(in srgb,var(--sky) 50%,var(--line));opacity:1}
-.lyr .scale i{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2.5px var(--bg);transform:translate(-50%,-50%)}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:.35rem;vertical-align:.06em}
 .dot.meas{background:var(--ink)}
 .dot.mod{background:transparent;border:1.5px solid var(--muted)}
@@ -499,13 +487,6 @@ const WET_BULB: [string, string][] = [
 ];
 const wetBulb = (wb: number) => WET_BULB[heatLevelOf({ wet_bulb_c: wb })];
 
-/** An inline good->severe scale with a marker at the reading's position (0..1).
- *  `calm` swaps the gradient for a neutral sky track (for non-hazard rows). */
-function scaleBar(p: number, calm = false): string {
-  const pct = Math.max(3, Math.min(97, p * 100));
-  return `<div class="scale${calm ? " calm" : ""}"><i style="left:${pct}%"></i></div>`;
-}
-
 /** One reading as a hairline-ruled stratum: icon + label, a big figure, a tail,
  *  and an optional inline scale showing where it sits on the good->severe range. */
 interface Layer {
@@ -578,7 +559,7 @@ function renderNearbyWarnings(ws: Warning[], lang: Lang): string {
       return `${esc(event)}${detail ? ` (${esc(detail)})` : ""}`;
     })
     .join(" · ");
-  return `<p class="near-warn">${t("Nearby, not over this spot:", lang)} ${items}</p>`;
+  return `<p class="near-warn">${t("Near this point, but not at it:", lang)} ${items}</p>`;
 }
 
 // Records this /c visit into the browser's "Your places" list (first-party,
@@ -646,8 +627,8 @@ export function renderConditionsPage(
     const marker = c.air.station
       ? `<i class="dot meas"></i>${t("measured", lang)} · ${c.air.station.distance_km} km`
       : `<i class="dot mod"></i>${t("modelled", lang)}`;
-    const aqli = c.air.yll != null ? ` · ~${c.air.yll} ${t("years of life lost", lang)}` : "";
-    const poll = pollutantLine(c.air.pollutants);
+    const aqli = c.air.yll != null ? `<br>${lifeBlocks(c.air.yll)}~${c.air.yll} ${t("years of life lost", lang)}` : "";
+    const bars = pollutantBars(c.air.pollutants);
     strata.push(
       lyr(
         "air",
@@ -655,35 +636,61 @@ export function renderConditionsPage(
         risk,
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
         `<span class="qa">AQI</span> <b style="color:${bandColor}">${t(bandLabel, lang)}</b>`,
-        `${marker}${aqli}${poll ? `<br><span class="poll">${poll}</span>` : ""}`,
-        c.air.aqi != null ? scaleBar(Math.min(c.air.aqi, 400) / 400) : "",
+        `${marker}${aqli}`,
+        bars
+          ? `<div class="prs">${bars}<span class="prk">${t("The dashed line is the CPCB limit.", lang)}</span></div>`
+          : "",
       ),
     );
   }
   if (c.heat) {
-    let sub = `${round(c.heat.temp_c)}° ${t("actual", lang)} · ${round(c.heat.humidity_pct)}% ${t("humidity", lang)}`;
-    if (c.heat.wet_bulb_c != null) {
-      const [wn, wc] = wetBulb(c.heat.wet_bulb_c);
-      sub += ` · ${t("wet-bulb", lang)} ${round(c.heat.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b>`;
+    const h = c.heat;
+    const cold = h.apparent_c != null && coldLevelOf(h.apparent_c) > 0;
+    let bar = `<span class="sub">${round(h.temp_c)}° ${t("actual", lang)} · ${round(h.humidity_pct)}% ${t("humidity", lang)}</span>`;
+    // Cold: a dot for how cold it feels among the cold thresholds. Hot or mild:
+    // the two heat-stress reads against theirs.
+    if (cold) {
+      const a = h.apparent_c!;
+      bar += gauge(a, -10, 30, { from: a, ticks: THRESHOLDS.cold, level: coldLevelOf(a), marker: true });
+    } else {
+      if (h.wet_bulb_c != null) {
+        const [wn, wc] = wetBulb(h.wet_bulb_c);
+        bar += `<span class="gl">${t("wet-bulb", lang)} ${round(h.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b></span>`;
+        bar += gauge(h.wet_bulb_c, 10, 35, {
+          ticks: THRESHOLDS.wetBulb,
+          level: heatLevelOf({ wet_bulb_c: h.wet_bulb_c }),
+        });
+      }
+      if (h.wbgt_c != null) {
+        bar += `<span class="gl">WBGT ${round(h.wbgt_c)}°</span>`;
+        bar += gauge(h.wbgt_c, 15, 40, { ticks: THRESHOLDS.wbgt, level: heatLevelOf({ wbgt_c: h.wbgt_c }) });
+      }
     }
-    if (c.heat.wbgt_c != null) sub += ` · WBGT ${round(c.heat.wbgt_c)}°`;
-    // Today's high vs the normal here: said only when it stands out (and is still
-    // today's, in IST), always labelled.
-    if (heatVsNormalShown(c.heat_vs_normal)) {
-      sub += `<br><span class="hvn">${heatVsNormalLine(c.heat_vs_normal, lang)}<small>${t(NORMALS_LABEL, lang)}</small></span>`;
+    // Today's high against the normal here: drawn only when it stands out (and is
+    // still today's, in IST), always labelled.
+    const n = c.heat_vs_normal;
+    if (heatVsNormalShown(n)) {
+      bar += `<span class="gl">${heatVsNormalLine(n, lang)}</span>`;
+      bar += gauge(n.today_max_c, n.normal_max_c - 10, n.normal_max_c + 10, {
+        from: n.normal_max_c,
+        ticks: [n.normal_max_c],
+        marker: true,
+        colour: n.anomaly_c >= 0 ? RISK_COLOR.high : "var(--sky)",
+      });
+      bar += `<small class="prk">${t(NORMALS_LABEL, lang)}</small>`;
     }
     strata.push(
       lyr(
         "heat",
         t("Heat", lang),
         risk,
-        `${round(c.heat.apparent_c)}°`,
+        `${round(h.apparent_c)}°`,
         // No feels-like, no phrase (never read a missing value as 0°, "dangerous cold").
-        c.heat.apparent_c != null
-          ? `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(c.heat.apparent_c, c.heat.wet_bulb_c), lang)}</b>`
+        h.apparent_c != null
+          ? `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(h.apparent_c, h.wet_bulb_c), lang)}</b>`
           : "",
-        sub,
-        c.heat.apparent_c != null ? scaleBar((c.heat.apparent_c - 25) / 25) : "",
+        "",
+        bar,
       ),
     );
   }
@@ -696,7 +703,7 @@ export function renderConditionsPage(
         String(Math.round(c.uv.index)),
         `<span class="qa">${t("UV index", lang)}</span> <b>${t(uvWord(c.uv.index), lang)}</b>`,
         "",
-        scaleBar(Math.min(c.uv.index, 11) / 11),
+        uvSteps(c.uv.index),
       ),
     );
   }
@@ -709,7 +716,7 @@ export function renderConditionsPage(
         String(Math.round(c.dust.dust_ug_m3)),
         `<span class="qa nu">µg/m³</span> <b>${t(dustBand(c.dust.dust_ug_m3), lang)}</b>`,
         "",
-        scaleBar(Math.min(c.dust.dust_ug_m3, 500) / 500),
+        gauge(c.dust.dust_ug_m3, 0, 600, { ticks: THRESHOLDS.dust, level: dustLevelOf(c.dust.dust_ug_m3) }),
       ),
     );
   }
@@ -727,7 +734,7 @@ export function renderConditionsPage(
         String(Math.round(gust)),
         `<span class="qa nu">km/h ${t("gusts", lang)}</span> <b>${t(windWord(gust), lang)}</b>`,
         dirParts.join(" · "),
-        scaleBar(Math.min(gust, 100) / 100),
+        `<div class="wrow">${c.wind.direction_deg != null ? compass(c.wind.direction_deg, windLevelOf(gust)) : ""}${gauge(gust, 0, 100, { under: c.wind.speed_kmh, ticks: THRESHOLDS.wind, level: windLevelOf(gust) })}</div>`,
       ),
     );
   }
@@ -743,7 +750,7 @@ export function renderConditionsPage(
         val,
         `<b>${t(visWord(m), lang)}</b>`,
         "",
-        scaleBar(1 - Math.min(m, 5000) / 5000),
+        gauge(m, 100, 10000, { log: true, ticks: [...THRESHOLDS.fog, 5000], level: fogLevelOf(m) }),
       ),
     );
   }
@@ -751,7 +758,7 @@ export function renderConditionsPage(
   if (c.smoke && smokeLvl != null) {
     const sub =
       c.smoke.nearest_km != null
-        ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW total", lang).replace("X", String(c.smoke.frp_sum))}`
+        ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW of fire power", lang).replace("X", String(c.smoke.frp_sum))}`
         : `${c.smoke.frp_sum} MW`;
     strata.push(
       lyr(
@@ -761,7 +768,13 @@ export function renderConditionsPage(
         String(c.smoke.count),
         `<span class="qa nu">${t("fires within 100 km", lang)}</span> <b>${t(SMOKE_PHRASE[smokeLvl], lang)}</b>`,
         sub,
-        scaleBar(Math.min(c.smoke.count, 100) / 100),
+        c.smoke.nearest_km != null
+          ? gauge(c.smoke.nearest_km, 0, c.smoke.radius_km ?? 100, {
+              from: c.smoke.nearest_km,
+              marker: true,
+              level: smokeLvl,
+            })
+          : "",
       ),
     );
   }
@@ -775,8 +788,8 @@ export function renderConditionsPage(
           risk,
           `${c.rain.probability_pct}%`,
           `<span class="qa">${t("chance of rain", lang)}</span>`,
-          mm ? t("X mm falling now", lang).replace("X", String(mm)) : "",
-          scaleBar(c.rain.probability_pct / 100, true),
+          mm ? t("X mm of rain now", lang).replace("X", String(mm)) : "",
+          drops(c.rain.probability_pct),
         ),
       );
     } else {
@@ -805,8 +818,8 @@ export function renderConditionsPage(
     <div class="cx-l">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
-    <p class="when">${t("the sky over this spot", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
-    <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading saved on this device, from X. Conditions and warnings may have changed since.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
+    <p class="when">${t("the sky at this point", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
+    <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
     ${c.warnings?.length ? c.warnings.map((w) => renderWarning(w, lang)).join("") : ""}
     ${c.nearby_warnings?.length ? renderNearbyWarnings(c.nearby_warnings, lang) : ""}
     <section class="amb">
@@ -833,7 +846,7 @@ export function renderConditionsPage(
     </footer>
   </article>`;
 
-  const css = CONDITIONS_CSS + (alertsKey ? ALERTS_CSS : "") + `\n:root{--cond:${condColor}}`;
+  const css = CONDITIONS_CSS + GLYPH_CSS + (alertsKey ? ALERTS_CSS : "") + `\n:root{--cond:${condColor}}`;
   const desc = `${placeName}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
@@ -1095,7 +1108,7 @@ export function renderKioskPage(
     <section class="ktiles">${tiles.join("")}</section>
     <footer class="kfoot">
       <div><span class="kbrand">mugilu.live</span><p class="kdisc">${esc(t(SHORT_DISCLAIMER, lang))}</p></div>
-      <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan for this<br>on your phone" : t("scan for this on your phone", lang)}</span></div>
+      <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan to see this<br>on your phone" : t("scan to see this on your phone", lang)}</span></div>
     </footer>
   </div>
   <div class="kload" aria-hidden="true"><div class="kspin"></div><p class="kverb">${t(KIOSK_VERBS[0], lang)}…</p></div>
@@ -1245,7 +1258,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   </a>
   <details class="ecode"><summary>${t("Embed this", lang)}</summary>
     <p>${t("Live widget (iframe):", lang)}</p><pre>${esc(iframe)}</pre>
-    <p>${t("Or a timestamped image:", lang)}</p><pre>${esc(imgtag)}</pre>
+    <p>${t("Or an image with the time on it:", lang)}</p><pre>${esc(imgtag)}</pre>
   </details>
   <script>if(window.self!==window.top)document.documentElement.classList.add('framed')</script>
   </body></html>`;
@@ -1772,17 +1785,17 @@ export function renderHome(
   const cityLinks = links.join(" · ");
   const noticeMsg =
     lang === "en"
-      ? `Couldn't find "${esc(notFound ?? "")}". Try a city or place name.`
-      : esc(t('Couldn\'t find "X". Try a city or place name.', lang)).replace("X", esc(notFound ?? ""));
+      ? `No place found for "${esc(notFound ?? "")}". Type the name of a city or a place.`
+      : esc(t('No place found for "X". Type the name of a city or a place.', lang)).replace("X", esc(notFound ?? ""));
   const notice = notFound ? `<p class="notice">${noticeMsg}</p>` : "";
   const cover = (ic: string, en: string) => `<span>${icon(ic)} ${t(en, lang)}</span>`;
   const shint =
     lang === "en"
-      ? `Type any place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>), to see <b>its sky</b>: air, heat, rain, dust. Not a map.`
-      : `${t("Type any place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("to see its sky: air, heat, rain, dust.", lang)} ${t("Not a map.", lang)}`;
+      ? `Type the name of a place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). You then see <b>its sky</b>: air, heat, rain and dust. This is not a map.`
+      : `${t("Type the name of a place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("You then see its sky: air, heat, rain and dust.", lang)} ${t("This is not a map.", lang)}`;
 
   const body = `
-  <h1 class="hero">${t("What's it like outside, right now?", lang)}</h1>
+  <h1 class="hero">${t("What is it like outside now?", lang)}</h1>
   <p class="tagline">${t("The open sky of India, one coordinate at a time.", lang)}</p>
   <p class="covers">${cover("air", "air")}${cover("heat", "heat")}${cover("rain", "rain")}${cover("sun", "UV")}${cover("dust", "dust")}${cover("warn", "warnings")}</p>
   <div class="acwrap">
@@ -1800,9 +1813,10 @@ export function renderHome(
   <p class="cities">${t("Popular:", lang)} ${cityLinks}</p>
   <script>
   var YP=${JSON.stringify(t("Your places", lang))};
+  var LOC=${JSON.stringify(t("Finding your location…", lang))},NOLOC=${JSON.stringify(t("Your location is not available.", lang))},NAME=${JSON.stringify(t("Type a name for this place (for example, Home or Office)", lang))};
   var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};
   var b=document.getElementById('nearme'),label=b.textContent;
-  if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent='Locating…';navigator.geolocation.getCurrentPosition(function(p){location.href=LP+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent='Location unavailable';});};}
+  if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent=LOC;navigator.geolocation.getCurrentPosition(function(p){location.href=LP+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent=NOLOC;});};}
   addEventListener('pageshow',function(){b.textContent=label;});
   var q=document.getElementById('q'),ac=document.getElementById('ac'),items=[],ix=-1,t,seq=0;
   function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}
@@ -1835,7 +1849,7 @@ export function renderHome(
       var btn=e.target.closest('button[data-a]');if(!btn)return;
       var id=btn.closest('.pl').getAttribute('data-id'),a=btn.getAttribute('data-a');
       var L=load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
-      if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt('Name this place (e.g. Home, Office)',p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});
+      if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt(NAME,p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});
       save(L);render();
     });
     render();

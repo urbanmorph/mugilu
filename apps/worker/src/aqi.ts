@@ -35,6 +35,11 @@ export function subIndex(pollutant: keyof typeof BP, value: number): number | nu
   return 500; // above the top breakpoint: saturate
 }
 
+/** CPCB's standard for a pollutant: the top of its "Satisfactory" band (sub-index 100). */
+export function cpcbLimit(pollutant: string): number | null {
+  return BP[pollutant]?.[1][1] ?? null;
+}
+
 export function computeAqi(p: NormalizedStation["pollutants"]): number | null {
   const subs: number[] = [];
   for (const k of Object.keys(p) as (keyof typeof BP)[]) {

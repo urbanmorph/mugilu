@@ -190,7 +190,7 @@ test("a place's page carries the box, hidden until the script decides, with the 
   const box = renderAlertsBox(KEY, "en");
   assert.match(box, /<section class="alerts" id="alerts" hidden data-key="BP4z9/);
   assert.match(box, /data-lang="en"/);
-  assert.match(box, /about 1 km/);
+  assert.match(box, /approximately 1 km/);
   for (const id of IDS) assert.ok(box.includes(`id="${id}"`), id);
   const on = renderConditionsPage(C, "everyone", "https://mugilu.live/c/14.91,79.99", "en", KEY);
   assert.ok(on.includes(box) && on.includes(ALERTS_JS));

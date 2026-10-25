@@ -244,7 +244,7 @@ export default {
           composeHighlights(env),
           topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
         ]);
-        // Only show the "Right now in India" hero when there's something in it.
+        // Only show the "India now" hero when there's something in it.
         const highlights =
           hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
         const res = cachedResponse(

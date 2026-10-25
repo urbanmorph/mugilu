@@ -174,8 +174,8 @@ export function heatVsNormalLine(h: HeatVsNormal, lang: Lang): string {
   const above = h.anomaly_c >= 0;
   return t(
     above
-      ? "Today's modelled high of {t}°C is {d}°C above normal for {period} here."
-      : "Today's modelled high of {t}°C is {d}°C below normal for {period} here.",
+      ? "The high today is {t}°C. That is {d}°C above normal for {period}."
+      : "The high today is {t}°C. That is {d}°C below normal for {period}.",
     lang,
   )
     .replace("{t}", String(h.today_max_c))
@@ -184,4 +184,4 @@ export function heatVsNormalLine(h: HeatVsNormal, lang: Lang): string {
 }
 
 /** The label that rides with the line wherever it is shown: what both halves are. */
-export const NORMALS_LABEL = "Today's high is modelled (Open-Meteo); the normal is 1991-2020 ERA5 reanalysis.";
+export const NORMALS_LABEL = "Today's high is a model value (Open-Meteo). The normal is from ERA5 data for 1991-2020.";

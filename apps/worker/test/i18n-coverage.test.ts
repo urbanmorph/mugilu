@@ -56,8 +56,8 @@ const LEAKS = [
   /wet-bulb/,
   /km\/h steady/,
   /\bfrom (N|NE|E|SE|S|SW|W|NW)\b/,
-  /falling now/,
-  /MW total/,
+  /of rain now/,
+  /MW of fire power/,
   /\bnearest \d/,
   /burning/,
   /fires &lt;100/,
@@ -99,6 +99,6 @@ test("the persona 'also watch' line is localised, not an English sentence looked
 
 test("English pages keep their English wording", () => {
   const text = visible(renderConditionsPage(c, "asthma", undefined, "en"));
-  for (const re of [/also watch: smoke is severe/, /% humidity/, /km\/h steady/, /from W/, /MW total/])
+  for (const re of [/also watch: smoke is severe/, /% humidity/, /km\/h steady/, /from W/, /MW of fire power/])
     assert.match(text, re);
 });

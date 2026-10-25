@@ -75,7 +75,7 @@ test("langCss(): none for English; Indic font vars + relaxed line-height otherwi
 test("renderHome(en): unchanged English, html lang=en, unprefixed canonical", () => {
   const html = renderHome(undefined, undefined, undefined, "en");
   assert.match(html, /<html lang="en">/);
-  assert.match(html, /What's it like outside, right now\?/);
+  assert.match(html, /What is it like outside now\?/);
   assert.match(html, /The open sky of India, one coordinate at a time\./);
   assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live">/);
   // hreflang alternates for every language + x-default
@@ -104,7 +104,7 @@ test("renderHome(kn): highlights hero localized; place + state names kept Englis
     worstAir: { name: "New Delhi", state: "Delhi", lat: 28.6, lon: 77.2, aqi: 500, band: "severe" },
   } as unknown as Parameters<typeof renderHome>[1];
   const html = renderHome(undefined, hl, undefined, "kn");
-  assert.match(html, /ಈಗ ಭಾರತದಾದ್ಯಂತ/); // "Right now in India" heading
+  assert.match(html, /ಈಗ ಭಾರತದಾದ್ಯಂತ/); // "India now" heading
   assert.match(html, /ಅತ್ಯಂತ ಬಿಸಿಲು: <b>Sitapur, Uttar Pradesh<\/b>/); // label localized, place English
   assert.match(html, /41° ಅನಿಸುತ್ತದೆ/); // "feels" (anisuttade), after the number
   assert.match(html, /ಅಪಾಯಕಾರವಾದ ಆರ್ದ್ರತೆ ಮತ್ತು ಬಿಸಿಲು/); // heat phrase

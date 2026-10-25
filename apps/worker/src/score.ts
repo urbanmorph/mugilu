@@ -252,51 +252,51 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
 
 // What each band means in plain language, per dominant hazard, so the score
 // explains itself and never just says "High" with no context.
-const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
+export const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
   Air: {
-    moderate: "Air is so-so, fine for most people.",
-    high: "Air is poor. Sensitive groups, take it easy.",
-    severe: "Air is dangerous. Stay indoors if you can.",
+    moderate: "The air is moderate. Most people can be outdoors as usual.",
+    high: "The air is poor. If you are sensitive, do less outdoors.",
+    severe: "The air is dangerous. Stay indoors if possible.",
   },
   Heat: {
-    moderate: "It's warm, so keep water handy.",
-    high: "Heat is high. Slow down, hydrate, find shade.",
-    severe: "Dangerous heat. Get somewhere cool, out of the sun, and drink water.",
+    moderate: "It is warm. Keep water with you.",
+    high: "The heat is high. Do less, drink water and stay in the shade.",
+    severe: "The heat is dangerous. Go to a cool place out of the sun. Drink water.",
   },
   Cold: {
-    moderate: "It's cold out. Layer up.",
-    high: "Cold conditions. Cover up and limit time outside.",
-    severe: "Dangerous cold. Stay warm indoors if you can.",
+    moderate: "It is cold outside. Wear layers of clothes.",
+    high: "It is very cold. Cover your body and spend less time outside.",
+    severe: "The cold is dangerous. Stay warm indoors if possible.",
   },
   UV: {
-    moderate: "Strong sun, a hat or sunscreen helps.",
-    high: "The sun is very strong. Limit midday hours.",
-    severe: "Extreme sun. Cover up and skip the midday hours.",
+    moderate: "The sun is strong. Use a hat or sunscreen.",
+    high: "The sun is very strong. Spend less time in the sun at midday.",
+    severe: "The sun is extreme. Cover your skin. Stay out of the sun at midday.",
   },
   Dust: {
-    moderate: "Some dust in the air.",
-    high: "Dusty. Mask up if you're sensitive.",
-    severe: "Heavy dust. Limit time outdoors.",
+    moderate: "There is some dust in the air.",
+    high: "There is a lot of dust. If you are sensitive, cover your nose and mouth.",
+    severe: "There is heavy dust. Spend less time outdoors.",
   },
   Wind: {
-    moderate: "It's windy. Secure loose items.",
-    high: "Strong winds. Take care outdoors, expect blowing dust.",
-    severe: "Damaging winds. Stay indoors, away from trees and hoardings.",
+    moderate: "It is windy. Tie down or bring in loose items.",
+    high: "The wind is strong. Be careful outdoors. Expect dust in the air.",
+    severe: "The wind can cause damage. Stay indoors, away from trees and hoardings.",
   },
   Fog: {
-    moderate: "Patchy low visibility. Drive with care.",
-    high: "Dense fog. Slow down, use low beams, allow extra time.",
-    severe: "Very dense fog. Avoid driving if you can.",
+    moderate: "Visibility is low in some areas. Drive carefully.",
+    high: "There is dense fog. Drive slowly with low beams. Give yourself more time.",
+    severe: "There is very dense fog. Do not drive if possible.",
   },
   Smoke: {
-    moderate: "Fires burning nearby. Sensitive groups, watch the air.",
-    high: "Heavy burning nearby. Keep windows shut, limit time outdoors.",
-    severe: "Intense fires nearby. Treat the air as hazardous; stay indoors.",
+    moderate: "There are fires near here. If you are sensitive, watch the air.",
+    high: "There is a lot of burning near here. Keep windows closed. Spend less time outdoors.",
+    severe: "There are large fires near here. The air can be dangerous. Stay indoors.",
   },
   Warning: {
-    moderate: "An official advisory is in effect.",
-    high: "An official warning is active. Stay alert.",
-    severe: "A serious warning is active. Follow official guidance.",
+    moderate: "An official advisory is active.",
+    high: "An official warning is active. Be alert.",
+    severe: "A serious warning is active. Do what the officials tell you.",
   },
 };
 
@@ -304,8 +304,8 @@ const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
  *  Describes the hazard as it is (its unbumped level), so a persona bump never
  *  renames CPCB moderate air "poor"; the persona's own step is personaAction. */
 export function ambientMeaning(risk: AmbientRisk): string {
-  if (risk.band === "low") return "Conditions are good right now.";
-  return ADVICE[risk.driver]?.[RISK_BANDS[risk.base]] ?? "Take some care outdoors.";
+  if (risk.band === "low") return "Conditions are good now.";
+  return ADVICE[risk.driver]?.[RISK_BANDS[risk.base]] ?? "Be careful outdoors.";
 }
 
 // What a persona can do to cut its exposure when its own trigger drives the
@@ -316,38 +316,38 @@ export function ambientMeaning(risk: AmbientRisk): string {
 export const PERSONA_ACTION: Record<Persona, Partial<Record<string, string>>> = {
   everyone: {},
   asthma: {
-    Air: "Cut down time and hard exercise outdoors today.",
-    Dust: "Limit time outdoors, and cover your nose and mouth if you go out.",
-    Smoke: "Keep windows shut and limit time outdoors.",
+    Air: "Spend less time outdoors today. Do not exercise hard outside.",
+    Dust: "Spend less time outdoors. Cover your nose and mouth when you go out.",
+    Smoke: "Keep windows closed. Spend less time outdoors.",
     Cold: "Cover your nose and mouth when you go out in the cold.",
   },
   elderly: {
-    Heat: "Hot homes are risky too: stay somewhere cool, drink water regularly, and have someone check on you.",
-    Cold: "Keep your home warm, wear layers indoors too, and have someone check on you.",
-    Air: "Limit time and exertion outdoors today.",
-    Smoke: "Keep windows shut and limit time outdoors.",
+    Heat: "A hot home is also a risk. Stay in a cool place and drink water regularly. Ask someone to check on you.",
+    Cold: "Keep your home warm and wear layers indoors. Ask someone to check on you.",
+    Air: "Spend less time outdoors today. Avoid hard physical activity there.",
+    Smoke: "Keep windows closed. Spend less time outdoors.",
   },
   child: {
-    UV: "Hat, shade and sunscreen, and keep midday play short.",
-    Air: "Keep outdoor play short and gentle today.",
-    Dust: "Keep outdoor play short today.",
-    Heat: "Give extra water, keep play in the shade, and never leave a child in a parked vehicle.",
-    Cold: "Dress them in layers and cover their head and hands.",
-    Smoke: "Keep them indoors with windows shut.",
+    UV: "Use a hat, shade and sunscreen. Keep play short at midday.",
+    Air: "Today, keep outdoor play short and easy.",
+    Dust: "Today, keep outdoor play short.",
+    Heat: "Give children more water and keep play in the shade. Never leave a child in a parked vehicle.",
+    Cold: "Dress children in layers. Cover their head and hands.",
+    Smoke: "Keep children indoors with the windows closed.",
   },
   outdoor: {
-    Heat: "Drink water often, take regular breaks in the shade, and move heavy work out of 12-3 pm.",
-    Cold: "Wear layers, keep dry, and take warm breaks.",
-    UV: "Cover up, wear a hat, and take shade breaks around midday.",
-    Air: "Swap heavy work for lighter tasks and take breaks indoors.",
-    Dust: "Cover your nose and mouth, and protect your eyes.",
-    Smoke: "Take breaks indoors and keep heavy work short.",
+    Heat: "Drink water often and take breaks in the shade. Do not do heavy work from 12 to 3 pm.",
+    Cold: "Wear layers and stay dry. Take breaks in a warm place.",
+    UV: "Cover your skin and wear a hat. Take breaks in the shade at midday.",
+    Air: "Do lighter work, not heavy work. Take breaks indoors.",
+    Dust: "Cover your nose and mouth. Protect your eyes.",
+    Smoke: "Take breaks indoors. Keep heavy work short.",
   },
   heart: {
-    Heat: "Avoid exertion and stay somewhere cool.",
-    Cold: "Keep warm and avoid sudden exertion in the cold.",
-    Air: "Avoid exertion outdoors today.",
-    Smoke: "Stay indoors with windows shut and avoid exertion.",
+    Heat: "Avoid hard physical activity. Stay in a cool place.",
+    Cold: "Stay warm. Avoid sudden hard physical activity in the cold.",
+    Air: "Avoid hard physical activity outdoors today.",
+    Smoke: "Stay indoors with the windows closed. Avoid hard physical activity.",
   },
 };
 
