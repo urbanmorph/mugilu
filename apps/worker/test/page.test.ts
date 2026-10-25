@@ -294,3 +294,60 @@ test("renderConditionsPage: many nearby warnings of one kind are counted, not re
   assert.match(line, /Heavy Rain \(until Fri Oct 23, 15:10\)/);
   assert.equal(line.match(/Lightning/g)!.length, 1);
 });
+
+// The order the layers appear in, read from the rendered page.
+const layerOrder = (html: string) => [...html.matchAll(/<div class="lyr(?: on)?" data-k="([a-z]+)"/g)].map((m) => m[1]);
+
+test("renderConditionsPage: on a calm day, layers follow what people check first, rain right after air and heat", () => {
+  const html = renderConditionsPage(
+    conditions({
+      rain: { probability_pct: 20, precipitation_mm: 0, source: "open-meteo" },
+      wind: { speed_kmh: 8, gust_kmh: 12, direction_deg: 90, source: "open-meteo" },
+    }),
+  );
+  assert.deepEqual(layerOrder(html), ["air", "heat", "rain", "wind", "dust", "sun"]);
+});
+
+test("renderConditionsPage: the worst hazard comes first, then whatever else is elevated", () => {
+  const html = renderConditionsPage(
+    conditions({
+      uv: { index: 11, source: "open-meteo" }, // high
+      dust: { dust_ug_m3: 90, aod: 0.5, source: "open-meteo" }, // caution
+    }),
+  );
+  assert.deepEqual(layerOrder(html).slice(0, 3), ["sun", "dust", "air"]);
+  assert.match(html, /<div class="lyr on" data-k="sun"/);
+});
+
+test("renderConditionsPage: rain falling now moves up past calm layers", () => {
+  const html = renderConditionsPage(
+    conditions({
+      dust: { dust_ug_m3: 90, aod: 0.5, source: "open-meteo" },
+      rain: { probability_pct: 90, precipitation_mm: 4, source: "open-meteo" },
+    }),
+  );
+  const o = layerOrder(html);
+  assert.ok(o.indexOf("rain") < o.indexOf("air"), o.join(","));
+});
+
+test("renderConditionsPage: a persona's own hazards come first among equals", () => {
+  const html = renderConditionsPage(
+    conditions({ rain: { probability_pct: 20, precipitation_mm: 0, source: "open-meteo" } }),
+    "asthma",
+  );
+  assert.deepEqual(layerOrder(html), ["air", "dust", "heat", "rain", "sun"]);
+});
+
+test("renderConditionsPage: a cold driver lights the heat layer", () => {
+  const html = renderConditionsPage(
+    conditions({ heat: { temp_c: -2, humidity_pct: 60, apparent_c: -6, wet_bulb_c: -3, source: "open-meteo" } }),
+  );
+  assert.match(html, /<div class="lyr on" data-k="heat"/);
+  assert.equal(layerOrder(html)[0], "heat");
+});
+
+test("renderConditionsPage: laptops get two columns, the reading pinned beside the layers", () => {
+  const html = renderConditionsPage(conditions());
+  assert.match(html, /<div class="cx-l">[\s\S]*class="amb"[\s\S]*<\/div>\s*<div class="cx-r">\s*<dl class="strata">/);
+  assert.match(html, /@media\(min-width:960px\)\{[^}]*main:has\(>\.cx\)\{max-width:/);
+});
