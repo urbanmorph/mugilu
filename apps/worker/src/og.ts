@@ -2,9 +2,22 @@ import { ImageResponse } from "workers-og";
 import type { NormalizedStation, Conditions } from "./types";
 import type { Persona } from "./score";
 import { conditionsOgHtml, ogText } from "./og-html";
+import { istStamp } from "./html";
 import { BAND_COLOR } from "./palette";
 
 import { AQI_BAND_LABEL } from "./aqi";
+
+/** A 1200x630 PNG of `html`, with our own cache lifetime (workers-og sets an immutable
+ *  one; these images change with the readings). */
+function png(html: string, cacheControl: string): Response {
+  const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });
+  const headers = new Headers(img.headers);
+  headers.set("cache-control", cacheControl);
+  return new Response(img.body, { status: img.status, headers });
+}
+
+/** Image cache lifetime: a few minutes in browsers, an hour at the edge. */
+const LIVE_IMAGE = "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400";
 
 export function renderStationOg(s: NormalizedStation, generatedAt: string): Response {
   const band = BAND_COLOR[s.band];
@@ -12,21 +25,13 @@ export function renderStationOg(s: NormalizedStation, generatedAt: string): Resp
   const aqi = s.aqi !== null ? String(s.aqi) : "n/a";
   const name = s.name.length > 34 ? s.name.slice(0, 32) + "…" : s.name;
   const city = s.city || "India";
-  const updated =
-    new Date(generatedAt).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }) + " IST";
+  const updated = istStamp(generatedAt);
 
   // Layout rules (Satori is strict):
   //   - every div with >1 child (including implicit whitespace text nodes) must set display:flex
   //   - text nodes count as children, so we keep multi-child divs compact with flex
   const html =
-    `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:60px 72px;font-family:sans-serif;">` +
+    `<div style="width:1200px;height:630px;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:60px 72px;font-family:sans-serif;">` +
     `<div style="display:flex;justify-content:space-between;font-size:26px;color:#94a3b8;">` +
     `<div style="display:flex;">mugilu · India air quality</div>` +
     `<div style="display:flex;">${ogText(updated)}</div>` +
@@ -48,28 +53,20 @@ export function renderStationOg(s: NormalizedStation, generatedAt: string): Resp
     `</div>` +
     `</div>`;
 
-  // workers-og adds its own immutable cache-control. We wrap the response to
-  // replace it with our shorter TTL (OG images depend on live AQI values).
-  const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });
-  const headers = new Headers(img.headers);
-  headers.set("cache-control", "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400");
-  return new Response(img.body, { status: img.status, headers });
+  return png(html, LIVE_IMAGE);
 }
 
 // ── Conditions snapshot image (the timestamped PNG for /c/{lat},{lon}.png) ──
 /** A shareable, timestamped snapshot image of the conditions at a point (markup in
  *  og-html.ts). The time is rendered prominently because the values change; cache is short. */
 export function renderConditionsOg(c: Conditions, persona: Persona): Response {
-  const img = new ImageResponse(conditionsOgHtml(c, persona), { width: 1200, height: 630, format: "png" });
-  const headers = new Headers(img.headers);
-  headers.set("cache-control", "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400");
-  return new Response(img.body, { status: img.status, headers });
+  return png(conditionsOgHtml(c, persona), LIVE_IMAGE);
 }
 
 // ── Branded card for the home + content pages (the social-share image) ──
 export function renderHomeOg(): Response {
   const html =
-    `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:72px 80px;font-family:sans-serif;">` +
+    `<div style="width:1200px;height:630px;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:72px 80px;font-family:sans-serif;">` +
     `<div style="display:flex;flex:1;flex-direction:column;justify-content:center;">` +
     `<div style="display:flex;font-size:128px;font-weight:800;line-height:1;color:#e2e8f0;">mugilu</div>` +
     `<div style="display:flex;font-size:46px;color:#cbd5e1;margin-top:26px;">The open sky of India, one coordinate at a time.</div>` +
@@ -80,8 +77,5 @@ export function renderHomeOg(): Response {
     `<div style="display:flex;font-size:28px;color:#38bdf8;">mugilu.live</div>` +
     `</div>` +
     `</div>`;
-  const img = new ImageResponse(html, { width: 1200, height: 630, format: "png" });
-  const headers = new Headers(img.headers);
-  headers.set("cache-control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800");
-  return new Response(img.body, { status: img.status, headers });
+  return png(html, "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800");
 }

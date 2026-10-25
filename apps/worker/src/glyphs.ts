@@ -6,19 +6,12 @@
 
 import { aqiBand, cpcbLimit, subIndex } from "./aqi";
 import { pollutantParts } from "./formats";
-import { BAND_COLOR, RISK_COLOR } from "./palette";
+import { BAND_COLOR, levelColor } from "./palette";
+import { gaugePos } from "./readings";
 import type { AirPollutants } from "./types";
 
-/** Hazard level (0-3) -> colour; level 0 is the quiet muted tone. */
-const LEVEL_COLOR = ["var(--muted)", RISK_COLOR.moderate, RISK_COLOR.high, RISK_COLOR.severe];
-
 const fix = (n: number) => +n.toFixed(1);
-
-/** Where v sits on lo..hi, as a percentage pinned to 0-100 (log for spans like 100 m-10 km). */
-function at(v: number, lo: number, hi: number, log = false): number {
-  const p = log ? Math.log(v / lo) / Math.log(hi / lo) : (v - lo) / (hi - lo);
-  return fix(Math.max(0, Math.min(1, p)) * 100);
-}
+const at = gaugePos;
 
 export interface GaugeOpts {
   /** Thresholds to mark on the track. */
@@ -43,7 +36,7 @@ export function gauge(v: number, lo: number, hi: number, o: GaugeOpts = {}): str
   const b = o.from == null ? p(v) : Math.max(p(o.from), p(v));
   const ticks = (o.ticks ?? []).map((x) => `<i class="gt" style="left:${p(x)}%"></i>`).join("");
   return (
-    `<div class="g" style="--gc:${o.colour ?? LEVEL_COLOR[o.level ?? 0]}" aria-hidden="true">` +
+    `<div class="g" style="--gc:${o.colour ?? levelColor(o.level ?? 0)}" aria-hidden="true">` +
     `<i class="gf" style="left:${a}%;width:${fix(b - a)}%"></i>` +
     (o.under != null ? `<i class="gu" style="width:${p(o.under)}%"></i>` : "") +
     ticks +
@@ -100,7 +93,7 @@ export function lifeBlocks(years: number): string {
  *  meteorological direction it blows from), coloured by the wind level. */
 export function compass(from: number, level: number): string {
   const to = (from + 180) % 360;
-  const c = LEVEL_COLOR[level];
+  const c = levelColor(level);
   return (
     `<svg class="cmp" viewBox="0 0 48 48" width="52" height="52" aria-hidden="true">` +
     `<circle cx="24" cy="24" r="21" fill="none" stroke="var(--hair)" stroke-width="1.5"/>` +

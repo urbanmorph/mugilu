@@ -3,7 +3,7 @@ import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { AQI_BAND_LABEL } from "./aqi";
 import { compass, drops, gauge, GLYPH_CSS, lifeBlocks, pollutantBars, uvSteps, worstPollutant } from "./glyphs";
-import { briefs, forPersona, isDriver, orderByRisk } from "./readings";
+import { briefs, forPersona, isDriver, km, orderByRisk, placeLabel } from "./readings";
 import { SOURCES } from "./sources";
 import { esc } from "./html";
 import {
@@ -19,14 +19,13 @@ import {
   PERSONAS,
   PERSONA_LABEL,
   RISK_BANDS,
-  RISK_LABEL,
-  COND_NOUN,
+  headline,
   SENSITIVE,
   THRESHOLD_ROWS,
   THRESHOLDS,
 } from "./score";
 import type { AmbientRisk, Persona, RiskBand } from "./score";
-import { RISK_COLOR, BAND_COLOR, tintOf } from "./palette";
+import { RISK_COLOR, BAND_COLOR, levelColor, tintOf } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
@@ -49,11 +48,6 @@ import { heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormal
 /** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
 function isHttpUrl(u: string): boolean {
   return /^https?:\/\//i.test(u);
-}
-
-/** The place's display name, raw (escape it where it is written out). */
-function placeLabel(c: Conditions): string {
-  return c.place ?? c.air?.station?.city ?? `${c.location.lat},${c.location.lon}`;
 }
 
 function round(n: number | undefined): string {
@@ -262,17 +256,23 @@ function langSwitcher(canonical: string, lang: Lang): string {
   return `<nav class="langsw" aria-label="Language">${items}</nav>`;
 }
 
+/** Optional page settings for shell(). */
+interface ShellOpts {
+  desc?: string;
+  canonical?: string;
+  jsonLd?: string;
+  ogImage?: string;
+  noBeacon?: boolean;
+  lang?: Lang;
+  /** Chromeless: no header bar, footer nav or language switcher (kiosk/display). */
+  bare?: boolean;
+}
+
 function shell(
   title: string,
   body: string,
   css: string,
-  desc: string = DEFAULT_DESC,
-  canonical?: string,
-  jsonLd?: string,
-  ogImage?: string,
-  noBeacon?: boolean,
-  lang: Lang = "en",
-  bare?: boolean, // chromeless: no header bar, footer nav or language switcher (kiosk/display)
+  { desc = DEFAULT_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare }: ShellOpts = {},
 ): string {
   const cur = canonical ? langUrl(canonical, lang) : undefined;
   // hreflang alternates for every language + x-default (English) so search
@@ -415,11 +415,11 @@ main:has(>.cx){max-width:1120px;padding-top:28px}
 function warnColor(color: string): string {
   switch (color.toLowerCase()) {
     case "red":
-      return "#dc2626";
+      return RISK_COLOR.severe;
     case "orange":
-      return "#f97316";
+      return RISK_COLOR.high;
     case "yellow":
-      return "#ca8a04";
+      return RISK_COLOR.moderate;
     default:
       return "#64748b";
   }
@@ -448,7 +448,6 @@ const ICON: Record<string, string> = {
   heart:
     '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>',
   pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
-  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
 };
 ICON.clear = ICON.sun;
 
@@ -471,13 +470,11 @@ const DRIVER_KEY: Record<string, string> = {
 };
 
 /** Wet-bulb survivability read (~31 is the theoretical limit): word + colour per level. */
-const WET_BULB: [string, string][] = [
-  ["safe", "var(--muted)"],
-  ["caution", RISK_COLOR.moderate],
-  ["severe", RISK_COLOR.high],
-  ["dangerous", RISK_COLOR.severe],
-];
-const wetBulb = (wb: number) => WET_BULB[heatLevelOf({ wet_bulb_c: wb })];
+const WET_BULB = ["safe", "caution", "severe", "dangerous"];
+const wetBulb = (wb: number): [string, string] => {
+  const level = heatLevelOf({ wet_bulb_c: wb });
+  return [WET_BULB[level], levelColor(level)];
+};
 
 /** One reading as a hairline-ruled stratum: icon + label, a big figure, a tail,
  *  and an optional inline scale showing where it sits on the good->severe range. */
@@ -515,6 +512,19 @@ const KEY_READING: Record<Persona, { pollutants: string[]; heat?: "wbgt" | "wetb
   outdoor: { pollutants: ["pm25"], heat: "wbgt" },
   heart: { pollutants: ["pm25"], heat: "wetbulb" },
 };
+
+/** The persona toggles (understated text links), the current one marked. */
+function personaLinks(href: (p: Persona) => string, current: Persona, lang: Lang): string {
+  return PERSONAS.map(
+    (p) => `<a${p === current ? ' class="on"' : ""} href="${href(p)}">${esc(t(PERSONA_LABEL[p], lang))}</a>`,
+  ).join("");
+}
+
+/** The editorial headline, "High heat." with the band word coloured, or "All clear." */
+function headHtml(risk: AmbientRisk, lang: Lang): string {
+  const h = headline(risk, (en) => t(en, lang));
+  return h.noun ? `<span class="b">${h.word}</span> ${h.noun}.` : `<span class="b">${h.word}.</span>`;
+}
 
 /** CSS custom properties for a read's colours: --cond (severity, the headline word)
  *  and --tint/--tk (the backdrop: the hazard's hue at the band's strength). */
@@ -719,7 +729,7 @@ function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerData[] {
   // Visibility only surfaces when reduced (hazy/fog); clear skies aren't news.
   if (c.visibility?.meters != null && c.visibility.meters < 5000) {
     const m = c.visibility.meters;
-    const val = m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
+    const val = km(m);
     out.push(
       L(
         "fog",
@@ -792,16 +802,9 @@ export function renderConditionsPage(
 
   // Persona toggles (understated text, not chips).
   const base = lp(`/c/${slug}`, lang);
-  const pills = PERSONAS.map((p) => {
-    const href = p === "everyone" ? base : `${base}?as=${p}`;
-    return `<a${p === risk.persona ? ' class="on"' : ""} href="${href}">${esc(t(PERSONA_LABEL[p], lang))}</a>`;
-  }).join("");
+  const pills = personaLinks((p) => (p === "everyone" ? base : `${base}?as=${p}`), risk.persona, lang);
 
-  // Editorial headline: "High heat." (band coloured) or "All clear." when calm.
-  const head =
-    risk.band === "low"
-      ? `<span class="b">${t("All clear", lang)}.</span>`
-      : `<span class="b">${t(RISK_LABEL[risk.band], lang)}</span> ${t(COND_NOUN[risk.driver] ?? "sky", lang)}.`;
+  const head = headHtml(risk, lang);
 
   // The readings, as strata, in the order they matter now; the Ambient driver's
   // stratum is highlighted (icon + label in the condition colour).
@@ -871,7 +874,7 @@ export function renderConditionsPage(
             description: `Air, heat, rain, dust, UV and official warnings at ${placeName}, India - right now.`,
             url: canonical,
             isAccessibleForFree: true,
-            creator: { "@type": "Organization", name: "mugilu", url: "https://mugilu.live" },
+            creator: { "@type": "Organization", name: "mugilu", url: SITE },
             license: "https://mugilu.live/terms",
             temporalCoverage: c.as_of,
             spatialCoverage: {
@@ -887,7 +890,7 @@ export function renderConditionsPage(
           {
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "mugilu", item: "https://mugilu.live" },
+              { "@type": "ListItem", position: 1, name: "mugilu", item: SITE },
               { "@type": "ListItem", position: 2, name: placeName, item: canonical },
             ],
           },
@@ -898,27 +901,21 @@ export function renderConditionsPage(
     `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
     body + PLACE_RECORDER + FRESHEN + (alertsKey ? `<script>${ALERTS_JS}</script>` : ""),
     css,
-    desc,
-    canonical,
-    dataset,
-    canonical ? `${canonical}.png` : HOME_OG,
-    undefined,
-    lang,
+    { desc, canonical, jsonLd: dataset, ogImage: canonical ? `${canonical}.png` : HOME_OG, lang },
   );
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun". The time travels on embeds/PNGs. */
+const IST_HM = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+const IST_DM = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
 function istTime(iso: string): string {
-  return (
-    new Date(iso).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }) +
-    " IST · " +
-    new Date(iso).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })
-  );
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "" : `${IST_HM.format(d)} IST · ${IST_DM.format(d)}`;
 }
 
 /** A relative-time element: the worker renders the absolute IST time (the no-JS /
@@ -961,14 +958,14 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad
 // ── Wall-display / kiosk view ──────────────────────────────────────────────
 // Full-bleed, glanceable, self-refreshing. `?kiosk` on any /c URL renders this
 // instead of the normal page, reusing the same Ambient + layer data. One fluid
-// layout (vmin-sized, no color-mix so older TV browsers cope) scales 720p to 4K
+// layout (vmin-sized; the one color-mix tint has a plain fallback for older TV browsers) scales 720p to 4K
 // in both landscape and portrait. A venue just opens the URL on a screen and
 // full-screens it; a corner QR sends passers-by to the same place on their phone.
 const KIOSK_CSS = `
-.bar,.foot{display:none}
 html,body{height:100%;overflow:hidden;background:#080d18}
 .k{--ink:#e7ecf3;--muted:#8b97a8;--line:#1c2740;--bg:#080d18;position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
-.k::before{content:"";position:absolute;inset:0;background:radial-gradient(130% 110% at 100% 0%,color-mix(in srgb,var(--tint) calc(var(--tk) * 1.6),transparent),transparent 64%);pointer-events:none}
+.k::before{content:"";position:absolute;inset:0;background:radial-gradient(130% 110% at 100% 0%,var(--tint),transparent 64%);opacity:.3;pointer-events:none}
+@supports (color:color-mix(in srgb,red,blue)){.k::before{background:radial-gradient(130% 110% at 100% 0%,color-mix(in srgb,var(--tint) calc(var(--tk) * 1.6),transparent),transparent 64%);opacity:1}}
 .k>*{position:relative;z-index:1}
 .ktop{display:flex;justify-content:space-between;align-items:flex-start;gap:3vmin}
 .kname{display:block;font-family:var(--serif),Georgia,serif;font-weight:700;font-size:6.2vmin;line-height:1.02}
@@ -1080,10 +1077,7 @@ export function renderKioskPage(
   const slug = `${c.location.lat},${c.location.lon}`;
   const placeName = placeLabel(c); // raw: shell() escapes the title
   const place = esc(placeName);
-  const head =
-    risk.band === "low"
-      ? `<span class="b">${t("All clear", lang)}.</span>`
-      : `<span class="b">${t(RISK_LABEL[risk.band], lang)}</span> ${t(COND_NOUN[risk.driver] ?? "sky", lang)}.`;
+  const head = headHtml(risk, lang);
 
   // Up to four tiles in the order the readings matter now, each with its graphic;
   // every other reading in one quiet line (label and value only).
@@ -1133,18 +1127,14 @@ export function renderKioskPage(
   const desc = `${c.place ?? slug}: a live wall-display of the whole sky over this spot, self-refreshing.`;
   // noBeacon: a kiosk is one persistent display auto-reloading every ~14 min; it would
   // inflate visitor counts and skew Core Web Vitals, so keep the RUM beacon off here.
-  return shell(
-    `${placeName} on a screen: mugilu`,
-    body,
-    css,
+  return shell(`${placeName} on a screen: mugilu`, body, css, {
     desc,
     canonical,
-    undefined,
-    `${canonical}.png`,
-    true,
+    ogImage: `${canonical}.png`,
+    noBeacon: true,
     lang,
-    true,
-  );
+    bare: true,
+  });
 }
 
 const DISPLAY_CSS = `
@@ -1177,10 +1167,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     ["guwahati", "Guwahati"],
   ];
   const asQ = persona !== "everyone" ? `&as=${persona}` : "";
-  const pills = PERSONAS.map((p) => {
-    const href = p === "everyone" ? lp("/display", lang) : lp(`/display?as=${p}`, lang);
-    return `<a${p === persona ? ' class="on"' : ""} href="${href}">${esc(t(PERSONA_LABEL[p], lang))}</a>`;
-  }).join("");
+  const pills = personaLinks((p) => lp(p === "everyone" ? "/display" : `/display?as=${p}`, lang), persona, lang);
   const tiles = popular
     .map(([s, n]) => `<a class="dtile" href="${lp(`/c/${s}?kiosk${asQ}`, lang)}">${esc(n)}</a>`)
     .join("");
@@ -1216,17 +1203,12 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(
-    "Put mugilu on a screen: mugilu",
-    body,
-    ABOUT_CSS + DISPLAY_CSS,
-    "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
-    `${SITE}/display`,
-    undefined,
-    HOME_OG,
-    undefined,
+  return shell("Put mugilu on a screen: mugilu", body, ABOUT_CSS + DISPLAY_CSS, {
+    desc: "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
+    canonical: `${SITE}/display`,
+    ogImage: HOME_OG,
     lang,
-  );
+  });
 }
 
 export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, lang: Lang = "en"): string {
@@ -1234,28 +1216,24 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const say = ambientSummary(risk, (en) => t(en, lang));
   const slug = `${c.location.lat},${c.location.lon}`;
   const place = esc(placeLabel(c));
-  const head =
-    risk.band === "low"
-      ? t("All clear", lang)
-      : `${t(RISK_LABEL[risk.band], lang)} ${t(COND_NOUN[risk.driver] ?? "sky", lang)}`;
+  const h = headline(risk, (en) => t(en, lang));
+  const head = h.noun ? `${h.word} ${h.noun}` : h.word;
 
-  const reads: string[] = [];
+  // The card's readings, each in its own words, in the order every surface uses.
+  const read: Record<string, string> = {};
   if (c.air?.aqi != null)
-    reads.push(
-      `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}</span></div>`,
-    );
+    read.air = `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}</span></div>`;
   if (c.heat?.apparent_c != null)
-    reads.push(`<div class="eread"><b>${round(c.heat.apparent_c)}°</b><span>${t("feels like", lang)}</span></div>`);
+    read.heat = `<div class="eread"><b>${round(c.heat.apparent_c)}°</b><span>${t("feels like", lang)}</span></div>`;
   if (c.uv?.index != null)
-    reads.push(
-      `<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${t(uvWord(c.uv.index), lang)}</span></div>`,
-    );
+    read.sun = `<div class="eread"><b>${Math.round(c.uv.index)}</b><span>UV ${t(uvWord(c.uv.index), lang)}</span></div>`;
   if (c.dust?.dust_ug_m3 != null)
-    reads.push(
-      `<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>${t("dust", lang)} ${t(dustBand(c.dust.dust_ug_m3), lang)}</span></div>`,
-    );
+    read.dust = `<div class="eread"><b>${Math.round(c.dust.dust_ug_m3)}</b><span>${t("dust", lang)} ${t(dustBand(c.dust.dust_ug_m3), lang)}</span></div>`;
   if (c.smoke && smokeLevel(c.smoke) != null)
-    reads.push(`<div class="eread"><b>${c.smoke.count}</b><span>${t("fires within 100 km", lang)}</span></div>`);
+    read.smoke = `<div class="eread"><b>${c.smoke.count}</b><span>${t("fires within 100 km", lang)}</span></div>`;
+  const reads = briefs(c, risk)
+    .map((b) => read[b.key])
+    .filter(Boolean);
 
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
@@ -1425,16 +1403,13 @@ export function renderAbout(lang: Lang = "en"): string {
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(
-    t("About mugilu: the open sky of India", lang),
-    body,
-    ABOUT_CSS,
-    t(
+  return shell(t("About mugilu: the open sky of India", lang), body, ABOUT_CSS, {
+    desc: t(
       "mugilu shows the air, heat, rain, sun, dust and official warnings over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.",
       lang,
     ),
-    `${SITE}/about`,
-    ld({
+    canonical: `${SITE}/about`,
+    jsonLd: ld({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: faqs.map((f) => ({
@@ -1443,10 +1418,9 @@ export function renderAbout(lang: Lang = "en"): string {
         acceptedAnswer: { "@type": "Answer", text: t(f.a, lang) },
       })),
     }),
-    HOME_OG,
-    undefined,
+    ogImage: HOME_OG,
     lang,
-  );
+  });
 }
 
 /** Terms & attribution: the disclaimer in full, plus per-source credit/licence.
@@ -1509,20 +1483,15 @@ export function renderTerms(lang: Lang = "en"): string {
 
   <p class="adisc">${commonsDisc}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
-  return shell(
-    t("mugilu: terms, sources and attribution", lang),
-    body,
-    ABOUT_CSS,
-    t(
+  return shell(t("mugilu: terms, sources and attribution", lang), body, ABOUT_CSS, {
+    desc: t(
       "mugilu's sources, licences and attribution: open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
       lang,
     ),
-    `${SITE}/terms`,
-    undefined,
-    HOME_OG,
-    undefined,
+    canonical: `${SITE}/terms`,
+    ogImage: HOME_OG,
     lang,
-  );
+  });
 }
 
 const PLACES_CSS = `
@@ -1563,7 +1532,7 @@ export function renderPlaces(lang: Lang = "en"): string {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "mugilu", item: "https://mugilu.live" },
+      { "@type": "ListItem", position: 1, name: "mugilu", item: SITE },
       { "@type": "ListItem", position: 2, name: "Places", item: canonical },
     ],
   });
@@ -1574,7 +1543,7 @@ export function renderPlaces(lang: Lang = "en"): string {
     <p class="count">${total} ${t("places across India", lang)}</p>
     ${sections}
   </div>`;
-  return shell(title, body, PLACES_CSS, desc, canonical, crumb, HOME_OG, undefined, lang);
+  return shell(title, body, PLACES_CSS, { desc, canonical, jsonLd: crumb, ogImage: HOME_OG, lang });
 }
 
 /** A real 404 page (the catch-all used to return 200 with a debug string). */
@@ -1588,7 +1557,7 @@ export function renderNotFound(lang: Lang = "en"): string {
   <h1 class="ahero">${t("Not here.", lang)}</h1>
   <p class="alead">${lead}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
-  return shell("Not found: mugilu", body, ABOUT_CSS, DEFAULT_DESC, undefined, undefined, HOME_OG, undefined, lang);
+  return shell("Not found: mugilu", body, ABOUT_CSS, { desc: DEFAULT_DESC, ogImage: HOME_OG, lang });
 }
 
 const METHOD_CSS = `
@@ -1659,20 +1628,15 @@ export function renderMethodology(lang: Lang = "en"): string {
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(
-    t("How mugilu works: the Ambient read explained", lang),
-    body,
-    ABOUT_CSS + METHOD_CSS,
-    t(
+  return shell(t("How mugilu works: the Ambient read explained", lang), body, ABOUT_CSS + METHOD_CSS, {
+    desc: t(
       "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
       lang,
     ),
-    `${SITE}/methodology`,
-    undefined,
-    HOME_OG,
-    undefined,
+    canonical: `${SITE}/methodology`,
+    ogImage: HOME_OG,
     lang,
-  );
+  });
 }
 
 const WLIST_CSS = `
@@ -1710,17 +1674,12 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     <p class="adisc">${disc}</p>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(
-    "Active warnings: mugilu",
-    body,
-    ABOUT_CSS + WLIST_CSS,
-    "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
-    `${SITE}/warnings`,
-    undefined,
-    HOME_OG,
-    undefined,
+  return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS, {
+    desc: "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
+    canonical: `${SITE}/warnings`,
+    ogImage: HOME_OG,
     lang,
-  );
+  });
 }
 
 const HOME_CSS = `
@@ -1880,7 +1839,7 @@ export function renderHome(
     "@type": "WebSite",
     name: "mugilu",
     alternateName: "mugilu: the open sky of India",
-    url: "https://mugilu.live",
+    url: SITE,
     description: DEFAULT_DESC,
     publisher: {
       "@type": "Organization",
@@ -1895,15 +1854,11 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell(
-    t("mugilu: air, heat, rain and warnings over any point in India", lang),
-    body,
-    HOME_CSS,
-    t(DEFAULT_DESC, lang),
-    SITE,
-    site,
-    HOME_OG,
-    undefined,
+  return shell(t("mugilu: air, heat, rain and warnings over any point in India", lang), body, HOME_CSS, {
+    desc: t(DEFAULT_DESC, lang),
+    canonical: SITE,
+    jsonLd: site,
+    ogImage: HOME_OG,
     lang,
-  );
+  });
 }

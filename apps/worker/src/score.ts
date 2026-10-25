@@ -271,6 +271,16 @@ export const COND_NOUN: Record<string, string> = {
   none: "sky",
 };
 
+/** The headline's two parts in the reader's language: the band word ("Severe") and
+ *  the hazard noun ("heat"), or "All clear" with no noun when the read is calm. */
+export function headline(
+  risk: Pick<AmbientRisk, "band" | "driver">,
+  tr: (en: string) => string = (en) => en,
+): { word: string; noun: string | null } {
+  if (risk.band === "low") return { word: tr("All clear"), noun: null };
+  return { word: tr(RISK_LABEL[risk.band]), noun: tr(COND_NOUN[risk.driver] ?? "sky") };
+}
+
 // What each band means in plain language, per dominant hazard, so the score
 // explains itself and never just says "High" with no context.
 export const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {

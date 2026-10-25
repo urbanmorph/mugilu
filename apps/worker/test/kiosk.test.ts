@@ -39,7 +39,7 @@ test("renderKioskPage: full-bleed display with the QR, self-refresh and wake loc
   assert.match(html, /location\.reload/);
   assert.match(html, /class="kload"/); // the blur + spinner loading overlay
   assert.match(html, /Reading the sky/); // creative loading verbs while it fetches
-  assert.match(html, /\.bar,\.foot\{display:none\}/); // no site chrome on a wall display
+  assert.doesNotMatch(html, /<header class="bar"|class="foot"/); // no site chrome on a wall display
   assert.match(html, /Air/);
   assert.match(html, /Heat/);
 });
