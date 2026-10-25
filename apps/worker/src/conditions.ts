@@ -19,6 +19,7 @@ import { fetchLocationAlerts, splitWarnings } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
 import { ambientRisk, ambientSummary, smokeLevel, PERSONA_LABEL } from "./score";
+import { briefs, forPersona } from "./readings";
 import type { Persona } from "./score";
 import { buildAttribution } from "./sources";
 
@@ -184,6 +185,12 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     `# Conditions at ${c.location.lat}, ${c.location.lon}`,
     "",
     `**Ambient for ${PERSONA_LABEL[persona]}: ${risk.band}.** ${[say.meaning, say.action].filter(Boolean).join(" ")}`,
+    ...(say.also ? ["", say.also] : []),
+    "",
+    // The order every mugilu surface shows them in: the headline hazard, then by risk.
+    `In order of risk: ${briefs(c, risk)
+      .map((b) => `${b.label.toLowerCase()} ${b.key === "smoke" ? `${b.value} fires` : b.value}`)
+      .join(", ")}.`,
     "",
     `*As of ${c.as_of}.*`,
     "",
@@ -351,6 +358,12 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
       summary: say.meaning,
       persona_action: say.action,
       persona_also: say.also,
+      // Additive in v1: the readings in the order every surface shows them (the
+      // headline hazard, then by risk), and which of them are the persona's own.
+      order: briefs(c, risk).map((b) => b.key),
+      persona_layers: briefs(c, risk)
+        .map((b) => b.key)
+        .filter((k) => forPersona(k, risk)),
       hazards: risk.hazards.map((h) => ({ hazard: h.hazard.toLowerCase(), level: h.level, risk_band: h.band })),
     },
     attribution: c.attribution,

@@ -82,11 +82,11 @@ A conditions response (the conditions_at structuredContent, or /c/{lat},{lon}.js
 - heat: { temp_c, humidity_pct, apparent_c (feels-like), wet_bulb_c, wbgt_c }
 - heat_vs_normal: { today_max_c, normal_max_c, anomaly_c, notable, date, period, baseline, source } (today's modelled high vs the 1991-2020 ERA5 normal for this time of year here; null where unknown. today_max_c is the model's estimate for the whole local day, so partly forecast early in the day; notable is the unrounded difference reaching 3 °C. Not a heatwave declaration, which only IMD makes)
 - rain, uv, dust, wind, visibility: modelled layers
-- smoke: { kind: observed, count (fires), window_h: 24 } (NASA FIRMS)
+- smoke: { kind: observed, count (fires), frp_sum (MW), nearest_km, radius_km, window_h: 24 } (NASA FIRMS)
 - warnings: official NDMA/IMD alerts at the point
 
 ## ambient (the interpreted read)
-{ risk_band: low|moderate|high|severe, level (0-3), driver (the worst hazard), persona, summary (plain words), persona_also, hazards[] }
+{ risk_band: low|moderate|high|severe, level (0-3), driver (the worst hazard), persona, summary (plain words), persona_action (the persona's own step, or null), persona_also (their other raised trigger, or null), order (layer keys in the order every mugilu surface shows them: the headline hazard, then by risk), persona_layers (the keys in order that are this persona's triggers), hazards[] }
 
 Plus "attribution" and "disclaimer" strings. Always surface them. Live example: https://mugilu.live/c/12.97,77.59.json`,
 
@@ -165,7 +165,7 @@ export function getPrompt(name: string, args: Record<string, unknown>): PromptGe
       return {
         description: `Sky check for ${place || "a place"}`,
         messages: userMsg(
-          `What is the sky doing at ${place} in India right now? Call the conditions_at tool for "${place}", then give a plain-language summary: the Ambient read (the single worst hazard) first, then air, heat and anything notable, and include the attribution and the "informational only" note.`,
+          `What is the sky doing at ${place} in India right now? Call the conditions_at tool for "${place}", then give a plain-language summary: the Ambient read (the single worst hazard) first, then the other readings in the order given (ambient.order), mentioning anything notable, and include the attribution and the "informational only" note.`,
         ),
       };
     case "safe-to-go-out":

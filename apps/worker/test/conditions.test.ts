@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildConditions, pickStation, renderConditionsMarkdown, serializeConditionsV1 } from "../src/conditions";
-import type { NormalizedStation, Snapshot } from "../src/types";
+import type { Conditions, NormalizedStation, Snapshot } from "../src/types";
 import type { HeatVsNormal } from "../src/heatnormals";
 
 test("serializeConditionsV1: a stable, self-describing /c v1 contract", async () => {
@@ -386,4 +386,24 @@ test("serializeConditionsV1: the internal degraded flag never reaches the API", 
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test("serializeConditionsV1 + markdown: the readings in order of risk, the persona's own layers, and the 'also watch' line", () => {
+  const c = {
+    location: { lat: 28.61, lon: 77.21 },
+    as_of: "2026-05-24T08:45:00.000Z",
+    air: { aqi: 140, band: "moderate", pollutants: { pm25: 50 }, station: null, source: "cpcb" },
+    heat: { temp_c: 45, humidity_pct: 20, apparent_c: 48, wet_bulb_c: 26, source: "om" },
+    uv: { index: 9, source: "om" },
+    smoke: { count: 70, frp_sum: 400, nearest_km: 8, radius_km: 100, source: "firms" },
+    attribution: "a",
+    disclaimer: "d",
+  } as unknown as Conditions;
+  const v1 = serializeConditionsV1(c, "asthma") as Record<string, any>;
+  assert.deepEqual(v1.ambient.order, ["heat", "smoke", "air", "sun"]);
+  assert.deepEqual(v1.ambient.persona_layers, ["smoke", "air"]);
+  assert.deepEqual((serializeConditionsV1(c, "everyone") as Record<string, any>).ambient.persona_layers, []);
+  const md = renderConditionsMarkdown(c, "asthma");
+  assert.match(md, /In order of risk: heat 48°, smoke 70 fires, air AQI 140, sun UV 9\./);
+  assert.match(md, /For asthma & lungs, also watch: smoke is severe\./);
 });
