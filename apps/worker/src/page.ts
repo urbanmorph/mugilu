@@ -338,8 +338,9 @@ ${canonical ? langSwitcher(canonical, lang) : ""}
 </html>`;
 }
 
-// The conditions page as an "atmospheric almanac": a sky-tinted backdrop that
-// takes its hue from the live dominant hazard (--cond, set per request), an
+// The conditions page as an "atmospheric almanac": a sky-tinted backdrop whose hue
+// names the dominant hazard and whose strength its band (--tint/--tk from tintOf;
+// clear-sky blue when calm), the headline word in the severity colour (--cond), an
 // editorial serif Ambient statement, and the readings as hairline-ruled strata
 // (not cards). Inline-SVG line icons, currentColor so the driver layer glows.
 const CONDITIONS_CSS = `
@@ -1494,7 +1495,7 @@ export function renderTerms(lang: Lang = "en"): string {
   <h2 class="ah">${t("Sources &amp; credit", lang)}</h2>
   <ul class="alist on">
     <li>${icon("air")}<span class="t"><b>${t("Air", lang)}</b>: ${t("CPCB (Govt. of India), Airnet (CSTEP), Aurassure, and Google AirView+, via the {oaq} broker.", lang).replace("{oaq}", `<a href="https://oaq.notf.in">OAQ</a>`)}</span></li>
-    <li>${icon("heat")}<span class="t"><b>${t("Heat, rain, UV, dust, wind", lang)}</b>: ${t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", `<a href="https://open-meteo.com">Open-Meteo</a>`)}</span></li>
+    <li>${icon("heat")}<span class="t"><b>${t("Modelled air, heat, rain, UV, dust, wind", lang)}</b>: ${t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", `<a href="https://open-meteo.com">Open-Meteo</a>`)}</span></li>
     <li>${icon("heat")}<span class="t"><b>${t("Heat compared with normal", lang)}</b>: ${t("1991-2020 normals from {era5} reanalysis (Copernicus Climate Change Service), via Open-Meteo.", lang).replace("{era5}", `<a href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels">ERA5</a>`)}</span></li>
     <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: ${t("NDMA / IMD via SACHET.", lang)}</span></li>
     <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>

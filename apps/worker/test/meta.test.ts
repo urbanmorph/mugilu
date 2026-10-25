@@ -76,3 +76,20 @@ test("sitemap.xml: hreflang alternates pair the en/hi/kn versions (+ x-default)"
   // a deep page keeps its path under the language prefix
   assert.match(xml, /<xhtml:link rel="alternate" hreflang="hi" href="https:\/\/mugilu\.live\/hi\/about"\/>/);
 });
+
+test("llmsTxt: an H1 and Markdown links (what the llms.txt convention and Lighthouse expect), covering every surface", () => {
+  const s = llmsTxt("https://mugilu.live");
+  assert.match(s, /^# /);
+  assert.ok([...s.matchAll(/\[[^\]]+\]\(https:\/\/mugilu\.live[^)]*\)/g)].length >= 10);
+  for (const re of [
+    /\.png/,
+    /\/embed\//,
+    /\/display/,
+    /\/hi\b/,
+    /\/kn\b/,
+    /heat_vs_normal/,
+    /"order"/,
+    /persona_layers/,
+  ])
+    assert.match(s, re);
+});

@@ -206,9 +206,9 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "स्रोत और श्रेय",
     kn: "ಮೂಲಗಳು ಮತ್ತು ಮನ್ನಣೆ",
   },
-  "Heat, rain, UV, dust, wind": {
-    hi: "गर्मी, बारिश, UV, धूल, हवा",
-    kn: "ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು, ಗಾಳಿ",
+  "Modelled air, heat, rain, UV, dust, wind": {
+    hi: "अनुमानित वायु गुणवत्ता, गर्मी, बारिश, UV, धूल, हवा",
+    kn: "ಅಂದಾಜು ವಾಯುಗುಣ, ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು, ಗಾಳಿ",
   },
   "Official warnings": {
     hi: "आधिकारिक चेतावनियाँ",
