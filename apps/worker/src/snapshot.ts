@@ -2,6 +2,7 @@ import type { Env } from "./index";
 import type { Snapshot, ConditionsSnapshot, NormalizedStation } from "./types";
 import type { WarningsSnapshot } from "./sachet";
 import type { FiresSnapshot } from "./firms";
+import type { CyclonesSnapshot } from "./cyclones";
 
 // One place for the R2-backed snapshot reads, so the key strings + casts live
 // once (the web routes and the MCP tools share these).
@@ -91,6 +92,9 @@ export async function loadSnapshot(env: Env): Promise<Snapshot | null> {
 export const GRID_KEY = "data/conditions.json";
 export const FIRES_KEY = "data/fires.json";
 export const WARNINGS_KEY = "data/warnings.json";
+export const CYCLONES_KEY = "data/cyclones.json";
 export const loadGrid = (env: Env) => loadRecent<ConditionsSnapshot>(env, GRID_KEY, 12 * 3600_000);
 export const loadFires = (env: Env) => loadRecent<FiresSnapshot>(env, FIRES_KEY, 6 * 3600_000);
+// JTWC is polled hourly; past half a day the runs have been failing and a storm moves on.
+export const loadCyclones = (env: Env) => loadRecent<CyclonesSnapshot>(env, CYCLONES_KEY, 12 * 3600_000);
 export const loadWarningsSnapshot = (env: Env) => loadJson<WarningsSnapshot>(env, WARNINGS_KEY);

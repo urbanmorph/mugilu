@@ -32,6 +32,8 @@ import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
+import { collectCyclones } from "./cyclones";
+import { composeMap } from "./indiamap";
 import { composeHighlights } from "./highlights";
 import {
   topPlaces,
@@ -240,15 +242,16 @@ export default {
     if (url.pathname === "/") {
       const notfound = url.searchParams.get("notfound") ?? undefined;
       const home = async () => {
-        const [hl, popular] = await Promise.all([
+        const [hl, popular, map] = await Promise.all([
           composeHighlights(env),
           topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
+          composeMap(env),
         ]);
         // Only show the "India now" hero when there's something in it.
         const highlights =
           hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
         const res = cachedResponse(
-          renderHome(notfound, highlights, { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular }, lang),
+          renderHome(notfound, highlights, { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map }, lang),
           "text/html; charset=utf-8",
         );
         // A missing grid or air snapshot leaves the hero partial: served, not stored.
@@ -646,6 +649,12 @@ export default {
             (e) => console.error(`[alerts] failed: ${reason(e)}`),
           ),
         );
+      ctx.waitUntil(
+        collectCyclones(env).then(
+          (r) => console.log(`[cyclones] ${r.systems.length} in the North Indian Ocean`),
+          (e) => console.error(`[cyclones] failed: ${reason(e)}`),
+        ),
+      );
       ctx.waitUntil(
         collectFires(env).then(
           (r) => console.log(`[firms] ${r.count} detections`),

@@ -49,9 +49,11 @@ test("renderHome: near-me is progressive enhancement (geolocation)", () => {
   assert.match(renderHome(), /geolocation/);
 });
 
-test("renderHome: search sets expectations (a sky lookup, not a map) + multilingual", () => {
+test("renderHome: search sets expectations (a sky lookup) + multilingual", () => {
   const html = renderHome();
-  assert.match(html, /not a map/i); // dispels the Google-Maps assumption
+  // What a search gives: the sky at that place. ("This is not a map" went when the
+  // home page gained its map of India.)
+  assert.match(html, /You then see <b>its sky<\/b>/);
   assert.match(html, /lat,lon/); // placeholder signals coordinates work
   assert.match(html, /any language/i); // invites native-script input
   assert.match(html, /[ಀ-೿]/); // a Kannada example is shown (ಬೆಂಗಳೂರು)

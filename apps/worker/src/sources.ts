@@ -33,6 +33,7 @@ export const SOURCES: { layer: string; text: string; names: string[] }[] = [
   },
   { layer: "Official warnings", text: "NDMA / IMD (SACHET)", names: ["NDMA", "IMD", "SACHET"] },
   { layer: "Fire / crop-burn smoke", text: "NASA FIRMS (VIIRS)", names: ["NASA FIRMS"] },
+  { layer: "Cyclone tracks", text: "JTWC (US Navy and Air Force; public domain)", names: ["JTWC"] },
   {
     layer: "Geography & place names",
     text: "place search from OpenStreetMap contributors (ODbL) and GeoNames (CC-BY 4.0, via the Open-Meteo geocoder); admin boundaries from bharatlas",
@@ -57,6 +58,7 @@ const SOURCE_CREDIT: Record<string, string> = {
   era5: "ERA5 (Copernicus C3S) normals",
   sachet: "NDMA / IMD (SACHET)",
   firms: "NASA FIRMS",
+  jtwc: "JTWC",
 };
 
 /** Build a deduped, ready-to-paste attribution line from contributing sources. */
