@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { airDots, LAND_PATH, mapCells, renderIndiaMap } from "../src/indiamap";
+import { airDots, LAND_PATH, mapCells, renderIndiaMap, STATE_PATH } from "../src/indiamap";
 import { renderHome } from "../src/page";
 import type { ConditionsPoint, NormalizedStation } from "../src/types";
 import type { Cyclone } from "../src/cyclones";
@@ -60,6 +60,15 @@ test("LAND_PATH: India's outline as one closed path", () => {
   assert.match(LAND_PATH, /^M[\d.]+ [\d.]+L/);
   assert.ok(LAND_PATH.split("Z").length > 5, "mainland and islands");
   assert.ok(LAND_PATH.length < 30_000, `${LAND_PATH.length} chars`);
+});
+
+test("STATE_PATH: the borders between states, open lines, light enough for the home page", () => {
+  assert.match(STATE_PATH, /^M[\d.]+ [\d.]+L/);
+  assert.ok(!STATE_PATH.includes("Z"), "borders are lines, not closed rings");
+  assert.ok(STATE_PATH.split("M").length > 60, "every border between two states");
+  assert.ok(STATE_PATH.length < 16_000, `${STATE_PATH.length} chars`);
+  const html = renderIndiaMap({ cells: [], dots: [], cyclones: [] });
+  assert.match(html, /<path class="mstates" d="M/); // drawn on every layer
 });
 
 const CYCLONE: Cyclone = {

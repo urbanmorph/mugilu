@@ -14,6 +14,7 @@ import { esc } from "./html";
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => (m.get(k) ?? m.set(k, []).get(k)!).push(v);
 import { lp, t, type Lang } from "./i18n";
 import outline from "../data/india.json";
+import states from "../data/state-lines.json";
 
 // The home page's map of India now: one-degree squares (about 100 km), each
 // coloured by the worst read in it, scored by the same ambientRisk as a place's
@@ -171,6 +172,18 @@ export const LAND_PATH = (outline as unknown as { polygons: Ring[][] }).polygons
   })
   .join("");
 
+/** The borders between states and Union Territories (LGD, scripts/build_state_lines.py),
+ *  as open lines in the map's pixels: drawn on every layer so a square can be placed. */
+export const STATE_PATH = (states as unknown as { lines: [number, number][][] }).lines
+  .map((line) => {
+    const pts = simplify(
+      line.map(([lon, lat]) => [px(lon), py(lat)] as [number, number]),
+      0.9,
+    );
+    return "M" + pts.map(([x, y]) => `${r1(x)} ${r1(y)}`).join("L");
+  })
+  .join("");
+
 /** The squares of one layer, one path per colour. */
 function cellPaths(cells: MapCell[], level: (c: MapCell) => number): string {
   const by = new Map<number, string[]>();
@@ -287,6 +300,7 @@ export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: stri
 <defs><path id="mland" d="${LAND_PATH}"/><clipPath id="mclip"><use href="#mland"/></clipPath></defs>
 <use href="#mland" class="mland"/>
 <g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, (c) => c.worst)}</g><g class="L Lh">${cellPaths(m.cells, (c) => c.heat)}</g></g>
+<path class="mstates" d="${STATE_PATH}"/>
 <use href="#mland" class="mline"/>
 <g class="L La">${dots}</g>
 ${cys.map(cycloneGlyph).join("")}
@@ -318,6 +332,7 @@ export const MAP_CSS = `
 #ml-w:focus-visible~.mseg [for=ml-w],#ml-a:focus-visible~.mseg [for=ml-a],#ml-h:focus-visible~.mseg [for=ml-h]{outline:2px solid var(--sky);outline-offset:-2px}
 .msvg{display:block;width:100%;max-width:440px;height:auto;cursor:pointer}
 .mland{fill:var(--mland)}.mline{fill:none;stroke:var(--muted);stroke-width:.8;stroke-linejoin:round}
+.mstates{fill:none;stroke:var(--ink);stroke-opacity:.6;stroke-width:.75;stroke-linejoin:round;stroke-linecap:round}
 .mcells path{stroke:var(--card);stroke-width:.6}
 .imap .L,.imap .mlg,.imap .mnote.Lw,.imap .mnote.La,.imap .mnote.Lh{display:none}
 #ml-w:checked~.mnote.Lw,#ml-a:checked~.mnote.La,#ml-h:checked~.mnote.Lh{display:block}
