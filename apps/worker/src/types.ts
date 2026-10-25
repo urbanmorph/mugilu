@@ -196,7 +196,7 @@ export interface Conditions {
 }
 
 /** The upstreams mugilu depends on, for the err:upstream:<source> counters (a fixed set). */
-export type UpstreamSource = "oaq" | "openmeteo" | "sachet" | "firms" | "r2";
+export type UpstreamSource = "oaq" | "openmeteo" | "sachet" | "firms" | "jtwc" | "r2";
 
 // ── National conditions grid (the de-bias) ──────────────────────────────────
 // Heat/rain/UV/dust come from a model that covers everywhere, so they're sampled

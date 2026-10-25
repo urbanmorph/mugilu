@@ -383,10 +383,10 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "वायु",
     kn: "ವಾಯುಗುಣ",
   },
-  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.":
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; cyclone tracks from JTWC; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.":
     {
-      hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है, और आज की गर्मी की तुलना के लिए 1991-2020 के सामान्य तापमान Open-Meteo के माध्यम से ERA5 पुनः विश्लेषण (Copernicus) से आते हैं; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं; जीवन के खोए वर्ष AQLI विधि से आते हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
-      kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ, ಮತ್ತು ಇಂದಿನ ಬಿಸಿಲನ್ನು ಹೋಲಿಸಲು ಬಳಸುವ 1991-2020ರ ಸಾಮಾನ್ಯ ತಾಪಮಾನಗಳು Open-Meteo ಮೂಲಕ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) ಬರುತ್ತವೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ; ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳು AQLI ವಿಧಾನದಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
+      hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है, और आज की गर्मी की तुलना के लिए 1991-2020 के सामान्य तापमान Open-Meteo के माध्यम से ERA5 पुनः विश्लेषण (Copernicus) से आते हैं; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; चक्रवात के मार्ग JTWC से आते हैं; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं; जीवन के खोए वर्ष AQLI विधि से आते हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
+      kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ, ಮತ್ತು ಇಂದಿನ ಬಿಸಿಲನ್ನು ಹೋಲಿಸಲು ಬಳಸುವ 1991-2020ರ ಸಾಮಾನ್ಯ ತಾಪಮಾನಗಳು Open-Meteo ಮೂಲಕ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) ಬರುತ್ತವೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಚಂಡಮಾರುತದ ಮಾರ್ಗಗಳು JTWCಯಿಂದ ಬರುತ್ತವೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ; ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳು AQLI ವಿಧಾನದಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
     },
   "The air is dangerous. Stay indoors if possible.": {
     hi: "वायु गुणवत्ता खतरनाक है। यदि आप कर सकते हैं तो घर के अंदर रहें।",
@@ -617,10 +617,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "अभी कोई सक्रिय राष्ट्रीय चेतावनी नहीं है।",
     kn: "ಪ್ರಸ್ತುತ ಯಾವುದೇ ಸಕ್ರಿಯ ರಾಷ್ಟ್ರೀಯ ಎಚ್ಚರಿಕೆಗಳಿಲ್ಲ.",
   },
-  "This is not a map.": {
-    hi: "यह कोई मानचित्र नहीं है।",
-    kn: "ಇದು ನಕ್ಷೆಯಲ್ಲ.",
-  },
   "Not here.": {
     hi: "यह पृष्ठ नहीं मिला",
     kn: "ಈ ಪುಟ ಕಂಡುಬಂದಿಲ್ಲ.",
@@ -672,6 +668,95 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   Rain: {
     hi: "बारिश",
     kn: "ಮಳೆ",
+  },
+  // The home map of India and its cyclone card (indiamap.ts). Drafts: native review pending.
+  Worst: {
+    hi: "सबसे खराब",
+    kn: "ಅತ್ಯಂತ ಕೆಟ್ಟ",
+  },
+  "Map of India. Each square has the colour of its worst reading now.": {
+    hi: "भारत का मानचित्र। हर वर्ग का रंग अभी उसकी सबसे खराब रीडिंग बताता है।",
+    kn: "ಭಾರತದ ನಕ್ಷೆ. ಪ್ರತಿ ಚೌಕದ ಬಣ್ಣವು ಈಗ ಅದರ ಅತ್ಯಂತ ಕೆಟ್ಟ ಮಾಪನವನ್ನು ತೋರಿಸುತ್ತದೆ.",
+  },
+  "Each square shows the worst reading in it, about 100 km across. Select a square to see that place.": {
+    hi: "हर वर्ग अपनी सबसे खराब रीडिंग दिखाता है; एक वर्ग लगभग 100 किमी का है। उस जगह को देखने के लिए वर्ग चुनें।",
+    kn: "ಪ್ರತಿ ಚೌಕವು ಅದರೊಳಗಿನ ಅತ್ಯಂತ ಕೆಟ್ಟ ಮಾಪನವನ್ನು ತೋರಿಸುತ್ತದೆ; ಒಂದು ಚೌಕ ಸುಮಾರು 100 ಕಿ.ಮೀ. ಆ ಸ್ಥಳವನ್ನು ನೋಡಲು ಚೌಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+  },
+  "Each dot is an air station, with the colour of its reading.": {
+    hi: "हर बिंदु एक वायु केंद्र है, उसका रंग उसकी रीडिंग बताता है।",
+    kn: "ಪ್ರತಿ ಚುಕ್ಕೆ ಒಂದು ವಾಯು ಕೇಂದ್ರ; ಅದರ ಬಣ್ಣ ಅದರ ಮಾಪನವನ್ನು ತೋರಿಸುತ್ತದೆ.",
+  },
+  "Heat is modelled for each district.": {
+    hi: "गर्मी हर ज़िले के लिए मॉडल से आँकी गई है।",
+    kn: "ಶಾಖವನ್ನು ಪ್ರತಿ ಜಿಲ್ಲೆಗೆ ಮಾದರಿಯಿಂದ ಅಂದಾಜಿಸಲಾಗಿದೆ.",
+  },
+  "Official warnings are not on this map. Look up a place to see them.": {
+    hi: "आधिकारिक चेतावनियाँ इस मानचित्र पर नहीं हैं। उन्हें देखने के लिए कोई जगह खोजें।",
+    kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಈ ನಕ್ಷೆಯಲ್ಲಿ ಇಲ್ಲ. ಅವನ್ನು ನೋಡಲು ಒಂದು ಸ್ಥಳವನ್ನು ಹುಡುಕಿ.",
+  },
+  "A cyclone can form in the Bay of Bengal.": {
+    hi: "बंगाल की खाड़ी में चक्रवात बन सकता है।",
+    kn: "ಬಂಗಾಳ ಕೊಲ್ಲಿಯಲ್ಲಿ ಚಂಡಮಾರುತ ರೂಪುಗೊಳ್ಳಬಹುದು.",
+  },
+  "A cyclone can form in the Arabian Sea.": {
+    hi: "अरब सागर में चक्रवात बन सकता है।",
+    kn: "ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿ ಚಂಡಮಾರುತ ರೂಪುಗೊಳ್ಳಬಹುದು.",
+  },
+  "A cyclone is in the Bay of Bengal.": {
+    hi: "बंगाल की खाड़ी में एक चक्रवात है।",
+    kn: "ಬಂಗಾಳ ಕೊಲ್ಲಿಯಲ್ಲಿ ಒಂದು ಚಂಡಮಾರುತವಿದೆ.",
+  },
+  "A cyclone is in the Arabian Sea.": {
+    hi: "अरब सागर में एक चक्रवात है।",
+    kn: "ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿ ಒಂದು ಚಂಡಮಾರುತವಿದೆ.",
+  },
+  "Cyclone X is in the Bay of Bengal.": {
+    hi: "चक्रवात X बंगाल की खाड़ी में है।",
+    kn: "X ಚಂಡಮಾರುತ ಬಂಗಾಳ ಕೊಲ್ಲಿಯಲ್ಲಿದೆ.",
+  },
+  "Cyclone X is in the Arabian Sea.": {
+    hi: "चक्रवात X अरब सागर में है।",
+    kn: "X ಚಂಡಮಾರುತ ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿದೆ.",
+  },
+  "It moves north.": {
+    hi: "यह उत्तर की ओर बढ़ रहा है।",
+    kn: "ಇದು ಉತ್ತರದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "It moves north-east.": {
+    hi: "यह उत्तर-पूर्व की ओर बढ़ रहा है।",
+    kn: "ಇದು ಈಶಾನ್ಯದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "It moves east.": {
+    hi: "यह पूर्व की ओर बढ़ रहा है।",
+    kn: "ಇದು ಪೂರ್ವದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "It moves south-east.": {
+    hi: "यह दक्षिण-पूर्व की ओर बढ़ रहा है।",
+    kn: "ಇದು ಆಗ್ನೇಯದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "It moves south.": {
+    hi: "यह दक्षिण की ओर बढ़ रहा है।",
+    kn: "ಇದು ದಕ್ಷಿಣದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "It moves south-west.": {
+    hi: "यह दक्षिण-पश्चिम की ओर बढ़ रहा है।",
+    kn: "ಇದು ನೈಋತ್ಯದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "It moves west.": {
+    hi: "यह पश्चिम की ओर बढ़ रहा है।",
+    kn: "ಇದು ಪಶ್ಚಿಮದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "It moves north-west.": {
+    hi: "यह उत्तर-पश्चिम की ओर बढ़ रहा है।",
+    kn: "ಇದು ವಾಯವ್ಯದ ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ.",
+  },
+  "Track: JTWC (US Navy). For official warnings, follow IMD.": {
+    hi: "मार्ग: JTWC (अमेरिकी नौसेना)। आधिकारिक चेतावनियों के लिए IMD देखें।",
+    kn: "ಮಾರ್ಗ: JTWC (ಅಮೆರಿಕ ನೌಕಾಪಡೆ). ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗೆ IMD ಅನ್ನು ಅನುಸರಿಸಿ.",
+  },
+  "Cyclone tracks": {
+    hi: "चक्रवात के मार्ग",
+    kn: "ಚಂಡಮಾರುತದ ಮಾರ್ಗಗಳು",
   },
   "India now": {
     hi: "अभी पूरे भारत में",
@@ -1001,10 +1086,10 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "mugilu आपके सटीक स्थान पर सबसे खराब खतरे का नाम लेता है और स्पष्ट रूप से बताता है कि क्या करना हैः अस्थमा, वृद्ध वयस्क, बच्चे, बाहरी श्रमिक या हृदय की स्थिति। यह केवल जानकारी के लिए है, चिकित्सा या सुरक्षा सलाह के लिए नहीं; आधिकारिक चेतावनियों के लिए, NDMA और IMD से परामर्श करें।",
       kn: "mugilu ನಿಮ್ಮ ನಿಖರವಾದ ಸ್ಥಳದ ಮೇಲೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸಿ, ಏನು ಮಾಡಬೇಕು ಎಂಬುದನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳುತ್ತಾನೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ: ಆಸ್ತಮಾ, ಹಿರಿಯ ವಯಸ್ಕರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು ಅಥವಾ ಹೃದಯ ಸ್ಥಿತಿ. ಇದು ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಗಳಿಗಾಗಿ ಅಲ್ಲ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ.",
     },
-  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.":
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, JTWC for cyclone tracks, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.":
     {
-      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता है। यह दूसरों के काम पर खड़ा है और उन्हें श्रेय देता हैः वायु गुणवत्ता के लिए CPCB, Airnet, Aurassure और Google AirView+ (OAQ ब्रोकर के माध्यम से), मौसम के लिए Open-Meteo, गर्मी के सामान्य तापमान के लिए ERA5 पुनः विश्लेषण (Copernicus), चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से), आग के धुएं के लिए NASA FIRMS, स्थानों और भारत के मानचित्र के लिए OpenStreetMap, GeoNames और bharatlas, और जीवन के खोए वर्षों के लिए AQLI विधि। कोड MIT लाइसेंस के तहत खुला है; डेटा प्रत्येक स्रोत के अपने नियमों को बनाए रखता है।",
-      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB, Airnet, Aurassure ಮತ್ತು Google AirView+ (OAQ ಬ್ರೋಕರ್ ಮೂಲಕ), ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಬಿಸಿಲಿನ ಸಾಮಾನ್ಯ ತಾಪಮಾನಕ್ಕಾಗಿ ERA5 ಮರುವಿಶ್ಲೇಷಣೆ (Copernicus), ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ), ಬೆಂಕಿಯ ಹೊಗೆಗಾಗಿ NASA FIRMS, ಸ್ಥಳಗಳು ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ OpenStreetMap, GeoNames ಮತ್ತು bharatlas, ಮತ್ತು ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳಿಗಾಗಿ AQLI ವಿಧಾನ. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ತೆರೆದಿರುತ್ತದೆ; ದತ್ತಾಂಶವು ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ.",
+      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता है। यह दूसरों के काम पर खड़ा है और उन्हें श्रेय देता हैः वायु गुणवत्ता के लिए CPCB, Airnet, Aurassure और Google AirView+ (OAQ ब्रोकर के माध्यम से), मौसम के लिए Open-Meteo, गर्मी के सामान्य तापमान के लिए ERA5 पुनः विश्लेषण (Copernicus), चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से), आग के धुएं के लिए NASA FIRMS, चक्रवात के मार्गों के लिए JTWC, स्थानों और भारत के मानचित्र के लिए OpenStreetMap, GeoNames और bharatlas, और जीवन के खोए वर्षों के लिए AQLI विधि। कोड MIT लाइसेंस के तहत खुला है; डेटा प्रत्येक स्रोत के अपने नियमों को बनाए रखता है।",
+      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB, Airnet, Aurassure ಮತ್ತು Google AirView+ (OAQ ಬ್ರೋಕರ್ ಮೂಲಕ), ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಬಿಸಿಲಿನ ಸಾಮಾನ್ಯ ತಾಪಮಾನಕ್ಕಾಗಿ ERA5 ಮರುವಿಶ್ಲೇಷಣೆ (Copernicus), ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ), ಬೆಂಕಿಯ ಹೊಗೆಗಾಗಿ NASA FIRMS, ಚಂಡಮಾರುತದ ಮಾರ್ಗಗಳಿಗಾಗಿ JTWC, ಸ್ಥಳಗಳು ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ OpenStreetMap, GeoNames ಮತ್ತು bharatlas, ಮತ್ತು ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳಿಗಾಗಿ AQLI ವಿಧಾನ. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ತೆರೆದಿರುತ್ತದೆ; ದತ್ತಾಂಶವು ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ.",
     },
   none: {
     hi: "कोई नहीं",

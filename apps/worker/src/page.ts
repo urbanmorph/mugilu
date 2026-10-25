@@ -32,6 +32,7 @@ import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 import { INSTALL_CSS, INSTALL_JS, installButton, installHead } from "./install";
 import { OFFLINE_NOTE_ID, SW_REGISTER } from "./sw";
 import { FRESHEN } from "./freshen";
+import { MAP_CSS, MAP_JS, renderIndiaMap, type IndiaMap } from "./indiamap";
 import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
 import { heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
 
@@ -120,7 +121,11 @@ const airBand = (b: NormalizedStation["band"]): RiskBand => RISK_BANDS[airLevelO
  *  plus a worst-air row from the hourly snapshot, each row state-qualified (so
  *  the place is recognisable), stamped with its own freshness, and coloured by
  *  its severity; the whole card takes the tint of the worst extreme, like /c. */
-function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?: string }, lang: Lang = "en"): string {
+function renderHero(
+  h: NationalHighlights | undefined,
+  meta?: { gridAsOf?: string; airAsOf?: string; map?: IndiaMap },
+  lang: Lang = "en",
+): string {
   const rows: string[] = [];
   let worst: RiskBand = "low";
   // Place + state names are proper nouns from the gazetteer: kept as-is (English)
@@ -134,7 +139,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
     if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
     return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
   };
-  if (h.hottest) {
+  if (h?.hottest) {
     rows.push(
       row(
         heatBand(h.hottest.apparent_c, h.hottest.wet_bulb_c),
@@ -145,7 +150,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
       ),
     );
   }
-  if (h.dustiest) {
+  if (h?.dustiest) {
     rows.push(
       row(
         dustBand(h.dustiest.dust_ug_m3),
@@ -156,7 +161,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
       ),
     );
   }
-  if (h.worstAir) {
+  if (h?.worstAir) {
     rows.push(
       row(
         airBand(h.worstAir.band),
@@ -167,8 +172,9 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
       ),
     );
   }
-  return rows.length
-    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("India now", lang)}</h2>${rows.join("")}</section>`
+  const map = meta?.map ? renderIndiaMap(meta.map, lang, relTime) : "";
+  return rows.length || map
+    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("India now", lang)}</h2>${map}${rows.join("")}</section>`
     : "";
 }
 
@@ -1306,9 +1312,9 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
 export const SOURCES_FAQ =
-  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.";
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; cyclone tracks from JTWC; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.";
 export const SOURCES_ABOUT =
-  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.";
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, JTWC for cyclone tracks, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.";
 
 /** English prose with each source name from SOURCES in bold. */
 const boldSourceNames = (text: string) =>
@@ -1489,6 +1495,7 @@ export function renderTerms(lang: Lang = "en"): string {
     <li>${icon("heat")}<span class="t"><b>${t("Heat compared with normal", lang)}</b>: ${t("1991-2020 normals from {era5} reanalysis (Copernicus Climate Change Service), via Open-Meteo.", lang).replace("{era5}", `<a href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels">ERA5</a>`)}</span></li>
     <li>${icon("warn")}<span class="t"><b>${t("Official warnings", lang)}</b>: ${t("NDMA / IMD via SACHET.", lang)}</span></li>
     <li>${icon("smoke")}<span class="t"><b>${t("Fire / crop-burn smoke", lang)}</b>: NASA FIRMS (VIIRS).</span></li>
+    <li>${icon("wind")}<span class="t"><b>${t("Cyclone tracks", lang)}</b>: <a href="https://www.metoc.navy.mil/jtwc/jtwc.html">JTWC</a> (US Navy and Air Force).</span></li>
     <li>${icon("pin")}<span class="t"><b>${t("Geography &amp; place names", lang)}</b>: ${t("place search from {osm} contributors (ODbL) and {geonames} (CC-BY 4.0); admin boundaries from {bharatlas}.", lang).replace("{osm}", `<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`).replace("{geonames}", `<a href="https://www.geonames.org">GeoNames</a>`).replace("{bharatlas}", `<a href="https://bharatlas.com">bharatlas</a>`)}</span></li>
     <li>${icon("heart")}<span class="t"><b>${t("Health impact", lang)}</b>: ${t("years of life lost uses the {aqli} methodology (U Chicago EPIC).", lang).replace("{aqli}", `<a href="https://aqli.epic.uchicago.edu">AQLI</a>`)}</span></li>
   </ul>
@@ -1795,7 +1802,12 @@ export const CITIES = [
 export function renderHome(
   notFound?: string,
   highlights?: NationalHighlights,
-  meta?: { gridAsOf?: string; airAsOf?: string; popular?: { label: string; lat: number; lon: number }[] },
+  meta?: {
+    gridAsOf?: string;
+    airAsOf?: string;
+    popular?: { label: string; lat: number; lon: number }[];
+    map?: IndiaMap;
+  },
   lang: Lang = "en",
 ): string {
   // "Popular" = real top-lookups (D1) first, then seed cities to fill (deduped),
@@ -1830,8 +1842,8 @@ export function renderHome(
   const cover = (ic: string, en: string) => `<span>${icon(ic)} ${t(en, lang)}</span>`;
   const shint =
     lang === "en"
-      ? `Type the name of a place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). You then see <b>its sky</b>: air, heat, rain and dust. This is not a map.`
-      : `${t("Type the name of a place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("You then see its sky: air, heat, rain and dust.", lang)} ${t("This is not a map.", lang)}`;
+      ? `Type the name of a place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). You then see <b>its sky</b>: air, heat, rain and dust.`
+      : `${t("Type the name of a place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("You then see its sky: air, heat, rain and dust.", lang)}`;
 
   const body = `
   <h1 class="hero">${t("What is it like outside now?", lang)}</h1>
@@ -1847,7 +1859,7 @@ export function renderHome(
   <p class="shint">${shint}</p>
   <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} ${t("Use my location", lang)}</button>
   ${notice}
-  ${highlights ? renderHero(highlights, meta, lang) : ""}
+  ${renderHero(highlights, meta, lang)}
   <div id="yp" class="yourplaces" hidden></div>
   <p class="cities">${t("Popular:", lang)} ${cityLinks}</p>
   <script>
@@ -1860,6 +1872,7 @@ export function renderHome(
   // Warm the edge + upstreams for a /c URL so the click lands instantly (dedup).
   function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
   ${typeaheadJs("q", "ac", "''")}
+  ${MAP_JS(lang)}
   // Your places: recents + favourites from localStorage (first-party, no login).
   (function(){
     var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;
@@ -1908,7 +1921,7 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell(t("mugilu: air, heat, rain and warnings over any point in India", lang), body, HOME_CSS, {
+  return shell(t("mugilu: air, heat, rain and warnings over any point in India", lang), body, HOME_CSS + MAP_CSS, {
     desc: t(DEFAULT_DESC, lang),
     canonical: SITE,
     jsonLd: site,
