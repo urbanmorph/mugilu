@@ -1278,11 +1278,16 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "iPhone और iPad पर, पहले mugilu को अपनी होम स्क्रीन पर जोड़ें (शेयर करें, फिर होम स्क्रीन में जोड़ें), उसे वहीं से खोलें, और यहाँ अलर्ट चालू करें।",
       kn: "iPhone ಮತ್ತು iPad ನಲ್ಲಿ, ಮೊದಲು mugilu ಅನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ (ಹಂಚಿಕೊಳ್ಳಿ, ನಂತರ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ), ಅಲ್ಲಿಂದ ತೆರೆಯಿರಿ, ಮತ್ತು ಇಲ್ಲಿ ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿ.",
     },
-  "Alerts are opt-in. When you turn on alerts, mugilu keeps this place (to approximately 1 km) and the push address of your browser. mugilu uses them only to send you official NDMA/IMD warnings for this place. mugilu deletes them when you turn off alerts.":
+  // The alerts note, split by state (sentences of the reviewed translation, recombined).
+  "Alerts are opt-in. When you turn on alerts, mugilu keeps this place (to approximately 1 km) and the push address of your browser. mugilu uses them only to send you official NDMA/IMD warnings for this place.":
     {
-      hi: "आपकी मर्ज़ी से। अलर्ट चालू करने पर mugilu यह जगह (लगभग 1 किमी तक) और आपके ब्राउज़र का पुश पता रखता है, केवल इस जगह की आधिकारिक NDMA/IMD चेतावनियाँ भेजने के लिए, और अलर्ट बंद करने पर इन्हें मिटा देता है।",
-      kn: "ನಿಮ್ಮ ಆಯ್ಕೆ. ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿದಾಗ, mugilu ಈ ಸ್ಥಳವನ್ನು (ಸುಮಾರು 1 ಕಿಮೀ ವರೆಗೆ) ಮತ್ತು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಪುಶ್ ವಿಳಾಸವನ್ನು ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ, ಈ ಸ್ಥಳದ ಅಧಿಕೃತ NDMA/IMD ಎಚ್ಚರಿಕೆಗಳನ್ನು ಕಳುಹಿಸಲು ಮಾತ್ರ, ಮತ್ತು ಅಲರ್ಟ್‌ಗಳನ್ನು ಆಫ್ ಮಾಡಿದಾಗ ಅವುಗಳನ್ನು ಅಳಿಸುತ್ತದೆ.",
+      hi: "आपकी मर्ज़ी से। अलर्ट चालू करने पर mugilu यह जगह (लगभग 1 किमी तक) और आपके ब्राउज़र का पुश पता रखता है, केवल इस जगह की आधिकारिक NDMA/IMD चेतावनियाँ भेजने के लिए।",
+      kn: "ನಿಮ್ಮ ಆಯ್ಕೆ. ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿದಾಗ, mugilu ಈ ಸ್ಥಳವನ್ನು (ಸುಮಾರು 1 ಕಿಮೀ ವರೆಗೆ) ಮತ್ತು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಪುಶ್ ವಿಳಾಸವನ್ನು ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ, ಈ ಸ್ಥಳದ ಅಧಿಕೃತ NDMA/IMD ಎಚ್ಚರಿಕೆಗಳನ್ನು ಕಳುಹಿಸಲು ಮಾತ್ರ.",
     },
+  "When you turn off alerts, mugilu deletes this place and the push address of your browser.": {
+    hi: "अलर्ट बंद करने पर mugilu यह जगह और आपके ब्राउज़र का पुश पता मिटा देता है।",
+    kn: "ಅಲರ್ಟ್‌ಗಳನ್ನು ಆಫ್ ಮಾಡಿದಾಗ, mugilu ಈ ಸ್ಥಳ ಮತ್ತು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಪುಶ್ ವಿಳಾಸವನ್ನು ಅಳಿಸುತ್ತದೆ.",
+  },
   "If you turn on alerts for a place, mugilu keeps that place (to about 1 km) and your browser's push address, only to send you official warnings for it, and deletes them when you turn alerts off.":
     {
       hi: "अगर आप किसी जगह के लिए अलर्ट चालू करते हैं, तो mugilu वह जगह (लगभग 1 किमी तक) और आपके ब्राउज़र का पुश पता रखता है, केवल उस जगह की आधिकारिक चेतावनियाँ भेजने के लिए, और अलर्ट बंद करने पर इन्हें मिटा देता है।",
