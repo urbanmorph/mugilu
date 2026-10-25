@@ -1,4 +1,4 @@
-import type { RiskBand } from "./score";
+import type { AmbientRisk, RiskBand } from "./score";
 
 // Single source of truth for the hazard palettes, shared by the HTML pages
 // (page.ts) and the share images (og.ts) so they can never drift apart.
@@ -21,3 +21,29 @@ export const BAND_COLOR: Record<string, string> = {
   severe: "#7f1d1d",
   unknown: "#9ca3af",
 };
+
+// The backdrop's hue says WHAT the sky is doing (one per hazard); its strength says
+// how bad, and the headline word keeps the severity colour above. A calm read is a
+// clear-sky blue. Shared by the /c page, the display, the embed and the image.
+export const HAZARD_TINT: Record<string, string> = {
+  none: "#38bdf8",
+  Heat: "#f97316",
+  Cold: "#60a5fa",
+  Air: "#a8a29e",
+  UV: "#a855f7",
+  Dust: "#d6a35c",
+  Wind: "#2dd4bf",
+  Fog: "#94a3b8",
+  Smoke: "#78716c",
+  Warning: "#ef4444",
+};
+/** How much of the hue goes into the backdrop, per band (percent). */
+export const TINT_STRENGTH: Record<RiskBand, number> = { low: 16, moderate: 20, high: 26, severe: 34 };
+
+/** The backdrop tint for a read: its hazard's hue (clear sky when calm) at its band's strength. */
+export function tintOf(risk: Pick<AmbientRisk, "band" | "driver">): { hue: string; strength: number } {
+  return {
+    hue: HAZARD_TINT[risk.band === "low" ? "none" : risk.driver] ?? HAZARD_TINT.none,
+    strength: TINT_STRENGTH[risk.band],
+  };
+}

@@ -250,6 +250,27 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
   };
 }
 
+// The headline's words: the band ("Severe") and the hazard's noun ("heat"), as in
+// "Severe heat." on every surface (the page, the display, the image).
+export const RISK_LABEL: Record<RiskBand, string> = {
+  low: "Low",
+  moderate: "Moderate",
+  high: "High",
+  severe: "Severe",
+};
+export const COND_NOUN: Record<string, string> = {
+  Air: "air",
+  Heat: "heat",
+  Cold: "cold",
+  UV: "sun",
+  Dust: "dust",
+  Wind: "wind",
+  Fog: "fog",
+  Smoke: "smoke",
+  Warning: "alert",
+  none: "sky",
+};
+
 // What each band means in plain language, per dominant hazard, so the score
 // explains itself and never just says "High" with no context.
 export const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {

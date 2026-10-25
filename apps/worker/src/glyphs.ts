@@ -75,6 +75,16 @@ export function pollutantBars(p: AirPollutants, key: readonly string[] = []): st
     .join("");
 }
 
+/** The one pollutant a small tile shows: the persona's own (first present), else
+ *  the one furthest over its CPCB limit. Null when none has a limit. */
+export function worstPollutant(p: AirPollutants, key: readonly string[] = []): AirPollutants | null {
+  const parts = pollutantParts(p).filter((x) => cpcbLimit(x.key) != null);
+  const pick =
+    parts.find((x) => key.includes(x.key)) ??
+    parts.sort((a, b) => b.value / cpcbLimit(b.key)! - a.value / cpcbLimit(a.key)!)[0];
+  return pick ? ({ [pick.key]: pick.value } as AirPollutants) : null;
+}
+
 /** Years of life lost as blocks, one per year (the last partly filled), at most ten. */
 export function lifeBlocks(years: number): string {
   const n = Math.min(10, Math.ceil(years));
