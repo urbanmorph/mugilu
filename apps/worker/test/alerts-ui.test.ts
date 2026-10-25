@@ -223,3 +223,12 @@ test("on a laptop the box sits in the left rail; on a phone it still comes after
   assert.match(html, /@media\(max-width:959px\)\{\.cx\{display:flex;flex-direction:column\}\.cx-l\{display:contents\}/);
   assert.match(html, /\.cx-r\{order:1\}\.cx \.alerts\{order:2\}\.cx footer\{order:3\}/);
 });
+
+test("the box has no heading repeating the button: the button says what it does", () => {
+  const box = renderAlertsBox(KEY, "en");
+  assert.doesNotMatch(box, /<h2/);
+  assert.match(
+    box,
+    /<section class="alerts" id="alerts" hidden data-key="[^"]+" data-lang="en" aria-label="Send me official warnings for this place">/,
+  );
+});
