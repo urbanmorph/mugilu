@@ -63,3 +63,15 @@ test("conditionsOgHtml: the headline reading's label takes the read's severity c
   assert.match(html, /data-k="air"[^>]*><div style="[^"]*color:#ca8a04;">AIR</);
   assert.doesNotMatch(html, /#f87171/);
 });
+
+test("conditionsOgHtml: text is written as is, never as HTML entities (the renderer would show '&amp;')", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-24T09:00:00Z") });
+  const air = {
+    ...c,
+    heat: { ...c.heat!, apparent_c: 30, wet_bulb_c: 20 },
+    uv: { index: 2, source: "om" },
+  } as Conditions;
+  const html = conditionsOgHtml(air, "asthma");
+  assert.match(html, /For asthma & lungs, treat it as high\./);
+  assert.doesNotMatch(html, /&amp;|&lt;|&gt;/);
+});
