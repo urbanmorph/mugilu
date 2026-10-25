@@ -1,9 +1,9 @@
 import { ImageResponse } from "workers-og";
 import type { NormalizedStation, Conditions } from "./types";
 import type { Persona } from "./score";
-import { conditionsOgHtml } from "./og-html";
+import { conditionsOgHtml, ogText } from "./og-html";
 import { BAND_COLOR } from "./palette";
-import { esc } from "./html";
+
 import { AQI_BAND_LABEL } from "./aqi";
 
 export function renderStationOg(s: NormalizedStation, generatedAt: string): Response {
@@ -29,21 +29,21 @@ export function renderStationOg(s: NormalizedStation, generatedAt: string): Resp
     `<div style="height:100%;width:100%;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:60px 72px;font-family:sans-serif;">` +
     `<div style="display:flex;justify-content:space-between;font-size:26px;color:#94a3b8;">` +
     `<div style="display:flex;">mugilu · India air quality</div>` +
-    `<div style="display:flex;">${esc(updated)}</div>` +
+    `<div style="display:flex;">${ogText(updated)}</div>` +
     `</div>` +
     `<div style="display:flex;flex:1;align-items:center;margin-top:32px;">` +
     `<div style="display:flex;flex-direction:column;margin-right:64px;">` +
-    `<div style="display:flex;font-size:220px;font-weight:800;line-height:0.9;color:#e2e8f0;font-family:monospace;">${esc(aqi)}</div>` +
-    `<div style="display:flex;font-size:32px;color:#94a3b8;margin-top:12px;">AQI (${esc(bandLabel)})</div>` +
+    `<div style="display:flex;font-size:220px;font-weight:800;line-height:0.9;color:#e2e8f0;font-family:monospace;">${ogText(aqi)}</div>` +
+    `<div style="display:flex;font-size:32px;color:#94a3b8;margin-top:12px;">AQI (${ogText(bandLabel)})</div>` +
     `</div>` +
     `<div style="display:flex;flex-direction:column;flex:1;">` +
-    `<div style="display:flex;font-size:56px;font-weight:700;line-height:1.1;color:#e2e8f0;">${esc(name)}</div>` +
-    `<div style="display:flex;font-size:36px;color:#94a3b8;margin-top:8px;">${esc(city)}</div>` +
+    `<div style="display:flex;font-size:56px;font-weight:700;line-height:1.1;color:#e2e8f0;">${ogText(name)}</div>` +
+    `<div style="display:flex;font-size:36px;color:#94a3b8;margin-top:8px;">${ogText(city)}</div>` +
     `<div style="display:flex;width:120px;height:18px;background:${band};border-radius:4px;margin-top:32px;"></div>` +
     `</div>` +
     `</div>` +
     `<div style="display:flex;justify-content:space-between;font-size:22px;color:#64748b;margin-top:32px;">` +
-    `<div style="display:flex;">${esc(s.provider.toUpperCase())} via oaq.notf.in</div>` +
+    `<div style="display:flex;">${ogText(s.provider.toUpperCase())} via oaq.notf.in</div>` +
     `<div style="display:flex;">urbanmorph/mugilu</div>` +
     `</div>` +
     `</div>`;
