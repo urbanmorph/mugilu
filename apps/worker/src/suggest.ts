@@ -94,10 +94,19 @@ export function matchStations(stations: NormalizedStation[], q: string, limit: n
   return out;
 }
 
+/** A station label as people write it: "Deesa-Rijment Rd ,Indira Nagar" -> "Deesa-Rijment Rd, Indira Nagar". */
+export function tidyLabel(label: string): string {
+  return label
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 /**
  * Build typeahead suggestions: a coord query short-circuits; otherwise apply the
- * alias, match our gazetteer (stations first, our unique value), and merge
- * India-ranked geocoded places. Geocoding is injected for testability.
+ * alias, match our stations and the place gazetteer (names that start with the
+ * query first), and fall back to India-ranked geocoded places. Geocoding is
+ * injected for testability.
  */
 export async function buildSuggestions(
   stations: NormalizedStation[],
@@ -122,27 +131,36 @@ export async function buildSuggestions(
   }
 
   const query = applyAlias(q);
-  // Stations first (mugilu's unique value: actual measurement points), then the
-  // OSM gazetteer fills remaining slots (every Indian city/town/locality, instant,
-  // no upstream, multilingual + fuzzy). The flaky geocoder is only paid for when
-  // BOTH find nothing (the rare long tail).
-  const stationHits = matchStations(stations, query, limit);
-  const merged: Suggestion[] = [...stationHits];
-  if (gaz && merged.length < limit) {
-    const seen = new Set(merged.map((s) => s.label.toLowerCase()));
-    for (const g of matchGazetteer(gaz, query, limit)) {
-      if (seen.has(g.name.toLowerCase())) continue;
-      seen.add(g.name.toLowerCase());
-      merged.push({
+  const needle = query.trim().toLowerCase();
+  // Stations (mugilu's own measurement points) and the OSM gazetteer (every Indian
+  // city/town/locality), both instant and in memory. Ranked so the name you are
+  // typing wins: anything whose name (or a station's city) starts with the query
+  // comes first, shortest name first, so "indira" offers Indiranagar before a station
+  // that merely contains it; the rest follow, stations first. The flaky geocoder is
+  // only paid for when both find nothing (the rare long tail).
+  const stationHits = matchStations(stations, query, limit * 2).map((s) => ({ ...s, label: tidyLabel(s.label) }));
+  const placeHits: Suggestion[] = gaz
+    ? matchGazetteer(gaz, query, limit * 2).map((g) => ({
         label: g.name,
         sublabel: [g.state, "IN"].filter(Boolean).join(", ") || undefined,
         lat: g.lat,
         lon: g.lon,
-        kind: "place",
-      });
-      if (merged.length >= limit) break;
-    }
-  }
+        kind: "place" as const,
+      }))
+    : [];
+  const starts = (s: Suggestion) =>
+    s.label.toLowerCase().startsWith(needle) ||
+    (s.kind === "station" && (s.sublabel ?? "").toLowerCase().startsWith(needle));
+  const all = [...stationHits, ...placeHits];
+  const prefix = all
+    .filter(starts)
+    .sort((a, b) => a.label.length - b.label.length || (a.kind === "place" ? -1 : 1) - (b.kind === "place" ? -1 : 1));
+  const rest = all.filter((s) => !starts(s));
+  const seen = new Set<string>();
+  const merged = [...prefix, ...rest].filter((s) => {
+    const k = s.label.toLowerCase();
+    return seen.has(k) ? false : (seen.add(k), true);
+  });
   if (merged.length > 0) return merged.slice(0, limit);
 
   const geo = await geocodeList(query, 5);

@@ -290,7 +290,7 @@ export const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
     severe: "The air is dangerous. Stay indoors if possible.",
   },
   Heat: {
-    moderate: "It is warm. Keep water with you.",
+    moderate: "It is very hot. Keep water with you.",
     high: "The heat is high. Do less, drink water and stay in the shade.",
     severe: "The heat is dangerous. Go to a cool place out of the sun. Drink water.",
   },

@@ -368,10 +368,10 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .who a.on{color:var(--ink);border-color:var(--cond)}
 .strata{margin:1.8rem 0 0;border-top:1px solid var(--hair)}
 .lyr{display:grid;grid-template-columns:5.4rem 1fr;gap:0 1rem;padding:1.05rem .1rem;border-bottom:1px solid var(--hair)}
-.lyr dt{display:flex;align-items:center;align-self:start;gap:.5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
+.lyr dt{display:flex;flex-wrap:wrap;align-items:center;align-self:start;gap:.3rem .5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
 .lyr dt .ic{flex:none}
 .lyr.on dt{color:var(--cond)}
-.lyr .fy{margin-left:.1rem;padding:.1rem .4rem;border-radius:999px;font:600 .66rem/1.3 var(--sans);letter-spacing:.03em;text-transform:none;color:var(--ink);background:color-mix(in srgb,var(--cond) 18%,transparent)}
+.lyr .fy{white-space:nowrap;margin-left:.1rem;padding:.1rem .4rem;border-radius:999px;font:600 .66rem/1.3 var(--sans);letter-spacing:.03em;text-transform:none;color:var(--ink);background:color-mix(in srgb,var(--cond) 18%,transparent)}
 .lyr.quiet .num,.lyr.quiet .q{color:var(--muted)}
 .lyr dd{margin:0;display:flex;flex-direction:column;gap:.16rem;min-width:0}
 .lyr .num{font:700 2.2rem/1 var(--sans);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
@@ -395,7 +395,8 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 main:has(>.cx){max-width:1120px;padding-top:28px}
 .cx{display:grid;grid-template-columns:minmax(0,23rem) minmax(0,1fr);column-gap:3.5rem;align-items:start}
 
-.cx-r .strata{margin-top:.5rem;display:grid;grid-template-columns:1fr 1fr;column-gap:2.2rem;border-top:0}
+.cx-r .strata{margin-top:.5rem;display:block;column-count:2;column-gap:2.2rem;border-top:0}
+.cx-r .lyr{break-inside:avoid}
 .cx-r .lyr{grid-template-columns:1fr;align-content:start;border-top:1px solid var(--hair);border-bottom:0;padding:1rem .1rem 1.15rem}
 .cx-r .lyr dt{padding-top:0;margin-bottom:.5rem}
 .cx footer{grid-column:1/-1}
@@ -524,6 +525,12 @@ function personaLinks(href: (p: Persona) => string, current: Persona, lang: Lang
 function headHtml(risk: AmbientRisk, lang: Lang): string {
   const h = headline(risk, (en) => t(en, lang));
   return h.noun ? `<span class="b">${h.word}</span> ${h.noun}.` : `<span class="b">${h.word}.</span>`;
+}
+
+/** Whether the air reading is older than the page by half an hour or more (stations
+ *  report on their own clock, often an hour or two behind), so it is named apart. */
+function airLag(c: Conditions): boolean {
+  return !!c.air_as_of && Date.parse(c.as_of) - Date.parse(c.air_as_of) >= 30 * 60_000;
 }
 
 /** CSS custom properties for a read's colours: --cond (severity, the headline word)
@@ -832,7 +839,7 @@ export function renderConditionsPage(
     <div class="cx-l">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
-    <p class="when">${t("the sky at this point", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
+    <p class="when">${t("the sky at this point", lang)} · ${t("updated", lang)} ${relTime(c.as_of)}${airLag(c) ? ` · ${t("air reading", lang)} ${relTime(c.air_as_of!)}` : ""}</p>
     <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
     ${c.warnings?.length ? c.warnings.map((w) => renderWarning(w, lang)).join("") : ""}
     ${c.nearby_warnings?.length ? renderNearbyWarnings(c.nearby_warnings, lang) : ""}
@@ -931,7 +938,7 @@ function relTime(iso: string): string {
 // snippet, hidden by a one-liner when the widget is itself being framed.
 const EMBED_CSS = `
 *{box-sizing:border-box}html,body{margin:0}
-:root{--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif}
+:root{--sky:#0284c7;--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937}}
 body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad("8px", "8px")}}
 .card{display:block;text-decoration:none;color:var(--ink);background:linear-gradient(160deg,color-mix(in srgb,var(--tint) var(--tk),var(--card)),var(--card) 72%);border:1px solid color-mix(in srgb,var(--cond) 30%,var(--line));border-radius:16px;padding:16px 18px;max-width:460px;margin:0 auto}
@@ -1102,7 +1109,7 @@ export function renderKioskPage(
   <div class="k" style="${readVars(risk)}">
     <header class="ktop">
       <div><span class="kname">${place}</span><span class="kcoord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</span></div>
-      <div class="kclock"><span id="clk">--:--</span><span class="kago">${t("updated", lang)} <span id="ago" data-t="${c.air_as_of ?? c.as_of}">${t("just now", lang)}</span></span></div>
+      <div class="kclock"><span id="clk">--:--</span><span class="kago">${t("updated", lang)} <span id="ago" data-t="${c.as_of}">${t("just now", lang)}</span></span></div>
     </header>
     ${warn}
     <div class="kbody">
@@ -1147,7 +1154,9 @@ const DISPLAY_CSS = `
 .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(8rem,1fr));gap:.55rem;margin:.1rem 0 .3rem}
 .dtile{padding:.7rem .9rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);text-decoration:none;font-weight:600;text-align:center}
 .dtile:hover{border-color:var(--ink)}
-.dhow{margin:.1rem 0 .5rem 1.1rem}.dhow li{margin:.35rem 0;line-height:1.5}`;
+.dhow{margin:.1rem 0 .5rem 1.1rem}.dhow li{margin:.35rem 0;line-height:1.5}
+.dprev{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#080d18;margin:.4rem 0 1.4rem}
+.dprev iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}`;
 
 // The "put it on a screen" builder: pick a place (+ who it's for), open the
 // self-refreshing kiosk view. Search routes through /go?kiosk=1 (zero JS).
@@ -1181,16 +1190,21 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     <h1 class="ahero">${heading}</h1>
     <p class="alead">${t("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.", lang)}</p>
 
+    <div class="dprev" aria-hidden="true"><iframe src="${esc(lp(`/c/bengaluru?kiosk${asQ}`, lang))}" title="${esc(t("Put mugilu on a screen.", lang))}" tabindex="-1" loading="lazy"></iframe></div>
+
     <p class="ah">${icon("users")}<span>${t("Weight it for who is nearby", lang)}</span></p>
     <nav class="dpers" aria-label="Persona">${pills}</nav>
 
     <p class="ah">${icon("pin")}<span>${t("Pick a place", lang)}</span></p>
+    <div class="acwrap">
     <form class="dsearch" action="${lp("/go", lang)}" method="get">
       <input type="hidden" name="kiosk" value="1">
       ${persona !== "everyone" ? `<input type="hidden" name="as" value="${persona}">` : ""}
-      <input name="q" placeholder="${esc(t("Any place in India", lang))}" autocomplete="off" autocapitalize="off">
+      <input id="dq" name="q" placeholder="${esc(t("Any place in India", lang))}" autocomplete="off" autocapitalize="off" aria-label="${esc(t("Any place in India", lang))}">
       <button type="submit">${t("Open display", lang)}</button>
     </form>
+    <ul id="dac" class="ac" role="listbox"></ul>
+    </div>
     <div class="dgrid">${tiles}</div>
 
     <p class="ah">${icon("layers")}<span>${t("How it runs", lang)}</span></p>
@@ -1202,8 +1216,10 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     </ol>
     <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
-  </article>`;
-  return shell("Put mugilu on a screen: mugilu", body, ABOUT_CSS + DISPLAY_CSS, {
+  </article>
+  <script>var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};${typeaheadJs("dq", "dac", `'?kiosk'+${JSON.stringify(asQ)}`)}
+  (function(){var b=document.querySelector('.dprev'),f=b&&b.querySelector('iframe');if(!f)return;function fit(){f.style.transform='scale('+b.clientWidth/1280+')';}fit();addEventListener('resize',fit);})();</script>`;
+  return shell("Put mugilu on a screen: mugilu", body, ABOUT_CSS + DISPLAY_CSS + AC_CSS, {
     desc: "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
@@ -1647,20 +1663,45 @@ const WLIST_CSS = `
 .whead{font-size:1.02rem;line-height:1.4;font-weight:600;margin:0 0 .3rem}
 .wmeta{color:var(--muted);font-size:.82rem}.wmeta a{color:var(--sky)}
 .wempty{color:var(--muted);font-size:1.05rem;margin:1.2rem 0}
+.wsec{margin:0 0 1.4rem}
+.wgrp{display:flex;align-items:center;gap:.5rem;font:700 1rem/1.3 var(--sans);margin:1.6rem 0 .2rem}
+.wgrp .wn{font:600 .72rem/1 var(--sans);color:var(--muted);background:var(--line);border-radius:999px;padding:.2rem .5rem}
 `;
 
 /** The national active-warnings list: surfaces the SACHET feed mugilu polls
  *  and archives, so the warning "moat" is readable, not just point-queried on /c. */
+/** The issuing office from a SACHET issuer field: "controlroom@ndma.gov.in (IMD
+ *  Chennai)" -> "IMD Chennai"; the control-room address is the same on every alert. */
+export function issuerName(issuer: string): string {
+  const named = issuer.match(/\(([^)]+)\)\s*$/)?.[1];
+  return (named ?? issuer.replace(/\S+@\S+/g, "")).trim() || "NDMA";
+}
+
 export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "en"): string {
-  const items =
-    snap && snap.alerts.length
-      ? `<ul class="wlist">${snap.alerts
-          .map(
-            (a) =>
-              `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div><div class="wmeta">${esc(a.issuer || "")}${a.sent ? ` · ${esc(a.sent)}` : ""}${isHttpUrl(a.link) ? ` · <a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""}</div></li>`,
-          )
-          .join("")}</ul>`
-      : `<p class="wempty">${t("No active national alerts right now.", lang)}</p>`;
+  // Grouped by issuing office (a state SDMA or an IMD centre), the office with the
+  // newest alert first, and newest first within it; times in IST like every page.
+  const when = (sent: string) => Date.parse(sent) || 0;
+  const groups = new Map<string, WarningsSnapshot["alerts"]>();
+  for (const a of [...(snap?.alerts ?? [])].sort((x, y) => when(y.sent) - when(x.sent))) {
+    const k = issuerName(a.issuer || "");
+    groups.set(k, [...(groups.get(k) ?? []), a]);
+  }
+  const items = groups.size
+    ? [...groups]
+        .map(
+          ([name, list]) =>
+            `<section class="wsec"><h2 class="wgrp">${esc(name)}<span class="wn">${list.length}</span></h2><ul class="wlist">${list
+              .map((a) => {
+                const at = when(a.sent) ? istTime(new Date(when(a.sent)).toISOString()) : "";
+                const meta = [at && esc(at), isHttpUrl(a.link) ? `<a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""]
+                  .filter(Boolean)
+                  .join(" · ");
+                return `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div>${meta ? `<div class="wmeta">${meta}</div>` : ""}</li>`;
+              })
+              .join("")}</ul></section>`,
+        )
+        .join("")
+    : `<p class="wempty">${t("No active national alerts right now.", lang)}</p>`;
   const disc =
     lang === "en"
       ? "Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD directly. mugilu mirrors the SACHET feed and keeps an archive of every alert."
@@ -1668,7 +1709,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
   const body = `
   <article class="ax">
     <h1 class="ahero">${t("Active warnings", lang)}</h1>
-    <p class="alead">${snap ? snap.count : 0} ${t("official NDMA / IMD alerts across India, right now.", lang)}</p>
+    <p class="alead">${t("The latest {n} official NDMA / IMD alerts across India.", lang).replace("{n}", String(snap?.alerts.length ?? 0))}</p>
     <p class="wgen">${snap ? `${t("as of X", lang).replace("X", esc(istTime(snap.generated_at)))} · via SACHET` : ""}</p>
     ${items}
     <p class="adisc">${disc}</p>
@@ -1682,6 +1723,34 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
   });
 }
 
+/** The suggestion list's style (home and the display setup page). */
+const AC_CSS = `.acwrap{position:relative}
+.ac{list-style:none;margin:4px 0 0;padding:4px;position:absolute;left:0;right:0;z-index:9;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.ac:empty{display:none}
+.ac li{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.95rem}
+.ac li span{color:var(--muted);font-size:.85rem}
+.ac li.on,.ac li:hover{background:var(--bg)}
+`;
+
+/** Place suggestions as you type, for the input `inputId` and list `listId`: arrows
+ *  and Enter pick one, which opens its /c page with `suffix` (a JS expression)
+ *  appended. Needs `LP` (the language prefix) in scope; warms the page through `pf`
+ *  when the page defines one. */
+function typeaheadJs(inputId: string, listId: string, suffix: string): string {
+  return `(function(){var q=document.getElementById('${inputId}'),ac=document.getElementById('${listId}');if(!q||!ac)return;var items=[],ix=-1,t,seq=0,SUF=${suffix};
+function url(x){return LP+'/c/'+x.lat+','+x.lon+SUF;}
+function warm(x){if(x&&typeof pf==='function')pf(url(x));}
+function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}
+function hide(){ac.innerHTML='';items=[];ix=-1;}
+function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].className=i===ix?'on':'';warm(items[ix]);}
+function go(i){var x=items[i];if(x)location.href=url(x);}
+q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(t);if(v.length<2){hide();return;}var s=++seq;t=setTimeout(function(){fetch('/suggest?q='+encodeURIComponent(v)).then(function(r){return r.json();}).then(function(d){if(s!==seq)return;items=d.suggestions||[];ix=-1;ac.innerHTML=items.map(function(x,i){return '<li role="option" data-i="'+i+'"><b>'+esc(x.label)+'</b>'+(x.sublabel?' <span>'+esc(x.sublabel)+'</span>':'')+'</li>';}).join('');warm(items[0]);}).catch(function(){if(s===seq)hide();});},150);});
+q.addEventListener('keydown',function(e){if(!items.length)return;if(e.key==='ArrowDown'){ix=(ix+1)%items.length;e.preventDefault();paint();}else if(e.key==='ArrowUp'){ix=(ix-1+items.length)%items.length;e.preventDefault();paint();}else if(e.key==='Enter'&&ix>=0){e.preventDefault();go(ix);}else if(e.key==='Escape'){hide();}});
+ac.addEventListener('mousedown',function(e){var li=e.target.closest('li');if(li)go(+li.getAttribute('data-i'));});
+ac.addEventListener('mouseover',function(e){var li=e.target.closest('li');if(li)warm(items[+li.getAttribute('data-i')]);});
+q.addEventListener('blur',function(){setTimeout(hide,150);});})();`;
+}
+
 const HOME_CSS = `
 body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg)),var(--bg) 44%) var(--bg) no-repeat}
 .hero{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8vw,2.7rem);letter-spacing:-.02em;line-height:1.05;margin:1.4rem 0 .5rem}
@@ -1692,13 +1761,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg
 .search{display:flex;gap:8px;margin:0 0 .8rem}
 .search input{flex:1;font-size:1rem;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 .search button{font-size:1rem;font-weight:600;padding:12px 18px;border:0;border-radius:12px;background:color-mix(in srgb,var(--sky) 86%,#000);color:#fff;cursor:pointer}
-.acwrap{position:relative}
-.ac{list-style:none;margin:4px 0 0;padding:4px;position:absolute;left:0;right:0;z-index:9;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
-.ac:empty{display:none}
-.ac li{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.95rem}
-.ac li span{color:var(--muted);font-size:.85rem}
-.ac li.on,.ac li:hover{background:var(--bg)}
-.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:46ch}.shint b{color:var(--ink);font-weight:600}
+${AC_CSS}.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:46ch}.shint b{color:var(--ink);font-weight:600}
 .exq{color:var(--ink)}
 .nearme{display:inline-flex;align-items:center;gap:.4rem;font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;margin:0 0 1rem}
 .nearme .ic{width:16px;height:16px;color:var(--sky)}
@@ -1794,18 +1857,9 @@ export function renderHome(
   var b=document.getElementById('nearme'),label=b.textContent;
   if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent=LOC;navigator.geolocation.getCurrentPosition(function(p){location.href=LP+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent=NOLOC;});};}
   addEventListener('pageshow',function(){b.textContent=label;});
-  var q=document.getElementById('q'),ac=document.getElementById('ac'),items=[],ix=-1,t,seq=0;
-  function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}
-  function hide(){ac.innerHTML='';items=[];ix=-1;}
-  function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].className=i===ix?'on':'';if(items[ix])pf(LP+'/c/'+items[ix].lat+','+items[ix].lon);}
-  function go(i){var x=items[i];if(x)location.href=LP+'/c/'+x.lat+','+x.lon;}
-  q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(t);if(v.length<2){hide();return;}var s=++seq;t=setTimeout(function(){fetch('/suggest?q='+encodeURIComponent(v)).then(function(r){return r.json();}).then(function(d){if(s!==seq)return;items=d.suggestions||[];ix=-1;ac.innerHTML=items.map(function(x,i){return '<li role="option" data-i="'+i+'"><b>'+esc(x.label)+'</b>'+(x.sublabel?' <span>'+esc(x.sublabel)+'</span>':'')+'</li>';}).join('');if(items[0])pf(LP+'/c/'+items[0].lat+','+items[0].lon);}).catch(function(){if(s===seq)hide();});},150);});
-  q.addEventListener('keydown',function(e){if(!items.length)return;if(e.key==='ArrowDown'){ix=(ix+1)%items.length;e.preventDefault();paint();}else if(e.key==='ArrowUp'){ix=(ix-1+items.length)%items.length;e.preventDefault();paint();}else if(e.key==='Enter'&&ix>=0){e.preventDefault();go(ix);}else if(e.key==='Escape'){hide();}});
-  ac.addEventListener('mousedown',function(e){var li=e.target.closest('li');if(li)go(+li.getAttribute('data-i'));});
-  q.addEventListener('blur',function(){setTimeout(hide,150);});
   // Warm the edge + upstreams for a /c URL so the click lands instantly (dedup).
   function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
-  ac.addEventListener('mouseover',function(e){var li=e.target.closest('li');if(li){var x=items[+li.getAttribute('data-i')];if(x)pf(LP+'/c/'+x.lat+','+x.lon);}});
+  ${typeaheadJs("q", "ac", "''")}
   // Your places: recents + favourites from localStorage (first-party, no login).
   (function(){
     var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;
