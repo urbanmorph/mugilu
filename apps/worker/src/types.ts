@@ -210,6 +210,8 @@ export interface Wx {
   wet_bulb_c?: number;
   humidity_pct?: number;
   rain_mm?: number;
+  /** Rain forecast for the next 24 hours (mm), for the home map's Rain layer. */
+  rain_24h_mm?: number;
   uv?: number;
   dust_ug_m3?: number;
 }

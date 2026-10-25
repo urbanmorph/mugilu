@@ -52,6 +52,7 @@ function wbgt(t?: number, rh?: number): number | undefined {
 interface OmResponse {
   current?: Record<string, unknown>;
   daily?: { time?: string[]; temperature_2m_max?: unknown[] };
+  hourly?: { precipitation?: unknown[] };
   elevation?: number;
 }
 
@@ -194,7 +195,8 @@ export async function getOpenMeteoBulk(coords: Array<{ lat: number; lon: number 
     const [fc, aq] = await Promise.allSettled([
       fetchBulk(
         `${FORECAST_URL}?${common}&current=` +
-          "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation",
+          "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation" +
+          "&hourly=precipitation&forecast_hours=24",
       ),
       fetchBulk(`${AIR_QUALITY_URL}?${common}&current=uv_index,dust`),
     ]);
@@ -203,12 +205,14 @@ export async function getOpenMeteoBulk(coords: Array<{ lat: number; lon: number 
     for (let j = 0; j < chunk.length; j++) {
       const f = fcArr[j]?.current ?? {};
       const a = aqArr[j]?.current ?? {};
+      const next24 = fcArr[j]?.hourly?.precipitation;
       out[i + j] = {
         temp_c: num(f.temperature_2m),
         apparent_c: num(f.apparent_temperature),
         wet_bulb_c: num(f.wet_bulb_temperature_2m),
         humidity_pct: num(f.relative_humidity_2m),
         rain_mm: num(f.precipitation),
+        rain_24h_mm: next24 ? +next24.reduce((s: number, v) => s + (num(v) ?? 0), 0).toFixed(1) : undefined,
         uv: num(a.uv_index),
         dust_ug_m3: num(a.dust),
       };

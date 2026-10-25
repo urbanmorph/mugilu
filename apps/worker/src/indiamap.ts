@@ -2,7 +2,7 @@ import type { Conditions, ConditionsPoint, NormalizedStation } from "./types";
 import type { FireDetection } from "./firms";
 import type { Cyclone } from "./cyclones";
 import type { Env } from "./index";
-import { airLevelOf, ambientRisk, heatLevelOf } from "./score";
+import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf } from "./score";
 import { BAND_COLOR, RISK_COLOR } from "./palette";
 import { AQI_BAND_LABEL } from "./aqi";
 import { isPlausible } from "./plausible";
@@ -17,21 +17,37 @@ import outline from "../data/india.json";
 import states from "../data/state-lines.json";
 
 // The home page's map of India now: one-degree squares (about 100 km), each
-// coloured by the worst read in it, scored by the same ambientRisk as a place's
-// page so the two can never disagree. Built from what the crons already collect
+// coloured by what is worst in it (air, heat or cold), scored by the same
+// ambientRisk as a place's page so the two can never disagree. A Rain layer shows
+// the next 24 hours' forecast, for a cyclone. Built from what the crons already collect
 // (the district grid, the air stations, the fires), so it costs no extra upstream
 // call. Official warnings are not on it: the national feed carries no areas, so a
 // place's page is where they show. Inline SVG, no map library, no tiles.
+
+/** What a square's worst read is, in three groups a map can tell apart: smoke and
+ *  dust are air. UV is left out, since it follows the time of day everywhere. */
+export type MapHazard = "air" | "heat" | "cold";
+const GROUP: Record<string, MapHazard> = { Air: "air", Smoke: "air", Dust: "air", Heat: "heat", Cold: "cold" };
+/** The order equal levels are named in. */
+const ORDER: MapHazard[] = ["air", "heat", "cold"];
 
 export interface MapCell {
   /** The square's south-west corner, whole degrees. */
   lon: number;
   lat: number;
-  /** The worst hazard level in the square (0-3), as on /c for everyone. */
+  /** The worst hazard level in the square (0-3), as on /c for everyone, UV aside. */
   worst: number;
+  /** Which hazard that is, when there is one. */
+  what?: MapHazard;
   /** Hot-side heat alone (0-3), for the Heat layer. */
   heat: number;
+  /** Rain in the next 24 hours as IMD's class (0-3); absent until the grid has a forecast. */
+  rain?: number;
 }
+type Worst = Pick<MapCell, "worst" | "what">;
+const beats = (a: Worst, b: Worst) =>
+  a.worst > b.worst || (a.worst === b.worst && ORDER.indexOf(a.what!) < ORDER.indexOf(b.what!));
+const maxOf = (a?: number, b?: number) => (a == null ? b : b == null ? a : Math.max(a, b));
 export interface MapDot {
   lat: number;
   lon: number;
@@ -48,8 +64,8 @@ export interface IndiaMap {
 const key = (lon: number, lat: number) => `${Math.floor(lon)},${Math.floor(lat)}`;
 
 /** The worst read per square: each district point scored with its square's measured
- *  air and fires, the square taking its worst point. Squares of India with no point
- *  borrow the nearest one's read (they sit inside big districts). */
+ *  air and fires, the square taking its worst point (and its most rain). Squares of
+ *  India with no point borrow the nearest one's read (they sit inside big districts). */
 export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[], fires: FireDetection[]): MapCell[] {
   const air = new Map<string, number>();
   for (const s of stations) {
@@ -77,15 +93,30 @@ export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[
       dust: p.wx.dust_ug_m3 == null ? null : { dust_ug_m3: p.wx.dust_ug_m3 },
       smoke: smoke.get(k) ?? null,
     } as unknown as Conditions;
-    return { p, k, worst: ambientRisk(c).level, heat: heatLevelOf(p.wx) };
+    let w: Worst = { worst: 0 };
+    for (const h of ambientRisk(c).hazards) {
+      const what = GROUP[h.hazard];
+      if (what && h.level > 0 && beats({ worst: h.level, what }, w)) w = { worst: h.level, what };
+    }
+    const rain = p.wx.rain_24h_mm == null ? undefined : rainLevelOf(p.wx.rain_24h_mm);
+    return { p, k, ...w, heat: heatLevelOf(p.wx), rain };
+  });
+  const cellOf = ({ worst, what, heat, rain }: (typeof scored)[number], lon: number, lat: number): MapCell => ({
+    lon,
+    lat,
+    worst,
+    what,
+    heat,
+    rain,
   });
   const cells = new Map<string, MapCell>();
   for (const s of scored) {
     const c = cells.get(s.k);
-    if (!c) cells.set(s.k, { lon: Math.floor(s.p.lon), lat: Math.floor(s.p.lat), worst: s.worst, heat: s.heat });
+    if (!c) cells.set(s.k, cellOf(s, Math.floor(s.p.lon), Math.floor(s.p.lat)));
     else {
-      c.worst = Math.max(c.worst, s.worst);
+      if (beats(s, c)) [c.worst, c.what] = [s.worst, s.what];
       c.heat = Math.max(c.heat, s.heat);
+      c.rain = maxOf(c.rain, s.rain);
     }
   }
   if (scored.length)
@@ -98,7 +129,7 @@ export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[
           const d = (s.p.lon - lon - 0.5) ** 2 + (s.p.lat - lat - 0.5) ** 2;
           if (d < bd) [best, bd] = [s, d];
         }
-        cells.set(`${lon},${lat}`, { lon, lat, worst: best.worst, heat: best.heat });
+        cells.set(`${lon},${lat}`, cellOf(best, lon, lat));
       }
   return [...cells.values()];
 }
@@ -184,21 +215,26 @@ export const STATE_PATH = (states as unknown as { lines: [number, number][][] })
   })
   .join("");
 
-/** The squares of one layer, one path per colour. */
-function cellPaths(cells: MapCell[], level: (c: MapCell) => number): string {
-  const by = new Map<number, string[]>();
+/** The squares of one layer, one path per fill; `fill` gives a square's fill
+ *  attributes, or nothing to leave it as land. */
+function cellPaths(cells: MapCell[], fill: (c: MapCell) => string | undefined): string {
+  const by = new Map<string, string[]>();
   const w = r1(KX * S);
   for (const c of cells) {
-    const l = level(c);
-    push(by, l, `M${r1(px(c.lon))} ${r1(py(c.lat + 1))}h${w}v${S}h-${w}z`);
+    const f = fill(c);
+    if (f) push(by, f, `M${r1(px(c.lon))} ${r1(py(c.lat + 1))}h${w}v${S}h-${w}z`);
   }
-  return [...by]
-    .map(
-      ([l, d]) =>
-        `<path fill="${l ? RISK_COLOR[(["low", "moderate", "high", "severe"] as const)[l]] : "var(--m0)"}" d="${d.join("")}"/>`,
-    )
-    .join("");
+  return [...by].map(([f, d]) => `<path ${f} d="${d.join("")}"/>`).join("");
 }
+const HIGH_OPACITY = ".5";
+/** What's worst: the hazard's colour where high (lighter) or severe; calmer squares stay land. */
+const worstFill = (c: MapCell) =>
+  c.what && c.worst >= 2
+    ? `fill="var(--m${c.what})"${c.worst < 3 ? ` fill-opacity="${HIGH_OPACITY}"` : ""}`
+    : undefined;
+const heatFill = (c: MapCell) =>
+  `fill="${c.heat ? RISK_COLOR[(["low", "moderate", "high", "severe"] as const)[c.heat]] : "var(--m0)"}"`;
+const rainFill = (c: MapCell) => (c.rain ? `fill="var(--mrain${c.rain})"` : undefined);
 
 const DIR_SENTENCE: Record<string, string> = {
   N: "It moves north.",
@@ -259,13 +295,23 @@ function cycloneGlyph(c: Cyclone): string {
   return `<g class="mcy">${line}${head}<circle cx="${r1(x)}" cy="${r1(y)}" r="7.5" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/><path d="${spiral}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/></g>`;
 }
 
-/** The map block: three layers switched by radio buttons (CSS only), a legend
- *  and a note per layer, the cyclone drawn and told in words. `stamp` renders a
- *  snapshot's time the way the page does. */
+/** The map block: four layers switched by radio buttons (CSS only; Rain only once the
+ *  grid has a forecast), a legend and a note per layer, the cyclone drawn and told in
+ *  words. `stamp` renders a snapshot's time the way the page does. */
 export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: string) => string = esc): string {
   const age = (iso?: string) => (iso ? ` <span class="age">· ${stamp(iso)}</span>` : "");
-  const chip = (color: string, label: string) =>
-    `<span><i style="background:${color}"></i>${esc(t(label, lang))}</span>`;
+  const chip = (color: string, label: string, opacity = "") =>
+    `<span><i style="background:${color}${opacity && `;opacity:${opacity}`}"></i>${esc(t(label, lang))}</span>`;
+  const what = [
+    chip("var(--mair)", "Air"),
+    chip("var(--mheat)", "Heat"),
+    chip("var(--mcold)", "Cold"),
+    chip("var(--ink)", "High", HIGH_OPACITY),
+    chip("var(--ink)", "Severe"),
+  ].join("");
+  const hasRain = m.cells.some((c) => c.rain != null);
+  const rainy = m.cells.some((c) => c.rain);
+  const rainLg = ["Heavy", "Very heavy", "Extremely heavy"].map((l, i) => chip(`var(--mrain${i + 1})`, l)).join("");
   const risk = [
     chip("var(--m0)", "Low"),
     chip(RISK_COLOR.moderate, "Moderate"),
@@ -291,24 +337,30 @@ export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: stri
   const cyText = cys.length
     ? `<div class="mcard">${cys.map((c) => `<p><b>${cycloneSentence(c, lang)}</b></p>`).join("")}<p class="msrc">${esc(
         t("Track: JTWC (US Navy). For official warnings, follow IMD.", lang),
-      ).replace("IMD", '<a href="https://mausam.imd.gov.in/" rel="noopener">IMD</a>')}</p></div>`
+      ).replace("IMD", '<a href="https://mausam.imd.gov.in/" rel="noopener">IMD</a>')}</p>${
+        hasRain ? `<p><label for="ml-r" class="mto">${esc(t("See the rain", lang))}</label></p>` : ""
+      }</div>`
     : "";
   return `<div class="imap">
-<input type="radio" name="ml" id="ml-w" checked><input type="radio" name="ml" id="ml-a"><input type="radio" name="ml" id="ml-h">
-<div class="mseg"><label for="ml-w">${esc(t("Worst", lang))}</label><label for="ml-a">${esc(t("Air", lang))}</label><label for="ml-h">${esc(t("Heat", lang))}</label></div>
-<svg class="msvg" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${esc(t("Map of India. Each square has the colour of its worst reading now.", lang))}">
+<input type="radio" name="ml" id="ml-w" checked><input type="radio" name="ml" id="ml-a"><input type="radio" name="ml" id="ml-h">${hasRain ? '<input type="radio" name="ml" id="ml-r">' : ""}
+<div class="mseg"><label for="ml-w">${esc(t("What's worst", lang))}</label><label for="ml-a">${esc(t("Air", lang))}</label><label for="ml-h">${esc(t("Heat", lang))}</label>${hasRain ? `<label for="ml-r">${esc(t("Rain", lang))}</label>` : ""}</div>
+<svg class="msvg" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${esc(t("Map of India. Each square is coloured by what is worst in it now.", lang))}">
 <defs><path id="mland" d="${LAND_PATH}"/><clipPath id="mclip"><use href="#mland"/></clipPath></defs>
 <use href="#mland" class="mland"/>
-<g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, (c) => c.worst)}</g><g class="L Lh">${cellPaths(m.cells, (c) => c.heat)}</g></g>
+<g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, worstFill)}</g><g class="L Lh">${cellPaths(m.cells, heatFill)}</g>${hasRain ? `<g class="L Lr">${cellPaths(m.cells, rainFill)}</g>` : ""}</g>
 <path class="mstates" d="${STATE_PATH}"/>
 <use href="#mland" class="mline"/>
 <g class="L La">${dots}</g>
 ${cys.map(cycloneGlyph).join("")}
 </svg>
-<p class="mlg Lw">${risk}</p><p class="mlg La">${bands}</p><p class="mlg Lh">${risk}</p>
-<p class="mnote Lw">${esc(t("Each square shows the worst reading in it, about 100 km across. Select a square to see that place.", lang))}${age(m.gridAsOf)}</p>
+<p class="mlg Lw">${what}</p><p class="mlg La">${bands}</p><p class="mlg Lh">${risk}</p>${hasRain ? `<p class="mlg Lr">${rainLg}</p>` : ""}
+<p class="mnote Lw">${esc(t("Each square, about 100 km across, has the colour of what is worst in it, where that is high or severe. Air includes smoke and dust. Select a square to see that place.", lang))}${age(m.gridAsOf)}</p>
 <p class="mnote La">${esc(t("Each dot is an air station, with the colour of its reading.", lang))}${age(m.airAsOf)}</p>
-<p class="mnote Lh">${esc(t("Heat is modelled for each district.", lang))}${age(m.gridAsOf)}</p>
+<p class="mnote Lh">${esc(t("Heat is modelled for each district.", lang))}${age(m.gridAsOf)}</p>${
+    hasRain
+      ? `${rainy ? "" : `<p class="mnote Lr"><b>${esc(t("No heavy rain is forecast in the next 24 hours.", lang))}</b></p>`}<p class="mnote Lr">${esc(t("Rain forecast for the next 24 hours, from a weather model. Models often underestimate the rain a cyclone brings.", lang))}${age(m.gridAsOf)}</p>`
+      : ""
+  }
 <p class="mnote">${esc(t("Official warnings are not on this map. Look up a place to see them.", lang))}</p>
 ${cyText}
 </div>`;
@@ -320,24 +372,25 @@ export const MAP_JS = (lang: Lang) =>
   `(function(){var s=document.querySelector('.msvg');if(!s)return;s.addEventListener('click',function(e){if(!e.target.closest('.mland,.mcells,.La'))return;var p=s.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(s.getScreenCTM().inverse());location.href=${JSON.stringify(lp("/c/", lang))}+(${LAT1}-q.y/${S}).toFixed(2)+','+(${LON0}+q.x/${r1(KX * S * 1e4) / 1e4}).toFixed(2);});})();`;
 
 export const MAP_CSS = `
-:root{--m0:#e0f2fe;--mland:#eef2f6}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--m0:#16324a;--mland:#172033}}
-:root[data-theme="dark"]{--m0:#16324a;--mland:#172033}
+:root{--m0:#e0f2fe;--mland:#eef2f6;--mair:#8b4513;--mheat:#e34948;--mcold:#2a78d6;--mrain1:#93c5fd;--mrain2:#3b82f6;--mrain3:#1e3a8a}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--m0:#16324a;--mland:#172033;--mair:#a0612e;--mheat:#e8606a;--mcold:#3987e5;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}}
+:root[data-theme="dark"]{--m0:#16324a;--mland:#172033;--mair:#a0612e;--mheat:#e8606a;--mcold:#3987e5;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}
 .imap{position:relative;margin:.2rem 0 .8rem}
 .imap input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.mseg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 .6rem}
-.mseg label{min-height:40px;display:flex;align-items:center;padding:0 16px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;border-left:1px solid var(--line)}
+.mseg{display:inline-flex;max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:0 0 .6rem}
+.mseg label{min-height:40px;display:flex;align-items:center;padding:0 13px;white-space:nowrap;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;border-left:1px solid var(--line)}
 .mseg label:first-child{border-left:0}
-#ml-w:checked~.mseg [for=ml-w],#ml-a:checked~.mseg [for=ml-a],#ml-h:checked~.mseg [for=ml-h]{background:var(--ink);color:var(--bg)}
-#ml-w:focus-visible~.mseg [for=ml-w],#ml-a:focus-visible~.mseg [for=ml-a],#ml-h:focus-visible~.mseg [for=ml-h]{outline:2px solid var(--sky);outline-offset:-2px}
+@media(max-width:360px){.mseg label{padding:0 9px;font-size:.82rem}}
+#ml-w:checked~.mseg [for=ml-w],#ml-a:checked~.mseg [for=ml-a],#ml-h:checked~.mseg [for=ml-h],#ml-r:checked~.mseg [for=ml-r]{background:var(--ink);color:var(--bg)}
+#ml-w:focus-visible~.mseg [for=ml-w],#ml-a:focus-visible~.mseg [for=ml-a],#ml-h:focus-visible~.mseg [for=ml-h],#ml-r:focus-visible~.mseg [for=ml-r]{outline:2px solid var(--sky);outline-offset:-2px}
 .msvg{display:block;width:100%;max-width:440px;height:auto;cursor:pointer}
 .mland{fill:var(--mland)}.mline{fill:none;stroke:var(--muted);stroke-width:.8;stroke-linejoin:round}
 .mstates{fill:none;stroke:var(--ink);stroke-opacity:.6;stroke-width:.75;stroke-linejoin:round;stroke-linecap:round}
 .mcells path{stroke:var(--card);stroke-width:.6}
-.imap .L,.imap .mlg,.imap .mnote.Lw,.imap .mnote.La,.imap .mnote.Lh{display:none}
-#ml-w:checked~.mnote.Lw,#ml-a:checked~.mnote.La,#ml-h:checked~.mnote.Lh{display:block}
-#ml-w:checked~svg .Lw,#ml-a:checked~svg .La,#ml-h:checked~svg .Lh{display:inline}
-#ml-w:checked~.Lw,#ml-a:checked~.La,#ml-h:checked~.Lh{display:flex}
+.imap .L,.imap .mlg,.imap .mnote.Lw,.imap .mnote.La,.imap .mnote.Lh,.imap .mnote.Lr{display:none}
+#ml-w:checked~.mnote.Lw,#ml-a:checked~.mnote.La,#ml-h:checked~.mnote.Lh,#ml-r:checked~.mnote.Lr{display:block}
+#ml-w:checked~svg .Lw,#ml-a:checked~svg .La,#ml-h:checked~svg .Lh,#ml-r:checked~svg .Lr{display:inline}
+#ml-w:checked~.Lw,#ml-a:checked~.La,#ml-h:checked~.Lh,#ml-r:checked~.Lr{display:flex}
 .mlg{flex-wrap:wrap;gap:.3rem .8rem;margin:.5rem 0 0;font-size:.8rem;color:var(--muted)}
 .mlg span{display:inline-flex;align-items:center;gap:.35rem}
 .mlg i{width:12px;height:12px;border-radius:3px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 12%,transparent)}
@@ -345,6 +398,7 @@ export const MAP_CSS = `
 .mcard{margin:.8rem 0 0;padding:10px 14px;border:1px solid var(--ink);border-radius:12px;background:var(--card)}
 .mcard p{margin:0;line-height:1.45}.mcard p+p{margin-top:.3rem}
 .mcard .msrc{font-size:.8rem;color:var(--muted)}
+.mcard .mto{color:var(--sky);font-weight:600;text-decoration:underline;cursor:pointer}
 `;
 
 /** The map's data, from the snapshots the crons write (each read is memoised). */
