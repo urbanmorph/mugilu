@@ -2,7 +2,8 @@ import type { Conditions, Warning, NormalizedStation } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { AQI_BAND_LABEL } from "./aqi";
-import { compass, drops, gauge, GLYPH_CSS, lifeBlocks, pollutantBars, uvSteps } from "./glyphs";
+import { compass, drops, gauge, GLYPH_CSS, lifeBlocks, pollutantBars, uvSteps, worstPollutant } from "./glyphs";
+import { briefs, forPersona, isDriver, orderByRisk } from "./readings";
 import { SOURCES } from "./sources";
 import { esc } from "./html";
 import {
@@ -18,12 +19,14 @@ import {
   PERSONAS,
   PERSONA_LABEL,
   RISK_BANDS,
+  RISK_LABEL,
+  COND_NOUN,
   SENSITIVE,
   THRESHOLD_ROWS,
   THRESHOLDS,
 } from "./score";
 import type { AmbientRisk, Persona, RiskBand } from "./score";
-import { RISK_COLOR, BAND_COLOR } from "./palette";
+import { RISK_COLOR, BAND_COLOR, tintOf } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
@@ -339,7 +342,7 @@ ${canonical ? langSwitcher(canonical, lang) : ""}
 // editorial serif Ambient statement, and the readings as hairline-ruled strata
 // (not cards). Inline-SVG line icons, currentColor so the driver layer glows.
 const CONDITIONS_CSS = `
-body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--bg)),color-mix(in srgb,var(--cond) 7%,var(--bg)) 18%,var(--bg) 50%) var(--bg) no-repeat}
+body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),var(--bg)),color-mix(in srgb,var(--tint) 8%,var(--bg)) 22%,var(--bg) 55%) var(--bg) no-repeat}
 .coord{font:500 .78rem/1.4 var(--mono);letter-spacing:.04em;color:var(--muted);margin:.4rem 0 0}
 .loc{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6.5vw,2.15rem);line-height:1.05;letter-spacing:-.01em;margin:.35rem 0 0}
 .when{color:var(--muted);font-size:.9rem;margin:.3rem 0 0}
@@ -420,13 +423,6 @@ function warnColor(color: string): string {
   }
 }
 
-const RISK_LABEL: Record<RiskBand, string> = {
-  low: "Low",
-  moderate: "Moderate",
-  high: "High",
-  severe: "Severe",
-};
-
 // Inline Lucide-style line icons (MIT). currentColor + one stroke weight, so each
 // inherits its context colour (muted by default, the condition hue on the driver).
 const ICON: Record<string, string> = {
@@ -471,18 +467,6 @@ const DRIVER_KEY: Record<string, string> = {
   Warning: "warn",
   none: "clear",
 };
-const COND_NOUN: Record<string, string> = {
-  Air: "air",
-  Heat: "heat",
-  Cold: "cold",
-  UV: "sun",
-  Dust: "dust",
-  Wind: "wind",
-  Fog: "fog",
-  Smoke: "smoke",
-  Warning: "alert",
-  none: "sky",
-};
 
 /** Wet-bulb survivability read (~31 is the theoretical limit): word + colour per level. */
 const WET_BULB: [string, string][] = [
@@ -517,36 +501,6 @@ function lyr(key: string, label: string, ctx: LayerCtx, num: string, q: string, 
   return { key, html };
 }
 
-// The hazard each layer reads (the thermal layer is Heat or Cold, whichever it is now).
-const LAYER_HAZARDS: Record<string, string[]> = {
-  air: ["Air"],
-  heat: ["Heat", "Cold"],
-  sun: ["UV"],
-  dust: ["Dust"],
-  wind: ["Wind"],
-  fog: ["Fog"],
-  smoke: ["Smoke"],
-};
-// What people check first when nothing stands out: the air they breathe, how hot
-// it is and how strong the sun (side by side), whether it will rain, then the rest.
-const CARE_ORDER = ["air", "heat", "sun", "rain", "wind", "fog", "smoke", "dust"];
-
-/** Rain worth planning around (a commute, the washing): falling now, or a 40%+ chance. */
-const RAIN_LIKELY_PCT = 40;
-function rainLikely(c: Conditions): boolean {
-  return (c.rain?.precipitation_mm ?? 0) > 0 || (c.rain?.probability_pct ?? 0) >= RAIN_LIKELY_PCT;
-}
-
-/** The hazard each layer reads right now (Heat or Cold for the thermal layer). */
-function layerHazards(k: string, risk: AmbientRisk) {
-  return risk.hazards.filter((h) => LAYER_HAZARDS[k]?.includes(h.hazard));
-}
-
-/** Whether this layer reads one of the persona's own triggers. */
-function forPersona(k: string, risk: AmbientRisk): boolean {
-  return layerHazards(k, risk).some((h) => SENSITIVE[risk.persona].includes(h.hazard));
-}
-
 /** The reading inside a layer each persona should look at first: the fine
  *  particles that reach the lungs and heart (PM2.5; PM10 too for the airways),
  *  wet-bulb for bodies that cool less well, and WBGT, the measure made for work
@@ -560,29 +514,11 @@ const KEY_READING: Record<Persona, { pollutants: string[]; heat?: "wbgt" | "wetb
   heart: { pollutants: ["pm25"], heat: "wetbulb" },
 };
 
-/** Whether this layer is the Ambient read's headline hazard. */
-function isDriver(key: string, risk: AmbientRisk): boolean {
-  return LAYER_HAZARDS[key]?.includes(risk.driver) ?? false;
-}
-
-/** Layers in the order they matter to this person now: the headline hazard, then
- *  by how risky each is for them, the persona's own hazards first among equals,
- *  then what people check first. Rain carries no health level, so it counts as
- *  elevated only when it is falling or likely. */
-function orderLayers(layers: Layer[], risk: AmbientRisk, rainUp: boolean): Layer[] {
-  const level = (k: string) =>
-    k === "rain" ? Number(rainUp) : Math.max(0, ...layerHazards(k, risk).map((h) => h.level));
-  const rank = (k: string) => [
-    isDriver(k, risk) ? 0 : 1,
-    -level(k),
-    forPersona(k, risk) ? 0 : 1,
-    CARE_ORDER.indexOf(k),
-  ];
-  return [...layers].sort((a, b) => {
-    const ra = rank(a.key),
-      rb = rank(b.key);
-    return ra.reduce((d, x, i) => d || x - rb[i], 0);
-  });
+/** CSS custom properties for a read's colours: --cond (severity, the headline word)
+ *  and --tint/--tk (the backdrop: the hazard's hue at the band's strength). */
+function readVars(risk: AmbientRisk): string {
+  const { hue, strength } = tintOf(risk);
+  return `--cond:${RISK_COLOR[risk.band]};--tint:${hue};--tk:${strength}%`;
 }
 
 /** A pinned official warning, the most urgent thing on the page. */
@@ -632,54 +568,48 @@ if(location.hash)try{history.replaceState(null,'',location.pathname+location.sea
 }catch(e){}})();
 </script>`;
 
-export function renderConditionsPage(
-  c: Conditions,
-  persona: Persona = "everyone",
-  canonical?: string,
-  lang: Lang = "en",
-  /** mugilu's VAPID public key, when alerts are set up: shows the "alert me" box. */
-  alertsKey?: string,
-): string {
-  const risk = ambientRisk(c, persona);
-  const say = ambientSummary(risk, (en) => t(en, lang));
-  const { meaning } = say;
-  const slug = `${c.location.lat},${c.location.lon}`;
-  const placeName = placeLabel(c); // raw: shell() escapes the title
-  const place = esc(placeName);
+/** One layer's content, rendered as a /c stratum or a display tile. `mini` is the
+ *  tile's compact graphic (default: `bar`); `normal` is the heat-vs-normal ruler,
+ *  which the /c page puts in the heat layer and the display beside the read. */
+interface LayerData {
+  key: string;
+  label: string;
+  num: string;
+  q: string;
+  sub: string;
+  bar: string;
+  mini?: string;
+  normal?: string;
+}
+
+/** Every reading present, as layers (unordered: see orderByRisk). */
+function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerData[] {
+  const out: LayerData[] = [];
+  const keyReading = KEY_READING[risk.persona];
+  const L = (key: string, label: string, num: string, q: string, sub: string, bar = ""): LayerData => ({
+    key,
+    label,
+    num,
+    q,
+    sub,
+    bar,
+  });
   const band = c.air?.band ?? "unknown";
   const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = AQI_BAND_LABEL[band] ?? "n/a";
-  const condColor = RISK_COLOR[risk.band];
-
-  // Persona toggles (understated text, not chips).
-  const base = lp(`/c/${slug}`, lang);
-  const pills = PERSONAS.map((p) => {
-    const href = p === "everyone" ? base : `${base}?as=${p}`;
-    return `<a${p === risk.persona ? ' class="on"' : ""} href="${href}">${esc(t(PERSONA_LABEL[p], lang))}</a>`;
-  }).join("");
-
-  // Editorial headline: "High heat." (band coloured) or "All clear." when calm.
-  const head =
-    risk.band === "low"
-      ? `<span class="b">${t("All clear", lang)}.</span>`
-      : `<span class="b">${t(RISK_LABEL[risk.band], lang)}</span> ${t(COND_NOUN[risk.driver] ?? "sky", lang)}.`;
-
   // The readings, as strata. Each renders only when it has a value; the Ambient
   // driver's stratum is highlighted (icon + label in the condition colour).
-  const strata: Layer[] = [];
-  const ctx: LayerCtx = { risk, forYou: t("for you", lang) };
-  const keyReading = KEY_READING[risk.persona];
   if (c.air) {
     const marker = c.air.station
       ? `<i class="dot meas"></i>${t("measured", lang)} · ${c.air.station.distance_km} km`
       : `<i class="dot mod"></i>${t("modelled", lang)}`;
     const aqli = c.air.yll != null ? `<br>${lifeBlocks(c.air.yll)}~${c.air.yll} ${t("years of life lost", lang)}` : "";
     const bars = pollutantBars(c.air.pollutants, keyReading.pollutants);
-    strata.push(
-      lyr(
+    const worst = worstPollutant(c.air.pollutants, keyReading.pollutants);
+    out.push({
+      ...L(
         "air",
         t("Air", lang),
-        ctx,
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
         `<span class="qa">AQI</span> <b style="color:${bandColor}">${t(bandLabel, lang)}</b>`,
         `${marker}${aqli}`,
@@ -687,12 +617,13 @@ export function renderConditionsPage(
           ? `<div class="prs">${bars}<span class="prk">${t("The dashed line is the CPCB limit.", lang)}</span></div>`
           : "",
       ),
-    );
+      mini: worst ? `<div class="prs">${pollutantBars(worst, keyReading.pollutants)}</div>` : "",
+    });
   }
   if (c.heat) {
     const h = c.heat;
     const cold = h.apparent_c != null && coldLevelOf(h.apparent_c) > 0;
-    let bar = `<span class="sub">${round(h.temp_c)}° ${t("actual", lang)} · ${round(h.humidity_pct)}% ${t("humidity", lang)}</span>`;
+    let bar = "";
     // Cold: a dot for how cold it feels among the cold thresholds. Hot or mild:
     // the two heat-stress reads against theirs.
     if (cold) {
@@ -715,37 +646,38 @@ export function renderConditionsPage(
     // Today's high against the normal here: drawn only when it stands out (and is
     // still today's, in IST), always labelled.
     const n = c.heat_vs_normal;
+    let normal = "";
     if (heatVsNormalShown(n)) {
-      bar += `<span class="gl">${heatVsNormalLine(n, lang)}</span>`;
-      bar += gauge(n.today_max_c, n.normal_max_c - 10, n.normal_max_c + 10, {
+      normal += `<span class="gl">${heatVsNormalLine(n, lang)}</span>`;
+      normal += gauge(n.today_max_c, n.normal_max_c - 10, n.normal_max_c + 10, {
         from: n.normal_max_c,
         ticks: [n.normal_max_c],
         marker: true,
         colour: n.anomaly_c >= 0 ? RISK_COLOR.high : "var(--sky)",
       });
-      bar += `<small class="prk">${t(NORMALS_LABEL, lang)}</small>`;
+      normal += `<small class="prk">${t(NORMALS_LABEL, lang)}</small>`;
     }
-    strata.push(
-      lyr(
+    out.push({
+      ...L(
         "heat",
         t("Heat", lang),
-        ctx,
         `${round(h.apparent_c)}°`,
         // No feels-like, no phrase (never read a missing value as 0°, "dangerous cold").
         h.apparent_c != null
           ? `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(h.apparent_c, h.wet_bulb_c), lang)}</b>`
           : "",
         "",
-        bar,
+        `<span class="sub">${round(h.temp_c)}° ${t("actual", lang)} · ${round(h.humidity_pct)}% ${t("humidity", lang)}</span>${bar}`,
       ),
-    );
+      mini: bar,
+      normal,
+    });
   }
   if (c.uv?.index != null) {
-    strata.push(
-      lyr(
+    out.push(
+      L(
         "sun",
         t("Sun", lang),
-        ctx,
         String(Math.round(c.uv.index)),
         `<span class="qa">${t("UV index", lang)}</span> <b>${t(uvWord(c.uv.index), lang)}</b>`,
         "",
@@ -754,11 +686,10 @@ export function renderConditionsPage(
     );
   }
   if (c.dust?.dust_ug_m3 != null) {
-    strata.push(
-      lyr(
+    out.push(
+      L(
         "dust",
         t("Dust", lang),
-        ctx,
         String(Math.round(c.dust.dust_ug_m3)),
         `<span class="qa nu">µg/m³</span> <b>${t(dustBand(c.dust.dust_ug_m3), lang)}</b>`,
         "",
@@ -772,11 +703,10 @@ export function renderConditionsPage(
     if (c.wind.direction_deg != null) dirParts.push(t("from X", lang).replace("X", compassDir(c.wind.direction_deg)));
     if (c.wind.speed_kmh != null)
       dirParts.push(t("X km/h steady", lang).replace("X", String(Math.round(c.wind.speed_kmh))));
-    strata.push(
-      lyr(
+    out.push(
+      L(
         "wind",
         t("Wind", lang),
-        ctx,
         String(Math.round(gust)),
         `<span class="qa nu">km/h ${t("gusts", lang)}</span> <b>${t(windWord(gust), lang)}</b>`,
         dirParts.join(" · "),
@@ -788,11 +718,10 @@ export function renderConditionsPage(
   if (c.visibility?.meters != null && c.visibility.meters < 5000) {
     const m = c.visibility.meters;
     const val = m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
-    strata.push(
-      lyr(
+    out.push(
+      L(
         "fog",
         t("Visibility", lang),
-        ctx,
         val,
         `<b>${t(visWord(m), lang)}</b>`,
         "",
@@ -806,11 +735,10 @@ export function renderConditionsPage(
       c.smoke.nearest_km != null
         ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW of fire power", lang).replace("X", String(c.smoke.frp_sum))}`
         : `${c.smoke.frp_sum} MW`;
-    strata.push(
-      lyr(
+    out.push(
+      L(
         "smoke",
         t("Smoke", lang),
-        ctx,
         String(c.smoke.count),
         `<span class="qa nu">${t("fires within 100 km", lang)}</span> <b>${t(SMOKE_PHRASE[smokeLvl], lang)}</b>`,
         sub,
@@ -827,11 +755,10 @@ export function renderConditionsPage(
   if (c.rain && (c.rain.probability_pct != null || c.rain.precipitation_mm != null)) {
     const mm = c.rain.precipitation_mm;
     if (c.rain.probability_pct != null) {
-      strata.push(
-        lyr(
+      out.push(
+        L(
           "rain",
           t("Rain", lang),
-          ctx,
           `${c.rain.probability_pct}%`,
           `<span class="qa">${t("chance of rain", lang)}</span>`,
           mm ? t("X mm of rain now", lang).replace("X", String(mm)) : "",
@@ -839,11 +766,47 @@ export function renderConditionsPage(
         ),
       );
     } else {
-      strata.push(
-        lyr("rain", t("Rain", lang), ctx, String(mm), `<span class="qa nu">mm</span> <b>${t("now", lang)}</b>`, ""),
-      );
+      out.push(L("rain", t("Rain", lang), String(mm), `<span class="qa nu">mm</span> <b>${t("now", lang)}</b>`, ""));
     }
   }
+
+  return out;
+}
+
+export function renderConditionsPage(
+  c: Conditions,
+  persona: Persona = "everyone",
+  canonical?: string,
+  lang: Lang = "en",
+  /** mugilu's VAPID public key, when alerts are set up: shows the "alert me" box. */
+  alertsKey?: string,
+): string {
+  const risk = ambientRisk(c, persona);
+  const say = ambientSummary(risk, (en) => t(en, lang));
+  const { meaning } = say;
+  const slug = `${c.location.lat},${c.location.lon}`;
+  const placeName = placeLabel(c); // raw: shell() escapes the title
+  const place = esc(placeName);
+
+  // Persona toggles (understated text, not chips).
+  const base = lp(`/c/${slug}`, lang);
+  const pills = PERSONAS.map((p) => {
+    const href = p === "everyone" ? base : `${base}?as=${p}`;
+    return `<a${p === risk.persona ? ' class="on"' : ""} href="${href}">${esc(t(PERSONA_LABEL[p], lang))}</a>`;
+  }).join("");
+
+  // Editorial headline: "High heat." (band coloured) or "All clear." when calm.
+  const head =
+    risk.band === "low"
+      ? `<span class="b">${t("All clear", lang)}.</span>`
+      : `<span class="b">${t(RISK_LABEL[risk.band], lang)}</span> ${t(COND_NOUN[risk.driver] ?? "sky", lang)}.`;
+
+  // The readings, as strata, in the order they matter now; the Ambient driver's
+  // stratum is highlighted (icon + label in the condition colour).
+  const ctx: LayerCtx = { risk, forYou: t("for you", lang) };
+  const strata = layerData(c, risk, lang).map((d) =>
+    lyr(d.key, d.label, ctx, d.num, d.q, d.sub, d.bar + (d.normal ?? "")),
+  );
 
   // Cross-links to nearby named places in the same state. Turns the ~800 /c/{slug}
   // pages from sitemap-only orphans into a connected graph a crawler can walk, the
@@ -879,7 +842,7 @@ export function renderConditionsPage(
     ${alertsKey ? renderAlertsBox(alertsKey, lang) : ""}
     </div>
     <div class="cx-r">
-    <dl class="strata">${orderLayers(strata, risk, rainLikely(c))
+    <dl class="strata">${orderByRisk(strata, risk, c)
       .map((l) => l.html)
       .join("")}</dl>
     </div>
@@ -892,7 +855,7 @@ export function renderConditionsPage(
     </footer>
   </article>`;
 
-  const css = CONDITIONS_CSS + GLYPH_CSS + (alertsKey ? ALERTS_CSS : "") + `\n:root{--cond:${condColor}}`;
+  const css = CONDITIONS_CSS + GLYPH_CSS + (alertsKey ? ALERTS_CSS : "") + `\n:root{${readVars(risk)}}`;
   const desc = `${placeName}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
@@ -972,7 +935,7 @@ const EMBED_CSS = `
 :root{--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937}}
 body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad("8px", "8px")}}
-.card{display:block;text-decoration:none;color:var(--ink);background:linear-gradient(160deg,color-mix(in srgb,var(--cond) 20%,var(--card)),var(--card) 72%);border:1px solid color-mix(in srgb,var(--cond) 30%,var(--line));border-radius:16px;padding:16px 18px;max-width:460px;margin:0 auto}
+.card{display:block;text-decoration:none;color:var(--ink);background:linear-gradient(160deg,color-mix(in srgb,var(--tint) var(--tk),var(--card)),var(--card) 72%);border:1px solid color-mix(in srgb,var(--cond) 30%,var(--line));border-radius:16px;padding:16px 18px;max-width:460px;margin:0 auto}
 .etop{display:flex;justify-content:space-between;align-items:center;margin:0 0 .6rem}
 .eplace{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
 .ebrand{color:var(--muted);font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.3rem}
@@ -1002,8 +965,8 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad
 const KIOSK_CSS = `
 .bar,.foot{display:none}
 html,body{height:100%;overflow:hidden;background:#080d18}
-.k{position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
-.k::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,var(--cond),transparent 62%);opacity:.16;pointer-events:none}
+.k{--ink:#e7ecf3;--muted:#8b97a8;--line:#1c2740;--bg:#080d18;position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
+.k::before{content:"";position:absolute;inset:0;background:radial-gradient(130% 110% at 100% 0%,color-mix(in srgb,var(--tint) calc(var(--tk) * 1.6),transparent),transparent 64%);pointer-events:none}
 .k>*{position:relative;z-index:1}
 .ktop{display:flex;justify-content:space-between;align-items:flex-start;gap:3vmin}
 .kname{display:block;font-family:var(--serif),Georgia,serif;font-weight:700;font-size:6.2vmin;line-height:1.02}
@@ -1021,13 +984,19 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .ksay{font-size:4.2vmin;line-height:1.2;color:#cfd7e2;max-width:42ch}
 .kact{font-size:2.8vmin;font-weight:600;line-height:1.25;margin-top:1.2vmin;max-width:60ch}
 .kamb:has(.kact) .ksay{font-size:3.4vmin}
-.ktiles{display:flex;gap:2vmin}
-.kt{flex:1;display:flex;flex-direction:column;gap:.4vmin;padding:1.8vmin 2.2vmin;border-radius:1.6vmin;background:#0f1626;border:.3vmin solid #1c2740}
+.kbody{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:4vmin;min-height:0}
+.ktiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.8vmin;align-content:center;min-height:0}
+.kt{display:flex;flex-direction:column;gap:.4vmin;padding:1.8vmin 2.2vmin;border-radius:1.6vmin;background:rgba(15,22,38,.82);border:.3vmin solid #1c2740;min-width:0}
+.kquiet{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:.6vmin 3vmin;margin:.4vmin .4vmin 0;font-size:2.2vmin;color:#8b97a8}
+.kquiet b{color:#cfd7e2;font-weight:600}
+.knorm{margin-top:2vmin;max-width:46vmin}
 .kt.on{border-color:var(--cond)}
 .kt.on .kt-n{color:var(--cond)}
 .kt-l{font-size:2vmin;letter-spacing:.1em;text-transform:uppercase;color:#8b97a8}
 .kt-n{font-size:6.2vmin;font-weight:700;line-height:1}
-.kt-w{font-size:2.4vmin;color:#aeb9c8}
+.kt-w{font-size:2.2vmin;color:#aeb9c8}
+.kt-w .qa{font-size:1.7vmin;letter-spacing:.08em;text-transform:uppercase;color:#8b97a8}
+.kt-w .qa.nu{text-transform:none;letter-spacing:.02em}
 .kfoot{display:flex;justify-content:space-between;align-items:flex-end;gap:2vmin}
 .kbrand{font-size:3vmin;font-weight:700;color:#38bdf8}
 .kdisc{font-size:1.7vmin;color:#8b97a8;margin-top:.5vmin}
@@ -1038,7 +1007,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
   .k{gap:2.6vmin;${safePad("5.5vmin", "5vmin")}}
   .kname{font-size:7vmin}.kclock #clk{font-size:6vmin}
   .khead{font-size:10vmin}.ksay{font-size:4.6vmin;max-width:24ch}
-  .ktiles{flex-wrap:wrap;gap:1.6vmin}.kt{flex:1 1 42%;padding:1.8vmin 2vmin}.kt-n{font-size:6vmin}
+  .kbody{grid-template-columns:minmax(0,1fr);gap:2.6vmin}.ktiles{gap:1.6vmin}.kt{padding:1.8vmin 2vmin}.kt-n{font-size:6vmin}
   .kqr svg{width:15vmin;height:15vmin}
 }
 @media (orientation:portrait) and (min-aspect-ratio:2/3){
@@ -1050,6 +1019,19 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .kspin{width:7vmin;height:7vmin;border:.7vmin solid rgba(148,163,184,.25);border-top-color:#7dd3fc;border-radius:50%;animation:kspin 1s linear infinite}
 .kverb{font-size:3.2vmin;color:#cbd5e1;letter-spacing:.01em}
 @keyframes kspin{to{transform:rotate(360deg)}}`;
+
+/** The layer graphics (GLYPH_CSS) scaled for a screen read from across a room. */
+const KIOSK_GLYPH_CSS = `
+.k .g{height:1vmin;max-width:none;margin:1vmin 0 .3vmin}
+.k .g .gt{top:-.5vmin;bottom:-.5vmin}
+.k .g .gm{width:1.8vmin;height:1.8vmin}
+.k .gl{font-size:1.9vmin;margin-top:.8vmin}
+.k .prk{font-size:1.6vmin}
+.k .uv{max-width:none;gap:.4vmin;margin-top:1vmin}.k .uv i{height:1.8vmin}
+.k .prs{max-width:none;margin-top:1vmin}.k .pr{font-size:2vmin;grid-template-columns:8vmin 1fr 6vmin}.k .pt{height:1.2vmin}
+.k .wrow{max-width:none}.k .cmp{width:7vmin;height:7vmin}
+.k .drops{width:100%;height:auto;margin-top:1vmin}
+.k .sub{display:none}`;
 
 /** The loading verbs the kiosk cycles through while it refreshes. */
 const KIOSK_VERBS = [
@@ -1096,42 +1078,24 @@ export function renderKioskPage(
   const slug = `${c.location.lat},${c.location.lon}`;
   const placeName = placeLabel(c); // raw: shell() escapes the title
   const place = esc(placeName);
-  const condColor = RISK_COLOR[risk.band];
   const head =
     risk.band === "low"
       ? `<span class="b">${t("All clear", lang)}.</span>`
       : `<span class="b">${t(RISK_LABEL[risk.band], lang)}</span> ${t(COND_NOUN[risk.driver] ?? "sky", lang)}.`;
 
-  const tile = (label: string, value: string, word: string, on: boolean, color = "") =>
-    `<div class="kt${on ? " on" : ""}"><span class="kt-l">${t(label, lang)}</span><span class="kt-n">${value}</span><span class="kt-w"${color ? ` style="color:${color}"` : ""}>${esc(t(word, lang))}</span></div>`;
-  const tiles: string[] = [];
-  if (c.air?.aqi != null)
-    tiles.push(
-      tile(
-        "Air",
-        String(c.air.aqi),
-        AQI_BAND_LABEL[c.air.band ?? "unknown"] ?? "n/a",
-        risk.driver === "Air",
-        BAND_COLOR[c.air.band ?? "unknown"] ?? BAND_COLOR.unknown,
-      ),
-    );
-  if (c.heat?.apparent_c != null)
-    tiles.push(
-      tile(
-        "Heat",
-        `${round(c.heat.apparent_c)}°`,
-        heatPhrase(c.heat.apparent_c, c.heat.wet_bulb_c),
-        risk.driver === "Heat",
-      ),
-    );
-  if (c.uv?.index != null)
-    tiles.push(tile("UV", String(Math.round(c.uv.index)), uvWord(c.uv.index), risk.driver === "UV"));
-  if (c.dust?.dust_ug_m3 != null)
-    tiles.push(
-      tile("Dust", String(Math.round(c.dust.dust_ug_m3)), dustBand(c.dust.dust_ug_m3), risk.driver === "Dust"),
-    );
-  if (c.rain?.probability_pct != null)
-    tiles.push(tile("Rain", `${Math.round(c.rain.probability_pct)}%`, "rain chance", risk.driver === "Rain"));
+  // Up to four tiles in the order the readings matter now, each with its graphic;
+  // every other reading in one quiet line (label and value only).
+  const layers = orderByRisk(layerData(c, risk, lang), risk, c);
+  const shown = layers.slice(0, 4);
+  const tiles = shown.map(
+    (d) =>
+      `<div class="kt${isDriver(d.key, risk) ? " on" : ""}" data-k="${d.key}"><span class="kt-l">${d.label}</span><span class="kt-n">${d.num}</span><span class="kt-w">${d.q}</span>${d.mini ?? d.bar}</div>`,
+  );
+  const rest = briefs(c, risk).filter((b) => !shown.some((d) => d.key === b.key));
+  const quietLine = rest.length
+    ? `<p class="kquiet">${rest.map((b) => `<span>${t(b.label, lang)} <b>${esc(b.value)}</b></span>`).join("")}</p>`
+    : "";
+  const normal = layers.find((d) => d.key === "heat")?.normal;
 
   const w0 = c.warnings?.[0];
   const warn = w0
@@ -1139,19 +1103,22 @@ export function renderKioskPage(
     : "";
 
   const body = `
-  <div class="k" style="--cond:${condColor}">
+  <div class="k" style="${readVars(risk)}">
     <header class="ktop">
       <div><span class="kname">${place}</span><span class="kcoord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</span></div>
       <div class="kclock"><span id="clk">--:--</span><span class="kago">${t("updated", lang)} <span id="ago" data-t="${c.air_as_of ?? c.as_of}">${t("just now", lang)}</span></span></div>
     </header>
     ${warn}
-    <main class="kamb">
-      <p class="keye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
-      <p class="khead">${head}</p>
-      <p class="ksay">${esc(say.meaning)}</p>
-      ${say.action ? `<p class="kact">${esc(say.action)}</p>` : ""}
-    </main>
-    <section class="ktiles">${tiles.join("")}</section>
+    <div class="kbody">
+      <main class="kamb">
+        <p class="keye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
+        <p class="khead">${head}</p>
+        <p class="ksay">${esc(say.meaning)}</p>
+        ${say.action ? `<p class="kact">${esc(say.action)}</p>` : ""}
+        ${normal ? `<div class="knorm">${normal}</div>` : ""}
+      </main>
+      <section class="ktiles">${tiles.join("")}${quietLine}</section>
+    </div>
     <footer class="kfoot">
       <div><span class="kbrand">mugilu.live</span><p class="kdisc">${esc(t(SHORT_DISCLAIMER, lang))}</p></div>
       <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan to see this<br>on your phone" : t("scan to see this on your phone", lang)}</span></div>
@@ -1160,7 +1127,7 @@ export function renderKioskPage(
   <div class="kload" aria-hidden="true"><div class="kspin"></div><p class="kverb">${t(KIOSK_VERBS[0], lang)}…</p></div>
   <script>${kioskJs(lang)}</script>`;
 
-  const css = KIOSK_CSS;
+  const css = KIOSK_CSS + GLYPH_CSS + KIOSK_GLYPH_CSS;
   const desc = `${c.place ?? slug}: a live wall-display of the whole sky over this spot, self-refreshing.`;
   // noBeacon: a kiosk is one persistent display auto-reloading every ~14 min; it would
   // inflate visitor counts and skew Core Web Vitals, so keep the RUM beacon off here.
@@ -1263,7 +1230,6 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
 export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, lang: Lang = "en"): string {
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk, (en) => t(en, lang));
-  const condColor = RISK_COLOR[risk.band];
   const slug = `${c.location.lat},${c.location.lon}`;
   const place = esc(placeLabel(c));
   const head =
@@ -1292,7 +1258,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{--cond:${condColor}}</style></head><body>
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{${readVars(risk)}}</style></head><body>
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>

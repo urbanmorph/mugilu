@@ -74,3 +74,65 @@ test("renderKioskPage: a persona display shows that group's own step", () => {
     /class="kact"[^>]*>[^<]*shade/,
   );
 });
+
+// The display, rebuilt: tiles in the order they matter, each drawn; the rest in one quiet line.
+const tiles = (html: string) => [...html.matchAll(/<div class="kt[^"]*" data-k="([a-z]+)"/g)].map((m) => m[1]);
+const quiet = (html: string) => html.match(/<p class="kquiet">([\s\S]*?)<\/p>/)?.[1] ?? "";
+
+test("renderKioskPage: up to four tiles in order of risk, the headline first; the rest in a quiet line", () => {
+  const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi", "<svg/>");
+  assert.deepEqual(tiles(html), ["heat", "dust", "air", "sun"]);
+  assert.match(quiet(html), /Rain <b>43%<\/b>/);
+  assert.match(html, /<div class="kt on" data-k="heat"/);
+});
+
+test("renderKioskPage: each tile carries its graphic, drawn against the limits", () => {
+  const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi", "<svg/>");
+  const tile = (k: string) => html.match(new RegExp(`data-k="${k}">[\\s\\S]*?(?=data-k=|</section>)`))?.[0] ?? "";
+  assert.match(tile("heat"), /class="g"/);
+  assert.match(tile("sun"), /class="uv"/);
+  assert.match(tile("air"), /class="prs"/);
+});
+
+test("renderKioskPage: the backdrop takes the hazard's tint", () => {
+  const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi", "<svg/>");
+  assert.match(html, /<div class="k" style="--cond:#dc2626;--tint:#f97316;--tk:34%">/);
+});
+
+test("renderKioskPage: a notable high vs normal sits beside the read", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-06-28T09:00:00Z") });
+  const hvn = {
+    today_max_c: 45,
+    normal_max_c: 40,
+    anomaly_c: 5,
+    notable: true,
+    date: "2026-06-28",
+    period: "late June",
+    baseline: "1991-2020 normals",
+    source: "era5",
+  };
+  const html = renderKioskPage(
+    conditions({ heat_vs_normal: hvn } as Partial<Conditions>),
+    "everyone",
+    "https://mugilu.live/c/x",
+    "<svg/>",
+  );
+  assert.match(html, /<div class="knorm">[\s\S]*?5°C above normal/);
+});
+
+test("renderKioskPage: a calm day still fills four tiles, and a persona gets their own step", () => {
+  const calm = conditions({
+    air: { aqi: 30, band: "good", pollutants: { pm25: 12 }, station: null, source: "cpcb" },
+    heat: { temp_c: 24, humidity_pct: 60, apparent_c: 24, wet_bulb_c: 19, source: "open-meteo" },
+    uv: { index: 4, source: "open-meteo" },
+    dust: { dust_ug_m3: 5, source: "open-meteo" },
+    rain: { precipitation_mm: 0, probability_pct: 20, source: "open-meteo" },
+    wind: { speed_kmh: 9, gust_kmh: 16, direction_deg: 250, source: "open-meteo" },
+  } as Partial<Conditions>);
+  const html = renderKioskPage(calm, "everyone", "https://mugilu.live/c/x", "<svg/>");
+  assert.deepEqual(tiles(html), ["air", "heat", "sun", "rain"]);
+  assert.match(quiet(html), /Wind <b>16 km\/h<\/b>[\s\S]*Dust <b>5 µg\/m³<\/b>/);
+  assert.match(html, /--tint:#38bdf8/);
+  const outdoor = renderKioskPage(conditions(), "outdoor", "https://mugilu.live/c/x", "<svg/>");
+  assert.match(outdoor, /class="kact"/);
+});
