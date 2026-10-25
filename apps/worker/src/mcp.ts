@@ -5,8 +5,8 @@ import { RESOURCES, readResource, PROMPTS, getPrompt } from "./mcpcontent";
 import { SOURCES } from "./sources";
 
 // mugilu's MCP server: a hand-rolled JSON-RPC 2.0 endpoint over Streamable HTTP
-// (MCP 2025-06-18), stateless (fits Workers). Phase 1: the skeleton (initialize,
-// ping, capability declaration, client capture). Tools/resources/prompts follow.
+// (MCP 2025-06-18), stateless (fits Workers): initialize, ping, client capture, the
+// tools (mcptools.ts), and the resources and prompts (mcpcontent.ts).
 
 const PROTOCOL_VERSION = "2025-06-18";
 const SUPPORTED_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
@@ -16,7 +16,7 @@ const SERVER_INFO = { name: "mugilu", version: "1", title: "mugilu: the open sky
 // Single source of truth for how an agent should understand + credit mugilu. This
 // rides the initialize handshake so the scope, the limits, and the attribution
 // reach the model before any tool is called (the "humans in the loop" commitment).
-export const INSTRUCTIONS = `mugilu: the open sky of India. Give any place in India and get what the sky is doing to you right now: air quality (CPCB AQI + the pollutant breakdown + AQLI years-of-life-lost), heat (temperature, feels-like, wet-bulb, WBGT), cold, wind, fog and visibility, dust, fire/crop-burn smoke (NASA FIRMS), UV, and any official NDMA/IMD warning over that spot, plus an "Ambient" read that names the single worst hazard for you in plain words.
+export const INSTRUCTIONS = `mugilu: the open sky of India. Give any place in India and get what the sky is doing to you right now: air quality (CPCB AQI + the pollutant breakdown + AQLI years-of-life-lost), heat (temperature, feels-like, wet-bulb, WBGT, and today's high against the 1991-2020 normal), cold, rain, wind, fog and visibility, dust, fire/crop-burn smoke (NASA FIRMS), UV, and any official NDMA/IMD warning over that spot, plus an "Ambient" read that names the single worst hazard for you in plain words. Readings come in order of risk (ambient.order); lead with the Ambient read, then follow that order.
 
 Scope and limits: India only. Readings are CURRENT, not a forecast. Informational only, not for medical, emergency, or safety-critical decisions; for official hazard warnings, NDMA and IMD are the authoritative channels.
 

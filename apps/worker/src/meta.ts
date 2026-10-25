@@ -40,32 +40,41 @@ export function llmsTxt(siteUrl: string): string {
 > Informational only, not for medical, emergency, or safety-critical decisions.
 
 ## Entry points
-- MCP server (for AI agents): ${siteUrl}/mcp  (JSON-RPC 2.0 over Streamable HTTP, MCP 2025-06-18; tools: conditions_at, search_place, nearest_stations, active_warnings, national_now; plus resources and prompts)
-- OpenAPI spec (REST): ${siteUrl}/openapi.json
-- Conditions (HTML): ${siteUrl}/c/{lat},{lon}  e.g. ${siteUrl}/c/12.97,77.59
-- Conditions (JSON): ${siteUrl}/c/{lat},{lon}.json
-- Conditions (Markdown): ${siteUrl}/c/{lat},{lon}.md
-- Persona weighting: add ?as=asthma|elderly|child|outdoor|heart to any /c URL
-- Nearest air stations: ${siteUrl}/near?lat={lat}&lon={lon}
-- Place search / typeahead: ${siteUrl}/suggest?q={name}
-- Air leaderboard: ${siteUrl}/index.json  and  ${siteUrl}/index.md
-- Active warnings (national): ${siteUrl}/warnings  (also .json and .md)
-- Per-station: ${siteUrl}/s/{provider}/{id}.json  and  .md
+- [MCP server](${siteUrl}/mcp): for AI agents (JSON-RPC 2.0 over Streamable HTTP, MCP 2025-06-18; tools: conditions_at, search_place, nearest_stations, active_warnings, national_now; plus resources and prompts)
+- [OpenAPI spec](${siteUrl}/openapi.json): the REST read API
+- [Conditions page](${siteUrl}/c/12.97,77.59): ${siteUrl}/c/{lat},{lon}, or a named place like ${siteUrl}/c/bengaluru
+- [Conditions JSON](${siteUrl}/c/12.97,77.59.json): ${siteUrl}/c/{lat},{lon}.json
+- [Conditions Markdown](${siteUrl}/c/12.97,77.59.md): ${siteUrl}/c/{lat},{lon}.md
+- [Conditions image](${siteUrl}/c/12.97,77.59.png): ${siteUrl}/c/{lat},{lon}.png, a timestamped PNG of the read
+- [Embeddable card](${siteUrl}/embed/12.97,77.59): ${siteUrl}/embed/{lat},{lon}
+- [Display for a wall screen](${siteUrl}/display): or add ?kiosk to any /c URL; it refreshes itself
+- [Persona weighting](${siteUrl}/c/delhi?as=asthma): add ?as=asthma|elderly|child|outdoor|heart to any /c URL
+- [Hindi](${siteUrl}/hi) and [Kannada](${siteUrl}/kn): the same pages under /hi/ and /kn/
+- [Nearest air stations](${siteUrl}/near?lat=12.97&lon=77.59): ${siteUrl}/near?lat={lat}&lon={lon}
+- [Place search](${siteUrl}/suggest?q=bengaluru): ${siteUrl}/suggest?q={name}
+- [Air leaderboard](${siteUrl}/index.json): also ${siteUrl}/index.md
+- [Active warnings](${siteUrl}/warnings): national, also .json and .md
+- Per-station: ${siteUrl}/s/{provider}/{id}.json and .md
 - Attribution: add ?ref=your-app to any API or /embed URL to identify your app or site (aggregate, domain-level; helps us see who builds on mugilu)
-- About: ${siteUrl}/about
-- Methodology (the Ambient thresholds, glass-box): ${siteUrl}/methodology
-- Terms and attribution: ${siteUrl}/terms
+- [About](${siteUrl}/about)
+- [Methodology](${siteUrl}/methodology): the Ambient thresholds, glass-box
+- [Terms and attribution](${siteUrl}/terms)
 
 ## What a conditions response carries
 The JSON is a versioned, self-describing contract: a "schema" and "version", and a
 "units" map (notably CO is mg/m3 while other pollutants are ug/m3). Layers: air
-(AQI + band + pollutants + AQLI years-of-life-lost), heat (temperature, humidity,
-feels-like, wet-bulb, WBGT), rain, uv, dust, wind, visibility, fire/crop-burn smoke
+(AQI + band + pollutants + AQLI years-of-life-lost; measured, or modelled where no
+station is within 50 km), heat (temperature, humidity, feels-like, wet-bulb, WBGT),
+heat_vs_normal (today's high against the 1991-2020 normal here; shown on pages only
+when 3 C or more apart), rain, uv, dust, wind, visibility, fire/crop-burn smoke
 (NASA FIRMS), and any official NDMA/SACHET warnings whose area covers the point
 ("warnings"; others active within 40 km are in "nearby_warnings"). Each layer carries
 its "source", a "kind" (measured / modelled / observed) and its own "as_of". An
 "ambient" object names the single worst hazard weighted by persona, with a plain
-"summary". Every response also carries "refresh_after_seconds" (how long the reading
+"summary", the persona's own step ("persona_action") and other raised trigger
+("persona_also"), and "order": the readings in the order every mugilu surface shows
+them (the headline hazard first, then by risk), with "persona_layers" marking the
+persona's own. Every response also carries "refresh_after_seconds" (how long the reading
 stays current). Attribution and a disclaimer travel inside every response.
 
 ## Freshness and polling
@@ -110,7 +119,7 @@ export function openApiSpec(siteUrl: string): object {
       title: "mugilu: India's open sky",
       version: "1.0.0",
       description:
-        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb), rain, UV, dust, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read. Informational only, not for medical, emergency, or safety-critical use. Freshness: readings recompute on a ~15-minute cycle (air and warnings change hourly, weather at most every 15 min). Each response carries refresh_after_seconds and a matching Cache-Control max-age; poll at most once every 15 minutes per place, faster returns identical data.",
+        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb, and today's high against the 1991-2020 normal), rain, UV, dust, wind, fog, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read with the readings in order of risk (ambient.order). Informational only, not for medical, emergency, or safety-critical use. Freshness: readings recompute on a ~15-minute cycle (air and warnings change hourly, weather at most every 15 min). Each response carries refresh_after_seconds and a matching Cache-Control max-age; poll at most once every 15 minutes per place, faster returns identical data.",
       license: { name: "Sources keep their own licence; see /terms", url: `${siteUrl}/terms` },
       contact: { url: siteUrl },
     },
@@ -133,7 +142,7 @@ export function openApiSpec(siteUrl: string): object {
             ref,
           ],
           responses: ok(
-            "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), and an ambient read.",
+            "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), and an ambient read (summary, persona_action, persona_also, order, persona_layers).",
           ),
         },
       },

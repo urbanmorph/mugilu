@@ -17,14 +17,15 @@ export const AIR_PROVIDERS: Record<ProviderId, { name: string; short: string }> 
 
 const shorts = Object.values(AIR_PROVIDERS).map((p) => p.short);
 
-/** Every air provider reaches us through the OAQ broker; there is no other air feed. */
+/** Every measured air provider reaches us through the OAQ broker. Where no station is
+ *  within 50 km, air is modelled by Open-Meteo instead (credited in its row below). */
 export const AIR_SOURCE = `${shorts.slice(0, -1).join(", ")} and ${shorts.at(-1)} via the OAQ broker (oaq.notf.in)`;
 
 /** Each layer, where it comes from (with the licence where it asks for credit), and
  *  the names any hand-written credit for that layer must mention. */
 export const SOURCES: { layer: string; text: string; names: string[] }[] = [
   { layer: "Air", text: AIR_SOURCE, names: ["CPCB", "Airnet", "Aurassure", "AirView+", "OAQ"] },
-  { layer: "Heat, rain, UV, dust, wind", text: "Open-Meteo (CC-BY 4.0)", names: ["Open-Meteo"] },
+  { layer: "Modelled air, heat, rain, UV, dust, wind", text: "Open-Meteo (CC-BY 4.0)", names: ["Open-Meteo"] },
   {
     layer: "Heat compared with normal",
     text: "1991-2020 normals of ERA5 reanalysis (Copernicus Climate Change Service) via Open-Meteo",

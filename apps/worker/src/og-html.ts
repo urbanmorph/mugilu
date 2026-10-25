@@ -14,7 +14,7 @@ import { briefs, isDriver, type Brief } from "./readings";
 import { heatVsNormalLine, heatVsNormalShown } from "./heatnormals";
 
 /** Text for the image. Satori draws text as written and never decodes HTML
- *  entities, so `ogText()` would show "&amp;" ("Asthma &amp; lungs"); only the angle
+ *  entities, so `esc()` would show "&amp;" ("Asthma &amp; lungs"); only the angle
  *  brackets that could open a tag are dropped. */
 export const ogText = (s: string) => s.replace(/[<>]/g, "");
 

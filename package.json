@@ -2,7 +2,7 @@
   "name": "mugilu",
   "private": true,
   "version": "0.0.0",
-  "description": "mugilu — India's open sky. Live air quality across India; expanding to heat, rain, UV, dust & official warnings.",
+  "description": "mugilu: India's open sky. Air, heat, rain, UV, dust, wind, fog, smoke and official warnings for any point in India.",
   "license": "MIT",
   "scripts": {
     "dev:worker": "pnpm --filter mugilu-worker dev",
