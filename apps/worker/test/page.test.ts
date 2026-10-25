@@ -360,3 +360,60 @@ test("renderConditionsPage: laptops get two columns, the reading pinned beside t
   assert.match(html, /<div class="cx-l">[\s\S]*class="amb"[\s\S]*<\/div>\s*<div class="cx-r">\s*<dl class="strata">/);
   assert.match(html, /@media\(min-width:960px\)\{[^}]*main:has\(>\.cx\)\{max-width:/);
 });
+
+// The graphics on each layer (glyphs.ts), drawn against the limits the read uses.
+const layerHtml = (html: string, k: string) => html.match(new RegExp(`<div class="lyr(?: on)?" data-k="${k}">[\\s\\S]*?</dd></div>`))?.[0] ?? "";
+
+test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit, not a line of numbers", () => {
+  const html = renderConditionsPage(conditions({ air: { ...conditions().air!, pollutants: { pm25: 64, pm10: 218 } } }));
+  const air = layerHtml(html, "air");
+  assert.match(air, /<div class="prs">/);
+  assert.match(air, /<div class="pr over"><span>PM10<\/span>/);
+  assert.doesNotMatch(air, /class="poll"/);
+  assert.match(air, /class="lb"/, "years of life lost as blocks");
+});
+
+test("renderConditionsPage: hot heat shows wet-bulb and WBGT against their thresholds", () => {
+  const html = renderConditionsPage(
+    conditions({ heat: { temp_c: 44, humidity_pct: 18, apparent_c: 47, wet_bulb_c: 24, wbgt_c: 33, source: "open-meteo" } }),
+  );
+  const heat = layerHtml(html, "heat");
+  assert.equal([...heat.matchAll(/<div class="g"/g)].length, 2);
+  assert.match(heat, /wet-bulb 24°/);
+  assert.match(heat, /WBGT 33°/);
+});
+
+test("renderConditionsPage: cold heat shows feels-like against the cold thresholds instead", () => {
+  const html = renderConditionsPage(
+    conditions({ heat: { temp_c: 2, humidity_pct: 60, apparent_c: -1, wet_bulb_c: 0, source: "open-meteo" } }),
+  );
+  const heat = layerHtml(html, "heat");
+  assert.equal([...heat.matchAll(/<div class="g"/g)].length, 1);
+  assert.equal([...heat.matchAll(/class="gt"/g)].length, 3);
+  assert.match(heat, /class="gf" style="left:22.5%;width:0%"/, "a dot, not a bar that reads as heat");
+});
+
+test("renderConditionsPage: a notable high vs normal draws today against the normal", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T08:00:00Z") });
+  const html = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL } as Partial<Conditions>));
+  const heat = layerHtml(html, "heat");
+  assert.match(heat, /class="gm" style="left:75%"/, "41 on a 26-46 ruler around the normal of 36");
+});
+
+test("renderConditionsPage: wind gets a compass, rain drops, sun the UV steps, visibility and smoke a ruler", () => {
+  const html = renderConditionsPage(
+    conditions({
+      wind: { speed_kmh: 18, gust_kmh: 46, direction_deg: 270, source: "open-meteo" },
+      rain: { probability_pct: 40, precipitation_mm: 0, source: "open-meteo" },
+      uv: { index: 11, source: "open-meteo" },
+      visibility: { meters: 1000, source: "open-meteo" },
+      smoke: { count: 3, frp_sum: 12, nearest_km: 42, radius_km: 100, source: "firms" },
+    } as Partial<Conditions>),
+  );
+  assert.match(layerHtml(html, "wind"), /<svg class="cmp"[\s\S]*rotate\(90 /);
+  assert.match(layerHtml(html, "rain"), /<svg class="drops"/);
+  assert.match(layerHtml(html, "sun"), /<span class="uv"/);
+  assert.match(layerHtml(html, "fog"), /class="gf" style="left:0%;width:50%"/, "1 km halfway on 100 m-10 km");
+  assert.match(layerHtml(html, "smoke"), /class="gm" style="left:42%"/);
+  assert.doesNotMatch(html, /class="scale/, "the old gradient bars are gone");
+});
