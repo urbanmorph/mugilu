@@ -511,8 +511,7 @@ function lyr(key: string, label: string, ctx: LayerCtx, num: string, q: string, 
   const { risk } = ctx;
   // For a persona: their own layers tagged, the rest quieter, except the headline
   // hazard, which stays at full strength (everyone: neither).
-  const own =
-    risk.persona === "everyone" ? "" : forPersona(key, risk) ? " mine" : isDriver(key, risk) ? "" : " quiet";
+  const own = risk.persona === "everyone" ? "" : forPersona(key, risk) ? " mine" : isDriver(key, risk) ? "" : " quiet";
   const tag = own === " mine" ? `<span class="fy">${ctx.forYou}</span>` : "";
   const html = `<div class="lyr${isDriver(key, risk) ? " on" : ""}${own}" data-k="${key}"><dt>${icon(key)}<span>${label}</span>${tag}</dt><dd><span class="num">${num}</span><span class="q">${q}</span>${bar}${sub ? `<span class="sub">${sub}</span>` : ""}</dd></div>`;
   return { key, html };
