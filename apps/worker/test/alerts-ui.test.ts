@@ -16,6 +16,8 @@ const IDS = [
   "alerts-denied",
   "alerts-failed",
   "alerts-full",
+  "alerts-note-off",
+  "alerts-note-on",
 ];
 const UA = {
   android: "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36",
@@ -101,7 +103,7 @@ const shown = (b: ReturnType<typeof browser>) =>
   b.els.alerts.hidden ? [] : IDS.filter((id) => id !== "alerts-off" && !b.els[id].hidden);
 
 test("where the browser can receive alerts, the box offers to turn them on", () => {
-  assert.deepEqual(shown(browser()), ["alerts", "alerts-on"]);
+  assert.deepEqual(shown(browser()), ["alerts", "alerts-on", "alerts-note-off"]);
 });
 
 test("turning alerts on asks permission, subscribes with mugilu's key, and sends the place", async () => {
@@ -120,28 +122,28 @@ test("turning alerts on asks permission, subscribes with mugilu's key, and sends
       },
     },
   ]);
-  assert.deepEqual(shown(b), ["alerts", "alerts-state"]);
+  assert.deepEqual(shown(b), ["alerts", "alerts-state", "alerts-note-on"]);
   assert.deepEqual(JSON.parse(b.store.get("mugilu:alerts")!), ["14.91,79.99"]);
 });
 
 test("a place with alerts on says so when the page opens", () => {
-  assert.deepEqual(shown(browser({ saved: ["14.91,79.99"] })), ["alerts", "alerts-state"]);
+  assert.deepEqual(shown(browser({ saved: ["14.91,79.99"] })), ["alerts", "alerts-state", "alerts-note-on"]);
 });
 
 test("if notifications are refused, it says how to allow them and sends nothing", async () => {
   const b = browser({ permission: "denied" });
   await b.tap("alerts-on");
   assert.deepEqual(b.posts, []);
-  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-denied"]);
+  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-denied", "alerts-note-off"]);
 });
 
 test("too many places, or a failure, is said plainly and leaves alerts off", async () => {
   let b = browser({ status: 409 });
   await b.tap("alerts-on");
-  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-full"]);
+  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-full", "alerts-note-off"]);
   b = browser({ status: 500 });
   await b.tap("alerts-on");
-  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-failed"]);
+  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-failed", "alerts-note-off"]);
   assert.equal(b.store.get("mugilu:alerts"), undefined);
 });
 
@@ -154,7 +156,7 @@ test("turning off the last place unsubscribes the browser; with others left, onl
     body: { endpoint: "https://fcm.googleapis.com/fcm/send/x" },
   });
   assert.equal(b.subscription()!.unsubscribed, true);
-  assert.deepEqual(shown(b), ["alerts", "alerts-on"]);
+  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-note-off"]);
 
   b = browser({ saved: ["13.00,77.60"] });
   await b.tap("alerts-on");
@@ -168,7 +170,11 @@ test("turning off the last place unsubscribes the browser; with others left, onl
 });
 
 test("on an iPhone not yet installed, it explains to install mugilu first; elsewhere without push, nothing shows", () => {
-  assert.deepEqual(shown(browser({ ua: UA.iphone, push: false })), ["alerts", "alerts-ios"]);
+  assert.deepEqual(
+    shown(browser({ ua: UA.iphone, push: false })),
+    ["alerts", "alerts-ios"],
+    "no note: alerts cannot be turned on yet",
+  );
   assert.deepEqual(shown(browser({ push: false })), []);
 });
 
@@ -201,4 +207,19 @@ test("a place's page carries the box, hidden until the script decides, with the 
 test("the Terms page's privacy section says what turning alerts on keeps", () => {
   assert.match(renderTerms("en"), /If you turn on alerts for a place, mugilu keeps that place \(to about 1 km\)/);
   assert.match(renderTerms("hi"), /अगर आप किसी जगह के लिए अलर्ट चालू करते हैं/);
+});
+
+test("each note shows only in its own state: what is kept before, what is deleted after", () => {
+  const box = renderAlertsBox(KEY, "en");
+  assert.match(box, /<p class="alerts-note" id="alerts-note-off" hidden>[^<]*keeps this place/);
+  assert.match(box, /<p class="alerts-note" id="alerts-note-on" hidden>[^<]*deletes this place/);
+  assert.doesNotMatch(box.match(/id="alerts-note-off"[^<]*/)![0], /deletes/);
+});
+
+test("on a laptop the box sits in the left rail; on a phone it still comes after the layers", () => {
+  const html = renderConditionsPage(C, "everyone", "https://mugilu.live/c/14.91,79.99", "en", KEY);
+  const left = html.slice(html.indexOf('<div class="cx-l">'), html.indexOf('<div class="cx-r">'));
+  assert.match(left, /<section class="alerts" id="alerts"/);
+  assert.match(html, /@media\(max-width:959px\)\{\.cx\{display:flex;flex-direction:column\}\.cx-l\{display:contents\}/);
+  assert.match(html, /\.cx-r\{order:1\}\.cx \.alerts\{order:2\}\.cx footer\{order:3\}/);
 });

@@ -387,17 +387,21 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--cond) 22%,var(--b
 @media(min-width:960px){
 main:has(>.cx){max-width:1120px;padding-top:28px}
 .cx{display:grid;grid-template-columns:minmax(0,23rem) minmax(0,1fr);column-gap:3.5rem;align-items:start}
-.cx-l{position:sticky;top:1.5rem}
+
 .cx-r .strata{margin-top:.5rem;display:grid;grid-template-columns:1fr 1fr;column-gap:2.2rem;border-top:0}
 .cx-r .lyr{grid-template-columns:1fr;align-content:start;border-top:1px solid var(--hair);border-bottom:0;padding:1rem .1rem 1.15rem}
 .cx-r .lyr dt{padding-top:0;margin-bottom:.5rem}
 .cx footer{grid-column:1/-1}
 }
+/* The left rail (place, read, alerts) stays in view while the layers scroll, when it fits. */
+@media(min-width:960px) and (min-height:820px){.cx-l{position:sticky;top:1.5rem}}
 @media(prefers-reduced-motion:no-preference){
 .coord,.loc,.when,.warn,.amb,.lyr{animation:rise .55s both cubic-bezier(.2,.7,.2,1)}
 .loc{animation-delay:.03s}.when{animation-delay:.06s}.warn{animation-delay:.09s}.amb{animation-delay:.12s}
 .strata .lyr:nth-child(1){animation-delay:.2s}.strata .lyr:nth-child(2){animation-delay:.26s}.strata .lyr:nth-child(3){animation-delay:.32s}.strata .lyr:nth-child(4){animation-delay:.38s}.strata .lyr:nth-child(5){animation-delay:.44s}
 }
+/* Phones: one column, the alerts box after the layers (it sits in the left rail on laptops). */
+@media(max-width:959px){.cx{display:flex;flex-direction:column}.cx-l{display:contents}.cx-r{order:1}.cx .alerts{order:2}.cx footer{order:3}}
 @keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 `;
 
@@ -830,12 +834,12 @@ export function renderConditionsPage(
       ${say.also ? `<p class="amb-also">${icon("users")}${esc(say.also)}</p>` : ""}
       <nav class="who" aria-label="${esc(t("Who is this for", lang))}">${pills}</nav>
     </section>
+    ${alertsKey ? renderAlertsBox(alertsKey, lang) : ""}
     </div>
     <div class="cx-r">
     <dl class="strata">${orderLayers(strata, risk, rainLikely(c))
       .map((l) => l.html)
       .join("")}</dl>
-    ${alertsKey ? renderAlertsBox(alertsKey, lang) : ""}
     </div>
     <footer>
       <p class="attr">${esc(lang === "en" ? c.attribution : c.attribution.replace(/^Sources:/, `${t("Sources", lang)}:`))}</p>

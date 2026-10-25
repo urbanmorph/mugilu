@@ -1,6 +1,7 @@
 // The "alert me" box on a place's page (alerts.ts holds the server side). Its
 // messages are rendered here, translated and hidden; the script only shows the
-// right ones. Hidden until the script runs: shown where the browser can receive
+// right ones: the note on what is kept while alerts are off, the note on what is
+// deleted once they are on, and neither on an iPhone that must install first. Hidden until the script runs: shown where the browser can receive
 // alerts, or on an iPhone or iPad not yet installed (Safari allows web push only
 // to an app on the Home Screen), with the steps to install first.
 
@@ -16,7 +17,8 @@ export function renderAlertsBox(publicKey: string, lang: Lang): string {
   <p class="alerts-msg" id="alerts-full" hidden>${t("Alerts are on for 12 places. That is the limit. Turn off alerts for one place first.", lang)}</p>
   <p class="alerts-msg" id="alerts-failed" hidden>${t("Alerts could not be turned on. Try again.", lang)}</p>
   <p class="alerts-msg" id="alerts-ios" hidden>${t("On iPhone and iPad, first add mugilu to your Home Screen (Share, then Add to Home Screen). Open mugilu from the Home Screen. Then turn on alerts here.", lang)}</p>
-  <p class="alerts-note">${t("Alerts are opt-in. When you turn on alerts, mugilu keeps this place (to approximately 1 km) and the push address of your browser. mugilu uses them only to send you official NDMA/IMD warnings for this place. mugilu deletes them when you turn off alerts.", lang)}</p>
+  <p class="alerts-note" id="alerts-note-off" hidden>${t("Alerts are opt-in. When you turn on alerts, mugilu keeps this place (to approximately 1 km) and the push address of your browser. mugilu uses them only to send you official NDMA/IMD warnings for this place.", lang)}</p>
+  <p class="alerts-note" id="alerts-note-on" hidden>${t("When you turn off alerts, mugilu deletes this place and the push address of your browser.", lang)}</p>
 </section>`;
 }
 
@@ -39,7 +41,7 @@ if(!('serviceWorker'in navigator&&'PushManager'in window&&'Notification'in windo
 if(ios&&!installed){box.hidden=false;$('alerts-on').hidden=true;$('alerts-ios').hidden=false}return}
 box.hidden=false;
 var say=function(id){['alerts-denied','alerts-full','alerts-failed'].forEach(function(m){$(m).hidden=m!==id})};
-var show=function(){var on=list().indexOf(here)>=0;$('alerts-on').hidden=on;$('alerts-state').hidden=!on};
+var show=function(){var on=list().indexOf(here)>=0;$('alerts-on').hidden=on;$('alerts-state').hidden=!on;$('alerts-note-off').hidden=on;$('alerts-note-on').hidden=!on};
 var post=function(path,body){return fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(r){if(!r.ok)throw r.status})};
 var key=function(s){var b=atob(s.replace(/-/g,'+').replace(/_/g,'/')),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
 $('alerts-on').addEventListener('click',function(){say();
