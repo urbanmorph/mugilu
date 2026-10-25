@@ -1241,7 +1241,6 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   // Opt-in alerts (alerts.ts, alerts-ui.ts): drafted here, native review pending.
   "Official warning for X, until Y.": { hi: "X के लिए आधिकारिक चेतावनी, Y तक।", kn: "X ಗೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, Y ವರೆಗೆ." },
   "Official warning for X.": { hi: "X के लिए आधिकारिक चेतावनी।", kn: "X ಗೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ." },
-  "Official warnings for this place": { hi: "इस जगह के लिए आधिकारिक चेतावनियाँ", kn: "ಈ ಸ್ಥಳಕ್ಕೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು" },
   "Send me official warnings for this place": {
     hi: "यहाँ की आधिकारिक चेतावनियों के बारे में मुझे सूचित करें",
     kn: "ಇಲ್ಲಿನ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳ ಬಗ್ಗೆ ನನಗೆ ತಿಳಿಸಿ",

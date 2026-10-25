@@ -9,8 +9,7 @@ import { esc } from "./html";
 import { t, type Lang } from "./i18n";
 
 export function renderAlertsBox(publicKey: string, lang: Lang): string {
-  return `<section class="alerts" id="alerts" hidden data-key="${esc(publicKey)}" data-lang="${lang}">
-  <h2 class="alerts-h">${t("Official warnings for this place", lang)}</h2>
+  return `<section class="alerts" id="alerts" hidden data-key="${esc(publicKey)}" data-lang="${lang}" aria-label="${esc(t("Send me official warnings for this place", lang))}">
   <button type="button" class="alerts-btn" id="alerts-on">${t("Send me official warnings for this place", lang)}</button>
   <p id="alerts-state" hidden>${t("Alerts are on for this place.", lang)} <button type="button" class="alerts-link" id="alerts-off">${t("Turn off", lang)}</button></p>
   <p class="alerts-msg" id="alerts-denied" hidden>${t("Your browser blocks notifications from mugilu. Allow them in the site settings of your browser. Then try again.", lang)}</p>
@@ -23,7 +22,6 @@ export function renderAlertsBox(publicKey: string, lang: Lang): string {
 }
 
 export const ALERTS_CSS = `.alerts{margin:1.6rem 0 0;padding:1rem 1.1rem;border:1px solid var(--line,rgba(127,127,127,.25));border-radius:12px}
-.alerts-h{font-size:1rem;margin:0 0 .6rem}
 .alerts-btn{font:inherit;padding:.55rem .9rem;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer}
 .alerts-link{font:inherit;background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer}
 .alerts-msg{margin:.6rem 0 0}
