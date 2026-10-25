@@ -10,13 +10,13 @@ import { t, type Lang } from "./i18n";
 export function renderAlertsBox(publicKey: string, lang: Lang): string {
   return `<section class="alerts" id="alerts" hidden data-key="${esc(publicKey)}" data-lang="${lang}">
   <h2 class="alerts-h">${t("Official warnings for this place", lang)}</h2>
-  <button type="button" class="alerts-btn" id="alerts-on">${t("Alert me about official warnings here", lang)}</button>
+  <button type="button" class="alerts-btn" id="alerts-on">${t("Send me official warnings for this place", lang)}</button>
   <p id="alerts-state" hidden>${t("Alerts are on for this place.", lang)} <button type="button" class="alerts-link" id="alerts-off">${t("Turn off", lang)}</button></p>
-  <p class="alerts-msg" id="alerts-denied" hidden>${t("Notifications are blocked for mugilu. Allow them in your browser's site settings, then try again.", lang)}</p>
-  <p class="alerts-msg" id="alerts-full" hidden>${t("Alerts are on for 12 places already. Turn one off first.", lang)}</p>
+  <p class="alerts-msg" id="alerts-denied" hidden>${t("Your browser blocks notifications from mugilu. Allow them in the site settings of your browser. Then try again.", lang)}</p>
+  <p class="alerts-msg" id="alerts-full" hidden>${t("Alerts are on for 12 places. That is the limit. Turn off alerts for one place first.", lang)}</p>
   <p class="alerts-msg" id="alerts-failed" hidden>${t("Alerts could not be turned on. Try again.", lang)}</p>
-  <p class="alerts-msg" id="alerts-ios" hidden>${t("On iPhone and iPad, add mugilu to your Home Screen first (Share, then Add to Home Screen), open it from there, and turn alerts on here.", lang)}</p>
-  <p class="alerts-note">${t("Opt-in. When you turn alerts on, mugilu keeps this place (to about 1 km) and your browser's push address, only to send you official NDMA/IMD warnings for it, and deletes them when you turn alerts off.", lang)}</p>
+  <p class="alerts-msg" id="alerts-ios" hidden>${t("On iPhone and iPad, first add mugilu to your Home Screen (Share, then Add to Home Screen). Open mugilu from the Home Screen. Then turn on alerts here.", lang)}</p>
+  <p class="alerts-note">${t("Alerts are opt-in. When you turn on alerts, mugilu keeps this place (to approximately 1 km) and the push address of your browser. mugilu uses them only to send you official NDMA/IMD warnings for this place. mugilu deletes them when you turn off alerts.", lang)}</p>
 </section>`;
 }
 

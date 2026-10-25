@@ -363,7 +363,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "इस स्थान पर वायु, गर्मी, बारिश, UV, धूल, धुआं और कोई भी आधिकारिक चेतावनी, आपके लिए नामित सबसे बुरे खतरे के साथ।",
       kn: "ಈ ಸ್ಥಳದ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು, ಹೊಗೆ ಮತ್ತು ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯದೊಂದಿಗೆ.",
     },
-  "A serious warning is active. Follow official guidance.": {
+  "A serious warning is active. Do what the officials tell you.": {
     hi: "एक गंभीर चेतावनी सक्रिय है। आधिकारिक मार्गदर्शन का पालन करें।",
     kn: "ಗಂಭೀರ ಎಚ್ಚರಿಕೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಅಧಿಕೃತ ಮಾರ್ಗದರ್ಶನವನ್ನು ಅನುಸರಿಸಿ.",
   },
@@ -389,15 +389,15 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है, और आज की गर्मी की तुलना के लिए 1991-2020 के सामान्य तापमान Open-Meteo के माध्यम से ERA5 पुनः विश्लेषण (Copernicus) से आते हैं; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं; जीवन के खोए वर्ष AQLI विधि से आते हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
       kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ, ಮತ್ತು ಇಂದಿನ ಬಿಸಿಲನ್ನು ಹೋಲಿಸಲು ಬಳಸುವ 1991-2020ರ ಸಾಮಾನ್ಯ ತಾಪಮಾನಗಳು Open-Meteo ಮೂಲಕ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) ಬರುತ್ತವೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ; ಕಳೆದುಹೋದ ಜೀವನದ ವರ್ಷಗಳು AQLI ವಿಧಾನದಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
     },
-  "Air is dangerous. Stay indoors if you can.": {
+  "The air is dangerous. Stay indoors if possible.": {
     hi: "वायु गुणवत्ता खतरनाक है। यदि आप कर सकते हैं तो घर के अंदर रहें।",
     kn: "ಗಾಳಿಯ ಗುಣಮಟ್ಟ ಅಪಾಯಕಾರಿಯಾಗಿದೆ. ಸಾಧ್ಯವಾದರೆ ಮನೆಯೊಳಗೆ ಇರಿ.",
   },
-  "Air is poor. Sensitive groups, take it easy.": {
+  "The air is poor. If you are sensitive, do less outdoors.": {
     hi: "वायु गुणवत्ता खराब है। संवेदनशील समूहों के लोगों को शारीरिक गतिविधि कम करनी चाहिए।",
     kn: "ಗಾಳಿಯ ಗುಣಮಟ್ಟ ಕೆಟ್ಟದಾಗಿದೆ. ಸೂಕ್ಷ್ಮ ಗುಂಪುಗಳಲ್ಲಿರುವ ಜನರು ದೈಹಿಕ ಚಟುವಟಿಕೆಯನ್ನು ಕಡಿಮೆ ಮಾಡಿಕೊಳ್ಳಬೇಕು.",
   },
-  "Air is so-so, fine for most people.": {
+  "The air is moderate. Most people can be outdoors as usual.": {
     hi: "हवा मध्यम है, अधिकांश लोगों के लिए ठीक है।",
     kn: "ವಾಯು ಗುಣಮಟ್ಟ ಸ್ವಲ್ಪ ಮಟ್ಟಿಗೆ ಉತ್ತಮವಾಗಿದೆ, ಹೆಚ್ಚಿನ ಜನರಿಗೆ ಸರಿ.",
   },
@@ -410,11 +410,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "सब कुछ ठीक है",
     kn: "ಎಲ್ಲವೂ ಸರಿ",
   },
-  "An official advisory is in effect.": {
+  "An official advisory is active.": {
     hi: "एक आधिकारिक परामर्श लागू है।",
     kn: "ಅಧಿಕೃತ ಸಲಹೆ ಜಾರಿಯಲ್ಲಿದೆ.",
   },
-  "An official warning is active. Stay alert.": {
+  "An official warning is active. Be alert.": {
     hi: "एक आधिकारिक चेतावनी सक्रिय है। सतर्क रहें।",
     kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಎಚ್ಚರವಾಗಿರಿ.",
   },
@@ -442,7 +442,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "बच्चे",
     kn: "ಮಕ್ಕಳು",
   },
-  "Cold conditions. Cover up and limit time outside.": {
+  "It is very cold. Cover your body and spend less time outside.": {
     hi: "ठंडी परिस्थितियाँ। बाहर समय सीमित करें और ढक कर रखें।",
     kn: "ಶೀತಲ ಪರಿಸ್ಥಿತಿಗಳು. ಹೊರಾಂಗಣದಲ್ಲಿ ಕಳೆಯುವ ಸಮಯವನ್ನು ಮಿತಿಗೊಳಿಸಿ ಮತ್ತು ಮುಚ್ಚಿಕೊಳ್ಳಿ.",
   },
@@ -450,23 +450,23 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "सामान्य प्रश्न",
     kn: "ಸಾಮಾನ್ಯ ಪ್ರಶ್ನೆಗಳು",
   },
-  "Conditions are good right now.": {
+  "Conditions are good now.": {
     hi: "अभी परिस्थितियाँ अच्छी हैं।",
     kn: "ಈಗ ಪರಿಸ್ಥಿತಿಗಳು ಉತ್ತಮವಾಗಿವೆ.",
   },
-  'Couldn\'t find "X". Try a city or place name.': {
+  'No place found for "X". Type the name of a city or a place.': {
     hi: "वह स्थान नहीं मिला। किसी शहर या स्थान का नाम आज़माएं।",
     kn: "ಆ ಸ್ಥಳವನ್ನು ಕಂಡುಹಿಡಿಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಒಂದು ನಗರ ಅಥವಾ ಸ್ಥಳದ ಹೆಸರನ್ನು ಪ್ರಯತ್ನಿಸಿ.",
   },
-  "Damaging winds. Stay indoors, away from trees and hoardings.": {
+  "The wind can cause damage. Stay indoors, away from trees and hoardings.": {
     hi: "हानिकारक हवाएँ। घर के अंदर रहें, पेड़ों और होर्डिंगों से दूर रहें।",
     kn: "ಹಾನಿಕಾರಕ ಗಾಳಿ. ಮನೆಯೊಳಗೆ ಇರಿ, ಮರಗಳು ಮತ್ತು ಜಾಹೀರಾತು ಫಲಕಗಳಿಂದ ದೂರವಿರಿ.",
   },
-  "Dangerous cold. Stay warm indoors if you can.": {
+  "The cold is dangerous. Stay warm indoors if possible.": {
     hi: "खतरनाक ठंड। यदि आप कर सकते हैं तो घर के अंदर रहें।",
     kn: "ಅಪಾಯಕಾರಿ ಶೀತ. ಸಾಧ್ಯವಾದರೆ ಒಳಾಂಗಣದಲ್ಲಿ ಬೆಚ್ಚಗಿರಿ.",
   },
-  "Dense fog. Slow down, use low beams, allow extra time.": {
+  "There is dense fog. Drive slowly with low beams. Give yourself more time.": {
     hi: "घना कोहरा। धीमा हो जाइए, कम बीम का प्रयोग कीजिए, अतिरिक्त समय दीजिए।",
     kn: "ದಟ್ಟವಾದ ಮಂಜು. ನಿಧಾನವಾಗಿ ಚಾಲನೆ ಮಾಡಿ, ಕಡಿಮೆ ಕಿರಣಗಳನ್ನು ಬಳಸಿ, ಹೆಚ್ಚುವರಿ ಸಮಯ ನೀಡಿ.",
   },
@@ -482,7 +482,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "सबसे धूल भरा स्थान",
     kn: "ಅತ್ಯಂತ ಧೂಳುಭರಿತ",
   },
-  "Dusty. Mask up if you're sensitive.": {
+  "There is a lot of dust. If you are sensitive, cover your nose and mouth.": {
     hi: "हवा धूल भरी है। यदि आप संवेदनशील हैं तो मास्क धारण करें।",
     kn: "ಗಾಳಿಯಲ್ಲಿ ಧೂಳು ತುಂಬಿದೆ. ನಿಮಗೆ ಅಲರ್ಜಿ ಇದ್ದರೆ ಮಾಸ್ಕ್ ಧರಿಸಿ.",
   },
@@ -494,7 +494,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "सभी",
     kn: "ಎಲ್ಲರೂ",
   },
-  "Extreme sun. Cover up and skip the midday hours.": {
+  "The sun is extreme. Cover your skin. Stay out of the sun at midday.": {
     hi: "सूर्य बहुत तेज है। अपनी त्वचा को कपड़ों से ढकें और दोपहर के समय बाहर जाने से बचें।",
     kn: "ಸೂರ್ಯನು ಅತ್ಯಂತ ಪ್ರಬಲನಾಗಿರುತ್ತಾನೆ. ನಿಮ್ಮ ಚರ್ಮವನ್ನು ಬಟ್ಟೆಯಿಂದ ಮುಚ್ಚಿಕೊಳ್ಳಿ ಮತ್ತು ಮಧ್ಯಾಹ್ನ ಹೊರಗೆ ಹೋಗುವುದನ್ನು ತಪ್ಪಿಸಿ.",
   },
@@ -502,7 +502,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "संतोषजनक",
     kn: "ತೃಪ್ತಿಕರ",
   },
-  "Fires burning nearby. Sensitive groups, watch the air.": {
+  "There are fires near here. If you are sensitive, watch the air.": {
     hi: "पास में आग लगी हुई है। संवेदनशील लोगों को वायु गुणवत्ता देखनी चाहिए।",
     kn: "ಹತ್ತಿರದಲ್ಲಿ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ. ಸೂಕ್ಷ್ಮ ವ್ಯಕ್ತಿಗಳು ವಾಯು ಗುಣಮಟ್ಟವನ್ನು ಗಮನಿಸಬೇಕು.",
   },
@@ -543,15 +543,15 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "गर्मी",
     kn: "ಬಿಸಿಲು",
   },
-  "Heat is high. Slow down, hydrate, find shade.": {
+  "The heat is high. Do less, drink water and stay in the shade.": {
     hi: "गर्मी अधिक है। धीमे हो जाइए, पानी पिएँ, छाया ढूँढ़ लीजिए।",
     kn: "ಬಿಸಿಲು ಹೆಚ್ಚಾಗಿದೆ. ನಿಧಾನವಾಗಿ ಹೋಗಿ, ನೀರು ಕುಡಿಯಿರಿ, ನೆರಳು ಹುಡುಕಿ.",
   },
-  "Heavy burning nearby. Keep windows shut, limit time outdoors.": {
+  "There is a lot of burning near here. Keep windows closed. Spend less time outdoors.": {
     hi: "पास में भारी आग लगी हुई है। खिड़कियाँ बंद रखें और बाहर कम समय बिताएँ।",
     kn: "ಹತ್ತಿರದಲ್ಲಿ ಭಾರೀ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ. ಕಿಟಕಿಗಳನ್ನು ಮುಚ್ಚಿ ಮತ್ತು ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ.",
   },
-  "Heavy dust. Limit time outdoors.": {
+  "There is heavy dust. Spend less time outdoors.": {
     hi: "हवा में बहुत धूल है। बाहर कम समय बिताएँ।",
     kn: "ಗಾಳಿಯಲ್ಲಿ ಧೂಳು ತುಂಬಿದೆ. ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ.",
   },
@@ -581,7 +581,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "जानकारी के लिए, न कि चिकित्सा, आपातकालीन या सुरक्षा-महत्वपूर्ण निर्णयों के लिए। आधिकारिक खतरे की चेतावनियों के लिए, NDMA और IMD से परामर्श करें।",
       kn: "ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಅಧಿಕೃತ ಅಪಾಯದ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, ಎನ್.ಡಿ.ಎಂ.ಎ ಮತ್ತು ಐ.ಎಂ.ಡಿ.ಯನ್ನು ಸಂಪರ್ಕಿಸಿ.",
     },
-  "Intense fires nearby. Treat the air as hazardous; stay indoors.": {
+  "There are large fires near here. The air can be dangerous. Stay indoors.": {
     hi: "पास में तीव्र आग। हवा को खतरनाक समझें और घर के अंदर रहें।",
     kn: "ಹತ್ತಿರದಲ್ಲಿ ತೀವ್ರವಾದ ಬೆಂಕಿ ಕಾಣಿಸಿಕೊಂಡಿದೆ. ಗಾಳಿಯನ್ನು ಅಪಾಯಕಾರಿ ಎಂದು ಪರಿಗಣಿಸಿ, ಒಳಾಂಗಣದಲ್ಲಿರಿ.",
   },
@@ -593,15 +593,15 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "क्या mugilu निःशुल्क है?",
     kn: "mugilu ಉಚಿತವೇ?",
   },
-  "It's cold out. Layer up.": {
+  "It is cold outside. Wear layers of clothes.": {
     hi: "बाहर ठण्ड है। गर्म कपड़ों की परतें पहनें।",
     kn: "ಹೊರಗೆ ಚಳಿ ಇದೆ. ಬೆಚ್ಚಗಿನ ಬಟ್ಟೆಗಳ ಪದರಗಳನ್ನು ಧರಿಸಿ.",
   },
-  "It's warm, so keep water handy.": {
+  "It is warm. Keep water with you.": {
     hi: "गर्मी है, इसलिए पानी अपने पास रखें।",
     kn: "ಇದು ಬೆಚ್ಚಗಿರುತ್ತದೆ, ಆದ್ದರಿಂದ ನೀರನ್ನು ಸುಲಭವಾಗಿ ಸಿಗುವಂತೆ ಇಟ್ಟುಕೊಳ್ಳಿ.",
   },
-  "It's windy. Secure loose items.": {
+  "It is windy. Tie down or bring in loose items.": {
     hi: "हवा चल रही है। ढीले सामान को नीचे बांध दें ताकि वे उड़ न जाएं।",
     kn: "ಗಾಳಿ ಜೋರಾಗಿದೆ. ಸಡಿಲವಾದ ವಸ್ತುಗಳನ್ನು ಕಟ್ಟಿಕೊಳ್ಳಿ, ಆಗ ಅವು ಬೀಸಿ ಹೋಗುವುದಿಲ್ಲ.",
   },
@@ -626,7 +626,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "अभी कोई सक्रिय राष्ट्रीय चेतावनी नहीं है।",
     kn: "ಪ್ರಸ್ತುತ ಯಾವುದೇ ಸಕ್ರಿಯ ರಾಷ್ಟ್ರೀಯ ಎಚ್ಚರಿಕೆಗಳಿಲ್ಲ.",
   },
-  "Not a map.": {
+  "This is not a map.": {
     hi: "यह कोई मानचित्र नहीं है।",
     kn: "ಇದು ನಕ್ಷೆಯಲ್ಲ.",
   },
@@ -650,7 +650,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "बाहर काम करने वाले",
     kn: "ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು",
   },
-  "Patchy low visibility. Drive with care.": {
+  "Visibility is low in some areas. Drive carefully.": {
     hi: "धुंधली दृश्यता। सावधानी से चलाइए।",
     kn: "ಮಬ್ಬಾದ ಕಡಿಮೆ ಗೋಚರತೆ. ಎಚ್ಚರಿಕೆಯಿಂದ ನಡೆಸಿ.",
   },
@@ -682,7 +682,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "बारिश",
     kn: "ಮಳೆ",
   },
-  "Right now in India": {
+  "India now": {
     hi: "अभी पूरे भारत में",
     kn: "ಈಗ ಭಾರತದಾದ್ಯಂತ",
   },
@@ -699,7 +699,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "धुआं",
     kn: "ಹೊಗೆ",
   },
-  "Some dust in the air.": {
+  "There is some dust in the air.": {
     hi: "हवा में थोड़ी धूल।",
     kn: "ಗಾಳಿಯಲ್ಲಿ ಸ್ವಲ್ಪ ಧೂಳು ಇದೆ.",
   },
@@ -711,11 +711,11 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "स्रोत",
     kn: "ಮೂಲಗಳು",
   },
-  "Strong sun, a hat or sunscreen helps.": {
+  "The sun is strong. Use a hat or sunscreen.": {
     hi: "तेज धूप में टोपी या सनस्क्रीन पहनने से मदद मिलती है।",
     kn: "ಬಿಸಿಲು, ಟೋಪಿ ಅಥವಾ ಸನ್‌ಸ್ಕ್ರೀನ್‌ ಸಹಾಯ ಮಾಡುತ್ತದೆ.",
   },
-  "Strong winds. Take care outdoors, expect blowing dust.": {
+  "The wind is strong. Be careful outdoors. Expect dust in the air.": {
     hi: "तेज हवाएँ चल रही हैं। बाहर सावधान रहें, और धूल उड़ती रहने की उम्मीद रखें।",
     kn: "ಬಲವಾದ ಗಾಳಿ ಬೀಸುತ್ತಿದೆ. ಹೊರಗೆ ಜಾಗರೂಕರಾಗಿರಿ, ಮತ್ತು ಧೂಳು ಬೀಸುತ್ತಿರುವುದನ್ನು ನಿರೀಕ್ಷಿಸಿ.",
   },
@@ -723,7 +723,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "सूर्य",
     kn: "ಸೂರ್ಯ",
   },
-  "Take some care outdoors.": {
+  "Be careful outdoors.": {
     hi: "बाहर थोड़ी सावधानी रखें।",
     kn: "ಹೊರಗೆ ಸ್ವಲ್ಪ ಜಾಗರೂಕತೆಯಿಂದಿರಿ.",
   },
@@ -744,7 +744,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "आपके ऊपर का आकाश एक साझा सार्वजनिक क्षेत्र है। यह जानकर कि इसे खरीदने के लिए पैसे खर्च करने या किसी के ऐप के अंदर बंद रहने की आवश्यकता नहीं है। mugilu गैर-वाणिज्यिक है, जो सार्वजनिक हित के लिए बनाया गया है, bharatlas और mdshare के साथ सार्वजनिक उपकरणों के एक छोटे समूह में तीसरा है।",
       kn: "ನಿಮ್ಮ ಮೇಲಿರುವ ಆಕಾಶವು ಒಂದು ಹಂಚಿಕೆಯ ಸಾಮಾನ್ಯ ಸ್ಥಳವಾಗಿದೆ. ಇದು ಹಣ ವೆಚ್ಚವಾಗಬಾರದು ಅಥವಾ ಯಾರೊಬ್ಬರ ಆ್ಯಪ್‌ನೊಳಗೆ ಲಾಕ್ ಆಗಬಾರದು ಎಂದು ತಿಳಿದಿದೆ. mugilu ವಾಣಿಜ್ಯೇತರವಾಗಿದ್ದು, ಸಾರ್ವಜನಿಕ ಹಿತಕ್ಕಾಗಿ ತಯಾರಿಸಲ್ಪಟ್ಟಿದೆ, bharatlas ಮತ್ತು mdshare ಜೊತೆಗೆ ಸಾರ್ವಜನಿಕ ಸಾಧನಗಳ ಸಣ್ಣ ಸಮೂಹದಲ್ಲಿ ಮೂರನೆಯದಾಗಿದೆ.",
     },
-  "The sun is very strong. Limit midday hours.": {
+  "The sun is very strong. Spend less time in the sun at midday.": {
     hi: "सूर्य बहुत तेज है। दोपहर के समय बाहर कम समय बिताएं।",
     kn: "ಸೂರ್ಯ ಬಹಳ ಪ್ರಬಲನಾಗಿರುತ್ತಾನೆ. ಮಧ್ಯಾಹ್ನದ ಸಮಯದಲ್ಲಿ ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ.",
   },
@@ -758,7 +758,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
       hi: "स्थान लिख दीजिए। देखिए कि आसमान इस समय आपके साथ क्या कर रहा है: वायु गुणवत्ता, गर्मी (और यह वास्तव में कितनी सहने योग्य है), बारिश, सूरज और धूल, साथ ही उस स्थान के बारे में कोई आधिकारिक चेतावनी। फिर एक सरल पंक्ति, जो आपके लिए सबसे खराब है, चाहे आपको दमा हो, बाहर काम करते हों या किसी बच्चे या बुज़ुर्ग माता-पिता की देखभाल कर रहे हों। कोई साइन-अप नहीं, और कोई तकनीकी शब्दावली नहीं।",
       kn: "ಸ್ಥಳ ಟೈಪ್ ಮಾಡಿ. ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಏನು ಮಾಡುತ್ತಿದೆ ಎಂಬುದನ್ನು ನೋಡಿ: ವಾಯು ಗುಣಮಟ್ಟ, ಬಿಸಿಲು (ಮತ್ತು ಅದು ನಿಜವಾಗಿಯೂ ಎಷ್ಟು ಬದುಕುಳಿಯಬಲ್ಲದು), ಮಳೆ, ಸೂರ್ಯ ಮತ್ತು ಧೂಳು, ಜೊತೆಗೆ ಆ ಸ್ಥಳದ ಬಗ್ಗೆ ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ. ನಂತರ ಒಂದು ಸರಳ ರೇಖೆ, ನಿಮಗೆ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದು, ನೀವು ಆಸ್ತಮಾ ಹೊಂದಿದ್ದರೂ, ಹೊರಾಂಗಣದಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತಿದ್ದರೂ ಅಥವಾ ಮಗುವನ್ನು ಅಥವಾ ಹಿರಿಯ ಪೋಷಕರನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದರೂ. ನೋಂದಣಿ ಅಗತ್ಯವಿಲ್ಲ, ಯಾವುದೇ ತಾಂತ್ರಿಕ ಶಬ್ದಗಳಿಲ್ಲ.",
     },
-  "Type any place in India, in any language": {
+  "Type the name of a place in India, in any language": {
     hi: "भारत में किसी भी स्थान का नाम, किसी भी भाषा में लिखें",
     kn: "ಭಾರತದಲ್ಲಿರುವ ಯಾವುದೇ ಸ್ಥಳದ ಹೆಸರನ್ನು, ಯಾವುದೇ ಭಾಷೆಯಲ್ಲಿ, ಬರೆಯಿರಿ.",
   },
@@ -770,7 +770,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "मेरे स्थान का प्रयोग करें",
     kn: "ನನ್ನ ಸ್ಥಳವನ್ನು ಬಳಸಿ.",
   },
-  "Very dense fog. Avoid driving if you can.": {
+  "There is very dense fog. Do not drive if possible.": {
     hi: "बहुत घना कोहरा। यदि आप कर सकते हैं तो गाड़ी न चलाएँ।",
     kn: "ತುಂಬಾ ದಟ್ಟವಾದ ಮಂಜು. ಸಾಧ್ಯವಾದರೆ ವಾಹನ ಚಲಾಯಿಸದಿರಿ.",
   },
@@ -795,7 +795,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "वेट-बल्ब तापमान क्या है और mugilu इसे क्यों दिखाता है?",
     kn: "ತೇವಾಂಶ-ಬಲ್ಬ್ ತಾಪಮಾನ ಎಂದರೇನು, ಮತ್ತು mugilu ಅದನ್ನು ಏಕೆ ತೋರಿಸುತ್ತದೆ?",
   },
-  "What's it like outside, right now?": {
+  "What is it like outside now?": {
     hi: "बाहर अभी कैसा है?",
     kn: "ಈಗ ಹೊರಗೆ ಹೇಗಿದೆ?",
   },
@@ -1035,7 +1035,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "सुरक्षित",
     kn: "ಸುರಕ್ಷಿತ",
   },
-  "scan for this on your phone": {
+  "scan to see this on your phone": {
     hi: "अपने फ़ोन पर देखने के लिए इसे स्कैन करें",
     kn: "ನಿಮ್ಮ ಫೋನಿನಲ್ಲಿ ನೋಡಲು ಇದನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
   },
@@ -1076,7 +1076,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "शर्तें",
     kn: "ಷರತ್ತುಗಳು",
   },
-  "the sky over this spot": {
+  "the sky at this point": {
     hi: "इस स्थान पर आकाश",
     kn: "ಆಕಾಶ ಈ ಸ್ಥಳದ ಮೇಲೆ",
   },
@@ -1084,7 +1084,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "घना कोहरा",
     kn: "ದಟ್ಟವಾದ ಮಂಜು",
   },
-  "to see its sky: air, heat, rain, dust.": {
+  "You then see its sky: air, heat, rain and dust.": {
     hi: "इसका आकाश देखने के लिए: वायु, गर्मी, बारिश, धूल।",
     kn: "ಅದರ ಆಕಾಶವನ್ನು ನೋಡಲು: ಗಾಳಿ, ಬಿಸಿಲು, ಮಳೆ, ಧೂಳು.",
   },
@@ -1121,15 +1121,15 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     kn: "ವರ್ಷಗಳ ಜೀವನ ಕಳೆದುಹೋಗಿದೆ",
   },
   // Persona exposure steps + short disclaimer (Sarvam draft, glossary-fixed; native review pending).
-  "Cut down time and hard exercise outdoors today.": {
+  "Spend less time outdoors today. Do not exercise hard outside.": {
     hi: "आज, बाहर कम समय बिताएं और बाहर कठिन व्यायाम करने से बचें।",
     kn: "ಇಂದು, ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ ಮತ್ತು ಹೊರಾಂಗಣದಲ್ಲಿ ಕಠಿಣ ವ್ಯಾಯಾಮವನ್ನು ತಪ್ಪಿಸಿ.",
   },
-  "Limit time outdoors, and cover your nose and mouth if you go out.": {
+  "Spend less time outdoors. Cover your nose and mouth when you go out.": {
     hi: "बाहर कम समय बिताएं और बाहर जाते समय अपना नाक और मुंह ढकें।",
     kn: "ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ, ಮತ್ತು ನೀವು ಹೊರಗೆ ಹೋದರೆ ನಿಮ್ಮ ಮೂಗು ಮತ್ತು ಬಾಯಿಯನ್ನು ಮುಚ್ಚಿಕೊಳ್ಳಿ.",
   },
-  "Keep windows shut and limit time outdoors.": {
+  "Keep windows closed. Spend less time outdoors.": {
     hi: "खिड़कियाँ बंद रखें और बाहर कम समय बिताएँ।",
     kn: "ಕಿಟಕಿಗಳನ್ನು ಮುಚ್ಚಿ ಮತ್ತು ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ.",
   },
@@ -1137,83 +1137,83 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "ठंड के मौसम में जब आप बाहर जाएँ तो अपने नाक और मुँह को कपड़े से ढकें।",
     kn: "ಚಳಿಯಲ್ಲಿ ಹೊರಗೆ ಹೋದಾಗ ನಿಮ್ಮ ಮೂಗು ಮತ್ತು ಬಾಯಿಯನ್ನು ಬಟ್ಟೆಯಿಂದ ಮುಚ್ಚಿಕೊಳ್ಳಿ.",
   },
-  "Hot homes are risky too: stay somewhere cool, drink water regularly, and have someone check on you.": {
+  "A hot home is also a risk. Stay in a cool place and drink water regularly. Ask someone to check on you.": {
     hi: "गर्म घर भी जोखिम भरा है: किसी ठंडी जगह पर रहें, नियमित रूप से पानी पिएँ, और किसी से कहें कि वह आपका हालचाल लेता रहे।",
     kn: "ಬಿಸಿಯಾದ ಮನೆಯೂ ಅಪಾಯಕಾರಿ: ತಂಪಾದ ಸ್ಥಳದಲ್ಲಿ ಇರಿ, ನಿಯಮಿತವಾಗಿ ನೀರು ಕುಡಿಯಿರಿ, ಮತ್ತು ಯಾರಾದರೂ ನಿಮ್ಮ ಯೋಗಕ್ಷೇಮ ವಿಚಾರಿಸುತ್ತಿರುವಂತೆ ನೋಡಿಕೊಳ್ಳಿ.",
   },
-  "Keep your home warm, wear layers indoors too, and have someone check on you.": {
+  "Keep your home warm and wear layers indoors. Ask someone to check on you.": {
     hi: "अपने घर को गर्म रखें, घर के अंदर भी कई परतों के कपड़े पहनें, और किसी से कहें कि वह आपका हालचाल लेता रहे।",
     kn: "ನಿಮ್ಮ ಮನೆಯನ್ನು ಬೆಚ್ಚಗಿಡಿ, ಮನೆಯ ಒಳಗೆ ಸಹ ಹಲವಾರು ಪದರಗಳ ಬಟ್ಟೆಗಳನ್ನು ಧರಿಸಿ, ಮತ್ತು ಯಾರಾದರೂ ನಿಮ್ಮ ಯೋಗಕ್ಷೇಮ ವಿಚಾರಿಸುತ್ತಿರುವಂತೆ ನೋಡಿಕೊಳ್ಳಿ.",
   },
-  "Limit time and exertion outdoors today.": {
+  "Spend less time outdoors today. Avoid hard physical activity there.": {
     hi: "आज, बाहर कम समय बिताएं और बाहर शारीरिक श्रम करने से बचें।",
     kn: "ಇಂದು, ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ ಮತ್ತು ಹೊರಾಂಗಣದಲ್ಲಿ ದೈಹಿಕ ಪರಿಶ್ರಮವನ್ನು ತಪ್ಪಿಸಿ.",
   },
-  "Hat, shade and sunscreen, and keep midday play short.": {
+  "Use a hat, shade and sunscreen. Keep play short at midday.": {
     hi: "बच्चे को टोपी, छाया और सनस्क्रीन दें और बच्चे के बाहरी खेल को दोपहर में छोटा रखें।",
     kn: "ಮಗುವಿಗೆ ಟೋಪಿ, ನೆರಳು ಮತ್ತು ಸನ್‌ಸ್ಕ್ರೀನ್ ನೀಡಿ, ಮತ್ತು ಮಧ್ಯಾಹ್ನದ ಹೊತ್ತು ಹೊರಾಂಗಣ ಆಟವನ್ನು ಕಡಿಮೆ ಮಾಡಿ.",
   },
-  "Keep outdoor play short and gentle today.": {
+  "Today, keep outdoor play short and easy.": {
     hi: "आज बच्चे का बाहर का खेल छोटा और हल्का रखें।",
     kn: "ಇಂದು, ಮಗುವಿನ ಹೊರಾಂಗಣ ಆಟವನ್ನು ಚಿಕ್ಕದಾಗಿ ಮತ್ತು ಸೌಮ್ಯವಾಗಿರಿಸಿ.",
   },
-  "Keep outdoor play short today.": {
+  "Today, keep outdoor play short.": {
     hi: "आज बच्चे का बाहर का खेल छोटा रखें।",
     kn: "ಇಂದು, ಮಗುವಿನ ಹೊರಾಂಗಣ ಆಟವನ್ನು ಚಿಕ್ಕದಾಗಿರಿಸಿ.",
   },
-  "Give extra water, keep play in the shade, and never leave a child in a parked vehicle.": {
+  "Give children more water and keep play in the shade. Never leave a child in a parked vehicle.": {
     hi: "बच्चे को अतिरिक्त पानी दें, बच्चे का खेल छाया में रखें और कभी भी बच्चे को पार्क की गई गाड़ी में अकेला न छोड़ें।",
     kn: "ಮಗುವಿಗೆ ಹೆಚ್ಚುವರಿ ನೀರು ಕೊಡಿ, ಮಗುವಿನ ಆಟವನ್ನು ನೆರಳು ಇರುವ ಜಾಗದಲ್ಲಿ ಇಡಿ, ಮತ್ತು ನಿಲ್ಲಿಸಿದ ವಾಹನದಲ್ಲಿ ಮಗುವನ್ನು ಎಂದಿಗೂ ಒಬ್ಬಂಟಿಯಾಗಿ ಬಿಡಬೇಡಿ.",
   },
-  "Dress them in layers and cover their head and hands.": {
+  "Dress children in layers. Cover their head and hands.": {
     hi: "बच्चों को कई परतों के कपड़े पहनाएं और उनके सिर और हाथों को ढकें।",
     kn: "ಮಕ್ಕಳಿಗೆ ಹಲವಾರು ಪದರಗಳ ಬಟ್ಟೆ ತೊಡಿಸಿ ಮತ್ತು ಅವರ ತಲೆ ಮತ್ತು ಕೈಗಳನ್ನು ಮುಚ್ಚಿ.",
   },
-  "Keep them indoors with windows shut.": {
+  "Keep children indoors with the windows closed.": {
     hi: "खिड़कियाँ बंद करके बच्चों को घर के अंदर रखें।",
     kn: "ಕಿಟಕಿಗಳನ್ನು ಮುಚ್ಚಿ ಮಕ್ಕಳನ್ನು ಮನೆಯೊಳಗೆ ಇರಿಸಿ.",
   },
-  "Drink water often, take regular breaks in the shade, and move heavy work out of 12-3 pm.": {
+  "Drink water often and take breaks in the shade. Do not do heavy work from 12 to 3 pm.": {
     hi: "बार-बार पानी पिएँ, छाया में नियमित रूप से आराम करें, और दोपहर 12 बजे से 3 बजे के बीच भारी काम न करें।",
     kn: "ಆಗಾಗ್ಗೆ ನೀರು ಕುಡಿಯಿರಿ, ನೆರಳಿನಲ್ಲಿ ನಿಯಮಿತವಾಗಿ ವಿಶ್ರಾಂತಿ ತೆಗೆದುಕೊಳ್ಳಿ, ಮತ್ತು ಮಧ್ಯಾಹ್ನ 12 ರಿಂದ 3 ಗಂಟೆಯವರೆಗೆ ಭಾರವಾದ ಕೆಲಸಗಳನ್ನು ಮಾಡಬೇಡಿ.",
   },
-  "Wear layers, keep dry, and take warm breaks.": {
+  "Wear layers and stay dry. Take breaks in a warm place.": {
     hi: "कई परतों के कपड़े पहनें, सूखे रहें और गर्म जगह पर आराम करें।",
     kn: "ಹಲವಾರು ಪದರಗಳ ಬಟ್ಟೆಗಳನ್ನು ಧರಿಸಿ, ಒಣಗಿರಿ ಮತ್ತು ಬೆಚ್ಚಗಿನ ಸ್ಥಳದಲ್ಲಿ ವಿಶ್ರಾಂತಿ ವಿರಾಮಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ.",
   },
-  "Cover up, wear a hat, and take shade breaks around midday.": {
+  "Cover your skin and wear a hat. Take breaks in the shade at midday.": {
     hi: "अपनी त्वचा को कपड़ों से ढकें, टोपी पहनें, और दोपहर के आसपास छाया में आराम करें।",
     kn: "ನಿಮ್ಮ ಚರ್ಮವನ್ನು ಬಟ್ಟೆಯಿಂದ ಮುಚ್ಚಿಕೊಳ್ಳಿ, ಟೋಪಿ ಧರಿಸಿ ಮತ್ತು ಮಧ್ಯಾಹ್ನದ ಸುಮಾರಿಗೆ ನೆರಳು ಇರುವ ಜಾಗದಲ್ಲಿ ವಿಶ್ರಾಂತಿ ತೆಗೆದುಕೊಳ್ಳಿ.",
   },
-  "Swap heavy work for lighter tasks and take breaks indoors.": {
+  "Do lighter work, not heavy work. Take breaks indoors.": {
     hi: "भारी काम की जगह हल्के काम करें, और बीच-बीच में अंदर आराम करें।",
     kn: "ಭಾರವಾದ ಕೆಲಸಗಳ ಬದಲಿಗೆ ಹಗುರವಾದ ಕೆಲಸಗಳನ್ನು ಮಾಡಿ ಮತ್ತು ಒಳಾಂಗಣದಲ್ಲಿ ವಿಶ್ರಾಂತಿ ವಿರಾಮಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ.",
   },
-  "Cover your nose and mouth, and protect your eyes.": {
+  "Cover your nose and mouth. Protect your eyes.": {
     hi: "अपने नाक और मुंह को कपड़े से ढकें और अपनी आँखों को धूल से बचाएं।",
     kn: "ನಿಮ್ಮ ಮೂಗು ಮತ್ತು ಬಾಯಿಯನ್ನು ಬಟ್ಟೆಯಿಂದ ಮುಚ್ಚಿಕೊಳ್ಳಿ ಮತ್ತು ಧೂಳಿನಿಂದ ನಿಮ್ಮ ಕಣ್ಣುಗಳನ್ನು ರಕ್ಷಿಸಿಕೊಳ್ಳಿ.",
   },
-  "Take breaks indoors and keep heavy work short.": {
+  "Take breaks indoors. Keep heavy work short.": {
     hi: "बीच-बीच में अंदर आराम करें, और भारी काम थोड़े समय के लिए ही करें।",
     kn: "ಒಳಾಂಗಣದಲ್ಲಿ ವಿಶ್ರಾಂತಿ ವಿರಾಮಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ ಮತ್ತು ಸ್ವಲ್ಪ ಸಮಯದವರೆಗೆ ಮಾತ್ರ ಭಾರವಾದ ಕೆಲಸ ಮಾಡಿ.",
   },
-  "Avoid exertion and stay somewhere cool.": {
+  "Avoid hard physical activity. Stay in a cool place.": {
     hi: "शारीरिक श्रम से बचें और ठंडी जगह पर रहें।",
     kn: "ದೈಹಿಕ ಪರಿಶ್ರಮವನ್ನು ತಪ್ಪಿಸಿ ಮತ್ತು ತಂಪಾದ ಸ್ಥಳದಲ್ಲಿ ಇರಿ.",
   },
-  "Keep warm and avoid sudden exertion in the cold.": {
+  "Stay warm. Avoid sudden hard physical activity in the cold.": {
     hi: "अपने शरीर को गर्म रखें और ठंड के मौसम में अचानक शारीरिक श्रम करने से बचें।",
     kn: "ನಿಮ್ಮ ದೇಹವನ್ನು ಬೆಚ್ಚಗಿಟ್ಟುಕೊಳ್ಳಿ ಮತ್ತು ಚಳಿಯಲ್ಲಿ ಹಠಾತ್ ದೈಹಿಕ ಪರಿಶ್ರಮವನ್ನು ತಪ್ಪಿಸಿ.",
   },
-  "Avoid exertion outdoors today.": {
+  "Avoid hard physical activity outdoors today.": {
     hi: "आज, बाहर शारीरिक श्रम करने से बचें।",
     kn: "ಇಂದು, ಹೊರಾಂಗಣದಲ್ಲಿ ದೈಹಿಕ ಪರಿಶ್ರಮವನ್ನು ತಪ್ಪಿಸಿ.",
   },
-  "Stay indoors with windows shut and avoid exertion.": {
+  "Stay indoors with the windows closed. Avoid hard physical activity.": {
     hi: "खिड़कियाँ बंद करके घर के अंदर रहें और शारीरिक श्रम से बचें।",
     kn: "ಕಿಟಕಿಗಳನ್ನು ಮುಚ್ಚಿ ಮನೆಯೊಳಗೆ ಇರಿ ಮತ್ತು ದೈಹಿಕ ಪರಿಶ್ರಮವನ್ನು ತಪ್ಪಿಸಿ.",
   },
-  "Dangerous heat. Get somewhere cool, out of the sun, and drink water.": {
+  "The heat is dangerous. Go to a cool place out of the sun. Drink water.": {
     hi: "गर्मी खतरनाक है। धूप से दूर एक ठंडी जगह पर जाएं और पानी पिएं।",
     kn: "ಬಿಸಿಲು ಅಪಾಯಕಾರಿಯಾಗಿದೆ. ಬಿಸಿಲಿನಿಂದ ದೂರ, ತಂಪಾದ ಸ್ಥಳಕ್ಕೆ ಹೋಗಿ, ನೀರು ಕುಡಿಯಿರಿ.",
   },
@@ -1239,34 +1239,33 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   "Tap Add.": { hi: "जोड़ें पर टैप करें।", kn: "ಸೇರಿಸಿ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ." },
   OK: { hi: "ठीक है", kn: "ಸರಿ" },
   // Offline (sw.ts): drafted here, native review pending.
-  "No connection. This is the last reading saved on this device, from X. Conditions and warnings may have changed since.":
-    {
-      hi: "कनेक्शन नहीं है। यह इस डिवाइस पर सहेजी गई आख़िरी रीडिंग है, X की। तब से हालात और चेतावनियाँ बदल चुकी हो सकती हैं।",
-      kn: "ಸಂಪರ್ಕವಿಲ್ಲ. ಇದು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಿದ ಕೊನೆಯ ರೀಡಿಂಗ್, X ರದ್ದು. ಅಂದಿನಿಂದ ಪರಿಸ್ಥಿತಿ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಬದಲಾಗಿರಬಹುದು.",
-    },
+  "No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.": {
+    hi: "कनेक्शन नहीं है। यह इस डिवाइस पर सहेजी गई आख़िरी रीडिंग है, X की। तब से हालात और चेतावनियाँ बदल चुकी हो सकती हैं।",
+    kn: "ಸಂಪರ್ಕವಿಲ್ಲ. ಇದು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಿದ ಕೊನೆಯ ರೀಡಿಂಗ್, X ರದ್ದು. ಅಂದಿನಿಂದ ಪರಿಸ್ಥಿತಿ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಬದಲಾಗಿರಬಹುದು.",
+  },
   "You are offline": { hi: "आप ऑफ़लाइन हैं", kn: "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ" },
   "mugilu shows the sky right now, so it needs a connection. Places you have opened on this device keep their last reading.":
     {
       hi: "mugilu अभी का आसमान दिखाता है, इसलिए इसे इंटरनेट कनेक्शन चाहिए। इस डिवाइस पर पहले खोली गई जगहों की आख़िरी रीडिंग सहेजी रहती है।",
       kn: "mugilu ಈಗಿನ ಆಕಾಶವನ್ನು ತೋರಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಇದಕ್ಕೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಬೇಕು. ಈ ಸಾಧನದಲ್ಲಿ ಹಿಂದೆ ತೆರೆದ ಸ್ಥಳಗಳ ಕೊನೆಯ ರೀಡಿಂಗ್ ಉಳಿದಿರುತ್ತದೆ.",
     },
-  "Nearby, not over this spot:": { hi: "पास में, इस जगह पर नहीं:", kn: "ಹತ್ತಿರದಲ್ಲಿ, ಈ ಸ್ಥಳದ ಮೇಲೆ ಅಲ್ಲ:" },
+  "Near this point, but not at it:": { hi: "पास में, इस जगह पर नहीं:", kn: "ಹತ್ತಿರದಲ್ಲಿ, ಈ ಸ್ಥಳದ ಮೇಲೆ ಅಲ್ಲ:" },
   "See your places": { hi: "अपनी जगहें देखें", kn: "ನಿಮ್ಮ ಸ್ಥಳಗಳನ್ನು ನೋಡಿ" },
   // Opt-in alerts (alerts.ts, alerts-ui.ts): drafted here, native review pending.
   "Official warning for X, until Y.": { hi: "X के लिए आधिकारिक चेतावनी, Y तक।", kn: "X ಗೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, Y ವರೆಗೆ." },
   "Official warning for X.": { hi: "X के लिए आधिकारिक चेतावनी।", kn: "X ಗೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ." },
   "Official warnings for this place": { hi: "इस जगह के लिए आधिकारिक चेतावनियाँ", kn: "ಈ ಸ್ಥಳಕ್ಕೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು" },
-  "Alert me about official warnings here": {
+  "Send me official warnings for this place": {
     hi: "यहाँ की आधिकारिक चेतावनियों के बारे में मुझे सूचित करें",
     kn: "ಇಲ್ಲಿನ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳ ಬಗ್ಗೆ ನನಗೆ ತಿಳಿಸಿ",
   },
   "Alerts are on for this place.": { hi: "इस जगह के लिए अलर्ट चालू हैं।", kn: "ಈ ಸ್ಥಳಕ್ಕೆ ಅಲರ್ಟ್‌ಗಳು ಆನ್ ಆಗಿವೆ." },
   "Turn off": { hi: "बंद करें", kn: "ಆಫ್ ಮಾಡಿ" },
-  "Notifications are blocked for mugilu. Allow them in your browser's site settings, then try again.": {
+  "Your browser blocks notifications from mugilu. Allow them in the site settings of your browser. Then try again.": {
     hi: "mugilu के लिए सूचनाएँ बंद हैं। अपने ब्राउज़र की साइट सेटिंग में इन्हें अनुमति दें, फिर दोबारा कोशिश करें।",
     kn: "mugilu ಗೆ ಅಧಿಸೂಚನೆಗಳನ್ನು ತಡೆಯಲಾಗಿದೆ. ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಸೈಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅನುಮತಿಸಿ, ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   },
-  "Alerts are on for 12 places already. Turn one off first.": {
+  "Alerts are on for 12 places. That is the limit. Turn off alerts for one place first.": {
     hi: "12 जगहों के लिए अलर्ट पहले से चालू हैं। पहले किसी एक को बंद करें।",
     kn: "ಈಗಾಗಲೇ 12 ಸ್ಥಳಗಳಿಗೆ ಅಲರ್ಟ್‌ಗಳು ಆನ್ ಆಗಿವೆ. ಮೊದಲು ಒಂದನ್ನು ಆಫ್ ಮಾಡಿ.",
   },
@@ -1274,12 +1273,12 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "अलर्ट चालू नहीं हो सके। दोबारा कोशिश करें।",
     kn: "ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಲು ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   },
-  "On iPhone and iPad, add mugilu to your Home Screen first (Share, then Add to Home Screen), open it from there, and turn alerts on here.":
+  "On iPhone and iPad, first add mugilu to your Home Screen (Share, then Add to Home Screen). Open mugilu from the Home Screen. Then turn on alerts here.":
     {
       hi: "iPhone और iPad पर, पहले mugilu को अपनी होम स्क्रीन पर जोड़ें (शेयर करें, फिर होम स्क्रीन में जोड़ें), उसे वहीं से खोलें, और यहाँ अलर्ट चालू करें।",
       kn: "iPhone ಮತ್ತು iPad ನಲ್ಲಿ, ಮೊದಲು mugilu ಅನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ (ಹಂಚಿಕೊಳ್ಳಿ, ನಂತರ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ), ಅಲ್ಲಿಂದ ತೆರೆಯಿರಿ, ಮತ್ತು ಇಲ್ಲಿ ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿ.",
     },
-  "Opt-in. When you turn alerts on, mugilu keeps this place (to about 1 km) and your browser's push address, only to send you official NDMA/IMD warnings for it, and deletes them when you turn alerts off.":
+  "Alerts are opt-in. When you turn on alerts, mugilu keeps this place (to approximately 1 km) and the push address of your browser. mugilu uses them only to send you official NDMA/IMD warnings for this place. mugilu deletes them when you turn off alerts.":
     {
       hi: "आपकी मर्ज़ी से। अलर्ट चालू करने पर mugilu यह जगह (लगभग 1 किमी तक) और आपके ब्राउज़र का पुश पता रखता है, केवल इस जगह की आधिकारिक NDMA/IMD चेतावनियाँ भेजने के लिए, और अलर्ट बंद करने पर इन्हें मिटा देता है।",
       kn: "ನಿಮ್ಮ ಆಯ್ಕೆ. ಅಲರ್ಟ್‌ಗಳನ್ನು ಆನ್ ಮಾಡಿದಾಗ, mugilu ಈ ಸ್ಥಳವನ್ನು (ಸುಮಾರು 1 ಕಿಮೀ ವರೆಗೆ) ಮತ್ತು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ ಪುಶ್ ವಿಳಾಸವನ್ನು ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ, ಈ ಸ್ಥಳದ ಅಧಿಕೃತ NDMA/IMD ಎಚ್ಚರಿಕೆಗಳನ್ನು ಕಳುಹಿಸಲು ಮಾತ್ರ, ಮತ್ತು ಅಲರ್ಟ್‌ಗಳನ್ನು ಆಫ್ ಮಾಡಿದಾಗ ಅವುಗಳನ್ನು ಅಳಿಸುತ್ತದೆ.",
@@ -1330,7 +1329,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "निकटतम X km",
     kn: "ಹತ್ತಿರದ್ದು X km",
   },
-  "X MW total": {
+  "X MW of fire power": {
     hi: "कुल X MW",
     kn: "ಒಟ್ಟು X MW",
   },
@@ -1350,7 +1349,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "भारी आग",
     kn: "ಭಾರೀ ಬೆಂಕಿ",
   },
-  "X mm falling now": {
+  "X mm of rain now": {
     hi: "अभी X mm बारिश",
     kn: "ಈಗ X mm ಮಳೆ",
   },
@@ -1406,7 +1405,7 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     hi: "लाइव विजेट (iframe):",
     kn: "ಲೈವ್ ವಿಜೆಟ್ (iframe):",
   },
-  "Or a timestamped image:": {
+  "Or an image with the time on it:": {
     hi: "या टाइमस्टैम्प के साथ एक छवि:",
     kn: "ಅಥವಾ ಟೈಮ್‌ಸ್ಟ್ಯಾಂಪ್ ಹೊಂದಿರುವ ಚಿತ್ರ:",
   },
@@ -1416,20 +1415,32 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   // (temperature) as elsewhere here. Native review pending.
   // {t}/{d} are whole °C; {period} is one of the three locative phrases below, with a
   // localised month name from Intl.
-  "Today's modelled high of {t}°C is {d}°C above normal for {period} here.": {
+  "The high today is {t}°C. That is {d}°C above normal for {period}.": {
     hi: "यहाँ आज का अनुमानित अधिकतम तापमान {t}°C है, जो {period} सामान्य से {d}°C अधिक है।",
     kn: "ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನ {t}°C, ಈ ಸ್ಥಳದಲ್ಲಿ {period} ಸಾಮಾನ್ಯಕ್ಕಿಂತ {d}°C ಹೆಚ್ಚು.",
   },
-  "Today's modelled high of {t}°C is {d}°C below normal for {period} here.": {
+  "The high today is {t}°C. That is {d}°C below normal for {period}.": {
     hi: "यहाँ आज का अनुमानित अधिकतम तापमान {t}°C है, जो {period} सामान्य से {d}°C कम है।",
     kn: "ಇಂದಿನ ಅಂದಾಜು ಗರಿಷ್ಠ ತಾಪಮಾನ {t}°C, ಈ ಸ್ಥಳದಲ್ಲಿ {period} ಸಾಮಾನ್ಯಕ್ಕಿಂತ {d}°C ಕಡಿಮೆ.",
   },
   "early {month}": { hi: "{month} की शुरुआत में", kn: "{month} ತಿಂಗಳ ಆರಂಭದಲ್ಲಿ" },
   "mid {month}": { hi: "{month} के मध्य में", kn: "{month} ತಿಂಗಳ ಮಧ್ಯದಲ್ಲಿ" },
   "late {month}": { hi: "{month} के अंत में", kn: "{month} ತಿಂಗಳ ಕೊನೆಯಲ್ಲಿ" },
-  "Today's high is modelled (Open-Meteo); the normal is 1991-2020 ERA5 reanalysis.": {
+  "Today's high is a model value (Open-Meteo). The normal is from ERA5 data for 1991-2020.": {
     hi: "आज का अधिकतम तापमान एक मॉडल अनुमान है (Open-Meteo); सामान्य तापमान 1991-2020 के ERA5 पुनः विश्लेषण से है।",
     kn: "ಇಂದಿನ ಗರಿಷ್ಠ ತಾಪಮಾನ ಮಾದರಿ ಅಂದಾಜು (Open-Meteo); ಸಾಮಾನ್ಯ ತಾಪಮಾನ 1991-2020ರ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ.",
+  },
+  // /c graphics key + home location button and rename prompt (Bhashini draft,
+  // hand-fixed). Native review pending.
+  "The dashed line is the CPCB limit.": {
+    hi: "डैश वाली रेखा CPCB की सीमा है।",
+    kn: "ಡ್ಯಾಶ್ ಮಾಡಿದ ರೇಖೆಯು CPCB ಮಿತಿಯಾಗಿದೆ.",
+  },
+  "Finding your location…": { hi: "आपका स्थान खोजा जा रहा है…", kn: "ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ…" },
+  "Your location is not available.": { hi: "आपका स्थान उपलब्ध नहीं है।", kn: "ನಿಮ್ಮ ಸ್ಥಳವು ಲಭ್ಯವಿಲ್ಲ." },
+  "Type a name for this place (for example, Home or Office)": {
+    hi: "इस स्थान के लिए एक नाम टाइप करें (उदाहरण के लिए, घर या कार्यालय)",
+    kn: "ಈ ಸ್ಥಳಕ್ಕೆ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ (ಉದಾಹರಣೆಗೆ, ಮನೆ ಅಥವಾ ಕಚೇರಿ)",
   },
 };
 export function t(en: string, lang: Lang): string {

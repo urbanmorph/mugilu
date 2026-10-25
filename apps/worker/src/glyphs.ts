@@ -99,7 +99,8 @@ export function compass(from: number, level: number): string {
   );
 }
 
-const DROP = (x: number) => `M${x + 7} 1C${x + 7} 1 ${x + 1} 8 ${x + 1} 12a6 6 0 0 0 12 0C${x + 13} 8 ${x + 7} 1 ${x + 7} 1Z`;
+const DROP = (x: number) =>
+  `M${x + 7} 1C${x + 7} 1 ${x + 1} 8 ${x + 1} 12a6 6 0 0 0 12 0C${x + 13} 8 ${x + 7} 1 ${x + 7} 1Z`;
 
 /** Ten drops, one filled for every full 10% chance of rain. */
 export function drops(pct: number): string {

@@ -32,7 +32,7 @@ test("renderKioskPage: full-bleed display with the QR, self-refresh and wake loc
   assert.match(html, /Delhi, Delhi/); // place
   assert.match(html, /Ambient/); // the headline read
   assert.match(html, /<svg>QR<\/svg>/); // the QR is injected for the phone hand-off
-  assert.match(html, /scan for this/i);
+  assert.match(html, /scan to see this/i);
   assert.match(html, /wakeLock/); // keeps the screen awake (tablets/phones)
   // self-refresh: a soft fetch-and-swap (no white flash) with a periodic hard-reload backstop
   assert.match(html, /DOMParser/);

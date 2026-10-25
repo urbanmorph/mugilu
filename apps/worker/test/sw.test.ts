@@ -244,7 +244,7 @@ test("a place's page carries the hidden last-reading note, with the reading's ti
   const note = html.match(new RegExp(`<p [^>]*id="${OFFLINE_NOTE_ID}" hidden>([\\s\\S]*?)</p>`));
   assert.ok(note, "the note is on the page, hidden");
   assert.match(note[1], /13:35 IST · 23 Oct/);
-  assert.match(note[1], /warnings may have changed/i);
+  assert.match(note[1], /warnings can be different now/i);
 });
 
 test("ordinary pages register the worker; the kiosk display and the embed card do not", () => {

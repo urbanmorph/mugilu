@@ -193,12 +193,12 @@ test("renderConditionsMarkdown: a notable difference from normal is said, labell
     const c = await buildConditions(null, 12.97, 77.59);
     t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T06:00:00Z") }); // the high's own day, IST
     const md = renderConditionsMarkdown({ ...c, heat_vs_normal: HOT });
-    assert.match(md, /Today's modelled high of 41°C is 5°C above normal for late May here/);
-    assert.match(md, /Today's high is modelled \(Open-Meteo\); the normal is 1991-2020 ERA5 reanalysis\./);
+    assert.match(md, /The high today is 41°C\. That is 5°C above normal for late May\./);
+    assert.match(md, /Today's high is a model value \(Open-Meteo\)\. The normal is from ERA5 data for 1991-2020\./);
     assert.doesNotMatch(md, /heatwave|heat wave/i);
     assert.doesNotMatch(md, /—/);
     const cool = renderConditionsMarkdown({ ...c, heat_vs_normal: { ...HOT, today_max_c: 31, anomaly_c: -5 } });
-    assert.match(cool, /Today's modelled high of 31°C is 5°C below normal for late May here/);
+    assert.match(cool, /The high today is 31°C\. That is 5°C below normal for late May\./);
     const quiet = renderConditionsMarkdown({ ...c, heat_vs_normal: { ...HOT, anomaly_c: 1, notable: false } });
     t.mock.timers.setTime(new Date("2026-05-25T18:40:00Z").getTime()); // 00:10 IST, the next day
     assert.doesNotMatch(
@@ -252,9 +252,9 @@ test("serializeConditionsV1 + markdown: carry the persona's own step", async () 
     const c = await buildConditions(snap(), 12.9716, 77.5946);
     c.air = { ...c.air!, aqi: 150, band: "moderate" };
     const asthma = serializeConditionsV1(c, "asthma") as Record<string, any>;
-    assert.match(asthma.ambient.persona_action, /hard exercise/);
+    assert.match(asthma.ambient.persona_action, /exercise hard/);
     assert.equal((serializeConditionsV1(c, "everyone") as Record<string, any>).ambient.persona_action, null);
-    assert.match(renderConditionsMarkdown(c, "asthma"), /hard exercise/);
+    assert.match(renderConditionsMarkdown(c, "asthma"), /exercise hard/);
   } finally {
     globalThis.fetch = realFetch;
   }

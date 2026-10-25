@@ -40,8 +40,8 @@ const HOT_VS_NORMAL = {
 test("renderConditionsPage: a notable high vs normal is said on the heat layer, labelled as modelled", (t) => {
   t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T06:00:00Z") }); // the high's own day, IST
   const html = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }));
-  assert.match(html, /Today's modelled high of 41°C is 5°C above normal for late May here\./);
-  assert.match(html, /Today's high is modelled \(Open-Meteo\); the normal is 1991-2020 ERA5 reanalysis\./);
+  assert.match(html, /The high today is 41°C\. That is 5°C above normal for late May\./);
+  assert.match(html, /Today's high is a model value \(Open-Meteo\)\. The normal is from ERA5 data for 1991-2020\./);
   const hi = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }), "everyone", undefined, "hi");
   assert.match(hi, /आज का अनुमानित अधिकतम तापमान 41°C है, जो मई के अंत में सामान्य से 5°C अधिक है/);
   assert.doesNotMatch(hi, /Today.s high/);
@@ -175,13 +175,13 @@ test("renderConditionsPage: no nearby block on a bare-coordinate page (no state 
 
 test("renderConditionsPage: shows the persona's own step when its trigger drives the read", () => {
   const moderateAir = conditions({ air: { ...conditions().air!, aqi: 150, band: "moderate" } });
-  assert.match(renderConditionsPage(moderateAir, "asthma"), /class="amb-act">[^<]*hard exercise/);
+  assert.match(renderConditionsPage(moderateAir, "asthma"), /class="amb-act">[^<]*exercise hard/);
   assert.doesNotMatch(renderConditionsPage(moderateAir, "everyone"), /class="amb-act"/);
 });
 
 test("renderEmbed: a persona card carries that group's own step", () => {
   const moderateAir = conditions({ air: { ...conditions().air!, aqi: 150, band: "moderate" } });
-  assert.match(renderEmbed(moderateAir, "asthma", "https://mugilu.live"), /class="eact">[^<]*hard exercise/);
+  assert.match(renderEmbed(moderateAir, "asthma", "https://mugilu.live"), /class="eact">[^<]*exercise hard/);
   assert.doesNotMatch(renderEmbed(moderateAir, "everyone", "https://mugilu.live"), /class="eact"/);
 });
 
@@ -263,7 +263,7 @@ test("renderConditionsPage: warnings over the spot stand out; nearby ones get on
   assert.match(html, /class="warn"[^>]*>[\s\S]*?Lightning/);
   const nearby = html.match(/<p class="near-warn">([\s\S]*?)<\/p>/);
   assert.ok(nearby, "a nearby line");
-  assert.match(nearby[1], /Nearby, not over this spot/);
+  assert.match(nearby[1], /Near this point, but not at it/);
   assert.match(nearby[1], /Heavy Rain/);
   const boxes = [...html.matchAll(/<div class="warn"[\s\S]*?<\/div><\/div>/g)].map((m) => m[0]);
   assert.equal(boxes.length, 1, "one warning box: the one over the spot");
@@ -362,7 +362,8 @@ test("renderConditionsPage: laptops get two columns, the reading pinned beside t
 });
 
 // The graphics on each layer (glyphs.ts), drawn against the limits the read uses.
-const layerHtml = (html: string, k: string) => html.match(new RegExp(`<div class="lyr(?: on)?" data-k="${k}">[\\s\\S]*?</dd></div>`))?.[0] ?? "";
+const layerHtml = (html: string, k: string) =>
+  html.match(new RegExp(`<div class="lyr(?: on)?" data-k="${k}">[\\s\\S]*?</dd></div>`))?.[0] ?? "";
 
 test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit, not a line of numbers", () => {
   const html = renderConditionsPage(conditions({ air: { ...conditions().air!, pollutants: { pm25: 64, pm10: 218 } } }));
@@ -375,7 +376,9 @@ test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit
 
 test("renderConditionsPage: hot heat shows wet-bulb and WBGT against their thresholds", () => {
   const html = renderConditionsPage(
-    conditions({ heat: { temp_c: 44, humidity_pct: 18, apparent_c: 47, wet_bulb_c: 24, wbgt_c: 33, source: "open-meteo" } }),
+    conditions({
+      heat: { temp_c: 44, humidity_pct: 18, apparent_c: 47, wet_bulb_c: 24, wbgt_c: 33, source: "open-meteo" },
+    }),
   );
   const heat = layerHtml(html, "heat");
   assert.equal([...heat.matchAll(/<div class="g"/g)].length, 2);

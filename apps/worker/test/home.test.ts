@@ -105,3 +105,10 @@ test("renderHome: minimal footer (about, terms, commons → PDGI scorecard)", ()
   assert.match(html, /PDGI\.md/); // the commons link points at the scorecard
   assert.match(html, /\/terms/);
 });
+
+test("renderHome: the location button and rename prompt speak the page's language", () => {
+  const kn = renderHome(undefined, undefined, undefined, "kn");
+  assert.match(kn, /ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ/);
+  assert.doesNotMatch(kn, /Locating|Location unavailable|Name this place/);
+  assert.match(renderHome(), /"Finding your location…"/);
+});

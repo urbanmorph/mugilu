@@ -130,7 +130,8 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
   const place = (name: string, state?: string) => esc(state ? `${name}, ${state}` : name);
   const age = (iso?: string) => (iso ? ` <span class="age">· ${relTime(iso)}</span>` : "");
   // "feels 41°": in Kannada/Hindi the verb follows the number ("41° ಅನಿಸುತ್ತದೆ").
-  const feels = (c: number) => (lang === "en" ? `feels ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`);
+  const feels = (c: number) =>
+    lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
   const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
     if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
     return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
@@ -169,7 +170,7 @@ function renderHero(h: NationalHighlights, meta?: { gridAsOf?: string; airAsOf?:
     );
   }
   return rows.length
-    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("Right now in India", lang)}</h2>${rows.join("")}</section>`
+    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("India now", lang)}</h2>${rows.join("")}</section>`
     : "";
 }
 
@@ -558,7 +559,7 @@ function renderNearbyWarnings(ws: Warning[], lang: Lang): string {
       return `${esc(event)}${detail ? ` (${esc(detail)})` : ""}`;
     })
     .join(" · ");
-  return `<p class="near-warn">${t("Nearby, not over this spot:", lang)} ${items}</p>`;
+  return `<p class="near-warn">${t("Near this point, but not at it:", lang)} ${items}</p>`;
 }
 
 // Records this /c visit into the browser's "Your places" list (first-party,
@@ -636,7 +637,9 @@ export function renderConditionsPage(
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
         `<span class="qa">AQI</span> <b style="color:${bandColor}">${t(bandLabel, lang)}</b>`,
         `${marker}${aqli}`,
-        bars ? `<div class="prs">${bars}<span class="prk">${t("The dashed line is the CPCB limit.", lang)}</span></div>` : "",
+        bars
+          ? `<div class="prs">${bars}<span class="prk">${t("The dashed line is the CPCB limit.", lang)}</span></div>`
+          : "",
       ),
     );
   }
@@ -653,7 +656,10 @@ export function renderConditionsPage(
       if (h.wet_bulb_c != null) {
         const [wn, wc] = wetBulb(h.wet_bulb_c);
         bar += `<span class="gl">${t("wet-bulb", lang)} ${round(h.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b></span>`;
-        bar += gauge(h.wet_bulb_c, 10, 35, { ticks: THRESHOLDS.wetBulb, level: heatLevelOf({ wet_bulb_c: h.wet_bulb_c }) });
+        bar += gauge(h.wet_bulb_c, 10, 35, {
+          ticks: THRESHOLDS.wetBulb,
+          level: heatLevelOf({ wet_bulb_c: h.wet_bulb_c }),
+        });
       }
       if (h.wbgt_c != null) {
         bar += `<span class="gl">WBGT ${round(h.wbgt_c)}°</span>`;
@@ -664,7 +670,7 @@ export function renderConditionsPage(
     // still today's, in IST), always labelled.
     const n = c.heat_vs_normal;
     if (heatVsNormalShown(n)) {
-      bar += `<span class="gl hvn">${heatVsNormalLine(n, lang)}</span>`;
+      bar += `<span class="gl">${heatVsNormalLine(n, lang)}</span>`;
       bar += gauge(n.today_max_c, n.normal_max_c - 10, n.normal_max_c + 10, {
         from: n.normal_max_c,
         ticks: [n.normal_max_c],
@@ -752,7 +758,7 @@ export function renderConditionsPage(
   if (c.smoke && smokeLvl != null) {
     const sub =
       c.smoke.nearest_km != null
-        ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW total", lang).replace("X", String(c.smoke.frp_sum))}`
+        ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW of fire power", lang).replace("X", String(c.smoke.frp_sum))}`
         : `${c.smoke.frp_sum} MW`;
     strata.push(
       lyr(
@@ -763,7 +769,11 @@ export function renderConditionsPage(
         `<span class="qa nu">${t("fires within 100 km", lang)}</span> <b>${t(SMOKE_PHRASE[smokeLvl], lang)}</b>`,
         sub,
         c.smoke.nearest_km != null
-          ? gauge(c.smoke.nearest_km, 0, c.smoke.radius_km ?? 100, { from: c.smoke.nearest_km, marker: true, level: smokeLvl })
+          ? gauge(c.smoke.nearest_km, 0, c.smoke.radius_km ?? 100, {
+              from: c.smoke.nearest_km,
+              marker: true,
+              level: smokeLvl,
+            })
           : "",
       ),
     );
@@ -778,7 +788,7 @@ export function renderConditionsPage(
           risk,
           `${c.rain.probability_pct}%`,
           `<span class="qa">${t("chance of rain", lang)}</span>`,
-          mm ? t("X mm falling now", lang).replace("X", String(mm)) : "",
+          mm ? t("X mm of rain now", lang).replace("X", String(mm)) : "",
           drops(c.rain.probability_pct),
         ),
       );
@@ -808,8 +818,8 @@ export function renderConditionsPage(
     <div class="cx-l">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
-    <p class="when">${t("the sky over this spot", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
-    <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading saved on this device, from X. Conditions and warnings may have changed since.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
+    <p class="when">${t("the sky at this point", lang)} · ${t("updated", lang)} ${relTime(c.air_as_of ?? c.as_of)}</p>
+    <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
     ${c.warnings?.length ? c.warnings.map((w) => renderWarning(w, lang)).join("") : ""}
     ${c.nearby_warnings?.length ? renderNearbyWarnings(c.nearby_warnings, lang) : ""}
     <section class="amb">
@@ -1098,7 +1108,7 @@ export function renderKioskPage(
     <section class="ktiles">${tiles.join("")}</section>
     <footer class="kfoot">
       <div><span class="kbrand">mugilu.live</span><p class="kdisc">${esc(t(SHORT_DISCLAIMER, lang))}</p></div>
-      <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan for this<br>on your phone" : t("scan for this on your phone", lang)}</span></div>
+      <div class="kqr">${qr}<span class="kqrl">${lang === "en" ? "scan to see this<br>on your phone" : t("scan to see this on your phone", lang)}</span></div>
     </footer>
   </div>
   <div class="kload" aria-hidden="true"><div class="kspin"></div><p class="kverb">${t(KIOSK_VERBS[0], lang)}…</p></div>
@@ -1248,7 +1258,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   </a>
   <details class="ecode"><summary>${t("Embed this", lang)}</summary>
     <p>${t("Live widget (iframe):", lang)}</p><pre>${esc(iframe)}</pre>
-    <p>${t("Or a timestamped image:", lang)}</p><pre>${esc(imgtag)}</pre>
+    <p>${t("Or an image with the time on it:", lang)}</p><pre>${esc(imgtag)}</pre>
   </details>
   <script>if(window.self!==window.top)document.documentElement.classList.add('framed')</script>
   </body></html>`;
@@ -1775,17 +1785,17 @@ export function renderHome(
   const cityLinks = links.join(" · ");
   const noticeMsg =
     lang === "en"
-      ? `Couldn't find "${esc(notFound ?? "")}". Try a city or place name.`
-      : esc(t('Couldn\'t find "X". Try a city or place name.', lang)).replace("X", esc(notFound ?? ""));
+      ? `No place found for "${esc(notFound ?? "")}". Type the name of a city or a place.`
+      : esc(t('No place found for "X". Type the name of a city or a place.', lang)).replace("X", esc(notFound ?? ""));
   const notice = notFound ? `<p class="notice">${noticeMsg}</p>` : "";
   const cover = (ic: string, en: string) => `<span>${icon(ic)} ${t(en, lang)}</span>`;
   const shint =
     lang === "en"
-      ? `Type any place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>), to see <b>its sky</b>: air, heat, rain, dust. Not a map.`
-      : `${t("Type any place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("to see its sky: air, heat, rain, dust.", lang)} ${t("Not a map.", lang)}`;
+      ? `Type the name of a place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). You then see <b>its sky</b>: air, heat, rain and dust. This is not a map.`
+      : `${t("Type the name of a place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("You then see its sky: air, heat, rain and dust.", lang)} ${t("This is not a map.", lang)}`;
 
   const body = `
-  <h1 class="hero">${t("What's it like outside, right now?", lang)}</h1>
+  <h1 class="hero">${t("What is it like outside now?", lang)}</h1>
   <p class="tagline">${t("The open sky of India, one coordinate at a time.", lang)}</p>
   <p class="covers">${cover("air", "air")}${cover("heat", "heat")}${cover("rain", "rain")}${cover("sun", "UV")}${cover("dust", "dust")}${cover("warn", "warnings")}</p>
   <div class="acwrap">
@@ -1803,9 +1813,10 @@ export function renderHome(
   <p class="cities">${t("Popular:", lang)} ${cityLinks}</p>
   <script>
   var YP=${JSON.stringify(t("Your places", lang))};
+  var LOC=${JSON.stringify(t("Finding your location…", lang))},NOLOC=${JSON.stringify(t("Your location is not available.", lang))},NAME=${JSON.stringify(t("Type a name for this place (for example, Home or Office)", lang))};
   var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};
   var b=document.getElementById('nearme'),label=b.textContent;
-  if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent='Locating…';navigator.geolocation.getCurrentPosition(function(p){location.href=LP+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent='Location unavailable';});};}
+  if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent=LOC;navigator.geolocation.getCurrentPosition(function(p){location.href=LP+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent=NOLOC;});};}
   addEventListener('pageshow',function(){b.textContent=label;});
   var q=document.getElementById('q'),ac=document.getElementById('ac'),items=[],ix=-1,t,seq=0;
   function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}
@@ -1838,7 +1849,7 @@ export function renderHome(
       var btn=e.target.closest('button[data-a]');if(!btn)return;
       var id=btn.closest('.pl').getAttribute('data-id'),a=btn.getAttribute('data-a');
       var L=load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
-      if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt('Name this place (e.g. Home, Office)',p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});
+      if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt(NAME,p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});
       save(L);render();
     });
     render();
