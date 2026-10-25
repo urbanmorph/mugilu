@@ -430,7 +430,10 @@ test("renderConditionsPage: a persona's own layers carry a 'for you' tag; the ot
   assert.deepEqual(tagged(renderConditionsPage(c, "asthma")), ["air", "dust"]);
   assert.deepEqual(tagged(renderConditionsPage(c, "child")).sort(), ["air", "dust", "heat", "sun"]);
   assert.deepEqual(tagged(renderConditionsPage(c)), [], "everyone: no tags");
-  assert.match(renderConditionsPage(c, "asthma"), /<div class="lyr[^"]*\bquiet\b[^"]*" data-k="(fog|wind|rain)"|<div class="lyr quiet" data-k="heat"/);
+  assert.match(
+    renderConditionsPage(c, "asthma"),
+    /<div class="lyr[^"]*\bquiet\b[^"]*" data-k="(fog|wind|rain)"|<div class="lyr quiet" data-k="heat"/,
+  );
   assert.doesNotMatch(renderConditionsPage(c), /class="lyr[^"]*\bquiet\b/);
   // The headline hazard (UV 7 here) is never quiet, even when it is not the persona's trigger.
   assert.match(renderConditionsPage(c, "asthma"), /<div class="lyr on" data-k="sun"/);
