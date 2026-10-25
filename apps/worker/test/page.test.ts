@@ -298,14 +298,14 @@ test("renderConditionsPage: many nearby warnings of one kind are counted, not re
 // The order the layers appear in, read from the rendered page.
 const layerOrder = (html: string) => [...html.matchAll(/<div class="lyr(?: on)?" data-k="([a-z]+)"/g)].map((m) => m[1]);
 
-test("renderConditionsPage: on a calm day, layers follow what people check first, rain right after air and heat", () => {
+test("renderConditionsPage: on a calm day, layers follow what people check first, sun beside heat, then rain", () => {
   const html = renderConditionsPage(
     conditions({
       rain: { probability_pct: 20, precipitation_mm: 0, source: "open-meteo" },
       wind: { speed_kmh: 8, gust_kmh: 12, direction_deg: 90, source: "open-meteo" },
     }),
   );
-  assert.deepEqual(layerOrder(html), ["air", "heat", "rain", "wind", "dust", "sun"]);
+  assert.deepEqual(layerOrder(html), ["air", "heat", "sun", "rain", "wind", "dust"]);
 });
 
 test("renderConditionsPage: the worst hazard comes first, then whatever else is elevated", () => {
@@ -330,12 +330,21 @@ test("renderConditionsPage: rain falling now moves up past calm layers", () => {
   assert.ok(o.indexOf("rain") < o.indexOf("air"), o.join(","));
 });
 
+test("renderConditionsPage: a 40% chance of rain is enough to move rain up; 39% is not", () => {
+  const at = (pct: number) =>
+    layerOrder(
+      renderConditionsPage(conditions({ rain: { probability_pct: pct, precipitation_mm: 0, source: "open-meteo" } })),
+    );
+  assert.ok(at(40).indexOf("rain") < at(40).indexOf("heat"), at(40).join(","));
+  assert.ok(at(39).indexOf("rain") > at(39).indexOf("heat"), at(39).join(","));
+});
+
 test("renderConditionsPage: a persona's own hazards come first among equals", () => {
   const html = renderConditionsPage(
     conditions({ rain: { probability_pct: 20, precipitation_mm: 0, source: "open-meteo" } }),
     "asthma",
   );
-  assert.deepEqual(layerOrder(html), ["air", "dust", "heat", "rain", "sun"]);
+  assert.deepEqual(layerOrder(html), ["air", "dust", "heat", "sun", "rain"]);
 });
 
 test("renderConditionsPage: a cold driver lights the heat layer", () => {

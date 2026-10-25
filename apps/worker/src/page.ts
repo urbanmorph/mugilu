@@ -529,12 +529,13 @@ const LAYER_HAZARDS: Record<string, string[]> = {
   smoke: ["Smoke"],
 };
 // What people check first when nothing stands out: the air they breathe, how hot
-// it is, whether it will rain, then the rest.
-const CARE_ORDER = ["air", "heat", "rain", "wind", "fog", "smoke", "dust", "sun"];
+// it is and how strong the sun (side by side), whether it will rain, then the rest.
+const CARE_ORDER = ["air", "heat", "sun", "rain", "wind", "fog", "smoke", "dust"];
 
-/** Rain worth planning around: falling now, or a 60%+ chance. */
+/** Rain worth planning around (a commute, the washing): falling now, or a 40%+ chance. */
+const RAIN_LIKELY_PCT = 40;
 function rainLikely(c: Conditions): boolean {
-  return (c.rain?.precipitation_mm ?? 0) > 0 || (c.rain?.probability_pct ?? 0) >= 60;
+  return (c.rain?.precipitation_mm ?? 0) > 0 || (c.rain?.probability_pct ?? 0) >= RAIN_LIKELY_PCT;
 }
 
 /** Whether this layer is the Ambient read's headline hazard. */
