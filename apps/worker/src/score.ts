@@ -104,6 +104,8 @@ export const THRESHOLDS = {
   /** Active fires within 100 km in 24h, or their summed fire power (MW). */
   smokeCount: [3, 25, 60],
   smokeFrp: [20, 120, 350],
+  /** mm of rain in 24 hours; IMD's heavy, very heavy and extremely heavy. */
+  rain24: [64.5, 115.6, 204.5],
 } as const;
 
 /** How many edges a value reaches: 0 (none) to edges.length. */
@@ -112,6 +114,7 @@ const atOrBelow = (v: number, edges: readonly number[]) => edges.filter((e) => v
 const below = (v: number, edges: readonly number[]) => edges.filter((e) => v < e).length;
 
 export const dustLevelOf = (ug: number) => atOrAbove(ug, THRESHOLDS.dust);
+export const rainLevelOf = (mm: number) => atOrAbove(mm, THRESHOLDS.rain24);
 
 /** Hot-side thermal stress (0-3): the worst of wet-bulb, feels-like and WBGT. */
 export function heatLevelOf(h: { apparent_c?: number; wet_bulb_c?: number; wbgt_c?: number }): number {

@@ -109,6 +109,7 @@ const FC_BULK = [
       relative_humidity_2m: 30,
       precipitation: 0,
     },
+    hourly: { precipitation: [1.5, 2, null, 4.25] },
   },
 ];
 const AQ_BULK = [{ current: { uv_index: 6, dust: 12 } }, { current: { uv_index: 4, dust: 409 } }];
@@ -129,6 +130,8 @@ test("getOpenMeteoBulk: maps bulk forecast + air-quality per coordinate, in orde
     assert.equal(out[1].apparent_c, 40);
     assert.equal(out[1].dust_ug_m3, 409);
     assert.equal(out[0].uv, 6);
+    assert.equal(out[0].rain_24h_mm, undefined); // no hourly forecast, no sum
+    assert.equal(out[1].rain_24h_mm, 7.8); // the next 24 hours, summed
   } finally {
     globalThis.fetch = realFetch;
   }

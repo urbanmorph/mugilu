@@ -670,17 +670,46 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
     kn: "ಮಳೆ",
   },
   // The home map of India and its cyclone card (indiamap.ts). Drafts: native review pending.
-  Worst: {
-    hi: "सबसे खराब",
-    kn: "ಅತ್ಯಂತ ಕೆಟ್ಟ",
+  "What's worst": {
+    hi: "सबसे बुरा क्या है",
+    kn: "ಅತಿ ಕೆಟ್ಟದ್ದು",
   },
-  "Map of India. Each square has the colour of its worst reading now.": {
-    hi: "भारत का मानचित्र। हर वर्ग का रंग अभी उसकी सबसे खराब रीडिंग बताता है।",
-    kn: "ಭಾರತದ ನಕ್ಷೆ. ಪ್ರತಿ ಚೌಕದ ಬಣ್ಣವು ಈಗ ಅದರ ಅತ್ಯಂತ ಕೆಟ್ಟ ಮಾಪನವನ್ನು ತೋರಿಸುತ್ತದೆ.",
+  "Map of India. Each square is coloured by what is worst in it now.": {
+    hi: "भारत का मानचित्र। हर वर्ग का रंग बताता है कि अभी वहाँ सबसे बुरा क्या है।",
+    kn: "ಭಾರತದ ನಕ್ಷೆ. ಪ್ರತಿ ಚೌಕದ ಬಣ್ಣವು ಈಗ ಅಲ್ಲಿ ಯಾವುದು ಅತ್ಯಂತ ಕೆಟ್ಟದು ಎಂದು ತೋರಿಸುತ್ತದೆ.",
   },
-  "Each square shows the worst reading in it, about 100 km across. Select a square to see that place.": {
-    hi: "हर वर्ग अपनी सबसे खराब रीडिंग दिखाता है; एक वर्ग लगभग 100 किमी का है। उस जगह को देखने के लिए वर्ग चुनें।",
-    kn: "ಪ್ರತಿ ಚೌಕವು ಅದರೊಳಗಿನ ಅತ್ಯಂತ ಕೆಟ್ಟ ಮಾಪನವನ್ನು ತೋರಿಸುತ್ತದೆ; ಒಂದು ಚೌಕ ಸುಮಾರು 100 ಕಿ.ಮೀ. ಆ ಸ್ಥಳವನ್ನು ನೋಡಲು ಚೌಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+  "Each square, about 100 km across, has the colour of what is worst in it, where that is high or severe. Air includes smoke and dust. Select a square to see that place.":
+    {
+      hi: "हर वर्ग (लगभग 100 किमी) का रंग वहाँ की सबसे बुरी चीज़ का है, जहाँ वह उच्च या गंभीर हो। वायु में धुआं और धूल भी शामिल हैं। उस जगह को देखने के लिए वर्ग चुनें।",
+      kn: "ಪ್ರತಿ ಚೌಕಕ್ಕೆ (ಸುಮಾರು 100 ಕಿ.ಮೀ.) ಅಲ್ಲಿನ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದರ ಬಣ್ಣವಿದೆ, ಅದು ಉನ್ನತ ಮಟ್ಟದ ಅಥವಾ ತೀವ್ರವಾಗಿದ್ದಲ್ಲಿ. ವಾಯುಗುಣದಲ್ಲಿ ಹೊಗೆ ಮತ್ತು ಧೂಳು ಸೇರಿವೆ. ಆ ಸ್ಥಳವನ್ನು ನೋಡಲು ಚೌಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+    },
+  Cold: {
+    hi: "सर्दी",
+    kn: "ಶೀತ",
+  },
+  Heavy: {
+    hi: "भारी",
+    kn: "ಭಾರೀ",
+  },
+  "Very heavy": {
+    hi: "बहुत भारी",
+    kn: "ಅತಿ ಭಾರೀ",
+  },
+  "Extremely heavy": {
+    hi: "अत्यंत भारी",
+    kn: "ಅತ್ಯಂತ ಭಾರೀ",
+  },
+  "See the rain": {
+    hi: "बारिश देखें",
+    kn: "ಮಳೆ ನೋಡಿ",
+  },
+  "No heavy rain is forecast in the next 24 hours.": {
+    hi: "अगले 24 घंटों में भारी बारिश का पूर्वानुमान नहीं है।",
+    kn: "ಮುಂದಿನ 24 ಗಂಟೆಗಳಲ್ಲಿ ಭಾರೀ ಮಳೆಯ ಮುನ್ಸೂಚನೆ ಇಲ್ಲ.",
+  },
+  "Rain forecast for the next 24 hours, from a weather model. Models often underestimate the rain a cyclone brings.": {
+    hi: "अगले 24 घंटों की बारिश का पूर्वानुमान, एक मौसम मॉडल से। मॉडल अक्सर चक्रवात की बारिश को कम आँकते हैं।",
+    kn: "ಮುಂದಿನ 24 ಗಂಟೆಗಳ ಮಳೆಯ ಮುನ್ಸೂಚನೆ, ಹವಾಮಾನ ಮಾದರಿಯಿಂದ. ಮಾದರಿಗಳು ಚಂಡಮಾರುತ ತರುವ ಮಳೆಯನ್ನು ಹೆಚ್ಚಾಗಿ ಕಡಿಮೆ ಅಂದಾಜಿಸುತ್ತವೆ.",
   },
   "Each dot is an air station, with the colour of its reading.": {
     hi: "हर बिंदु एक वायु केंद्र है, उसका रंग उसकी रीडिंग बताता है।",
