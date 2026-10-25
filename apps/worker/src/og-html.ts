@@ -28,7 +28,7 @@ function pos(v: number, g: Brief["gauge"]): number {
   return +(Math.max(0, Math.min(1, p)) * 100).toFixed(1);
 }
 
-function stat(b: Brief, c: Conditions, driver: boolean): string {
+function stat(b: Brief, c: Conditions, label: string): string {
   const fill = b.key === "air" ? (BAND_COLOR[c.air?.band ?? "unknown"] ?? BAND_COLOR.unknown) : LEVEL_FILL[b.level];
   const value = b.key === "heat" ? `feels ${b.value}` : b.value;
   const ticks = b.gauge.ticks
@@ -39,7 +39,7 @@ function stat(b: Brief, c: Conditions, driver: boolean): string {
     .join("");
   return (
     `<div data-k="${b.key}" style="display:flex;flex-direction:column;flex:1;margin-right:28px;">` +
-    `<div style="display:flex;font-size:21px;letter-spacing:2px;color:${driver ? "#f87171" : "#64748b"};">${esc(b.label.toUpperCase())}</div>` +
+    `<div style="display:flex;font-size:21px;letter-spacing:2px;color:${label};">${esc(b.label.toUpperCase())}</div>` +
     `<div style="display:flex;font-size:36px;font-weight:700;color:#e2e8f0;margin-top:6px;">${esc(value)}</div>` +
     `<div style="display:flex;position:relative;height:10px;border-radius:5px;background:#1f2937;margin-top:10px;">` +
     `<div style="display:flex;position:absolute;top:0;bottom:0;left:0;width:${pos(b.gauge.v, b.gauge)}%;border-radius:5px;background:${fill};"></div>` +
@@ -72,7 +72,7 @@ export function conditionsOgHtml(c: Conditions, persona: Persona): string {
     : "";
   const stats = briefs(c, risk)
     .slice(0, 4)
-    .map((b) => stat(b, c, isDriver(b.key, risk)))
+    .map((b) => stat(b, c, isDriver(b.key, risk) ? RISK_COLOR[risk.band] : "#64748b"))
     .join("");
 
   return (

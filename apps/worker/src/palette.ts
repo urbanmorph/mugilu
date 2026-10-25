@@ -29,7 +29,7 @@ export const HAZARD_TINT: Record<string, string> = {
   none: "#38bdf8",
   Heat: "#f97316",
   Cold: "#60a5fa",
-  Air: "#a8a29e",
+  Air: "#a0785a", // smoggy brown (darker and redder than dust's sand)
   UV: "#a855f7",
   Dust: "#d6a35c",
   Wind: "#2dd4bf",

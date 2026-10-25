@@ -52,3 +52,14 @@ test("conditionsOgHtml: the card is sized in pixels (the renderer resolves a % w
   const html = conditionsOgHtml(c, "everyone");
   assert.match(html, /^<div style="display:flex;flex-direction:column;width:1200px;height:630px;/);
 });
+
+test("conditionsOgHtml: the headline reading's label takes the read's severity colour, not always red", () => {
+  const moderate = {
+    ...c,
+    heat: { ...c.heat!, apparent_c: 30, wet_bulb_c: 20 },
+    uv: { index: 2, source: "om" },
+  } as Conditions;
+  const html = conditionsOgHtml(moderate, "everyone");
+  assert.match(html, /data-k="air"[^>]*><div style="[^"]*color:#ca8a04;">AIR</);
+  assert.doesNotMatch(html, /#f87171/);
+});
