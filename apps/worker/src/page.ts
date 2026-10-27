@@ -1788,6 +1788,25 @@ ${AC_CSS}.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2re
 .hero-now .hl b{font-weight:700}
 .hero-now .age{color:var(--muted);font-weight:400;font-size:.85em}
 .hero-now .hl .ic{width:18px;height:18px;color:var(--hue,var(--sky));margin-right:8px;vertical-align:-.2em}
+/* iPads in portrait: one column, wider, so the map is bigger. */
+@media(min-width:700px) and (max-width:959px){main:has(>.hm){max-width:720px}.hm .msvg{max-width:560px;margin:0 auto}}
+/* Laptops and iPads in landscape: search, the India-now rows and places on the left, the map
+   on the right. The India-now card opens up so its rows join the left column; the map takes
+   the card's look. The last row (1fr) takes the map's height so the left rows stay packed.
+   Only with a map, and only where :has() works; otherwise the one column stays. */
+@supports selector(:has(a)){@media(min-width:960px){
+main:has(>.hm .imap){max-width:1180px;padding-top:28px}
+body:has(.hm .imap) :is(.foot,.langsw){max-width:1180px}
+.hm:has(.imap){display:grid;grid-template-columns:minmax(0,26rem) minmax(0,1fr);grid-template-rows:repeat(14,auto) 1fr;column-gap:3.5rem;align-items:start}
+.hm>*,.hero-now>*{grid-column:1}
+.hm:has(.imap) .hero-now{display:contents}
+.hero-now>.imap{grid-column:2;grid-row:1/-1;margin:0;border:1px solid color-mix(in srgb,var(--cond,var(--sky)) 32%,var(--line));border-radius:14px;padding:16px 20px;background:linear-gradient(180deg,color-mix(in srgb,var(--cond,var(--sky)) 13%,var(--card)),var(--card))}
+.hm .msvg{max-width:min(100%,calc((100svh - 230px) * .9));margin:0 auto}
+.hero{margin-top:.4rem}
+.nearme{justify-self:start}
+.hero-now>h2{margin:.4rem 0 .3rem}
+.hero-now>.hl:last-of-type{margin-bottom:1.4rem}
+}}
 `;
 
 export const CITIES = [
@@ -1845,7 +1864,7 @@ export function renderHome(
       ? `Type the name of a place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). You then see <b>its sky</b>: air, heat, rain and dust.`
       : `${t("Type the name of a place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("You then see its sky: air, heat, rain and dust.", lang)}`;
 
-  const body = `
+  const body = `<div class="hm">
   <h1 class="hero">${t("What is it like outside now?", lang)}</h1>
   <p class="tagline">${t("The open sky of India, one coordinate at a time.", lang)}</p>
   <p class="covers">${cover("air", "air")}${cover("heat", "heat")}${cover("rain", "rain")}${cover("sun", "UV")}${cover("dust", "dust")}${cover("warn", "warnings")}</p>
@@ -1862,6 +1881,7 @@ export function renderHome(
   ${renderHero(highlights, meta, lang)}
   <div id="yp" class="yourplaces" hidden></div>
   <p class="cities">${t("Popular:", lang)} ${cityLinks}</p>
+  </div>
   <script>
   var YP=${JSON.stringify(t("Your places", lang))};
   var LOC=${JSON.stringify(t("Finding your location…", lang))},NOLOC=${JSON.stringify(t("Your location is not available.", lang))},NAME=${JSON.stringify(t("Type a name for this place (for example, Home or Office)", lang))};
