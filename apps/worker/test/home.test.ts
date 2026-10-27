@@ -114,3 +114,17 @@ test("renderHome: the location button and rename prompt speak the page's languag
   assert.doesNotMatch(kn, /Locating|Location unavailable|Name this place/);
   assert.match(renderHome(), /"Finding your location…"/);
 });
+
+test("renderHome: one wrapper holds the page, and laptops get two columns with the map on the right", () => {
+  const html = renderHome(undefined, {
+    hottest: { name: "Lucknow", state: "Uttar Pradesh", lat: 26.85, lon: 80.95, apparent_c: 44 },
+  });
+  // Same HTML for every screen: the search, the India-now section and Popular sit in one grid wrapper.
+  const hm = html.slice(html.indexOf('<div class="hm">'));
+  assert.ok(html.includes('<div class="hm">'));
+  for (const part of ['class="search"', 'class="hero-now"', 'class="cities"']) assert.ok(hm.includes(part), part);
+  // Only CSS changes with width: two columns from 960px, a wider single column on iPads in portrait.
+  assert.match(html, /@media\(min-width:960px\)\{[^@]*\.hm:has\(\.imap\)\{display:grid/);
+  assert.match(html, /@media\(min-width:960px\)\{[^@]*\.hero-now>\.imap\{grid-column:2/);
+  assert.match(html, /@media\(min-width:700px\) and \(max-width:959px\)\{main:has\(>\.hm\)\{max-width:720px/);
+});
