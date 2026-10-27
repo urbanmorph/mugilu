@@ -133,7 +133,12 @@ test("renderIndiaMap: What's worst colours a square by its hazard, only where hi
   assert.match(worst, /fill="var\(--mcold\)"/); // Leh
   assert.equal(worst.match(/<path/g)!.length, 3); // calm squares are left as land
   assert.doesNotMatch(worst, /fill-opacity/); // all three severe: full strength
-  assert.match(html, /<p class="mlg Lw">.*Air.*Heat.*Cold.*High.*Severe/);
+  // The legend names hazards only; each chip shows its two strengths, and one line says which is which.
+  const lg = html.match(/<p class="mlg Lw">(.*?)<\/p>/)![1];
+  assert.match(lg, /Air.*Heat.*Cold/);
+  assert.equal(lg.match(/class="pair"/g)!.length, 3);
+  assert.doesNotMatch(lg, />High<|>Severe</); // levels are not chips: no grey or white square to look for
+  assert.match(html, /Pale: high\. Solid: severe\./);
   assert.match(html, /Air includes smoke and dust/);
 });
 

@@ -300,15 +300,16 @@ function cycloneGlyph(c: Cyclone): string {
  *  words. `stamp` renders a snapshot's time the way the page does. */
 export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: string) => string = esc): string {
   const age = (iso?: string) => (iso ? ` <span class="age">· ${stamp(iso)}</span>` : "");
-  const chip = (color: string, label: string, opacity = "") =>
-    `<span><i style="background:${color}${opacity && `;opacity:${opacity}`}"></i>${esc(t(label, lang))}</span>`;
-  const what = [
-    chip("var(--mair)", "Air"),
-    chip("var(--mheat)", "Heat"),
-    chip("var(--mcold)", "Cold"),
-    chip("var(--ink)", "High", HIGH_OPACITY),
-    chip("var(--ink)", "Severe"),
-  ].join("");
+  const chip = (color: string, label: string) =>
+    `<span><i style="background:${color}"></i>${esc(t(label, lang))}</span>`;
+  // What's worst: a chip per hazard, pale half (high) and solid half (severe), as on the map.
+  const pair = (hazard: MapHazard, label: string) =>
+    `<span><i class="pair" style="--c:var(--m${hazard})"></i>${esc(t(label, lang))}</span>`;
+  const what =
+    pair("air", "Air") +
+    pair("heat", "Heat") +
+    pair("cold", "Cold") +
+    `<span>${esc(t("Pale: high. Solid: severe.", lang))}</span>`;
   const hasRain = m.cells.some((c) => c.rain != null);
   const rainy = m.cells.some((c) => c.rain);
   const rainLg = ["Heavy", "Very heavy", "Extremely heavy"].map((l, i) => chip(`var(--mrain${i + 1})`, l)).join("");
@@ -394,6 +395,7 @@ export const MAP_CSS = `
 .mlg{flex-wrap:wrap;gap:.3rem .8rem;margin:.5rem 0 0;font-size:.8rem;color:var(--muted)}
 .mlg span{display:inline-flex;align-items:center;gap:.35rem}
 .mlg i{width:12px;height:12px;border-radius:3px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 12%,transparent)}
+.mlg i.pair{width:22px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) ${+HIGH_OPACITY * 100}%,transparent) 50%,var(--c) 50%)}
 .mnote{margin:.4rem 0 0;font-size:.8rem;color:var(--muted)}
 .mcard{margin:.8rem 0 0;padding:10px 14px;border:1px solid var(--ink);border-radius:12px;background:var(--card)}
 .mcard p{margin:0;line-height:1.45}.mcard p+p{margin-top:.3rem}
