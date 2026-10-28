@@ -190,7 +190,8 @@ async function nationalNow(args: Record<string, unknown>, env: Env): Promise<Too
   const kind = str(args.kind) || "all";
   const want = (k: string) => kind === "all" || kind === k;
   const { highlights: h } = await composeHighlights(env);
-  const place = (p: { name: string; state?: string }) => `${p.name}${p.state ? `, ${p.state}` : ""}`;
+  const place = (p: { name: string; station?: string; state?: string }) =>
+    [p.station, p.name, p.state].filter(Boolean).join(", ");
   const out: Record<string, unknown> = {};
   const lines: string[] = [];
   if (want("air") && h.worstAir) {

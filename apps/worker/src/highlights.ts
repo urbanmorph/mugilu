@@ -11,7 +11,16 @@ export interface NationalHighlights {
   hottest?: { name: string; state?: string; lat: number; lon: number; apparent_c: number; wet_bulb_c?: number };
   dustiest?: { name: string; state?: string; lat: number; lon: number; dust_ug_m3: number };
   /** Worst-AQI station from the hourly air snapshot, fresher than the grid. */
-  worstAir?: { name: string; state?: string; lat: number; lon: number; aqi: number; band: NormalizedStation["band"] };
+  worstAir?: {
+    name: string;
+    /** The monitor, when it has a city of its own: one roadside junction must not read as the whole city. */
+    station?: string;
+    state?: string;
+    lat: number;
+    lon: number;
+    aqi: number;
+    band: NormalizedStation["band"];
+  };
 }
 
 /** The single most extreme heat + dust point across the national grid. */
@@ -47,7 +56,8 @@ export function worstAirStation(stations: NormalizedStation[]): NationalHighligh
     .sort((a, b) => b.aqi! - a.aqi!);
   const s = ranked.find((c) => isPlausible(c, stations, true));
   if (!s) return undefined;
-  return { name: s.city || s.name, lat: s.lat!, lon: s.lon!, aqi: s.aqi!, band: s.band };
+  const station = s.city && s.name !== s.city ? s.name : undefined;
+  return { name: s.city || s.name, station, lat: s.lat!, lon: s.lon!, aqi: s.aqi!, band: s.band };
 }
 
 /** The national picture composed from R2: heat/dust from the 4-hourly grid, the

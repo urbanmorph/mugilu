@@ -45,6 +45,21 @@ test("renderHome: hero shows state-qualified places, the worst-air row, and per-
   assert.match(html, /<time[^>]*data-rel/); // each row stamped with its own age
 });
 
+test("renderHome: the worst-air row names the monitor before its city", () => {
+  const html = renderHome(undefined, {
+    worstAir: {
+      name: "Bengaluru",
+      station: "Silk Board",
+      state: "Karnataka",
+      lat: 12.9,
+      lon: 77.6,
+      aqi: 500,
+      band: "severe",
+    },
+  });
+  assert.match(html, /<b>Silk Board, Bengaluru, Karnataka<\/b>/);
+});
+
 test("renderHome: near-me is progressive enhancement (geolocation)", () => {
   assert.match(renderHome(), /geolocation/);
 });
