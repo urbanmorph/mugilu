@@ -143,3 +143,10 @@ test("renderHome: one wrapper holds the page, and laptops get two columns with t
   assert.match(html, /@media\(min-width:960px\)\{[^@]*\.hero-now>\.imap\{grid-column:2/);
   assert.match(html, /@media\(min-width:700px\) and \(max-width:959px\)\{main:has\(>\.hm\)\{max-width:720px/);
 });
+
+test("renderHome: the Your places script defines its own esc (the typeahead's is private to it)", () => {
+  const html = renderHome();
+  const yp = html.slice(html.indexOf("var K='mugilu:places',yp="));
+  const block = yp.slice(0, yp.indexOf("})();"));
+  assert.match(block, /function esc\(/);
+});
