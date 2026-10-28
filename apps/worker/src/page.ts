@@ -1739,6 +1739,9 @@ const AC_CSS = `.acwrap{position:relative}
 .ac li.on,.ac li:hover{background:var(--bg)}
 `;
 
+/** Escapes text for innerHTML in a page script; each script scope that builds HTML defines it. */
+const CLIENT_ESC = `function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}`;
+
 /** Place suggestions as you type, for the input `inputId` and list `listId`: arrows
  *  and Enter pick one, which opens its /c page with `suffix` (a JS expression)
  *  appended. Needs `LP` (the language prefix) in scope; warms the page through `pf`
@@ -1747,7 +1750,7 @@ function typeaheadJs(inputId: string, listId: string, suffix: string): string {
   return `(function(){var q=document.getElementById('${inputId}'),ac=document.getElementById('${listId}');if(!q||!ac)return;var items=[],ix=-1,t,seq=0,SUF=${suffix};
 function url(x){return LP+'/c/'+x.lat+','+x.lon+SUF;}
 function warm(x){if(x&&typeof pf==='function')pf(url(x));}
-function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}
+${CLIENT_ESC}
 function hide(){ac.innerHTML='';items=[];ix=-1;}
 function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].className=i===ix?'on':'';warm(items[ix]);}
 function go(i){var x=items[i];if(x)location.href=url(x);}
@@ -1896,6 +1899,7 @@ export function renderHome(
   // Your places: recents + favourites from localStorage (first-party, no login).
   (function(){
     var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;
+    ${CLIENT_ESC}
     function load(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}}
     function save(L){try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}}
     function nm(p){return p.name||p.label||(p.lat+', '+p.lon);}
