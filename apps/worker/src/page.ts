@@ -167,7 +167,7 @@ function renderHero(
         airBand(h.worstAir.band),
         h.worstAir.lat,
         h.worstAir.lon,
-        `${icon("air")}${t("Worst air", lang)}: <b>${place(h.worstAir.name, h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(AQI_BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
+        `${icon("air")}${t("Worst air", lang)}: <b>${place([h.worstAir.station, h.worstAir.name].filter(Boolean).join(", "), h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(AQI_BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
         meta?.airAsOf,
       ),
     );

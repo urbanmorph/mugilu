@@ -79,3 +79,12 @@ test("worstAirStation: a spiking or isolated sensor cannot headline the country"
   const isolated = st("isolated", "airview", 30, { pm25: 250 });
   assert.equal(worstAirStation([spike, isolated, ...town])?.name, "c2");
 });
+
+test("worstAirStation: names the monitor as well as its city, so one junction does not read as the whole city", () => {
+  const silk = { ...st("silk", "cpcb", 12.917, { pm10: 642 }), name: "Silk Board", city: "Bengaluru" };
+  const w = worstAirStation([silk, ...town])!;
+  assert.equal(w.name, "Bengaluru");
+  assert.equal(w.station, "Silk Board");
+  // No city: the monitor's own name is the place, with no repeat.
+  assert.equal(worstAirStation(town)?.station, undefined);
+});
