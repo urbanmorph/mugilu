@@ -28,7 +28,16 @@ const UA = {
 type El = { hidden: boolean; click?: () => unknown; addEventListener: (t: string, f: () => unknown) => void };
 
 function browser(
-  o: { ua?: string; push?: boolean; permission?: string; standalone?: boolean; status?: number; saved?: string[] } = {},
+  o: {
+    ua?: string;
+    push?: boolean;
+    permission?: string;
+    /** Notification.permission when the page opens (what the browser already decided). */
+    state?: string;
+    standalone?: boolean;
+    status?: number;
+    saved?: string[];
+  } = {},
 ) {
   const els: Record<string, El & { attrs?: Record<string, string> }> = {};
   for (const id of IDS)
@@ -86,7 +95,10 @@ function browser(
   };
   if (o.push !== false) {
     window.PushManager = function () {};
-    window.Notification = { requestPermission: async () => o.permission ?? "granted" };
+    window.Notification = {
+      permission: o.state ?? "default",
+      requestPermission: async () => o.permission ?? "granted",
+    };
   }
   window.window = window;
   runInNewContext(ALERTS_JS, window);
@@ -135,6 +147,12 @@ test("if notifications are refused, it says how to allow them and sends nothing"
   await b.tap("alerts-on");
   assert.deepEqual(b.posts, []);
   assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-denied", "alerts-note-off"]);
+});
+
+test("if the browser already blocks notifications, it says so when the page opens, before any tap", () => {
+  assert.deepEqual(shown(browser({ state: "denied" })), ["alerts", "alerts-on", "alerts-denied", "alerts-note-off"]);
+  // Allowed in the browser's settings later: the hint is gone, and turning alerts on is one tap.
+  assert.deepEqual(shown(browser({ state: "granted" })), ["alerts", "alerts-on", "alerts-note-off"]);
 });
 
 test("too many places, or a failure, is said plainly and leaves alerts off", async () => {
