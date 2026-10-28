@@ -217,21 +217,26 @@ export const STATE_PATH = (states as unknown as { lines: [number, number][][] })
 
 /** The squares of one layer, one path per fill; `fill` gives a square's fill
  *  attributes, or nothing to leave it as land. */
-function cellPaths(cells: MapCell[], fill: (c: MapCell) => string | undefined): string {
+function cellPaths(cells: MapCell[], fill: (c: MapCell) => string | undefined, size = (_c: MapCell) => 1): string {
   const by = new Map<string, string[]>();
-  const w = r1(KX * S);
   for (const c of cells) {
     const f = fill(c);
-    if (f) push(by, f, `M${r1(px(c.lon))} ${r1(py(c.lat + 1))}h${w}v${S}h-${w}z`);
+    if (!f) continue;
+    // A square scaled about its centre (size 1 fills the cell).
+    const k = size(c);
+    const w = KX * S * k;
+    const h = S * k;
+    const x = px(c.lon) + (KX * S - w) / 2;
+    const y = py(c.lat + 1) + (S - h) / 2;
+    push(by, f, `M${r1(x)} ${r1(y)}h${r1(w)}v${r1(h)}h-${r1(w)}z`);
   }
   return [...by].map(([f, d]) => `<path ${f} d="${d.join("")}"/>`).join("");
 }
-const HIGH_OPACITY = ".5";
-/** What's worst: the hazard's colour where high (lighter) or severe; calmer squares stay land. */
-const worstFill = (c: MapCell) =>
-  c.what && c.worst >= 2
-    ? `fill="var(--m${c.what})"${c.worst < 3 ? ` fill-opacity="${HIGH_OPACITY}"` : ""}`
-    : undefined;
+/** What's worst: the hazard's colour where high or severe; calmer squares stay land. High is a
+ *  smaller square in the full colour: fading it toward the land blurred the hues together. */
+const HIGH_SIZE = 0.6;
+const worstFill = (c: MapCell) => (c.what && c.worst >= 2 ? `fill="var(--m${c.what})"` : undefined);
+const worstSize = (c: MapCell) => (c.worst < 3 ? HIGH_SIZE : 1);
 const heatFill = (c: MapCell) =>
   `fill="${c.heat ? RISK_COLOR[(["low", "moderate", "high", "severe"] as const)[c.heat]] : "var(--m0)"}"`;
 const rainFill = (c: MapCell) => (c.rain ? `fill="var(--mrain${c.rain})"` : undefined);
@@ -302,14 +307,14 @@ export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: stri
   const age = (iso?: string) => (iso ? ` <span class="age">· ${stamp(iso)}</span>` : "");
   const chip = (color: string, label: string) =>
     `<span><i style="background:${color}"></i>${esc(t(label, lang))}</span>`;
-  // What's worst: a chip per hazard, pale half (high) and solid half (severe), as on the map.
+  // What's worst: a chip per hazard, a small square (high) and a full one (severe), as on the map.
   const pair = (hazard: MapHazard, label: string) =>
     `<span><i class="pair" style="--c:var(--m${hazard})"></i>${esc(t(label, lang))}</span>`;
   const what =
     pair("air", "Air") +
     pair("heat", "Heat") +
     pair("cold", "Cold") +
-    `<span>${esc(t("Pale: high. Solid: severe.", lang))}</span>`;
+    `<span>${esc(t("Small: high. Full: severe.", lang))}</span>`;
   const hasRain = m.cells.some((c) => c.rain != null);
   const rainy = m.cells.some((c) => c.rain);
   const rainLg = ["Heavy", "Very heavy", "Extremely heavy"].map((l, i) => chip(`var(--mrain${i + 1})`, l)).join("");
@@ -348,7 +353,7 @@ export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: stri
 <svg class="msvg" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${esc(t("Map of India. Each square is coloured by what is worst in it now.", lang))}">
 <defs><path id="mland" d="${LAND_PATH}"/><clipPath id="mclip"><use href="#mland"/></clipPath></defs>
 <use href="#mland" class="mland"/>
-<g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, worstFill)}</g><g class="L Lh">${cellPaths(m.cells, heatFill)}</g>${hasRain ? `<g class="L Lr">${cellPaths(m.cells, rainFill)}</g>` : ""}</g>
+<g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, worstFill, worstSize)}</g><g class="L Lh">${cellPaths(m.cells, heatFill)}</g>${hasRain ? `<g class="L Lr">${cellPaths(m.cells, rainFill)}</g>` : ""}</g>
 <path class="mstates" d="${STATE_PATH}"/>
 <use href="#mland" class="mline"/>
 <g class="L La">${dots}</g>
@@ -373,9 +378,9 @@ export const MAP_JS = (lang: Lang) =>
   `(function(){var s=document.querySelector('.msvg');if(!s)return;s.addEventListener('click',function(e){if(!e.target.closest('.mland,.mcells,.La'))return;var p=s.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(s.getScreenCTM().inverse());location.href=${JSON.stringify(lp("/c/", lang))}+(${LAT1}-q.y/${S}).toFixed(2)+','+(${LON0}+q.x/${r1(KX * S * 1e4) / 1e4}).toFixed(2);});})();`;
 
 export const MAP_CSS = `
-:root{--m0:#e0f2fe;--mland:#eef2f6;--mair:#8b4513;--mheat:#e34948;--mcold:#2a78d6;--mrain1:#93c5fd;--mrain2:#3b82f6;--mrain3:#1e3a8a}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--m0:#16324a;--mland:#172033;--mair:#a0612e;--mheat:#e8606a;--mcold:#3987e5;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}}
-:root[data-theme="dark"]{--m0:#16324a;--mland:#172033;--mair:#a0612e;--mheat:#e8606a;--mcold:#3987e5;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}
+:root{--m0:#e0f2fe;--mland:#eef2f6;--mair:#7b2872;--mheat:#e75c2e;--mcold:#238ce4;--mrain1:#93c5fd;--mrain2:#3b82f6;--mrain3:#1e3a8a}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--m0:#16324a;--mland:#172033;--mair:#b778be;--mheat:#d02026;--mcold:#256de7;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}}
+:root[data-theme="dark"]{--m0:#16324a;--mland:#172033;--mair:#b778be;--mheat:#d02026;--mcold:#256de7;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}
 .imap{position:relative;margin:.2rem 0 .8rem}
 .imap input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .mseg{display:inline-flex;max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:0 0 .6rem}
@@ -395,7 +400,7 @@ export const MAP_CSS = `
 .mlg{flex-wrap:wrap;gap:.3rem .8rem;margin:.5rem 0 0;font-size:.8rem;color:var(--muted)}
 .mlg span{display:inline-flex;align-items:center;gap:.35rem}
 .mlg i{width:12px;height:12px;border-radius:3px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 12%,transparent)}
-.mlg i.pair{width:22px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) ${+HIGH_OPACITY * 100}%,transparent) 50%,var(--c) 50%)}
+.mlg i.pair{width:22px;border-radius:0;box-shadow:none;background:linear-gradient(var(--c),var(--c)) 1px 50%/7px 7px no-repeat,linear-gradient(var(--c),var(--c)) 100% 50%/12px 12px no-repeat}
 .mnote{margin:.4rem 0 0;font-size:.8rem;color:var(--muted)}
 .mcard{margin:.8rem 0 0;padding:10px 14px;border:1px solid var(--ink);border-radius:12px;background:var(--card)}
 .mcard p{margin:0;line-height:1.45}.mcard p+p{margin-top:.3rem}
