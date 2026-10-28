@@ -369,7 +369,7 @@ test("buildConditions: a place with no normal yet is complete, not degraded (so 
     return Response.json(u.includes("air-quality") ? AIR : forecast);
   }) as typeof fetch;
   try {
-    const c = await buildConditions(snap(), 11.67, 92.73); // Port Blair: off the built grid
+    const c = await buildConditions(snap(), 5.5, 80.5); // south of the grid, so never a normal
     assert.equal(c.heat_vs_normal, null);
     assert.equal(c.degraded, undefined);
   } finally {
