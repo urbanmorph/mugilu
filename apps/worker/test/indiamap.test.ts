@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { airDots, LAND_PATH, mapCells, renderIndiaMap, STATE_PATH } from "../src/indiamap";
+import { airDots, LAND_PATH, MAP_CSS, mapCells, renderIndiaMap, STATE_PATH } from "../src/indiamap";
 import { renderHome } from "../src/page";
 import type { ConditionsPoint, NormalizedStation } from "../src/types";
 import type { Cyclone } from "../src/cyclones";
@@ -138,7 +138,7 @@ test("renderIndiaMap: What's worst colours a square by its hazard, only where hi
   assert.match(lg, /Air.*Heat.*Cold/);
   assert.equal(lg.match(/class="pair"/g)!.length, 3);
   assert.doesNotMatch(lg, />High<|>Severe</); // levels are not chips: no grey or white square to look for
-  assert.match(html, /Pale: high\. Solid: severe\./);
+  assert.match(html, /Small: high\. Full: severe\./);
   assert.match(html, /Air includes smoke and dust/);
 });
 
@@ -199,4 +199,22 @@ test("renderHome: the India now section carries the map when there is one", () =
   assert.match(html, /A cyclone can form/);
   assert.doesNotMatch(html, /This is not a map/);
   assert.doesNotMatch(renderHome(), /class="imap"/); // no data, no map
+});
+
+test("renderIndiaMap: a high square is a smaller square in the full colour, never a faded one", () => {
+  const cells = [
+    { lon: 77, lat: 28, worst: 3, what: "air" as const, heat: 0 },
+    { lon: 78, lat: 28, worst: 2, what: "air" as const, heat: 0 },
+  ];
+  const html = renderIndiaMap({ cells, dots: [], cyclones: [] });
+  const worst = html.match(/<g class="L Lw">(.*?)<\/g>/)![1];
+  assert.doesNotMatch(worst, /opacity/); // fading mixes the hues toward the land and they blur together
+  const sides = [...worst.matchAll(/h([\d.]+)v([\d.]+)/g)].map((m) => +m[2]);
+  assert.equal(sides.length, 2);
+  assert.ok(Math.min(...sides) < Math.max(...sides) * 0.7, `sides ${sides}`); // high is visibly smaller
+});
+
+test("MAP_CSS: air, heat and cold are plum, orange-red and blue, chosen to stay apart for colour-blind readers", () => {
+  assert.match(MAP_CSS, /--mair:#7b2872;--mheat:#e75c2e;--mcold:#238ce4/);
+  assert.equal(MAP_CSS.match(/--mair:#b778be;--mheat:#d02026;--mcold:#256de7/g)?.length, 2); // both dark-mode rules
 });
