@@ -51,4 +51,4 @@ $('alerts-off').addEventListener('click',function(){say();var L=list().filter(fu
 return navigator.serviceWorker.ready.then(function(reg){return reg.pushManager.getSubscription()}).then(function(s){if(!s)return;
 return post('/push/unsubscribe',L.length?{endpoint:s.endpoint,lat:lat,lon:lon}:{endpoint:s.endpoint}).then(function(){if(!L.length)return s.unsubscribe()})})
 .then(function(){keep(L);show()}).catch(function(){say('alerts-failed')})});
-show()})();`;
+show();if(Notification.permission==='denied')say('alerts-denied')})();`;
