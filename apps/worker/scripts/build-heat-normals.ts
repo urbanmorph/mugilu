@@ -121,14 +121,15 @@ function samplePoint(lat: number, lon: number, step: number, inside: Inside, kno
     .filter(([a, o]) => Math.abs(a - lat) <= half && Math.abs(o - lon) <= half)
     .map(([a, o]) => ({ lat: a, lon: o }));
   if (land.length) return nearest(land);
+  const atSea = (p: Pt) => (known.get(nodeKey(p.lat, p.lon)) ?? 1) <= 0;
   const node = { lat, lon };
-  if (wellInside(node, inside)) return node;
+  if (wellInside(node, inside) && !atSea(node)) return node;
   const lattice: Pt[] = [];
   const n = Math.round(step / 0.05);
   for (let i = 0; i <= n; i++)
     for (let j = 0; j <= n; j++) {
       const p = { lat: round2(lat - half + i * 0.05), lon: round2(lon - half + j * 0.05) };
-      if (inside(p.lat, p.lon) && !((known.get(nodeKey(p.lat, p.lon)) ?? 1) <= 0)) lattice.push(p);
+      if (inside(p.lat, p.lon) && !atSea(p)) lattice.push(p);
     }
   return nearest(lattice.filter((p) => wellInside(p, inside))) ?? nearest(lattice);
 }

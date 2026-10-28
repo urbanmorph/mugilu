@@ -91,6 +91,13 @@ test("gridNodes: a point the archive found at sea is skipped; one it found on la
   assert.deepEqual(kept.sample, { lat: 10.5, lon: 70.5 });
 });
 
+test("gridNodes: a node well inside the outline but found at sea level is not sampled again", () => {
+  // Kuttanad (Alappuzha) lies below sea level: the archive says 0 or less, so the node itself is
+  // skipped and the nearest other point is tried, not the same point every attempt.
+  const [n] = gridNodes(1, () => true, BOX, new Map([["10.5,70.5", -1]]));
+  assert.notDeepEqual(n.sample, { lat: 10.5, lon: 70.5 });
+});
+
 test("bundled normals: every node is on land (elevation above 0) with a full, finite year", () => {
   const file = JSON.parse(readFileSync(new URL("../data/heat-normals.json", import.meta.url), "utf8"));
   for (const [k, v] of Object.entries(file.nodes as Record<string, number[]>)) {
