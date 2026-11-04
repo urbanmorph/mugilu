@@ -341,7 +341,7 @@ export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: stri
     : "";
   const cys = m.cyclones.filter((c) => c.basin);
   const cyText = cys.length
-    ? `<div class="mcard">${cys.map((c) => `<p><b>${cycloneSentence(c, lang)}</b></p>`).join("")}<p class="msrc">${esc(
+    ? `<div class="mcard">${cys.map((c) => `<p><b>${cycloneSentence(c, lang)}</b>${age(c.at)}</p>`).join("")}<p class="msrc">${esc(
         t("Track: JTWC (US Navy). For official warnings, follow IMD.", lang),
       ).replace("IMD", '<a href="https://mausam.imd.gov.in/" rel="noopener">IMD</a>')}</p>${
         hasRain ? `<p><label for="ml-r" class="mto">${esc(t("See the rain", lang))}</label></p>` : ""

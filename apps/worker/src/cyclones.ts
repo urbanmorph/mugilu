@@ -30,6 +30,10 @@ export interface Cyclone {
   track: { lat: number; lon: number }[];
   /** JTWC's issue time, DDHHMMZ. */
   issued: string;
+  /** The issue time as ISO (set when collected). */
+  at?: string;
+  /** JTWC's last warning on it: it has gone over land, weakened or died out. */
+  final?: true;
   basin?: Basin;
 }
 
@@ -106,8 +110,27 @@ export function parseJtwcText(txt: string): Cyclone | null {
     ...(mv && Number(mv[2]) > 0 ? { moving: compass(Number(mv[1])) } : {}),
     track: fixes.slice(1),
     issued,
+    ...(/FINAL WARNING/.test(txt) ? { final: true as const } : {}),
   };
 }
+
+/** JTWC's DDHHMMZ as an ISO time: the latest such time not after `now` (plus a
+ *  little slack), so a day number above today's is last month's. */
+export function issuedAt(issued: string, now: Date): string {
+  const [d, h, m] = [0, 2, 4].map((i) => Number(issued.slice(i, i + 2)));
+  let t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), d, h, m);
+  if (t > now.getTime() + 6 * 3600_000) t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, d, h, m);
+  return new Date(t).toISOString();
+}
+
+// How long a product speaks for once issued: JTWC warns every 6 (at most 12) hours and
+// reissues a formation alert within 24. Older than that and it has been dropped or
+// left behind in the feed (Murasu stayed a day after its final warning).
+const LIFETIME_H = { warning: 12, alert: 24 };
+
+/** Whether a system is still worth showing at `now`. */
+const current = (c: Cyclone & { at: string }, now: Date) =>
+  !c.final && now.getTime() - Date.parse(c.at) <= LIFETIME_H[c.kind] * 3600_000;
 
 /** Which of India's seas a centre is in: the Arabian Sea west of the peninsula's
  *  tip, the Bay of Bengal (with the Andaman Sea) east of it; null outside the North
@@ -126,18 +149,19 @@ async function getText(url: string): Promise<string> {
 /** Poll JTWC (hourly): the North Indian Ocean systems, written to R2 even when there
  *  are none (so readers know the answer is fresh), plus a daily archive of the tracks.
  *  A failed feed keeps the previous snapshot and counts as err:upstream:jtwc. */
-export async function collectCyclones(env: Env): Promise<CyclonesSnapshot> {
+export async function collectCyclones(env: Env, now = new Date()): Promise<CyclonesSnapshot> {
   const systems = await counted(env, "jtwc", async () => {
     const urls = jtwcProducts(await getText(FEED));
     const out: Cyclone[] = [];
     for (const u of urls) {
       const c = parseJtwcText(await getText(u));
       const basin = c && basinOf(c.lat, c.lon);
-      if (c && basin) out.push({ ...c, basin });
+      const dated = c && { ...c, at: issuedAt(c.issued, now) };
+      if (dated && basin && current(dated, now)) out.push({ ...dated, basin });
     }
     return out;
   });
-  const snapshot: CyclonesSnapshot = { generated_at: new Date().toISOString(), systems };
+  const snapshot: CyclonesSnapshot = { generated_at: now.toISOString(), systems };
   await putJson(env, CYCLONES_KEY, JSON.stringify(snapshot), "public, max-age=900");
   if (systems.length)
     await env.OAQ_R2.put(`archive/cyclones/${snapshot.generated_at.slice(0, 10)}.json`, JSON.stringify(snapshot), {
