@@ -8,7 +8,7 @@ import type {
   UpstreamSource,
   Warning,
 } from "./types";
-import { findNearest } from "./near";
+import { findNearest, STATION_META } from "./near";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo } from "./openmeteo";
 import { compareWithNormal, heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
@@ -279,9 +279,9 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
 // Units are not otherwise discoverable from the bare numbers: notably CO is
 // mg/m³ while the other pollutants are µg/m³. This map ships in every response.
 const UNITS = {
-  pollutants: { co: "mg/m3", default: "ug/m3" },
-  aqi: "cpcb_0_500",
-  yll_years: "years",
+  pollutants: STATION_META.units.pollutants,
+  aqi: STATION_META.units.aqi,
+  yll_years: STATION_META.units.yll_years,
   temp_c: "C",
   apparent_c: "C",
   wet_bulb_c: "C",

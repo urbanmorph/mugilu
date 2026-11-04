@@ -1,5 +1,21 @@
 import { indianPoint } from "./india";
 import type { NearStation, NormalizedStation } from "./types";
+import { STALE_AFTER_MS } from "./snapshot";
+
+/** What the station endpoints (/near, /index.json, /s/...json) say about their numbers,
+ *  which the numbers can't say themselves: CO is mg/m3 while the other pollutants are
+ *  ug/m3, the AQI is CPCB's, and every station listed reported within the last few
+ *  hours (older ones are left out, snapshot.ts). The conditions contract reuses the
+ *  pollutant and AQI units. */
+export const STATION_META = {
+  units: {
+    pollutants: { co: "mg/m3", default: "ug/m3" },
+    aqi: "cpcb_0_500",
+    yll_years: "years",
+    distance_km: "km",
+  },
+  fresh_within_hours: STALE_AFTER_MS / 3600_000,
+} as const;
 
 const EARTH_RADIUS_KM = 6371;
 
