@@ -175,6 +175,14 @@ test("renderIndiaMap: a cyclone is drawn on the map and told in words, with IMD 
     cyclones: [{ ...CYCLONE, kind: "warning", id: "03B", name: "Montha", moving: "NW", track: [{ lat: 17, lon: 87 }] }],
   });
   assert.match(named, /Cyclone Montha is in the Bay of Bengal\. It moves north-west\./);
+  // When JTWC placed it, as the other layers say how old they are.
+  assert.doesNotMatch(named, /class="mcard">[\s\S]*class="age"/);
+  const dated = renderIndiaMap(
+    { cells: [], dots: [], cyclones: [{ ...CYCLONE, at: "2026-11-03T09:00:00.000Z" }] },
+    "en",
+    (iso) => `at ${iso}`,
+  );
+  assert.match(dated, /class="mcard"><p><b>[^<]*<\/b> <span class="age">· at 2026-11-03T09:00:00\.000Z<\/span><\/p>/);
 });
 
 test("renderIndiaMap: in Hindi the words are Hindi, the names stay", () => {
