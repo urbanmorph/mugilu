@@ -399,15 +399,15 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .cxback{margin:1.1rem 0 0;font-size:.9rem}.cxback a{color:var(--muted);text-decoration:none}.cxback a:hover{color:var(--ink)}
 @media(min-width:960px){
 main:has(>.cx){max-width:1120px;padding-top:28px}
-.cx{display:grid;grid-template-columns:minmax(0,23rem) minmax(0,1fr);column-gap:3.5rem;align-items:start}
+.cx-cols{display:grid;grid-template-columns:minmax(0,23rem) minmax(0,1fr);column-gap:3.5rem;align-items:start}
 
 .cx-r .strata{margin-top:.5rem;display:block;column-count:2;column-gap:2.2rem;border-top:0}
 .cx-r .lyr{break-inside:avoid}
 .cx-r .lyr{grid-template-columns:1fr;align-content:start;border-top:1px solid var(--hair);border-bottom:0;padding:1rem .1rem 1.15rem}
 .cx-r .lyr dt{padding-top:0;margin-bottom:.5rem}
-.cx footer{grid-column:1/-1}
 }
-/* The left rail (place, read, alerts) stays in view while the layers scroll, when it fits. */
+/* The left rail (place, read, alerts) stays in view while the layers scroll, when it fits.
+   It is pinned within .cx-cols, so it stops where the columns end, above the footer. */
 @media(min-width:960px) and (min-height:820px){.cx-l{position:sticky;top:1.5rem}}
 @media(prefers-reduced-motion:no-preference){
 .coord,.loc,.when,.warn,.amb,.lyr{animation:rise .55s both cubic-bezier(.2,.7,.2,1)}
@@ -415,7 +415,7 @@ main:has(>.cx){max-width:1120px;padding-top:28px}
 .strata .lyr:nth-child(1){animation-delay:.2s}.strata .lyr:nth-child(2){animation-delay:.26s}.strata .lyr:nth-child(3){animation-delay:.32s}.strata .lyr:nth-child(4){animation-delay:.38s}.strata .lyr:nth-child(5){animation-delay:.44s}
 }
 /* Phones: one column, the alerts box after the layers (it sits in the left rail on laptops). */
-@media(max-width:959px){.cx{display:flex;flex-direction:column}.cx-l{display:contents}.cx-r{order:1}.cx .alerts{order:2}.cx footer{order:3}}
+@media(max-width:959px){.cx{display:flex;flex-direction:column}.cx-cols,.cx-l{display:contents}.cx-r{order:1}.cx .alerts{order:2}.cx footer{order:3}}
 @keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 `;
 
@@ -842,6 +842,7 @@ export function renderConditionsPage(
 
   const body = `
   <article class="cx">
+    <div class="cx-cols">
     <div class="cx-l">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
@@ -863,6 +864,7 @@ export function renderConditionsPage(
     <dl class="strata">${orderByRisk(strata, risk, c)
       .map((l) => l.html)
       .join("")}</dl>
+    </div>
     </div>
     <footer>
       <p class="attr">${esc(lang === "en" ? c.attribution : c.attribution.replace(/^Sources:/, `${t("Sources", lang)}:`))}</p>
