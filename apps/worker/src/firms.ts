@@ -10,7 +10,11 @@ import { counted } from "./metrics";
 // the current set + archives new days (the moat), and /c point-queries it.
 
 const FIRMS_URL = "https://firms.modaps.eosdis.nasa.gov/api/area/csv";
-const SOURCE = "VIIRS_SNPP_NRT"; // 375 m, ~best resolution for crop fires
+// VIIRS 375 m, the best resolution for crop fires. One satellite at a time: the smoke bands
+// (score.ts) were benchmarked on one satellite's detections, and two would count each fire
+// twice. NOAA-21 first, NOAA-20 when it fails or is empty. SNPP's NRT feed ended 2 Nov 2026
+// and FIRMS went on answering it with an empty CSV, which read as "no fires" for days.
+export const SOURCES = ["VIIRS_NOAA21_NRT", "VIIRS_NOAA20_NRT"] as const;
 const INDIA_BBOX = "68,6,98,38"; // west,south,east,north
 
 export interface FireDetection {
@@ -89,15 +93,29 @@ export function fireRiskAt(fires: FireDetection[], lat: number, lon: number, rad
  * per-day roll-up so the burning-season record accrues (the moat). ETag-free.
  * FIRMS rotates the NRT file, so we just overwrite the current snapshot.
  */
-export async function collectFires(env: Env): Promise<{ count: number; archived: boolean }> {
+export async function collectFires(env: Env): Promise<{ count: number; source: string; archived: boolean }> {
   const key = env.FIRMS_MAP_KEY;
   if (!key) throw new Error("FIRMS_MAP_KEY not set");
-  const url = `${FIRMS_URL}/${key}/${SOURCE}/${INDIA_BBOX}/1`;
-  // The FIRMS call, and a body that is not its CSV, are the upstream step (err:upstream:firms).
-  const fires = await counted(env, "firms", async () => {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  const read = async (source: string) => {
+    const res = await fetch(`${FIRMS_URL}/${key}/${source}/${INDIA_BBOX}/1`, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`firms ${res.status}`);
     return parseFirmsCsv(await res.text());
+  };
+  // Only every satellite failing is the upstream step failing (err:upstream:firms).
+  const [source, fires] = await counted(env, "firms", async () => {
+    let first: [string, FireDetection[]] | null = null;
+    let error: unknown = null;
+    for (const s of SOURCES) {
+      try {
+        const f = await read(s);
+        if (f.length) return [s, f] as [string, FireDetection[]];
+        first ??= [s, f];
+      } catch (e) {
+        error ??= e;
+      }
+    }
+    if (first) return first;
+    throw error;
   });
   const snapshot: FiresSnapshot = {
     generated_at: new Date().toISOString(),
@@ -111,5 +129,5 @@ export async function collectFires(env: Env): Promise<{ count: number; archived:
   await env.OAQ_R2.put(`archive/firms/${day}.json`, JSON.stringify(snapshot), {
     httpMetadata: { contentType: "application/json" },
   });
-  return { count: fires.length, archived: true };
+  return { count: fires.length, source, archived: true };
 }

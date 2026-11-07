@@ -667,7 +667,7 @@ export default {
       );
       ctx.waitUntil(
         collectFires(env).then(
-          (r) => console.log(`[firms] ${r.count} detections`),
+          (r) => console.log(`[firms] ${r.count} detections (${r.source})`),
           (e) => console.error(`[firms] failed: ${reason(e)}`),
         ),
       );
