@@ -55,6 +55,7 @@ export function llmsTxt(siteUrl: string): string {
 - [Air leaderboard](${siteUrl}/index.json): also ${siteUrl}/index.md
 - [Active warnings](${siteUrl}/warnings): national, also .json and .md
 - Per-station: ${siteUrl}/s/{provider}/{id}.json and .md
+- Station JSON (/near, /index.json, /s/...json) carries "units" (CO mg/m3, other pollutants ug/m3, CPCB AQI) and lists only stations that reported within "fresh_within_hours" (3); each station has its reading time "ts"
 - Attribution: add ?ref=your-app to any API or /embed URL to identify your app or site (aggregate, domain-level; helps us see who builds on mugilu)
 - [About](${siteUrl}/about)
 - [Methodology](${siteUrl}/methodology): the Ambient thresholds, glass-box
@@ -161,7 +162,9 @@ export function openApiSpec(siteUrl: string): object {
               schema: { type: "integer" },
             },
           ],
-          responses: ok("The nearest stations with distance and current AQI."),
+          responses: ok(
+            "The nearest stations with distance and current CPCB AQI. `units` gives the units (CO in mg/m3, other pollutants ug/m3); only stations that reported within `fresh_within_hours` are listed, each with its reading time `ts`.",
+          ),
         },
       },
       "/suggest": {
@@ -176,7 +179,9 @@ export function openApiSpec(siteUrl: string): object {
         get: {
           operationId: "airLeaderboard",
           summary: "National air leaderboard (all reporting stations).",
-          responses: ok("The current air snapshot."),
+          responses: ok(
+            "The current air snapshot: every station that reported within `fresh_within_hours`, with `units` as for /near.",
+          ),
         },
       },
       "/warnings.json": {

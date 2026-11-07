@@ -7,7 +7,7 @@ import { faviconSvg, iconPng } from "./icon";
 import { ICONS, MANIFEST_PATH, webManifest } from "./install";
 import { SW_PATH, serviceWorker } from "./sw";
 import { handleSubscribe, handleUnsubscribe, runAlerts } from "./alerts";
-import { findNearest, parseLatLon } from "./near";
+import { findNearest, parseLatLon, STATION_META } from "./near";
 import { renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
 import { lookupConditions, recordUsage, type LookupFormat } from "./lookup";
 import { cacheKey, edgeServe } from "./edge";
@@ -316,7 +316,11 @@ export default {
         const snap = await loadSnapshot(env);
         if (!snap) return new Response("no snapshot yet", { status: 503 });
         return url.pathname === "/index.json"
-          ? cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS)
+          ? cachedResponse(
+              JSON.stringify({ ...snap, ...STATION_META }),
+              "application/json; charset=utf-8",
+              REFRESH_AFTER_SECONDS,
+            )
           : cachedResponse(
               renderSnapshotMarkdown(snap, SITE_URL),
               "text/markdown; charset=utf-8",
@@ -360,7 +364,13 @@ export default {
           const stations = findNearest(snap.stations, lat, lon, n);
           return cachedResponse(
             JSON.stringify(
-              { query: { lat, lon, n }, generated_at: snap.generated_at, count: stations.length, stations },
+              {
+                query: { lat, lon, n },
+                generated_at: snap.generated_at,
+                ...STATION_META,
+                count: stations.length,
+                stations,
+              },
               null,
               2,
             ),
@@ -528,7 +538,7 @@ export default {
         if (!station) return new Response("station not found", { status: 404 });
         return ext === "json"
           ? cachedResponse(
-              JSON.stringify({ generated_at: snap.generated_at, station }),
+              JSON.stringify({ generated_at: snap.generated_at, ...STATION_META, station }),
               "application/json; charset=utf-8",
               REFRESH_AFTER_SECONDS,
             )

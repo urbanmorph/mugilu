@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { haversineKm, findNearest, parseLatLon } from "../src/near";
+import { haversineKm, findNearest, parseLatLon, STATION_META } from "../src/near";
+import { STALE_AFTER_MS } from "../src/snapshot";
+import { llmsTxt, openApiSpec } from "../src/meta";
 import type { NormalizedStation } from "../src/types";
 
 function station(id: string, lat: number | null, lon: number | null): NormalizedStation {
@@ -64,4 +66,17 @@ test("parseLatLon: rejects non-numeric and out-of-range", () => {
 test("parseLatLon: accepts valid coords in India; 0,0 (Gulf of Guinea) is outside coverage", () => {
   assert.deepEqual(parseLatLon("12.97", "77.59"), { lat: 12.97, lon: 77.59 });
   assert.equal(parseLatLon("0", "0"), null);
+});
+
+test("STATION_META: the station endpoints say their units and how recent every station is", () => {
+  assert.deepEqual(STATION_META.units.pollutants, { co: "mg/m3", default: "ug/m3" });
+  assert.equal(STATION_META.units.aqi, "cpcb_0_500");
+  assert.equal(STATION_META.units.distance_km, "km");
+  assert.equal(STATION_META.fresh_within_hours, STALE_AFTER_MS / 3600_000);
+});
+
+test("the docs say it too: OpenAPI and llms.txt name the units and the freshness", () => {
+  const spec = JSON.stringify(openApiSpec("https://mugilu.live"));
+  assert.match(spec, /fresh_within_hours/);
+  assert.match(llmsTxt("https://mugilu.live"), /"units" \(CO mg\/m3/);
 });
