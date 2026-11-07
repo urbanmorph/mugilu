@@ -10,6 +10,14 @@ on:
   push:
     branches: [main]
 
+# One push to main at a time: a newer push cancels the older push's run, so the last
+# commit merged is the one deployed. (On 7 Nov two merges deployed at once and the older
+# commit finished last, overwriting the newer one.) Cancelling is safe: Cloudflare only
+# switches to a new version once its upload completes. PR runs each get their own group.
+concurrency:
+  group: ${{ github.event_name == 'push' && 'main' || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
