@@ -359,6 +359,14 @@ test("renderConditionsPage: laptops get two columns, the reading pinned beside t
   const html = renderConditionsPage(conditions());
   assert.match(html, /<div class="cx-l">[\s\S]*class="amb"[\s\S]*<\/div>\s*<div class="cx-r">\s*<dl class="strata">/);
   assert.match(html, /@media\(min-width:960px\)\{[^}]*main:has\(>\.cx\)\{max-width:/);
+  // The pinned rail is held inside the two columns, so scrolling never slides it over
+  // the sources and disclaimer in the footer below them.
+  assert.match(
+    html,
+    /<div class="cx-cols">\s*<div class="cx-l">[\s\S]*<div class="cx-r">[\s\S]*<\/dl>\s*<\/div>\s*<\/div>\s*<footer>/,
+  );
+  assert.match(html, /\.cx-cols\{display:grid;/);
+  assert.match(html, /\.cx-l\{position:sticky;/);
 });
 
 // The graphics on each layer (glyphs.ts), drawn against the limits the read uses.
