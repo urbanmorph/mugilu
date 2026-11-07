@@ -61,3 +61,39 @@ test("collectFires: a FIRMS call that fails or answers with something else is co
     { name: "err:upstream:firms", n: 2 },
   ]);
 });
+
+// SNPP's NRT feed ended on 2 Nov 2026: FIRMS kept answering with a header and no rows, so
+// mugilu wrote "no fires" for days. NOAA-21 is read first, NOAA-20 when it fails or is empty;
+// never both at once, since the smoke bands were benchmarked on one satellite's detections.
+test("collectFires: reads NOAA-21, falls back to NOAA-20 when it fails or is empty, never SNPP", async () => {
+  const puts: Record<string, string> = {};
+  const r2 = { put: async (k: string, v: string) => void (puts[k] = v) };
+  const env = { METRICS: testD1(), FIRMS_MAP_KEY: "k", OAQ_R2: r2, SNAPSHOT: r2 } as unknown as Parameters<typeof collectFires>[0];
+  const HEADER = CSV.split("\n")[0];
+  const realFetch = globalThis.fetch;
+  const asked: string[] = [];
+  const answer = (by: Record<string, () => Response>) => (async (u: string) => {
+    const s = String(u).split("/")[7];
+    asked.push(s);
+    return by[s]();
+  }) as unknown as typeof fetch;
+  try {
+    globalThis.fetch = answer({ VIIRS_NOAA21_NRT: () => new Response(CSV) });
+    assert.deepEqual(await collectFires(env), { count: 3, source: "VIIRS_NOAA21_NRT", archived: true });
+    assert.deepEqual(asked, ["VIIRS_NOAA21_NRT"]);
+
+    asked.length = 0;
+    globalThis.fetch = answer({ VIIRS_NOAA21_NRT: () => new Response(HEADER), VIIRS_NOAA20_NRT: () => new Response(CSV) });
+    assert.equal((await collectFires(env)).source, "VIIRS_NOAA20_NRT");
+    assert.deepEqual(asked, ["VIIRS_NOAA21_NRT", "VIIRS_NOAA20_NRT"]);
+
+    globalThis.fetch = answer({ VIIRS_NOAA21_NRT: () => new Response("down", { status: 503 }), VIIRS_NOAA20_NRT: () => new Response(CSV) });
+    assert.equal((await collectFires(env)).count, 3);
+
+    // both empty: a genuine zero is written as zero (and logged, for ops to see)
+    globalThis.fetch = answer({ VIIRS_NOAA21_NRT: () => new Response(HEADER), VIIRS_NOAA20_NRT: () => new Response(HEADER) });
+    assert.deepEqual(await collectFires(env), { count: 0, source: "VIIRS_NOAA21_NRT", archived: true });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
