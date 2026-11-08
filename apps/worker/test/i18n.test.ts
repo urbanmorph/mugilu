@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { t, lp, langUrl, langCss, LANG_NAME, LANGS } from "../src/i18n";
+import { t, lp, langUrl, langCss, LANG_NAME, LANGS, TR } from "../src/i18n";
 import {
   renderHome,
   renderNotFound,
@@ -323,4 +323,45 @@ test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots re
   for (const html of [about, meth, terms]) {
     assert.doesNotMatch(html, /\{score\}|\{terms\}|\{repo\}|\{um\}|\{bl\}|\{md\}/); // no slot leaks
   }
+});
+
+// Mechanical rules every translation keeps, whatever its wording (the 8 Nov 2026 review
+// found each of these broken somewhere): the reviewer judges words, this judges the rest.
+test("every translation keeps its placeholders, its script, the Latin names and the house punctuation", () => {
+  const SCRIPT = { hi: /[ऀ-ॿ]/, kn: /[ಀ-೿]/ };
+  const OTHER_INDIC = /[ঀ-౿ഀ-෿]/; // Bengali to Telugu, Malayalam, Sinhala
+  const holes = (s: string) => (s.match(/\{[a-z_]+\}|\$\{[a-z]+\}|\bX\b|\bY\b/g) ?? []).sort().join(",");
+  const LATIN = [
+    "mugilu",
+    "CPCB",
+    "NDMA",
+    "IMD",
+    "SACHET",
+    "JTWC",
+    "AQI",
+    "PM2.5",
+    "UV",
+    "WBGT",
+    "QR",
+    "JSON",
+    "PNG",
+    "MCP",
+    "km",
+  ];
+  const bad: string[] = [];
+  for (const [en, tr] of Object.entries(TR))
+    for (const [lang, s] of Object.entries(tr) as ["hi" | "kn", string][]) {
+      const at = `${lang} "${en.slice(0, 50)}"`;
+      if (holes(s) !== holes(en)) bad.push(`${at}: placeholders ${holes(en)} became ${holes(s)}`);
+      if (s.includes("—")) bad.push(`${at}: em-dash`);
+      const other = lang === "hi" ? SCRIPT.kn : SCRIPT.hi;
+      if (other.test(s) || (lang === "kn" ? OTHER_INDIC.test(s.replace(/[ಀ-೿]/g, "")) : OTHER_INDIC.test(s)))
+        bad.push(`${at}: a character from another script`);
+      for (const w of LATIN)
+        if (new RegExp(`(^|[^A-Za-z])${w.replace(".", "\\.")}([^A-Za-z]|$)`).test(en) && !s.includes(w))
+          bad.push(`${at}: ${w} not kept in Latin`);
+      // है/हैं ("is/are") then a visarga is a colon typed wrong; पुनः ("re-") keeps its own.
+      if (lang === "hi" && /हैं?ः/.test(s)) bad.push(`${at}: visarga where a colon belongs`);
+    }
+  assert.deepEqual(bad, []);
 });
