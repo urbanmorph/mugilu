@@ -2,15 +2,21 @@ import type {
   AirConditions,
   AirPollutants,
   Conditions,
+  ConditionsPoint,
+  ConditionsSnapshot,
+  DustConditions,
+  HeatConditions,
   NearStation,
   NormalizedStation,
+  RainConditions,
   Snapshot,
   UpstreamSource,
+  UvConditions,
   Warning,
 } from "./types";
-import { findNearest, STATION_META } from "./near";
+import { findNearest, haversineKm, STATION_META } from "./near";
 import { isPlausible } from "./plausible";
-import { getOpenMeteo } from "./openmeteo";
+import { getOpenMeteo, wbgt } from "./openmeteo";
 import { compareWithNormal, heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
 import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { pollutantParts } from "./formats";
@@ -97,6 +103,7 @@ export async function buildConditions(
   lat: number,
   lon: number,
   firesIn: FiresSnapshot | null | Promise<FiresSnapshot | null> = null,
+  gridIn?: () => Promise<ConditionsSnapshot | null>,
 ): Promise<Conditions> {
   // The snapshots (R2) and the upstreams (Open-Meteo, SACHET) are independent: all
   // four are in flight together, so a cold R2 read never delays the weather call.
@@ -107,6 +114,7 @@ export async function buildConditions(
     fetchLocationAlerts(lat, lon),
   ]);
   const found = alerts ?? [];
+  const grid = await fromGrid(om, lat, lon, gridIn);
   // Nearest station that actually has a reading, from ANY provider via OAQ,
   // preferring CPCB when one is about as near (pickStation). The very closest
   // is often null, so don't stop there; fall back to overall nearest only if
@@ -151,11 +159,12 @@ export async function buildConditions(
     // Measured air is as old as the station's own reading; modelled air is live (~now).
     air_as_of: air?.station && nearest?.ts ? new Date(nearest.ts).toISOString() : as_of,
     air,
-    heat: om.heat,
+    ...(grid.at ? { weather_as_of: grid.at } : {}),
+    heat: grid.heat ?? om.heat,
     heat_vs_normal: heatVsNormal,
-    rain: om.rain,
-    uv: om.uv,
-    dust: om.dust,
+    rain: grid.rain ?? om.rain,
+    uv: grid.uv ?? om.uv,
+    dust: grid.dust ?? om.dust,
     wind: om.wind,
     visibility: om.visibility,
     smoke,
@@ -163,11 +172,11 @@ export async function buildConditions(
     nearby_warnings: nearby.length ? nearby : undefined,
     attribution: buildAttribution([
       air?.source,
-      om.heat?.source,
+      (grid.heat ?? om.heat)?.source,
       heatVsNormal?.source,
-      om.rain?.source,
-      om.uv?.source,
-      om.dust?.source,
+      (grid.rain ?? om.rain)?.source,
+      (grid.uv ?? om.uv)?.source,
+      (grid.dust ?? om.dust)?.source,
       smoke && smoke.count > 0 ? "firms" : undefined,
       found.length ? "sachet" : undefined,
     ]),
@@ -175,6 +184,48 @@ export async function buildConditions(
     // Incomplete for a passing reason: callers must not cache it as whole.
     ...(failed.length ? { degraded: failed } : {}),
   };
+}
+
+// A district's centroid within this reach stands in for the spot when the live weather
+// call fails (districts are ~50-80 km apart; farther, the grid would describe elsewhere).
+const GRID_FALLBACK_KM = 75;
+
+type OpenMeteo = Awaited<ReturnType<typeof getOpenMeteo>>;
+
+/** The layers the live Open-Meteo calls failed to give, from the nearest district on
+ *  the 4-hourly grid (read only then), each dated with the grid's time. The grid holds
+ *  no wind, visibility or today's high, so those stay empty. */
+async function fromGrid(om: OpenMeteo, lat: number, lon: number, gridIn?: () => Promise<ConditionsSnapshot | null>) {
+  const none: { at?: string; heat?: HeatConditions; rain?: RainConditions; uv?: UvConditions; dust?: DustConditions } =
+    {};
+  if (!gridIn || (om.heat && om.rain && om.uv && om.dust)) return none;
+  const grid = await gridIn().catch(() => null);
+  let near: ConditionsPoint | undefined;
+  let best = GRID_FALLBACK_KM;
+  for (const p of grid?.points ?? []) {
+    const km = haversineKm(lat, lon, p.lat, p.lon);
+    if (km <= best) [near, best] = [p, km];
+  }
+  if (!grid || !near) return none;
+  const w = near.wx;
+  const as_of = grid.generated_at;
+  const source = "open-meteo";
+  const out = { ...none };
+  if (!om.heat && w.temp_c != null)
+    out.heat = {
+      temp_c: w.temp_c,
+      humidity_pct: w.humidity_pct,
+      apparent_c: w.apparent_c,
+      wet_bulb_c: w.wet_bulb_c,
+      wbgt_c: wbgt(w.temp_c, w.humidity_pct),
+      source,
+      as_of,
+    };
+  if (!om.rain && w.rain_mm != null) out.rain = { precipitation_mm: w.rain_mm, source, as_of };
+  if (!om.uv && w.uv != null) out.uv = { index: w.uv, source, as_of };
+  if (!om.dust && w.dust_ug_m3 != null) out.dust = { dust_ug_m3: w.dust_ug_m3, source, as_of };
+  if (out.heat || out.rain || out.uv || out.dust) out.at = as_of;
+  return out;
 }
 
 /** LLM-friendly Markdown rendering of a conditions response. */
@@ -315,7 +366,9 @@ const apiWarning = ({ covers: _covers, ...w }: Warning) => ({ ...w, source: "sac
 export function serializeConditionsV1(c: Conditions, persona: Persona) {
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk);
-  const modelled = <T extends object>(o: T | null) => (o ? { kind: "modelled" as const, ...o, as_of: c.as_of } : null);
+  // A layer the grid stood in for keeps the grid's time; the rest are live.
+  const modelled = <T extends object>(o: T | null) =>
+    o ? { kind: "modelled" as const, ...o, as_of: (o as { as_of?: string }).as_of ?? c.as_of } : null;
   return {
     schema: "mugilu/conditions",
     version: 1,

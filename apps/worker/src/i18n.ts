@@ -1585,6 +1585,8 @@ const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
   "Nearby places": { hi: "आस-पास के स्थान", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು" },
   "all places": { hi: "सभी स्थान", kn: "ಎಲ್ಲಾ ಸ್ಥಳಗಳು" },
   "air reading": { hi: "वायु रीडिंग", kn: "ವಾಯು ಓದುವಿಕೆ" },
+  // the weather taken from the 4-hourly grid when the live call failed (draft, pending native review)
+  "weather reading": { hi: "मौसम रीडिंग", kn: "ಹವಾಮಾನ ಓದುವಿಕೆ" },
 };
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;

@@ -407,3 +407,93 @@ test("serializeConditionsV1 + markdown: the readings in order of risk, the perso
   assert.match(md, /In order of risk: heat 48°, smoke 70 fires, air AQI 140, sun UV 9\./);
   assert.match(md, /For asthma & lungs, also watch: smoke is severe\./);
 });
+
+// When the live weather call fails, the 4-hourly grid's nearest district stands in for
+// heat, rain, UV and dust (wind and visibility it doesn't hold), dated as the grid is.
+const GRID = {
+  generated_at: "2026-06-26T12:05:00Z",
+  point_count: 2,
+  points: [
+    {
+      id: "d-1",
+      name: "Bengaluru Urban",
+      level: "district",
+      source_layer: "x",
+      lat: 12.97,
+      lon: 77.59,
+      wx: { temp_c: 31, apparent_c: 34, wet_bulb_c: 23, humidity_pct: 50, rain_mm: 0.4, uv: 7, dust_ug_m3: 12 },
+    },
+    { id: "d-2", name: "Far", level: "district", source_layer: "x", lat: 20, lon: 85, wx: { temp_c: 40 } },
+  ],
+};
+
+async function withOpenMeteo(
+  fail: "forecast" | "air" | "both" | "none",
+  grid: unknown = GRID,
+  at = { lat: 12.9716, lon: 77.5946 },
+) {
+  const realFetch = globalThis.fetch;
+  const ok = mockFetch();
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const u = String(input);
+    if (u.includes("sachet")) return Response.json({ alerts: [] });
+    const isAir = u.includes("air-quality");
+    if (fail === "both" || (fail === "air" && isAir) || (fail === "forecast" && !isAir)) throw new Error("timeout");
+    return ok(input);
+  }) as typeof fetch;
+  let reads = 0;
+  try {
+    const c = await buildConditions(snap(), at.lat, at.lon, null, async () => (reads++, grid as never));
+    return { c, reads };
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+test("buildConditions: a failed forecast falls back to the nearest district on the grid, dated as the grid is", async () => {
+  const { c, reads } = await withOpenMeteo("both");
+  assert.equal(reads, 1);
+  assert.deepEqual(c.heat, {
+    temp_c: 31,
+    humidity_pct: 50,
+    apparent_c: 34,
+    wet_bulb_c: 23,
+    wbgt_c: c.heat!.wbgt_c,
+    source: "open-meteo",
+    as_of: GRID.generated_at,
+  });
+  assert.ok(typeof c.heat!.wbgt_c === "number");
+  assert.deepEqual(c.rain, { precipitation_mm: 0.4, source: "open-meteo", as_of: GRID.generated_at });
+  assert.deepEqual(c.uv, { index: 7, source: "open-meteo", as_of: GRID.generated_at });
+  assert.deepEqual(c.dust, { dust_ug_m3: 12, source: "open-meteo", as_of: GRID.generated_at });
+  assert.equal(c.wind, null); // the grid has no wind or visibility
+  assert.equal(c.visibility, null);
+  assert.equal(c.weather_as_of, GRID.generated_at);
+  assert.deepEqual(c.degraded, ["openmeteo"]); // still not cached as if complete: the next visitor retries live
+});
+
+test("buildConditions: only what failed is filled; a live layer stays live", async () => {
+  const { c } = await withOpenMeteo("air");
+  assert.equal(c.heat!.temp_c, 22); // the live forecast
+  assert.equal(c.heat!.as_of, undefined);
+  assert.equal(c.uv!.index, 7); // from the grid
+  assert.equal(c.weather_as_of, GRID.generated_at);
+});
+
+test("buildConditions: the grid is read only when something failed, and only a near district counts", async () => {
+  const live = await withOpenMeteo("none");
+  assert.equal(live.reads, 0);
+  assert.equal(live.c.weather_as_of, undefined);
+  const far = await withOpenMeteo("forecast", GRID, { lat: 26.9, lon: 75.8 }); // Jaipur: no district within reach
+  assert.equal(far.c.heat, null);
+  assert.equal(far.c.weather_as_of, undefined);
+  const none = await withOpenMeteo("forecast", null);
+  assert.equal(none.c.heat, null);
+});
+
+test("serializeConditionsV1: a layer from the grid carries the grid's time", async () => {
+  const { c } = await withOpenMeteo("forecast");
+  const v1 = serializeConditionsV1(c, "everyone") as Record<string, any>;
+  assert.equal(v1.heat.as_of, GRID.generated_at);
+  assert.equal(v1.uv.as_of, c.as_of); // live
+});

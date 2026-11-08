@@ -39,6 +39,21 @@ test("2. the page says when it was built; an older air reading is named separate
   assert.match(when, /air reading <time data-rel datetime="2026-10-25T05:00:00.000Z"/);
   const fresh = renderConditionsPage(c({ air, air_as_of: "2026-10-25T06:50:00.000Z" } as Partial<Conditions>));
   assert.doesNotMatch(fresh.match(/<p class="when">([\s\S]*?)<\/p>/)![1], /air reading/);
+  // Weather taken from the 4-hourly grid (the live call failed) is named the same way.
+  const grid = renderConditionsPage(c({ weather_as_of: "2026-10-25T04:05:00.000Z" } as Partial<Conditions>));
+  assert.match(
+    grid.match(/<p class="when">([\s\S]*?)<\/p>/)![1],
+    /weather reading <time data-rel datetime="2026-10-25T04:05:00.000Z"/,
+  );
+  assert.match(
+    renderConditionsPage(
+      c({ weather_as_of: "2026-10-25T04:05:00.000Z" } as Partial<Conditions>),
+      "everyone",
+      undefined,
+      "kn",
+    ),
+    /ಹವಾಮಾನ ಓದುವಿಕೆ/,
+  );
 });
 
 test("3. warnings: an honest count, grouped by issuer with a readable name, newest first, times in IST", () => {
