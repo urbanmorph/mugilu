@@ -52,7 +52,7 @@ test("2. the page says when it was built; an older air reading is named separate
       undefined,
       "kn",
     ),
-    /ಹವಾಮಾನ ಓದುವಿಕೆ/,
+    /ಹವಾಮಾನ ಮಾಹಿತಿ/,
   );
 });
 

@@ -37,7 +37,7 @@ function cond(overrides: Partial<Conditions> = {}): Conditions {
 
 test("t(): English is identity; hi/kn look up; unknown key falls back to English", () => {
   assert.equal(t("Popular:", "en"), "Popular:");
-  assert.equal(t("Popular:", "hi"), "प्रसिद्ध स्थान:");
+  assert.equal(t("Popular:", "hi"), "लोकप्रिय:");
   assert.equal(t("Popular:", "kn"), "ಜನಪ್ರಿಯ ಸ್ಥಳಗಳು:");
   // a string with no translation entry renders the English source, never a blank
   assert.equal(t("this key does not exist anywhere", "kn"), "this key does not exist anywhere");
@@ -107,7 +107,7 @@ test("renderHome(kn): highlights hero localized; place + state names kept Englis
   assert.match(html, /ಈಗ ಭಾರತದಾದ್ಯಂತ/); // "India now" heading
   assert.match(html, /ಅತ್ಯಂತ ಬಿಸಿಲು: <b>Sitapur, Uttar Pradesh<\/b>/); // label localized, place English
   assert.match(html, /41° ಅನಿಸುತ್ತದೆ/); // "feels" (anisuttade), after the number
-  assert.match(html, /ಅಪಾಯಕಾರವಾದ ಆರ್ದ್ರತೆ ಮತ್ತು ಬಿಸಿಲು/); // heat phrase
+  assert.match(html, /ಅಪಾಯಕಾರಿ ಆರ್ದ್ರತೆ ಮತ್ತು ಬಿಸಿಲು/); // heat phrase
   assert.match(html, /ತೀವ್ರ ಧೂಳು/); // dust phrase
   assert.doesNotMatch(html, /feels 41|Hottest:|Dustiest:|Worst air:/); // no English leaked
 });
@@ -210,7 +210,7 @@ test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss presen
   assert.match(kn, /<html lang="kn">/);
   assert.match(kn, /ಜನರಿಗೆ ಸಂಪೂರ್ಣ ಆಕಾಶದ ನೋಟ/); // lead
   assert.match(kn, /<span>mugilu ಏಕೆ<\/span>/); // heading, brand Latin
-  assert.match(kn, /ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಕನ್ನಡ ಪದ/); // the meaning gloss
+  assert.match(kn, /ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಇರುವ ಕನ್ನಡ ಪದ/); // the meaning gloss
   assert.match(kn, /ಡೆವಲಪರ್‌ಗಳಿಗೆ/); // developer label (tech, not property)
   assert.match(kn, /CPCB/); // proper nouns stay Latin
   assert.doesNotMatch(kn, /ಶಾಖ|ಪರದೆ|ಗಿಟ್‌ಹೌಸ್/); // no reverted-vocab / GitHouse
@@ -227,7 +227,7 @@ test("renderMethodology(kn): prose localized, acronyms + numbers Latin, links pr
   assert.match(kn, /<html lang="kn">/);
   assert.match(kn, /ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ/); // "glass box" rendered in the lead
   assert.match(kn, /ಮಿತಿಗಳು/); // "The thresholds" heading localized
-  assert.match(kn, /ವಾಯುಗುಣ \(AQI\)/); // table label localized, acronym Latin
+  assert.match(kn, /ವಾಯು ಗುಣಮಟ್ಟ \(AQI\)/); // table label localized, acronym Latin
   assert.match(kn, /CPCB/); // proper nouns/acronyms stay Latin
   assert.match(kn, /WBGT/);
   assert.match(kn, /301\+/); // numeric thresholds stay Arabic numerals
