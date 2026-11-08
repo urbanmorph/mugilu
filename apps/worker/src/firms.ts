@@ -88,21 +88,41 @@ export function fireRiskAt(fires: FireDetection[], lat: number, lon: number, rad
   return { count, frp_sum: +frp.toFixed(1), nearest_km: nearest === null ? null : +nearest.toFixed(1) };
 }
 
+// FIRMS's day range counts UTC calendar days ("1" is today since 00:00 UTC), so it is asked
+// for two and 24 hours kept. With "1", every day from 00:00 UTC to the first satellite pass
+// over India (about 08:00 UTC) read as no fires at all. The 24 hours end at the newest
+// detection, not the clock: NRT data lags a pass by hours, so a clock window drops
+// yesterday's afternoon pass before today's has arrived, and the count dips for hours.
+const DAY_RANGE = 2;
+const WINDOW_MS = 24 * 3600_000;
+
+/** A detection's time: acq is "YYYY-MM-DD HHMM" in UTC (HHMM may lose its leading zeros). */
+const acqTime = (acq: string) => {
+  const [date, hhmm = "0"] = acq.split(" ");
+  const t = hhmm.padStart(4, "0");
+  return Date.parse(`${date}T${t.slice(0, 2)}:${t.slice(2)}:00Z`);
+};
+
 /**
- * Poll FIRMS for India (last 24 h), write the current set to R2, and archive a
- * per-day roll-up so the burning-season record accrues (the moat). ETag-free.
+ * Poll FIRMS for India, keep the last 24 h, write that set to R2, and archive each UTC
+ * day's own detections so the burning-season record accrues (the moat). ETag-free.
  * FIRMS rotates the NRT file, so we just overwrite the current snapshot.
  */
-export async function collectFires(env: Env): Promise<{ count: number; source: string; archived: boolean }> {
+export async function collectFires(
+  env: Env,
+  now = new Date(),
+): Promise<{ count: number; source: string; archived: boolean }> {
   const key = env.FIRMS_MAP_KEY;
   if (!key) throw new Error("FIRMS_MAP_KEY not set");
   const read = async (source: string) => {
-    const res = await fetch(`${FIRMS_URL}/${key}/${source}/${INDIA_BBOX}/1`, { signal: AbortSignal.timeout(15000) });
+    const res = await fetch(`${FIRMS_URL}/${key}/${source}/${INDIA_BBOX}/${DAY_RANGE}`, {
+      signal: AbortSignal.timeout(15000),
+    });
     if (!res.ok) throw new Error(`firms ${res.status}`);
     return parseFirmsCsv(await res.text());
   };
   // Only every satellite failing is the upstream step failing (err:upstream:firms).
-  const [source, fires] = await counted(env, "firms", async () => {
+  const [source, days] = await counted(env, "firms", async () => {
     let first: [string, FireDetection[]] | null = null;
     let error: unknown = null;
     for (const s of SOURCES) {
@@ -117,17 +137,24 @@ export async function collectFires(env: Env): Promise<{ count: number; source: s
     if (first) return first;
     throw error;
   });
+  const times = days.map((f) => acqTime(f.acq)).filter(Number.isFinite);
+  const since = (times.length ? Math.max(...times) : now.getTime()) - WINDOW_MS;
+  const fires = days.filter((f) => acqTime(f.acq) >= since);
   const snapshot: FiresSnapshot = {
-    generated_at: new Date().toISOString(),
+    generated_at: now.toISOString(),
     count: fires.length,
     fires,
   };
   await putJson(env, FIRES_KEY, JSON.stringify(snapshot), "public, max-age=900");
-  // Archive a daily snapshot (the moat). Date stamp in UTC; overwrite within the
-  // day so the latest, fullest day's set is what's kept.
-  const day = snapshot.generated_at.slice(0, 10);
-  await env.OAQ_R2.put(`archive/firms/${day}.json`, JSON.stringify(snapshot), {
-    httpMetadata: { contentType: "application/json" },
-  });
+  // Archive each UTC day's own detections (the moat), today's always (an empty day is a
+  // record too) and yesterday's again, now that its last passes are in.
+  const today = snapshot.generated_at.slice(0, 10);
+  for (const day of new Set([today, ...days.map((f) => f.acq.slice(0, 10))])) {
+    const own = days.filter((f) => f.acq.startsWith(day));
+    const archive: FiresSnapshot = { generated_at: snapshot.generated_at, count: own.length, fires: own };
+    await env.OAQ_R2.put(`archive/firms/${day}.json`, JSON.stringify(archive), {
+      httpMetadata: { contentType: "application/json" },
+    });
+  }
   return { count: fires.length, source, archived: true };
 }
