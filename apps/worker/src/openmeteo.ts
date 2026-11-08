@@ -43,7 +43,7 @@ export interface TodayMax {
 /** Simplified WBGT (shade) from temperature + humidity (Australian BoM):
  *  e = (RH/100)·6.105·exp(17.27·T/(237.7+T)); WBGT = 0.567·T + 0.393·e + 3.94.
  *  An explicit heat-stress index; runs slightly hot in very dry heat. */
-function wbgt(t?: number, rh?: number): number | undefined {
+export function wbgt(t?: number, rh?: number): number | undefined {
   if (t == null || rh == null) return undefined;
   const e = (rh / 100) * 6.105 * Math.exp((17.27 * t) / (237.7 + t));
   return +(0.567 * t + 0.393 * e + 3.94).toFixed(1);

@@ -846,7 +846,7 @@ export function renderConditionsPage(
     <div class="cx-l">
     <p class="coord">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>
     <h1 class="loc" data-ll="${c.location.lat},${c.location.lon}">${place}</h1>
-    <p class="when">${t("the sky at this point", lang)} · ${t("updated", lang)} ${relTime(c.as_of)}${airLag(c) ? ` · ${t("air reading", lang)} ${relTime(c.air_as_of!)}` : ""}</p>
+    <p class="when">${t("the sky at this point", lang)} · ${t("updated", lang)} ${relTime(c.as_of)}${airLag(c) ? ` · ${t("air reading", lang)} ${relTime(c.air_as_of!)}` : ""}${c.weather_as_of ? ` · ${t("weather reading", lang)} ${relTime(c.weather_as_of)}` : ""}</p>
     <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
     ${c.warnings?.length ? c.warnings.map((w) => renderWarning(w, lang)).join("") : ""}
     ${c.nearby_warnings?.length ? renderNearbyWarnings(c.nearby_warnings, lang) : ""}

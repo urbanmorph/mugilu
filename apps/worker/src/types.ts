@@ -103,23 +103,31 @@ export interface HeatConditions {
   wet_bulb_c?: number; // survivability metric
   wbgt_c?: number; // WBGT heat-stress index (°C), simplified shade estimate
   source: string;
+  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
+  as_of?: string;
 }
 
 export interface RainConditions {
   precipitation_mm?: number;
   probability_pct?: number;
   source: string;
+  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
+  as_of?: string;
 }
 
 export interface UvConditions {
   index?: number;
   source: string;
+  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
+  as_of?: string;
 }
 
 export interface DustConditions {
   aod?: number; // aerosol optical depth (unitless)
   dust_ug_m3?: number;
   source: string;
+  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
+  as_of?: string;
 }
 
 /** Wind, modelled. Gusts drive dust-storm onset, fire spread, cyclone exposure. */
@@ -169,6 +177,9 @@ export interface Conditions {
   /** ISO time the air reading is from: the hourly snapshot when measured, or
    *  ~now when modelled live. Anchors the "updated X ago" freshness on /c. */
   air_as_of?: string;
+  /** When the live weather call failed: the time of the 4-hourly grid that stood in
+   *  for heat, rain, UV or dust (each such layer carries it as as_of too). */
+  weather_as_of?: string;
   air: AirConditions | null;
   heat: HeatConditions | null;
   /** Today's modelled high against the 1991-2020 normal here; null where there is

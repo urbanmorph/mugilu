@@ -1,10 +1,10 @@
 import type { Env } from "./index";
-import type { Conditions, Snapshot } from "./types";
+import type { Conditions, ConditionsSnapshot, Snapshot } from "./types";
 import type { FiresSnapshot } from "./firms";
 import type { Persona } from "./score";
 import type { Served } from "./edge";
 import { buildConditions } from "./conditions";
-import { loadFires, loadSnapshot } from "./snapshot";
+import { loadFires, loadGrid, loadSnapshot } from "./snapshot";
 import {
   recordEvent,
   recordLookup,
@@ -28,6 +28,8 @@ export type LookupFormat = "html" | "kiosk" | "json" | "md" | "png" | "embed" | 
 interface ConditionsData {
   snapshot: Promise<Snapshot | null>;
   fires: Promise<FiresSnapshot | null>;
+  /** The 4-hourly grid, read only if the live weather call fails (conditions.ts fromGrid). */
+  grid: () => Promise<ConditionsSnapshot | null>;
 }
 
 interface LookupInput {
@@ -55,7 +57,7 @@ const REFERRER_SURFACE: Partial<Record<LookupFormat, string>> = {
  *  failure surfaces where they are awaited; the no-op catch only keeps an early
  *  return from leaving a rejection unhandled. */
 export function conditionsData(env: Env): ConditionsData {
-  const d = { snapshot: loadSnapshot(env), fires: loadFires(env) };
+  const d = { snapshot: loadSnapshot(env), fires: loadFires(env), grid: () => loadGrid(env) };
   d.snapshot.catch(() => {});
   d.fires.catch(() => {});
   return d;
@@ -73,7 +75,7 @@ export async function lookupConditions(
   const d = q.data ?? conditionsData(env);
   let conditions: Conditions;
   try {
-    conditions = await buildConditions(d.snapshot, q.lat, q.lon, d.fires);
+    conditions = await buildConditions(d.snapshot, q.lat, q.lon, d.fires, d.grid);
   } catch (e) {
     // Only the R2 reads can reject here: the weather and warning calls report failure.
     ctx.waitUntil(upstreamFailed(env, ["r2"]));
