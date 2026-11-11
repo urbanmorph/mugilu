@@ -396,6 +396,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .raw{margin:.95rem 0 0;font:500 .82rem var(--mono);letter-spacing:.02em}
 .raw a{color:var(--cond);text-decoration:none}
 .raw a:hover{text-decoration:underline}
+.grap{margin:.9rem 0 0;font-size:.92rem;line-height:1.5;color:var(--muted)}.grap a{color:var(--sky)}
 .nearby{margin:1.1rem 0 0;font-size:.9rem;line-height:1.9;color:var(--muted)}.nearby a{color:var(--cond);text-decoration:none}.nearby a:hover{text-decoration:underline}
 .cxback{margin:1.1rem 0 0;font-size:.9rem}.cxback a{color:var(--muted);text-decoration:none}.cxback a:hover{color:var(--ink)}
 @media(min-width:960px){
@@ -858,6 +859,7 @@ export function renderConditionsPage(
     <p class="stale" id="${OFFLINE_NOTE_ID}" hidden>${t("No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.", lang).replace("X", esc(istTime(c.air_as_of ?? c.as_of)))}</p>
     ${c.warnings?.length ? c.warnings.map((w) => renderWarning(w, lang)).join("") : ""}
     ${c.nearby_warnings?.length ? renderNearbyWarnings(c.nearby_warnings, lang) : ""}
+    ${c.grap ? grapLine(c.grap, lang) : ""}
     <section class="amb">
       <p class="amb-eye">${icon(DRIVER_KEY[risk.driver] ?? "clear")}<span>Ambient · ${esc(t(PERSONA_LABEL[risk.persona], lang))}</span></p>
       <p class="amb-head">${head}</p>
@@ -1008,6 +1010,24 @@ export function renderStationPage(
     address: { "@type": "PostalAddress", addressLocality: s.city || undefined, addressCountry: "IN" },
   });
   return shell(title, body + FRESHEN, STATION_CSS, { desc, canonical, jsonLd, ogImage: HOME_OG, lang });
+}
+
+const GRAP_RANGE = ["201-300", "201-300", "301-400", "401-450", "above 450"];
+const ROMAN = ["I", "I", "II", "III", "IV"];
+
+/** Delhi-NCR: the GRAP stage range Delhi's AQI is in now, and that CAQM sets the stage (grap.ts). */
+function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string {
+  const text = t(
+    g.stage
+      ? "Delhi's AQI averages {aqi} across {n} CPCB stations now, in the Stage {stage} range ({range}). The stage in force is set by CAQM."
+      : "Delhi's AQI averages {aqi} across {n} CPCB stations now, below the Stage I range (201-300). The stage in force is set by CAQM.",
+    lang,
+  )
+    .replace("{aqi}", String(g.aqi))
+    .replace("{n}", String(g.stations))
+    .replace("{stage}", ROMAN[g.stage])
+    .replace("{range}", g.stage === 4 ? t("above 450", lang) : GRAP_RANGE[g.stage]);
+  return `<p class="grap"><b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}</p>`;
 }
 
 /** A place page's title and the description's first sentence, in the words people search:

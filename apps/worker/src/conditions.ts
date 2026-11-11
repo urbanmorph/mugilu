@@ -15,6 +15,7 @@ import type {
   Warning,
 } from "./types";
 import { findNearest, haversineKm, STATION_META } from "./near";
+import { grapRead } from "./grap";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo, wbgt } from "./openmeteo";
 import { compareWithNormal, heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
@@ -171,6 +172,7 @@ export async function buildConditions(
     warnings: warnings.length ? warnings : undefined,
     nearby_warnings: nearby.length ? nearby : undefined,
     ...nearbyStations(snapshot, lat, lon),
+    ...grapFor(snapshot, lat, lon),
     attribution: buildAttribution([
       air?.source,
       (grid.heat ?? om.heat)?.source,
@@ -231,6 +233,12 @@ async function fromGrid(om: OpenMeteo, lat: number, lon: number, gridIn?: () => 
 
 // Stations listed on a place page: the six nearest with a reading, within this reach.
 const NEARBY_STATIONS_KM = 20;
+
+/** Delhi's GRAP range, for a spot in Delhi-NCR (absent elsewhere). */
+function grapFor(snapshot: Snapshot | null, lat: number, lon: number) {
+  const g = snapshot ? grapRead(snapshot.stations, lat, lon) : null;
+  return g ? { grap: g } : {};
+}
 
 /** The air stations near a spot, for the page's links (absent when there are none). */
 function nearbyStations(snapshot: Snapshot | null, lat: number, lon: number) {

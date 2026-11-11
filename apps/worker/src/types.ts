@@ -198,6 +198,8 @@ export interface Conditions {
   nearby_warnings?: Warning[];
   /** Air stations with a reading within 20 km, nearest first (page navigation; not in the JSON contract). */
   nearby_stations?: NearStation[];
+  /** Delhi-NCR only: the GRAP stage range Delhi's AQI is in now (grap.ts; not in the JSON contract). */
+  grap?: { aqi: number; stations: number; stage: 0 | 1 | 2 | 3 | 4 };
   /** Ready-to-paste credit line for whatever sources contributed. */
   attribution: string;
   /** Always present, always relayed. */
