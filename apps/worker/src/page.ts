@@ -876,7 +876,9 @@ export function renderConditionsPage(
   </article>`;
 
   const css = CONDITIONS_CSS + GLYPH_CSS + (alertsKey ? ALERTS_CSS : "") + `\n:root{${readVars(risk)}}`;
-  const desc = `${placeName}: ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
+  // Title and description in the words people search ("Delhi AQI today"), with the number.
+  const { title, lead } = searchTitle(c, placeName, lang);
+  const desc = `${lead ?? `${placeName}:`} ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
   const dataset = canonical
@@ -912,12 +914,33 @@ export function renderConditionsPage(
         ],
       })
     : undefined;
-  return shell(
-    `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu`,
-    body + PLACE_RECORDER + FRESHEN + (alertsKey ? `<script>${ALERTS_JS}</script>` : ""),
-    css,
-    { desc, canonical, jsonLd: dataset, ogImage: canonical ? `${canonical}.png` : HOME_OG, lang },
-  );
+  return shell(title, body + PLACE_RECORDER + FRESHEN + (alertsKey ? `<script>${ALERTS_JS}</script>` : ""), css, {
+    desc,
+    canonical,
+    jsonLd: dataset,
+    ogImage: canonical ? `${canonical}.png` : HOME_OG,
+    lang,
+  });
+}
+
+/** A place page's title and the description's first sentence, in the words people search:
+ *  "Delhi AQI today: 344 Very Poor". With no air reading, the title names what there is. */
+function searchTitle(c: Conditions, placeName: string, lang: Lang): { title: string; lead?: string } {
+  const air = c.air;
+  if (!air || air.aqi == null)
+    return { title: `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu` };
+  const fill = (s: string) =>
+    s
+      .replace("{place}", placeName)
+      .replace("{aqi}", String(air.aqi))
+      .replace("{band}", t(AQI_BAND_LABEL[air.band] ?? "", lang));
+  const title = `${fill(t("{place} AQI today: {aqi} {band}", lang))} · ${t("air quality, heat and warnings now", lang)} · mugilu`;
+  const lead = air.station
+    ? fill(t("{place} AQI {aqi} ({band}) right now, from the {station} station {km} km away.", lang))
+        .replace("{station}", air.station.name)
+        .replace("{km}", air.station.distance_km.toFixed(1))
+    : fill(t("{place} AQI {aqi} ({band}) right now, modelled.", lang));
+  return { title, lead };
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun". The time travels on embeds/PNGs. */

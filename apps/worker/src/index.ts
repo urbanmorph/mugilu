@@ -47,7 +47,7 @@ import {
 } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
-import { placeBySlug, slugForName } from "./slugs";
+import { placeBySlug, slugForName, slugLabel } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
 import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
@@ -482,7 +482,7 @@ export default {
           status: 404,
           headers: { "content-type": "text/html; charset=utf-8" },
         });
-      const label = place.state ? `${place.name}, ${place.state}` : place.name;
+      const label = slugLabel(place);
       return serveConditions(place.lat, place.lon, ext, parsePersona(url.searchParams.get("as")), `/c/${slug}`, label);
     }
 

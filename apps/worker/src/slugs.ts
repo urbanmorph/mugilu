@@ -95,6 +95,11 @@ export function placeBySlug(slug: string): SlugPlace | undefined {
   return SLUGS.get(slug.toLowerCase());
 }
 
+/** How a named place reads: "New Delhi, Delhi", but "Delhi" once when the state has its name. */
+export function slugLabel(p: Pick<SlugPlace, "name" | "state">): string {
+  return p.state && p.state !== p.name ? `${p.name}, ${p.state}` : p.name;
+}
+
 /** The slug for a place name, if it maps to exactly one known district. */
 export function slugForName(name: string): string | undefined {
   const s = slugify(name);

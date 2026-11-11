@@ -352,6 +352,20 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     kn: "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ",
   },
   // /c conditions <title> descriptor (place name is prepended, stays verbatim).
+  // place-page title and description, in the words people search ("Delhi AQI today")
+  "{place} AQI today: {aqi} {band}": { hi: "{place} AQI आज: {aqi} {band}", kn: "{place} AQI ಇಂದು: {aqi} {band}" },
+  "air quality, heat and warnings now": {
+    hi: "वायु गुणवत्ता, गर्मी और चेतावनियाँ अभी",
+    kn: "ವಾಯು ಗುಣಮಟ್ಟ, ಬಿಸಿಲು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಈಗ",
+  },
+  "{place} AQI {aqi} ({band}) right now, from the {station} station {km} km away.": {
+    hi: "{place} AQI अभी {aqi} ({band}) है, {km} km दूर {station} स्टेशन से।",
+    kn: "{place} AQI ಈಗ {aqi} ({band}), {km} km ದೂರದ {station} ನಿಲ್ದಾಣದಿಂದ.",
+  },
+  "{place} AQI {aqi} ({band}) right now, modelled.": {
+    hi: "{place} AQI अभी {aqi} ({band}) है, मॉडल का अनुमान।",
+    kn: "{place} AQI ಈಗ {aqi} ({band}), ಮಾದರಿಯ ಅಂದಾಜು.",
+  },
   "air, heat, rain and warnings right now": {
     hi: "वायु, गर्मी, बारिश और चेतावनियाँ अभी",
     kn: "ಈಗಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",

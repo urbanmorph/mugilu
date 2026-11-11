@@ -73,7 +73,7 @@ export function nearestPlace(lat: number, lon: number): string | null {
     const human = aliased ?? (idLike ? null : best.name);
     return [human, city].filter(Boolean).join(", ") || best.name;
   }
-  return best.state ? `${best.name}, ${best.state}` : best.name;
+  return best.state && best.state !== best.name ? `${best.name}, ${best.state}` : best.name;
 }
 
 /** The state/UT a point falls in, via the nearest grid centroid (for points
