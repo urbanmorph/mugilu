@@ -362,6 +362,21 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "{place} AQI अभी {aqi} ({band}) है, {km} km दूर {station} स्टेशन से।",
     kn: "{place} AQI ಈಗ {aqi} ({band}), {km} km ದೂರದ {station} ನಿಲ್ದಾಣದಿಂದ.",
   },
+  "air quality station": { hi: "वायु गुणवत्ता स्टेशन", kn: "ವಾಯು ಗುಣಮಟ್ಟ ನಿಲ್ದಾಣ" },
+  "{station} ({city}) AQI {aqi} ({band}) right now, measured by {provider}.": {
+    hi: "{station} ({city}) AQI अभी {aqi} ({band}) है, {provider} द्वारा मापा गया।",
+    kn: "{station} ({city}) AQI ಈಗ {aqi} ({band}), {provider} ಅಳೆದದ್ದು.",
+  },
+  "Measured by {provider}.": { hi: "{provider} द्वारा मापा गया।", kn: "{provider} ಅಳೆದದ್ದು." },
+  "No recent reading from this station. Last reading: X": {
+    hi: "इस स्टेशन से हाल का कोई आँकड़ा नहीं। आखिरी आँकड़ा: X",
+    kn: "ಈ ನಿಲ್ದಾಣದಿಂದ ಇತ್ತೀಚಿನ ಮಾಹಿತಿ ಇಲ್ಲ. ಕೊನೆಯ ಮಾಹಿತಿ: X",
+  },
+  "The full sky here: heat, rain, warnings and what to do": {
+    hi: "यहाँ का पूरा हाल: गर्मी, बारिश, चेतावनियाँ और क्या करें",
+    kn: "ಇಲ್ಲಿನ ಪೂರ್ಣ ಆಕಾಶ: ಬಿಸಿಲು, ಮಳೆ, ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ಏನು ಮಾಡಬೇಕು",
+  },
+  "Air stations near here": { hi: "पास के वायु गुणवत्ता स्टेशन", kn: "ಹತ್ತಿರದ ವಾಯು ಗುಣಮಟ್ಟ ನಿಲ್ದಾಣಗಳು" },
   "{place} AQI {aqi} ({band}) right now, modelled.": {
     hi: "{place} AQI अभी {aqi} ({band}) है, मॉडल का अनुमान।",
     kn: "{place} AQI ಈಗ {aqi} ({band}), ಮಾದರಿಯ ಅಂದಾಜು.",

@@ -196,6 +196,8 @@ export interface Conditions {
   warnings?: Warning[];
   /** Active warnings within the lookup radius whose own area does not cover this spot. */
   nearby_warnings?: Warning[];
+  /** Air stations with a reading within 20 km, nearest first (page navigation; not in the JSON contract). */
+  nearby_stations?: NearStation[];
   /** Ready-to-paste credit line for whatever sources contributed. */
   attribution: string;
   /** Always present, always relayed. */

@@ -15,6 +15,7 @@ import {
   renderConditionsPage,
   renderKioskPage,
   renderDisplayBuilder,
+  renderStationPage,
   renderHome,
   renderAbout,
   renderTerms,
@@ -26,7 +27,7 @@ import {
 } from "./page";
 import { qrSvg } from "./qr";
 import { lp, type Lang } from "./i18n";
-import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
+import { robotsTxt, llmsTxt, sitemapXml, stationSitemapXml, openApiSpec } from "./meta";
 import { geocodeList } from "./geocode";
 import { INDEXNOW_KEY, INDEXNOW_PATH, indexNowUrls, submitIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
@@ -51,7 +52,7 @@ import type { Persona } from "./score";
 import { placeBySlug, slugForName, slugLabel } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
+import { loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { Conditions, NormalizedStation } from "./types";
@@ -124,7 +125,6 @@ function badRequest(message: string): Response {
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
-
 
     // Canonical host: send www → apex (301), preserving path + query.
     if (url.hostname === "www.mugilu.live") {
@@ -529,6 +529,49 @@ export default {
         const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
         if (!station) return new Response("station not found", { status: 404 });
         return renderStationOg(station, snap.generated_at);
+      });
+    }
+
+    // Per-station page: /s/{provider}/{raw_id}, titled the way people search ("Anand Vihar
+    // AQI today"). A station that has not reported lately is shown as that (from the raw
+    // snapshot), so its URL keeps answering; one never seen is a 404.
+    const stationPage = url.pathname.match(/^\/s\/([^/]+)\/([^/.]+)$/);
+    if (stationPage) {
+      const [, provider, rawId] = stationPage;
+      return cached(LIVE_EDGE_TTL, async () => {
+        const fresh = await loadSnapshot(env);
+        const is = (x: NormalizedStation) => x.provider === provider && x.raw_id === rawId;
+        let station = fresh?.stations.find(is);
+        const live = !!station;
+        station ??= (await loadRawSnapshot(env))?.stations.find(is);
+        if (!station)
+          return {
+            res: new Response(renderNotFound(lang), {
+              status: 404,
+              headers: { "content-type": "text/html; charset=utf-8" },
+            }),
+            store: false,
+          };
+        const { lat, lon } = station;
+        const nearby =
+          lat != null && lon != null
+            ? findNearest(
+                (fresh?.stations ?? []).filter((x) => x.aqi != null && !is(x)),
+                lat,
+                lon,
+                8,
+              ).filter((x) => x.distance_km <= 25)
+            : [];
+        return cachedResponse(renderStationPage(station, nearby, live, lang), "text/html; charset=utf-8");
+      });
+    }
+
+    // Every station page, for search engines (robots.txt lists it beside /sitemap.xml).
+    if (url.pathname === "/sitemap-stations.xml") {
+      return cached(STATIC_EDGE_TTL, async () => {
+        const snap = await loadRawSnapshot(env);
+        if (!snap) return { res: new Response("no snapshot yet", { status: 503 }), store: false };
+        return cachedResponse(stationSitemapXml(SITE_URL, snap.stations), "application/xml; charset=utf-8");
       });
     }
 

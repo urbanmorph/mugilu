@@ -1,10 +1,11 @@
-import type { Conditions, Warning, NormalizedStation } from "./types";
+import type { Conditions, Warning, NormalizedStation, NearStation } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
 import { AQI_BAND_LABEL } from "./aqi";
 import { compass, drops, gauge, GLYPH_CSS, lifeBlocks, pollutantBars, uvSteps, worstPollutant } from "./glyphs";
 import { briefs, forPersona, isDriver, km, orderByRisk, placeLabel } from "./readings";
-import { SOURCES } from "./sources";
+import { SOURCES, providerName } from "./sources";
+import { pollutantParts } from "./formats";
 import { esc } from "./html";
 import {
   airLevelOf,
@@ -839,6 +840,13 @@ export function renderConditionsPage(
       nearby = `<nav class="nearby" aria-label="${esc(t("Nearby places", lang))}">${t("Nearby:", lang)} ${near}</nav>`;
     }
   }
+  // The air stations around the place, each to its own page ("Anand Vihar AQI").
+  if (c.nearby_stations?.length) {
+    const list = c.nearby_stations
+      .map((s) => `<a href="${lp(`/s/${s.provider}/${s.raw_id}`, lang)}">${esc(s.name)}</a> ${s.aqi}`)
+      .join(" · ");
+    nearby += `<nav class="nearby" aria-label="${esc(t("Air stations near here", lang))}">${t("Air stations near here", lang)}: ${list}</nav>`;
+  }
 
   const body = `
   <article class="cx">
@@ -921,6 +929,85 @@ export function renderConditionsPage(
     ogImage: canonical ? `${canonical}.png` : HOME_OG,
     lang,
   });
+}
+
+const STATION_CSS = `
+.sx{max-width:44rem}
+.sx h1{font-family:var(--serif);font-size:clamp(2rem,6vw,3rem);line-height:1.1;margin:.2rem 0 .3rem}
+.sx .where{color:var(--muted);margin:0 0 1.2rem}
+.sx .aqi{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:.4rem 0 .2rem}
+.sx .aqi b{font-size:clamp(2.6rem,9vw,4rem);line-height:1;color:var(--band)}
+.sx .aqi span{font-weight:600;color:var(--band)}
+.sx .when{color:var(--muted);font-size:.9rem;margin:0 0 1.2rem}
+.sx dl{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1.2rem;margin:.6rem 0 1.4rem}
+.sx dt{color:var(--muted)}.sx dd{margin:0;font-variant-numeric:tabular-nums}
+.sx .full a,.sx .nearby a{color:var(--sky)}
+.sx .nearby{font-size:.95rem;line-height:1.9;color:var(--muted);margin:1rem 0}
+.sx .stale{border-left:3px solid var(--line);padding:.2rem 0 .2rem .9rem;color:var(--muted)}
+.sx footer{margin-top:2rem;border-top:1px solid var(--line);padding-top:1rem;font-size:.85rem;color:var(--muted)}
+.sx footer a{color:var(--muted)}`;
+
+/** /s/{provider}/{id}: one air station, titled the way people search ("Anand Vihar AQI
+ *  today: 412 Severe"). `fresh` false: the station has not reported within the snapshot's
+ *  window, so its last reading is shown as that, with no number in the title. */
+export function renderStationPage(
+  s: NormalizedStation,
+  nearby: NearStation[],
+  fresh: boolean,
+  lang: Lang = "en",
+): string {
+  const band = t(AQI_BAND_LABEL[s.band] ?? "", lang);
+  const live = fresh && s.aqi != null;
+  const path = `/s/${s.provider}/${s.raw_id}`;
+  const canonical = `${SITE}${path}`;
+  const where = [s.city, s.state].filter(Boolean).join(", ");
+  const tail = `${where ? `${where} · ` : ""}${t("air quality station", lang)} · mugilu`;
+  const fill = (x: string) =>
+    x
+      .replace("{place}", s.name)
+      .replace("{station}", s.name)
+      .replace("{city}", s.city || s.name)
+      .replace("{aqi}", String(s.aqi))
+      .replace("{band}", band)
+      .replace("{provider}", providerName(s.provider));
+  const title = live ? `${fill(t("{place} AQI today: {aqi} {band}", lang))} · ${tail}` : `${s.name} · ${tail}`;
+  const desc = live
+    ? fill(t("{station} ({city}) AQI {aqi} ({band}) right now, measured by {provider}.", lang))
+    : `${s.name}${where ? ` (${where})` : ""}: ${t("air quality station", lang)}, ${providerName(s.provider)}.`;
+  const reading = live
+    ? `<p class="aqi"><b>${s.aqi}</b><span>AQI · ${esc(band)}</span></p>
+    <p class="when">${esc(fill(t("Measured by {provider}.", lang)))} ${s.ts ? relTime(new Date(s.ts).toISOString()) : ""}</p>
+    <dl>${pollutantParts(s.pollutants)
+      .map((p) => `<dt>${esc(p.label)}</dt><dd>${p.value} ${esc(p.unit)}</dd>`)
+      .join("")}</dl>`
+    : `<p class="stale">${t("No recent reading from this station. Last reading: X", lang).replace("X", s.ts ? relTime(new Date(s.ts).toISOString()) : "n/a")}</p>`;
+  const near = nearby.length
+    ? `<nav class="nearby" aria-label="${esc(t("Air stations near here", lang))}">${t("Air stations near here", lang)}: ${nearby
+        .map((n) => `<a href="${lp(`/s/${n.provider}/${n.raw_id}`, lang)}">${esc(n.name)}</a> ${n.aqi ?? ""}`)
+        .join(" · ")}</nav>`
+    : "";
+  const body = `
+  <article class="sx" style="--band:${BAND_COLOR[s.band] ?? BAND_COLOR.unknown}">
+    <h1>${esc(s.name)}</h1>
+    <p class="where">${esc(where || "India")} · ${esc(providerName(s.provider))}</p>
+    ${reading}
+    ${s.lat != null && s.lon != null ? `<p class="full"><a href="${lp(`/c/${s.lat},${s.lon}`, lang)}">${t("The full sky here: heat, rain, warnings and what to do", lang)} →</a></p>` : ""}
+    ${near}
+    <footer>
+      <p>${esc(fill(t("Measured by {provider}.", lang)))} ${esc(t("Sources", lang))}: ${esc(providerName(s.provider))} via OAQ, via mugilu.</p>
+      <p>${esc(t(SHORT_DISCLAIMER, lang))}</p>
+      <p><a href="${path}.json">JSON</a> · <a href="${path}.md">Markdown</a> · <a href="${lp("/", lang)}">← ${t("Look up another place", lang)}</a></p>
+    </footer>
+  </article>`;
+  const jsonLd = ld({
+    "@context": "https://schema.org",
+    "@type": "Place",
+    name: `${s.name} air quality station`,
+    url: canonical,
+    geo: { "@type": "GeoCoordinates", latitude: s.lat, longitude: s.lon },
+    address: { "@type": "PostalAddress", addressLocality: s.city || undefined, addressCountry: "IN" },
+  });
+  return shell(title, body + FRESHEN, STATION_CSS, { desc, canonical, jsonLd, ogImage: HOME_OG, lang });
 }
 
 /** A place page's title and the description's first sentence, in the words people search:
