@@ -204,8 +204,8 @@ test("titles are escaped exactly once (og:title showed '&amp;amp;')", () => {
     "everyone",
     "https://mugilu.live/c/20.4,72.8",
   );
-  assert.match(html, /<title>Daman &amp; Diu: /);
-  assert.match(html, /<meta property="og:title" content="Daman &amp; Diu: /);
+  assert.match(html, /<title>Daman &amp; Diu AQI today: /);
+  assert.match(html, /<meta property="og:title" content="Daman &amp; Diu AQI today: /);
   assert.doesNotMatch(html, /&amp;amp;/);
 });
 
@@ -467,4 +467,30 @@ test("renderEmbed: the card's readings follow the order every surface uses", () 
   const html = renderEmbed(c, "everyone", "https://mugilu.live");
   const order = [...html.matchAll(/<div class="eread"><b[^>]*>[^<]*<\/b><span>([^<]+)/g)].map((m) => m[1]);
   assert.match(order[0], /feels like/, order.join(" | "));
+});
+
+// People search "Delhi AQI today", "दिल्ली AQI", "air quality": the title and description
+// carry those words and the number, in each language; no air reading keeps the old title.
+test("renderConditionsPage: the title says AQI, its number and band, the way people search", () => {
+  const delhi = conditions({ place: "Delhi", air: { ...conditions().air!, aqi: 344, band: "vpoor" } });
+  const title = (html: string) => html.match(/<title>([^<]*)<\/title>/)![1];
+  const desc = (html: string) => html.match(/<meta name="description" content="([^"]*)"/)![1];
+  assert.equal(
+    title(renderConditionsPage(delhi)),
+    "Delhi AQI today: 344 Very Poor · air quality, heat and warnings now · mugilu",
+  );
+  assert.match(
+    desc(renderConditionsPage(delhi)),
+    /^Delhi AQI 344 \(Very Poor\) right now, from the Kumarapark station 2\.3 km away\./,
+  );
+  assert.equal(
+    title(renderConditionsPage(delhi, "everyone", undefined, "hi")),
+    "Delhi AQI आज: 344 बहुत खराब · वायु गुणवत्ता, गर्मी और चेतावनियाँ अभी · mugilu",
+  );
+  assert.match(title(renderConditionsPage(delhi, "everyone", undefined, "kn")), /^Delhi AQI ಇಂದು: 344 /);
+  // with no air reading, the title names what there is
+  assert.equal(
+    title(renderConditionsPage(conditions({ place: "Leh", air: null }))),
+    "Leh: air, heat, rain and warnings right now · mugilu",
+  );
 });

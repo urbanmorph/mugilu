@@ -352,6 +352,47 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     kn: "ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ, ಅಥವಾ ಅಕ್ಷಾಂಶ, ರೇಖಾಂಶ",
   },
   // /c conditions <title> descriptor (place name is prepended, stays verbatim).
+  // place-page title and description, in the words people search ("Delhi AQI today")
+  "{place} AQI today: {aqi} {band}": { hi: "{place} AQI आज: {aqi} {band}", kn: "{place} AQI ಇಂದು: {aqi} {band}" },
+  "air quality, heat and warnings now": {
+    hi: "वायु गुणवत्ता, गर्मी और चेतावनियाँ अभी",
+    kn: "ವಾಯು ಗುಣಮಟ್ಟ, ಬಿಸಿಲು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಈಗ",
+  },
+  "{place} AQI {aqi} ({band}) right now, from the {station} station {km} km away.": {
+    hi: "{place} AQI अभी {aqi} ({band}) है, {km} km दूर {station} स्टेशन से।",
+    kn: "{place} AQI ಈಗ {aqi} ({band}), {km} km ದೂರದ {station} ನಿಲ್ದಾಣದಿಂದ.",
+  },
+  "air quality station": { hi: "वायु गुणवत्ता स्टेशन", kn: "ವಾಯು ಗುಣಮಟ್ಟ ನಿಲ್ದಾಣ" },
+  "{station} ({city}) AQI {aqi} ({band}) right now, measured by {provider}.": {
+    hi: "{station} ({city}) AQI अभी {aqi} ({band}) है, {provider} द्वारा मापा गया।",
+    kn: "{station} ({city}) AQI ಈಗ {aqi} ({band}), {provider} ಅಳೆದದ್ದು.",
+  },
+  "Measured by {provider}.": { hi: "{provider} द्वारा मापा गया।", kn: "{provider} ಅಳೆದದ್ದು." },
+  "No recent reading from this station. Last reading: X": {
+    hi: "इस स्टेशन से हाल का कोई आँकड़ा नहीं। आखिरी आँकड़ा: X",
+    kn: "ಈ ನಿಲ್ದಾಣದಿಂದ ಇತ್ತೀಚಿನ ಮಾಹಿತಿ ಇಲ್ಲ. ಕೊನೆಯ ಮಾಹಿತಿ: X",
+  },
+  "The full sky here: heat, rain, warnings and what to do": {
+    hi: "यहाँ का पूरा हाल: गर्मी, बारिश, चेतावनियाँ और क्या करें",
+    kn: "ಇಲ್ಲಿನ ಪೂರ್ಣ ಆಕಾಶ: ಬಿಸಿಲು, ಮಳೆ, ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ಏನು ಮಾಡಬೇಕು",
+  },
+  // GRAP (Delhi-NCR): the range Delhi's AQI is in, never the stage in force (grap.ts)
+  "Delhi's AQI averages {aqi} across {n} CPCB stations now, in the Stage {stage} range ({range}). The stage in force is set by CAQM.":
+    {
+      hi: "अभी {n} CPCB स्टेशनों पर Delhi का औसत AQI {aqi} है, जो Stage {stage} की सीमा ({range}) में है। लागू स्टेज CAQM तय करता है।",
+      kn: "ಈಗ {n} CPCB ನಿಲ್ದಾಣಗಳಲ್ಲಿ Delhi ಸರಾಸರಿ AQI {aqi}, ಇದು Stage {stage} ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ({range}) ಇದೆ. ಜಾರಿಯಲ್ಲಿರುವ ಹಂತವನ್ನು CAQM ನಿರ್ಧರಿಸುತ್ತದೆ.",
+    },
+  "Delhi's AQI averages {aqi} across {n} CPCB stations now, below the Stage I range (201-300). The stage in force is set by CAQM.":
+    {
+      hi: "अभी {n} CPCB स्टेशनों पर Delhi का औसत AQI {aqi} है, जो Stage I की सीमा (201-300) से नीचे है। लागू स्टेज CAQM तय करता है।",
+      kn: "ಈಗ {n} CPCB ನಿಲ್ದಾಣಗಳಲ್ಲಿ Delhi ಸರಾಸರಿ AQI {aqi}, ಇದು Stage I ವ್ಯಾಪ್ತಿಗಿಂತ (201-300) ಕಡಿಮೆ. ಜಾರಿಯಲ್ಲಿರುವ ಹಂತವನ್ನು CAQM ನಿರ್ಧರಿಸುತ್ತದೆ.",
+    },
+  "above 450": { hi: "450 से ऊपर", kn: "450 ಕ್ಕಿಂತ ಹೆಚ್ಚು" },
+  "Air stations near here": { hi: "पास के वायु गुणवत्ता स्टेशन", kn: "ಹತ್ತಿರದ ವಾಯು ಗುಣಮಟ್ಟ ನಿಲ್ದಾಣಗಳು" },
+  "{place} AQI {aqi} ({band}) right now, modelled.": {
+    hi: "{place} AQI अभी {aqi} ({band}) है, मॉडल का अनुमान।",
+    kn: "{place} AQI ಈಗ {aqi} ({band}), ಮಾದರಿಯ ಅಂದಾಜು.",
+  },
   "air, heat, rain and warnings right now": {
     hi: "वायु, गर्मी, बारिश और चेतावनियाँ अभी",
     kn: "ಈಗಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",

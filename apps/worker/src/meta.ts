@@ -1,5 +1,6 @@
 import { allSlugPlaces } from "./slugs";
 import { sourcesMarkdown } from "./sources";
+import type { NormalizedStation } from "./types";
 
 // Discoverability + agent front-door files: plain-text/XML siblings to the HTML
 // pages, so people, search engines, and LLM crawlers all find the same surface.
@@ -25,6 +26,7 @@ export function robotsTxt(siteUrl: string): string {
     "Allow: /",
     "",
     `Sitemap: ${siteUrl}/sitemap.xml`,
+    `Sitemap: ${siteUrl}/sitemap-stations.xml`,
     "",
   ].join("\n");
 }
@@ -202,12 +204,10 @@ export function openApiSpec(siteUrl: string): object {
  *  place page's live readings move constantly, but its indexable text does not, and
  *  stamping all ~800 with today's date every day just teaches crawlers to distrust
  *  our lastmod. Bump STATIC when a page's text (not its live numbers) changes. */
-export function sitemapXml(siteUrl: string): string {
-  const today = new Date().toISOString().slice(0, 10);
-  const STATIC = "2026-07-07";
-  const live = new Set(["/", "/warnings"]);
-  // Static pages + the /places directory + a named /c/{slug} page per district.
-  const paths = [
+/** Every indexable page: the static pages, the /places directory and a named /c/{slug}
+ *  page per district (the sitemap's list, and what IndexNow announces). */
+export function sitemapPaths(): string[] {
+  return [
     "/",
     "/about",
     "/methodology",
@@ -216,8 +216,40 @@ export function sitemapXml(siteUrl: string): string {
     "/warnings",
     ...allSlugPlaces().map((p) => `/c/${p.slug}`),
   ];
-  // Localized URL for a path: English is unprefixed (canonical); hi/kn get a /prefix.
-  const loc = (p: string, l: string) => `${siteUrl}${l === "en" ? "" : "/" + l}${p === "/" ? "" : p}`;
+}
+
+/** A page's URL in a language: English is unprefixed (canonical); hi/kn get a /prefix. */
+export const localizedUrl = (siteUrl: string, p: string, l: string) =>
+  `${siteUrl}${l === "en" ? "" : "/" + l}${p === "/" ? "" : p}`;
+
+/** One page per air station (/s/{provider}/{id}), the three languages paired. Built from
+ *  the snapshot, so it lists the stations that report. */
+export function stationSitemapXml(siteUrl: string, stations: NormalizedStation[]): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const loc = (p: string, l: string) => localizedUrl(siteUrl, p, l);
+  const urls = stations
+    .map((s) => {
+      const p = `/s/${s.provider}/${s.raw_id}`;
+      const alts = ["en", "hi", "kn"]
+        .map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${loc(p, l)}"/>`)
+        .join("");
+      return `  <url><loc>${loc(p, "en")}</loc><lastmod>${today}</lastmod>${alts}</url>`;
+    })
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${urls}
+</urlset>
+`;
+}
+
+export function sitemapXml(siteUrl: string): string {
+  const today = new Date().toISOString().slice(0, 10);
+  // Bumped 11 Nov 2026: place titles now carry the AQI ("Delhi AQI today: 344 Very Poor").
+  const STATIC = "2026-11-11";
+  const live = new Set(["/", "/warnings"]);
+  const paths = sitemapPaths();
+  const loc = (p: string, l: string) => localizedUrl(siteUrl, p, l);
   // hreflang alternates so search engines pair the three language versions (+ x-default).
   const alts = (p: string) =>
     ["en", "hi", "kn"].map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${loc(p, l)}"/>`).join("") +

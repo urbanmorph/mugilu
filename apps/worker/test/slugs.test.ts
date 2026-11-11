@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { placeBySlug, slugForName, allSlugPlaces, slugPlacesByState, siblingPlaces } from "../src/slugs";
+import { placeBySlug, slugForName, allSlugPlaces, slugPlacesByState, siblingPlaces, slugLabel } from "../src/slugs";
 import { sitemapXml } from "../src/meta";
 
 test("slugs: major cities get clean keyword slugs, not LGD district names", () => {
@@ -63,4 +63,11 @@ test("sitemap: lists the named /c/{slug} place pages (keyword URLs)", () => {
   assert.match(xml, /<loc>https:\/\/mugilu\.live\/c\/lucknow<\/loc>/);
   assert.match(xml, /<loc>https:\/\/mugilu\.live\/c\/bengaluru<\/loc>/);
   assert.doesNotMatch(xml, /c\/12\.97,77\.59/); // coordinate URLs are no longer the sitemap surface
+});
+
+test("slugLabel: a place whose state has the same name is said once (Delhi, not Delhi, Delhi)", () => {
+  assert.equal(slugLabel({ name: "Delhi", state: "Delhi" } as never), "Delhi");
+  assert.equal(slugLabel({ name: "Chandigarh", state: "Chandigarh" } as never), "Chandigarh");
+  assert.equal(slugLabel({ name: "New Delhi", state: "Delhi" } as never), "New Delhi, Delhi");
+  assert.equal(slugLabel({ name: "Leh" } as never), "Leh");
 });

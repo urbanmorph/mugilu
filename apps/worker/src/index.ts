@@ -15,6 +15,7 @@ import {
   renderConditionsPage,
   renderKioskPage,
   renderDisplayBuilder,
+  renderStationPage,
   renderHome,
   renderAbout,
   renderTerms,
@@ -26,8 +27,9 @@ import {
 } from "./page";
 import { qrSvg } from "./qr";
 import { lp, type Lang } from "./i18n";
-import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
+import { robotsTxt, llmsTxt, sitemapXml, stationSitemapXml, openApiSpec } from "./meta";
 import { geocodeList } from "./geocode";
+import { INDEXNOW_KEY, INDEXNOW_PATH, indexNowUrls, submitIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
@@ -47,10 +49,10 @@ import {
 } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
-import { placeBySlug, slugForName } from "./slugs";
+import { placeBySlug, slugForName, slugLabel } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
+import { loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { Conditions, NormalizedStation } from "./types";
@@ -101,6 +103,7 @@ function cachedResponse(body: string, contentType: string, clientMaxAge?: number
 // its usage, so the demand, behaviour and adopter metrics count every request.
 /** Live data (conditions, embed, home, warnings, leaderboard, stations): the
  *  weather upstream is itself cached 15 min and air/warnings move hourly. */
+const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 const LIVE_EDGE_TTL = 300;
 /** Output fixed by the deployed code (front-door files, static pages, manifest):
  *  short enough that a deploy shows within 15 minutes. */
@@ -122,8 +125,6 @@ function badRequest(message: string): Response {
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
-
-    const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 
     // Canonical host: send www → apex (301), preserving path + query.
     if (url.hostname === "www.mugilu.live") {
@@ -217,6 +218,10 @@ export default {
         cachedResponse(JSON.stringify(openApiSpec(SITE_URL), null, 2), "application/json; charset=utf-8"),
       );
     }
+
+    // IndexNow's key file: proves to the engines that this site sent the pings (indexnow.ts).
+    if (url.pathname === INDEXNOW_PATH)
+      return new Response(INDEXNOW_KEY, { headers: { "content-type": "text/plain; charset=utf-8" } });
 
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return cached(IMAGE_EDGE_TTL, () => iconPng());
@@ -482,7 +487,7 @@ export default {
           status: 404,
           headers: { "content-type": "text/html; charset=utf-8" },
         });
-      const label = place.state ? `${place.name}, ${place.state}` : place.name;
+      const label = slugLabel(place);
       return serveConditions(place.lat, place.lon, ext, parsePersona(url.searchParams.get("as")), `/c/${slug}`, label);
     }
 
@@ -524,6 +529,49 @@ export default {
         const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
         if (!station) return new Response("station not found", { status: 404 });
         return renderStationOg(station, snap.generated_at);
+      });
+    }
+
+    // Per-station page: /s/{provider}/{raw_id}, titled the way people search ("Anand Vihar
+    // AQI today"). A station that has not reported lately is shown as that (from the raw
+    // snapshot), so its URL keeps answering; one never seen is a 404.
+    const stationPage = url.pathname.match(/^\/s\/([^/]+)\/([^/.]+)$/);
+    if (stationPage) {
+      const [, provider, rawId] = stationPage;
+      return cached(LIVE_EDGE_TTL, async () => {
+        const fresh = await loadSnapshot(env);
+        const is = (x: NormalizedStation) => x.provider === provider && x.raw_id === rawId;
+        let station = fresh?.stations.find(is);
+        const live = !!station;
+        station ??= (await loadRawSnapshot(env))?.stations.find(is);
+        if (!station)
+          return {
+            res: new Response(renderNotFound(lang), {
+              status: 404,
+              headers: { "content-type": "text/html; charset=utf-8" },
+            }),
+            store: false,
+          };
+        const { lat, lon } = station;
+        const nearby =
+          lat != null && lon != null
+            ? findNearest(
+                (fresh?.stations ?? []).filter((x) => x.aqi != null && !is(x)),
+                lat,
+                lon,
+                8,
+              ).filter((x) => x.distance_km <= 25)
+            : [];
+        return cachedResponse(renderStationPage(station, nearby, live, lang), "text/html; charset=utf-8");
+      });
+    }
+
+    // Every station page, for search engines (robots.txt lists it beside /sitemap.xml).
+    if (url.pathname === "/sitemap-stations.xml") {
+      return cached(STATIC_EDGE_TTL, async () => {
+        const snap = await loadRawSnapshot(env);
+        if (!snap) return { res: new Response("no snapshot yet", { status: 503 }), store: false };
+        return cachedResponse(stationSitemapXml(SITE_URL, snap.stations), "application/xml; charset=utf-8");
       });
     }
 
@@ -690,6 +738,13 @@ export default {
         ),
       );
       ctx.waitUntil(pruneReferrers(env).catch((e) => console.error(`[referrers] prune failed: ${reason(e)}`)));
+      // Once a day, tell the IndexNow engines (Bing and others) the pages have new readings.
+      ctx.waitUntil(
+        submitIndexNow(SITE_URL, indexNowUrls(SITE_URL)).then(
+          (r) => console.log(`[indexnow] ${r.count} urls (HTTP ${r.status})`),
+          (e) => console.error(`[indexnow] failed: ${reason(e)}`),
+        ),
+      );
     }
   },
 };
