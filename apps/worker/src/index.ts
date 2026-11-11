@@ -28,6 +28,7 @@ import { qrSvg } from "./qr";
 import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
 import { geocodeList } from "./geocode";
+import { INDEXNOW_KEY, INDEXNOW_PATH, indexNowUrls, submitIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
@@ -101,6 +102,7 @@ function cachedResponse(body: string, contentType: string, clientMaxAge?: number
 // its usage, so the demand, behaviour and adopter metrics count every request.
 /** Live data (conditions, embed, home, warnings, leaderboard, stations): the
  *  weather upstream is itself cached 15 min and air/warnings move hourly. */
+const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 const LIVE_EDGE_TTL = 300;
 /** Output fixed by the deployed code (front-door files, static pages, manifest):
  *  short enough that a deploy shows within 15 minutes. */
@@ -123,7 +125,6 @@ export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
 
-    const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 
     // Canonical host: send www → apex (301), preserving path + query.
     if (url.hostname === "www.mugilu.live") {
@@ -217,6 +218,10 @@ export default {
         cachedResponse(JSON.stringify(openApiSpec(SITE_URL), null, 2), "application/json; charset=utf-8"),
       );
     }
+
+    // IndexNow's key file: proves to the engines that this site sent the pings (indexnow.ts).
+    if (url.pathname === INDEXNOW_PATH)
+      return new Response(INDEXNOW_KEY, { headers: { "content-type": "text/plain; charset=utf-8" } });
 
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return cached(IMAGE_EDGE_TTL, () => iconPng());
@@ -690,6 +695,13 @@ export default {
         ),
       );
       ctx.waitUntil(pruneReferrers(env).catch((e) => console.error(`[referrers] prune failed: ${reason(e)}`)));
+      // Once a day, tell the IndexNow engines (Bing and others) the pages have new readings.
+      ctx.waitUntil(
+        submitIndexNow(SITE_URL, indexNowUrls(SITE_URL)).then(
+          (r) => console.log(`[indexnow] ${r.count} urls (HTTP ${r.status})`),
+          (e) => console.error(`[indexnow] failed: ${reason(e)}`),
+        ),
+      );
     }
   },
 };
