@@ -1,6 +1,5 @@
 import { allSlugPlaces } from "./slugs";
 import { sourcesMarkdown } from "./sources";
-import type { NormalizedStation } from "./types";
 
 // Discoverability + agent front-door files: plain-text/XML siblings to the HTML
 // pages, so people, search engines, and LLM crawlers all find the same surface.
@@ -26,7 +25,6 @@ export function robotsTxt(siteUrl: string): string {
     "Allow: /",
     "",
     `Sitemap: ${siteUrl}/sitemap.xml`,
-    `Sitemap: ${siteUrl}/sitemap-stations.xml`,
     "",
   ].join("\n");
 }
@@ -221,27 +219,6 @@ export function sitemapPaths(): string[] {
 /** A page's URL in a language: English is unprefixed (canonical); hi/kn get a /prefix. */
 export const localizedUrl = (siteUrl: string, p: string, l: string) =>
   `${siteUrl}${l === "en" ? "" : "/" + l}${p === "/" ? "" : p}`;
-
-/** One page per air station (/s/{provider}/{id}), the three languages paired. Built from
- *  the snapshot, so it lists the stations that report. */
-export function stationSitemapXml(siteUrl: string, stations: NormalizedStation[]): string {
-  const today = new Date().toISOString().slice(0, 10);
-  const loc = (p: string, l: string) => localizedUrl(siteUrl, p, l);
-  const urls = stations
-    .map((s) => {
-      const p = `/s/${s.provider}/${s.raw_id}`;
-      const alts = ["en", "hi", "kn"]
-        .map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${loc(p, l)}"/>`)
-        .join("");
-      return `  <url><loc>${loc(p, "en")}</loc><lastmod>${today}</lastmod>${alts}</url>`;
-    })
-    .join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${urls}
-</urlset>
-`;
-}
 
 export function sitemapXml(siteUrl: string): string {
   const today = new Date().toISOString().slice(0, 10);

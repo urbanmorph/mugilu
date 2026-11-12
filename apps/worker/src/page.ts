@@ -274,13 +274,15 @@ interface ShellOpts {
   lang?: Lang;
   /** Chromeless: no header bar, footer nav or language switcher (kiosk/display). */
   bare?: boolean;
+  /** Keep the page out of search indexes while its links are still followed (thin, endless pages). */
+  noindex?: boolean;
 }
 
 function shell(
   title: string,
   body: string,
   css: string,
-  { desc = DEFAULT_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare }: ShellOpts = {},
+  { desc = DEFAULT_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex }: ShellOpts = {},
 ): string {
   const cur = canonical ? langUrl(canonical, lang) : undefined;
   // hreflang alternates for every language + x-default (English) so search
@@ -313,7 +315,7 @@ ${VIEWPORT}
 ${installHead(lang)}
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
-${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
+${noindex ? `<meta name="robots" content="noindex, follow">\n` : ""}${cur ? `<link rel="canonical" href="${esc(cur)}">` : ""}${alts}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="mugilu">
 ${localeTags}
@@ -808,6 +810,8 @@ export function renderConditionsPage(
   lang: Lang = "en",
   /** mugilu's VAPID public key, when alerts are set up: shows the "alert me" box. */
   alertsKey?: string,
+  /** An arbitrary point (not a named place): endless and thin, so kept out of search indexes. */
+  noindex = false,
 ): string {
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk, (en) => t(en, lang));
@@ -947,6 +951,7 @@ export function renderConditionsPage(
     jsonLd: dataset,
     ogImage: canonical ? `${canonical}.png` : HOME_OG,
     lang,
+    noindex,
   });
 }
 
@@ -1026,7 +1031,8 @@ export function renderStationPage(
     geo: { "@type": "GeoCoordinates", latitude: s.lat, longitude: s.lon },
     address: { "@type": "PostalAddress", addressLocality: s.city || undefined, addressCountry: "IN" },
   });
-  return shell(title, body + FRESHEN, STATION_CSS, { desc, canonical, jsonLd, ogImage: HOME_OG, lang });
+  // Station pages are thin and Google never crawled them: they stay for people, out of the index.
+  return shell(title, body + FRESHEN, STATION_CSS, { desc, canonical, jsonLd, ogImage: HOME_OG, lang, noindex: true });
 }
 
 const GRAP_RANGE = ["201-300", "201-300", "301-400", "401-450", "above 450"];
