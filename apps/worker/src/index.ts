@@ -57,6 +57,7 @@ import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { Conditions, NormalizedStation } from "./types";
 import { reason } from "./logs";
+import { archiveHealth } from "./archives";
 
 export interface Env {
   OAQ_KV: KVNamespace;
@@ -165,6 +166,11 @@ export default {
 
     if (url.pathname === "/health") {
       return Response.json({ ok: true, ts: new Date().toISOString() });
+    }
+
+    // When the newest air and conditions archive files were written: ops watches that the record keeps growing.
+    if (url.pathname === "/health/archives") {
+      return Response.json(await archiveHealth(env.OAQ_R2), { headers: { "cache-control": "public, max-age=300" } });
     }
 
     // MCP server (the agent front-door): JSON-RPC 2.0 over Streamable HTTP.
