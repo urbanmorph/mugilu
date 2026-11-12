@@ -21,18 +21,27 @@ export function hasCoverage(points: ConditionsPoint[]): boolean {
   return points.length > 0 && filled / points.length >= MIN_COVERAGE;
 }
 
+/** Where a grid snapshot is kept: archive/conditions/{YYYY-MM-DD}/{HH}.json.gz, off its UTC hour (as the air
+ *  archive, refresh.ts). */
+export function conditionsArchiveKey(generatedAt: string): string {
+  return `archive/conditions/${generatedAt.slice(0, 10)}/${generatedAt.slice(11, 13)}.json.gz`;
+}
+
 /**
  * Collect modelled conditions (heat/rain/UV/dust) over the national grid and
  * write the snapshot to R2. This is what makes heat etc. national, rankable and
  * archivable, first-class alongside the air-station snapshot, not air-biased.
+ * Each run's grid is also kept, gzipped, in the archive: mugilu's own record of what
+ * it already fetches (about 26 KB a run), instead of overwriting it. `delayMs` paces
+ * the Open-Meteo batches (tests pass 0).
  */
-export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
+export async function collectConditions(env: Env, delayMs = 12_000): Promise<ConditionsSnapshot> {
   // Throttle ~12s/batch to keep any 60s window under Open-Meteo's minute limit.
   // A failed bulk call, or too few points answered, counts as err:upstream:openmeteo.
   const points = await counted(env, "openmeteo", async () => {
     const wx = await getOpenMeteoBulk(
       GRID.map((c) => ({ lat: c.lat, lon: c.lon })),
-      12_000,
+      delayMs,
     );
     const pts: ConditionsPoint[] = GRID.map((c, i) => ({ ...c, wx: wx[i] ?? {} }));
     if (!hasCoverage(pts)) throw new Error("[collect] too few grid points came back; kept the previous grid");
@@ -45,6 +54,13 @@ export async function collectConditions(env: Env): Promise<ConditionsSnapshot> {
     points,
   };
 
-  await putJson(env, GRID_KEY, JSON.stringify(snapshot), "public, max-age=300");
+  const body = JSON.stringify(snapshot);
+  const gz = await new Response(new Response(body).body!.pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
+  await Promise.all([
+    putJson(env, GRID_KEY, body, "public, max-age=300"),
+    env.OAQ_R2.put(conditionsArchiveKey(snapshot.generated_at), gz, {
+      httpMetadata: { contentType: "application/json", contentEncoding: "gzip" },
+    }),
+  ]);
   return snapshot;
 }
