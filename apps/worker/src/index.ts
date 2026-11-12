@@ -27,7 +27,7 @@ import {
 } from "./page";
 import { qrSvg } from "./qr";
 import { lp, type Lang } from "./i18n";
-import { robotsTxt, llmsTxt, sitemapXml, stationSitemapXml, openApiSpec } from "./meta";
+import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
 import { geocodeList } from "./geocode";
 import { INDEXNOW_KEY, INDEXNOW_PATH, indexNowUrls, submitIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
@@ -441,6 +441,8 @@ export default {
         const s = slugForName(conditions.place.split(",")[0]);
         if (s) canonical = `${SITE_URL}/c/${s}`;
       }
+      // An arbitrary point (no named place owns it) stays self-canonical: endless and thin, so noindex.
+      const arbitrary = !placeName && canonical === `${SITE_URL}${canonicalPath}`;
       if (ext === "png") return renderConditionsOg(conditions, persona);
       if (ext === "json")
         return cachedResponse(
@@ -462,7 +464,14 @@ export default {
         );
       }
       return cachedResponse(
-        renderConditionsPage(conditions, persona, canonical, lang, alertsOn(env) ? env.VAPID_PUBLIC_KEY : undefined),
+        renderConditionsPage(
+          conditions,
+          persona,
+          canonical,
+          lang,
+          alertsOn(env) ? env.VAPID_PUBLIC_KEY : undefined,
+          arbitrary,
+        ),
         "text/html; charset=utf-8",
       );
     }
@@ -569,15 +578,6 @@ export default {
               ).filter((x) => x.distance_km <= 25)
             : [];
         return cachedResponse(renderStationPage(station, nearby, live, lang), "text/html; charset=utf-8");
-      });
-    }
-
-    // Every station page, for search engines (robots.txt lists it beside /sitemap.xml).
-    if (url.pathname === "/sitemap-stations.xml") {
-      return cached(STATIC_EDGE_TTL, async () => {
-        const snap = await loadRawSnapshot(env);
-        if (!snap) return { res: new Response("no snapshot yet", { status: 503 }), store: false };
-        return cachedResponse(stationSitemapXml(SITE_URL, snap.stations), "application/xml; charset=utf-8");
       });
     }
 

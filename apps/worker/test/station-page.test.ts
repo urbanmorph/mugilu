@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderStationPage, renderConditionsPage } from "../src/page";
-import { stationSitemapXml, robotsTxt } from "../src/meta";
+import { robotsTxt } from "../src/meta";
 import type { Conditions, NormalizedStation } from "../src/types";
 
 const st = (over: Partial<NormalizedStation> = {}): NormalizedStation => ({
@@ -53,12 +53,12 @@ test("renderStationPage (hi): localised framing, names and acronyms Latin, links
   assert.match(html, /href="\/hi\/s\/cpcb\/1"/);
 });
 
-test("stationSitemapXml: every station page, with the three languages paired; robots lists it", () => {
-  const xml = stationSitemapXml("https://mugilu.live", [st(), ...near]);
-  assert.match(xml, /<loc>https:\/\/mugilu\.live\/s\/cpcb\/1558<\/loc>/);
-  assert.match(xml, /hreflang="hi" href="https:\/\/mugilu\.live\/hi\/s\/cpcb\/1558"/);
-  assert.equal((xml.match(/<url>/g) ?? []).length, 2);
-  assert.match(robotsTxt("https://mugilu.live"), /Sitemap: https:\/\/mugilu\.live\/sitemap-stations\.xml/);
+test("station pages stay out of the index but pass their links on; robots.txt lists no station sitemap", () => {
+  // 1,334 thin station pages were never crawled (Search Console: "Discovered, not indexed", zero
+  // impressions in 90 days); they stay for people, out of Google's way for the city pages.
+  assert.match(renderStationPage(st(), near, true), /<meta name="robots" content="noindex, follow">/);
+  assert.doesNotMatch(robotsTxt("https://mugilu.live"), /sitemap-stations/);
+  assert.match(robotsTxt("https://mugilu.live"), /Sitemap: https:\/\/mugilu\.live\/sitemap\.xml/);
 });
 
 test("renderConditionsPage: lists the air stations near the place, linking to each", () => {
@@ -88,6 +88,13 @@ test("renderConditionsPage: lists the air stations near the place, linking to ea
     disclaimer: "Informational only.",
   } as unknown as Conditions;
   const html = renderConditionsPage(c);
+  // a named place (and a point that canonicalises to one) is indexable
+  assert.doesNotMatch(html, /name="robots"/);
+  // an arbitrary point is not: there are endless of them, all thin
+  assert.match(
+    renderConditionsPage(c, "everyone", "https://mugilu.live/c/28.61,77.21", "en", undefined, true),
+    /<meta name="robots" content="noindex, follow">/,
+  );
   assert.match(html, /Air stations near here/);
   assert.match(html, /href="\/s\/cpcb\/1558"[^>]*>Anand Vihar<\/a> 412/);
 });
