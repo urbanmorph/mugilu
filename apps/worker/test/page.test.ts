@@ -494,3 +494,21 @@ test("renderConditionsPage: the title says AQI, its number and band, the way peo
     "Leh: air, heat, rain and warnings right now · mugilu",
   );
 });
+
+test("renderConditionsPage: a named city links its ward map (bharatlas) and its state's species (yellide)", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/jaipur");
+  assert.match(html, /<nav class="nearby around" aria-label="Around Jaipur">Around Jaipur:/);
+  assert.match(
+    html,
+    /<a href="https:\/\/bharatlas\.com\/view\/wards_jaipur">Find your ward: Jaipur ward map \(bharatlas\)<\/a>/,
+  );
+  assert.match(html, /<a href="https:\/\/yellide\.com\/in\/rajasthan">Species of Rajasthan \(yellide\)<\/a>/);
+  const hi = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/jaipur", "hi");
+  assert.match(hi, /Jaipur के आस-पास:/);
+  assert.match(hi, /Rajasthan की प्रजातियाँ \(yellide\)/);
+});
+
+test("renderConditionsPage: no sister-site links on a bare-coordinate page", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/12.97,77.59");
+  assert.doesNotMatch(html, /yellide\.com|bharatlas\.com\/view/);
+});

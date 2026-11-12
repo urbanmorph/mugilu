@@ -28,6 +28,7 @@ import {
 import type { AmbientRisk, Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR, levelColor, tintOf } from "./palette";
 import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
+import { aroundLinks } from "./sister";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 import { INSTALL_CSS, INSTALL_JS, installButton, installHead } from "./install";
@@ -839,6 +840,22 @@ export function renderConditionsPage(
     if (sibs.length) {
       const near = sibs.map((s) => `<a href="${lp(`/c/${s.slug}`, lang)}">${esc(s.name)}</a>`).join(" · ");
       nearby = `<nav class="nearby" aria-label="${esc(t("Nearby places", lang))}">${t("Nearby:", lang)} ${near}</nav>`;
+    }
+    // The same place on the sister sites: its ward map (bharatlas) and its state's species (yellide).
+    const around = m ? aroundLinks(m[1]) : null;
+    if (around && (around.wards || around.species)) {
+      const label = t("Around {place}:", lang).replace("{place}", around.city);
+      const links = [
+        around.wards
+          ? `<a href="${around.wards}">${esc(t("Find your ward: {place} ward map", lang).replace("{place}", around.city))} (bharatlas)</a>`
+          : "",
+        around.species
+          ? `<a href="${around.species}">${esc(t("Species of {state}", lang).replace("{state}", around.state))} (yellide)</a>`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      nearby += `<nav class="nearby around" aria-label="${esc(label.replace(/:$/, ""))}">${esc(label)} ${links}</nav>`;
     }
   }
   // The air stations around the place, each to its own page ("Anand Vihar AQI").

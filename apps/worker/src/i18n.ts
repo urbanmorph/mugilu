@@ -1623,6 +1623,12 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   // UI audit (2026-10): footer and nearby links, and the separate air-reading age.
   // Drafts pending native review.
   "Nearby:": { hi: "आस-पास:", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು:" },
+  "Around {place}:": { hi: "{place} के आस-पास:", kn: "{place} ಸುತ್ತಮುತ್ತ:" },
+  "Find your ward: {place} ward map": {
+    hi: "अपना वार्ड खोजें: {place} वार्ड नक्शा",
+    kn: "ನಿಮ್ಮ ವಾರ್ಡ್ ಹುಡುಕಿ: {place} ವಾರ್ಡ್ ನಕ್ಷೆ",
+  },
+  "Species of {state}": { hi: "{state} की प्रजातियाँ", kn: "{state}: ಜೀವಪ್ರಭೇದಗಳು" },
   "Nearby places": { hi: "आस-पास के स्थान", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು" },
   "all places": { hi: "सभी स्थान", kn: "ಎಲ್ಲಾ ಸ್ಥಳಗಳು" },
   "air reading": { hi: "वायु के आँकड़े:", kn: "ವಾಯು ಗುಣಮಟ್ಟ ಮಾಹಿತಿ" },
