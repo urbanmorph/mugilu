@@ -8,6 +8,7 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.sathya--sankaran%2Fmugilu-7c3aed)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.sathya-sankaran/mugilu)
 [![Runs on Cloudflare Workers](https://img.shields.io/badge/runs_on-Cloudflare_Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
 [![mugilu MCP connector: tool definition quality and endpoint health on Glama](https://glama.ai/mcp/connectors/io.github.sathya-sankaran/mugilu/badges/score.svg)](https://glama.ai/mcp/connectors/io.github.sathya-sankaran/mugilu)
+[![mugilu MCP connector on mcptry](https://mcptry.com/badge/io.github.sathya-sankaran/mugilu)](https://mcptry.com/servers/io.github.sathya-sankaran/mugilu)
 
 ![The mugilu homepage: a place search box and a map of India showing where the air, heat or cold is worst right now](docs/screenshots/home-desktop.png)
 
