@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { INDEXNOW_KEY, indexNowUrls, submitIndexNow } from "../src/indexnow";
+import { INDEXNOW_KEY, indexNowUrls, todaysIndexNowUrls, submitIndexNow } from "../src/indexnow";
 
 const SITE = "https://mugilu.live";
 
@@ -35,4 +35,17 @@ test("submitIndexNow: one POST to the shared IndexNow endpoint, with the key fil
 test("submitIndexNow: a refusal is an error, so the daily job logs it as failed", async () => {
   const fetcher = (async () => new Response("Forbidden", { status: 403 })) as unknown as typeof fetch;
   await assert.rejects(submitIndexNow(SITE, [SITE], fetcher), /indexnow 403/);
+});
+
+test("todaysIndexNowUrls: a seventh of the pages a day, so each is announced once a week", () => {
+  // Sending every page (~2,400) every day drew HTTP 429 from IndexNow on 11 and 12 Nov: it throttles
+  // resubmitting unchanged URLs. A rotating slice keeps each page announced weekly.
+  const all = indexNowUrls(SITE);
+  const week = Array.from({ length: 7 }, (_, d) => todaysIndexNowUrls(SITE, new Date(Date.UTC(2026, 10, 16 + d))));
+  for (const day of week) assert.ok(day.length > 0 && day.length <= Math.ceil(all.length / 7));
+  assert.deepEqual(week.flat().sort(), [...all].sort()); // the week covers every page exactly once
+  // the same day gives the same slice (a rerun sends nothing new), the next week repeats it
+  const mon = new Date(Date.UTC(2026, 10, 16, 20, 30));
+  assert.deepEqual(todaysIndexNowUrls(SITE, mon), todaysIndexNowUrls(SITE, new Date(Date.UTC(2026, 10, 16, 3))));
+  assert.deepEqual(todaysIndexNowUrls(SITE, mon), todaysIndexNowUrls(SITE, new Date(Date.UTC(2026, 10, 23, 20, 30))));
 });

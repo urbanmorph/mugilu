@@ -14,6 +14,16 @@ export function indexNowUrls(siteUrl: string): string[] {
   return sitemapPaths().flatMap((p) => ["en", "hi", "kn"].map((l) => localizedUrl(siteUrl, p, l)));
 }
 
+const DAYS = 7;
+
+/** Today's share of the pages: every seventh, rotating by the UTC day, so each page is announced
+ *  once a week. Sending all ~2,400 every day drew HTTP 429 (IndexNow throttles resubmitting
+ *  unchanged URLs); the readings change hourly, but the pages themselves are the same. */
+export function todaysIndexNowUrls(siteUrl: string, now: Date = new Date()): string[] {
+  const day = Math.floor(now.getTime() / 86_400_000) % DAYS;
+  return indexNowUrls(siteUrl).filter((_, i) => i % DAYS === day);
+}
+
 /** Announce `urls` (up to 10,000) in one request. A refusal throws, so the job logs it. */
 export async function submitIndexNow(
   siteUrl: string,
