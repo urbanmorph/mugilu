@@ -1,5 +1,6 @@
 import { allSlugPlaces } from "./slugs";
 import { sourcesMarkdown } from "./sources";
+import { TOOLS } from "./mcptools";
 
 // Discoverability + agent front-door files: plain-text/XML siblings to the HTML
 // pages, so people, search engines, and LLM crawlers all find the same surface.
@@ -27,6 +28,25 @@ export function robotsTxt(siteUrl: string): string {
     `Sitemap: ${siteUrl}/sitemap.xml`,
     "",
   ].join("\n");
+}
+
+/** /.well-known/mcp.json: where agents find the hosted MCP server, and the tools it has.
+ *  The tool names come from TOOLS, so this file can't drift from what /mcp serves. */
+export function mcpJson(siteUrl: string): string {
+  return JSON.stringify(
+    {
+      name: "mugilu",
+      title: "mugilu: the open sky of India",
+      description:
+        "The sky over any place in India now: air quality, heat, rain, fog, smoke, UV and official warnings, with the single worst hazard named. Free, no sign-in.",
+      homepage: siteUrl,
+      remotes: [{ type: "streamable-http", url: `${siteUrl}/mcp` }],
+      tools: TOOLS.map((t) => t.name),
+      license: "Code MIT; each data source keeps its own licence",
+    },
+    null,
+    2,
+  );
 }
 
 /** llms.txt: the LLM-friendly manifest of what mugilu is and how to read it. */

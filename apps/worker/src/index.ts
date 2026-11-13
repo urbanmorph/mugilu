@@ -27,7 +27,7 @@ import {
 } from "./page";
 import { qrSvg } from "./qr";
 import { lp, type Lang } from "./i18n";
-import { robotsTxt, llmsTxt, sitemapXml, openApiSpec } from "./meta";
+import { robotsTxt, llmsTxt, sitemapXml, openApiSpec, mcpJson } from "./meta";
 import { geocodeList } from "./geocode";
 import { INDEXNOW_KEY, INDEXNOW_PATH, todaysIndexNowUrls, submitIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
@@ -214,6 +214,9 @@ export default {
     }
     if (url.pathname === "/llms.txt") {
       return cached(STATIC_EDGE_TTL, () => cachedResponse(llmsTxt(SITE_URL), "text/plain; charset=utf-8"));
+    }
+    if (url.pathname === "/.well-known/mcp.json") {
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(mcpJson(SITE_URL), "application/json; charset=utf-8"));
     }
     if (url.pathname === "/sitemap.xml") {
       return cached(STATIC_EDGE_TTL, () => cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8"));
