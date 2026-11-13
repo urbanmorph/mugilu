@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { openApiSpec, llmsTxt, sitemapXml, robotsTxt } from "../src/meta";
+import { openApiSpec, llmsTxt, sitemapXml, robotsTxt, mcpJson } from "../src/meta";
+import { TOOLS } from "../src/mcptools";
 
 test("openApiSpec: a valid 3.1 spec covering the read endpoints", () => {
   const s = openApiSpec("https://mugilu.live") as any;
@@ -92,4 +93,16 @@ test("llmsTxt: an H1 and Markdown links (what the llms.txt convention and Lighth
     /persona_layers/,
   ])
     assert.match(s, re);
+});
+
+test("/.well-known/mcp.json: points agents at the hosted server and names every tool it offers", () => {
+  const m = JSON.parse(mcpJson("https://mugilu.live"));
+  assert.equal(m.name, "mugilu");
+  assert.equal(m.homepage, "https://mugilu.live");
+  assert.deepEqual(m.remotes, [{ type: "streamable-http", url: "https://mugilu.live/mcp" }]);
+  assert.deepEqual(
+    m.tools,
+    TOOLS.map((t) => t.name),
+  );
+  assert.ok(m.description.length >= 40);
 });
