@@ -29,7 +29,7 @@ import { qrSvg } from "./qr";
 import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec, mcpJson } from "./meta";
 import { geocodeList } from "./geocode";
-import { INDEXNOW_KEY, INDEXNOW_PATH, todaysIndexNowUrls, submitIndexNow } from "./indexnow";
+import { INDEXNOW_KEY, INDEXNOW_PATH, runIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
@@ -747,11 +747,11 @@ export default {
         ),
       );
       ctx.waitUntil(pruneReferrers(env).catch((e) => console.error(`[referrers] prune failed: ${reason(e)}`)));
-      // Once a day, tell the IndexNow engines (Bing and others) about a seventh of the pages, so each
-      // is announced weekly (all of them daily was throttled with HTTP 429).
+      // IndexNow (Bing and others): paused until 21 Nov after three nights of HTTP 429, then only
+      // pages not yet announced, at most once a week (indexnow.ts).
       ctx.waitUntil(
-        submitIndexNow(SITE_URL, todaysIndexNowUrls(SITE_URL)).then(
-          (r) => console.log(`[indexnow] ${r.count} urls (HTTP ${r.status})`),
+        runIndexNow(env.OAQ_KV, SITE_URL, Date.now()).then(
+          (line) => console.log(line),
           (e) => console.error(`[indexnow] failed: ${reason(e)}`),
         ),
       );
