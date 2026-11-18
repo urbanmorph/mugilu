@@ -4,21 +4,8 @@ import { airCounts, airDots, mapCells, type IndiaMap } from "../src/indiamap";
 import { indiaMap, placesMap } from "../src/ui/map";
 import { officialCyclone, type WarningsSnapshot } from "../src/sachet";
 import { warnedPlaces } from "../src/pages/places";
-import type { ConditionsPoint, NormalizedStation } from "../src/types";
+import { pt, st } from "./helpers/map-fixtures";
 import type { Cyclone } from "../src/cyclones";
-
-const pt = (name: string, lat: number, lon: number, wx: ConditionsPoint["wx"], state?: string): ConditionsPoint => ({
-  id: name,
-  name,
-  level: "district",
-  source_layer: "x",
-  lat,
-  lon,
-  state,
-  wx,
-});
-const st = (id: string, lat: number, lon: number, band: NormalizedStation["band"], aqi: number) =>
-  ({ id, name: id, city: id, lat, lon, band, aqi, pollutants: {}, provider: "cpcb" }) as unknown as NormalizedStation;
 
 const GRID = [
   pt("Churu", 28.3, 74.95, { apparent_c: 46, wet_bulb_c: 24, uv: 8, dust_ug_m3: 40, rain_24h_mm: 0 }, "Rajasthan"),
