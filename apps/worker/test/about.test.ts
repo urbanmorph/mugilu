@@ -44,3 +44,13 @@ test("renderAbout: FAQPage structured data, mirrored by visible Q&A (AEO)", () =
   assert.match(html, /wet-bulb/i); // a real answer renders (visible + in schema)
   assert.match(html, /Is mugilu free/);
 });
+
+test("renderAbout: the AI-agents line points to /mcp instead of repeating its tool list", () => {
+  for (const lang of ["en", "hi", "kn"] as const) {
+    const html = renderAbout(lang);
+    assert.match(html, /<a href="\/mcp">\/mcp<\/a>/, lang);
+    assert.doesNotMatch(html, /place search, nearest stations|स्थान खोज, निकटतम|ಸ್ಥಳ ಹುಡುಕಾಟ, ಹತ್ತಿರದ/, lang);
+  }
+  assert.match(renderAbout("hi"), /Claude, Cursor या किसी भी MCP क्लाइंट/); // translated, not English fallback
+  assert.match(renderAbout("kn"), /Claude, Cursor ಅಥವಾ ಯಾವುದೇ MCP ಕ್ಲೈಂಟ್/);
+});

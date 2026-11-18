@@ -277,11 +277,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "जीवन के खोए वर्षों की गणना {aqli} पद्धति से होती है (U Chicago EPIC)।",
     kn: "ಕಳೆದುಕೊಳ್ಳುವ ಆಯುಷ್ಯದ ವರ್ಷಗಳು {aqli} ವಿಧಾನವನ್ನು ಬಳಸುತ್ತವೆ (U Chicago EPIC).",
   },
-  "an MCP server at {mcp} (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in {llms}.":
-    {
-      hi: "{mcp} पर एक MCP सर्वर (स्थितियों, स्थान खोज, निकटतम केंद्रों, चेतावनियों और राष्ट्रीय स्थिति के लिए टूल; साथ ही संसाधन और प्रॉम्प्ट)। {llms} में सूचीबद्ध।",
-      kn: "{mcp} ನಲ್ಲಿ ಒಂದು MCP ಸರ್ವರ್ (ಪರಿಸ್ಥಿತಿಗಳು, ಸ್ಥಳ ಹುಡುಕಾಟ, ಹತ್ತಿರದ ಕೇಂದ್ರಗಳು, ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ರಾಷ್ಟ್ರೀಯ ಚಿತ್ರಣಕ್ಕೆ ಸಾಧನಗಳು; ಜೊತೆಗೆ ಸಂಪನ್ಮೂಲಗಳು ಮತ್ತು ಪ್ರಾಂಪ್ಟ್‌ಗಳು). {llms} ನಲ್ಲಿ ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ.",
-    },
+  "connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.": {
+    hi: "Claude, Cursor या किसी भी MCP क्लाइंट को {mcp} से जोड़ें; सेटअप और टूल उसी पेज पर हैं। {llms} में सूचीबद्ध।",
+    kn: "Claude, Cursor ಅಥವಾ ಯಾವುದೇ MCP ಕ್ಲೈಂಟ್ ಅನ್ನು {mcp} ಗೆ ಸಂಪರ್ಕಿಸಿ; ಸೆಟಪ್ ಮತ್ತು ಸಾಧನಗಳು ಆ ಪುಟದಲ್ಲಿವೆ. {llms} ನಲ್ಲಿ ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ.",
+  },
   "a documented {openapi}, and every reading as {json} or {md}.": {
     hi: "एक प्रलेखित {openapi}, और प्रत्येक जानकारी {json} या {md} के रूप में।",
     kn: "ದಾಖಲಿತ {openapi}, ಮತ್ತು ಪ್ರತಿಯೊಂದು ಮಾಹಿತಿಯೂ {json} ಅಥವಾ {md} ಆಗಿ.",
@@ -1010,6 +1009,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   breezy: {
     hi: "हल्की हवा",
     kn: "ಹಗುರ ಗಾಳಿ",
+  },
+  "MCP server": {
+    hi: "MCP सर्वर",
+    kn: "MCP ಸರ್ವರ್",
   },
   "build on it": {
     hi: "इस पर कुछ बनाएँ",
