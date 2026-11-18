@@ -2,6 +2,7 @@ import type { NormalizedStation } from "./types";
 import type { GeoResult } from "./geocode";
 import { matchGazetteer, type GazIndex } from "./gazetteer";
 import { indianPoint } from "./india";
+import { placeByAlias } from "./slugs";
 
 export interface Suggestion {
   label: string;
@@ -151,13 +152,26 @@ export async function buildSuggestions(
   const starts = (s: Suggestion) =>
     s.label.toLowerCase().startsWith(needle) ||
     (s.kind === "station" && (s.sublabel ?? "").toLowerCase().startsWith(needle));
+  // A district searched by a name only its alias knows ("North 24 Parganas") leads.
+  const named = placeByAlias(query);
+  const aliasHits: Suggestion[] = named
+    ? [
+        {
+          label: named.name,
+          sublabel: [named.state, "IN"].filter(Boolean).join(", "),
+          lat: named.lat,
+          lon: named.lon,
+          kind: "place",
+        },
+      ]
+    : [];
   const all = [...stationHits, ...placeHits];
   const prefix = all
     .filter(starts)
     .sort((a, b) => a.label.length - b.label.length || (a.kind === "place" ? -1 : 1) - (b.kind === "place" ? -1 : 1));
   const rest = all.filter((s) => !starts(s));
   const seen = new Set<string>();
-  const merged = [...prefix, ...rest].filter((s) => {
+  const merged = [...aliasHits, ...prefix, ...rest].filter((s) => {
     const k = s.label.toLowerCase();
     return seen.has(k) ? false : (seen.add(k), true);
   });

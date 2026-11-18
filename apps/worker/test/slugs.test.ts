@@ -89,3 +89,26 @@ test("slugs: every slug in the sitemap is one the /c/ route accepts (24 Parganas
   assert.equal(slugFromPath("/c/-bad"), null);
   assert.equal(slugFromPath("/c/Delhi"), null);
 });
+
+test("slugs: the 24 Parganas districts answer to the names people search, on the LGD slugs", () => {
+  for (const q of [
+    "North 24 Parganas",
+    "north 24 parganas",
+    "North 24-Parganas",
+    "24 Parganas North",
+    "24 Paraganas North",
+  ])
+    assert.equal(slugForName(q), "24-paraganas-north", q);
+  for (const q of [
+    "South 24 Parganas",
+    "south 24 parganas",
+    "South 24-Parganas",
+    "24 Parganas South",
+    "24 Paraganas South",
+  ])
+    assert.equal(slugForName(q), "24-paraganas-south", q);
+  // the slugs themselves (in the sitemap and Search Console) stay as they are
+  assert.equal(placeBySlug("24-paraganas-north")!.name, "24 Paraganas North");
+  assert.equal(placeBySlug("north-24-parganas"), undefined);
+  assert.ok(!allSlugPlaces().some((p) => p.slug.includes("parganas")));
+});

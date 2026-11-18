@@ -8,6 +8,16 @@
 
 import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "./hazards";
 
+// The hazard lists (hazards.ts) in hi and kn, so every localised string that names them says the same list.
+const HAZARDS_TR = {
+  hi: "वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ",
+  kn: "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು",
+};
+const HAZARDS_SHORT_TR = {
+  hi: "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ",
+  kn: "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
+};
+
 export type Lang = "en" | "hi" | "kn";
 export const LANGS: readonly Lang[] = ["en", "hi", "kn"] as const;
 export const LANG_NAME: Record<Lang, string> = {
@@ -314,12 +324,12 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   // Localised so regional SERP shows the hi/kn snippet, not English.
   // The hazard lists come from hazards.ts (HAZARDS, HAZARDS_SHORT), so these keys are built from it.
   [`mugilu: ${HAZARDS_SHORT} anywhere in India`]: {
-    hi: "mugilu: भारत में कहीं भी वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ",
-    kn: "mugilu: ಭಾರತದಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
+    hi: `mugilu: भारत में कहीं भी ${HAZARDS_SHORT_TR.hi}`,
+    kn: `mugilu: ಭಾರತದಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ${HAZARDS_SHORT_TR.kn}`,
   },
   [SITE_DESC]: {
-    hi: "mugilu: भारत का खुला आकाश। किसी भी बिंदु पर वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ, और आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।",
-    kn: "mugilu: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ. ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯ.",
+    hi: `mugilu: भारत का खुला आकाश। किसी भी बिंदु पर ${HAZARDS_TR.hi}, और आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।`,
+    kn: `mugilu: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ. ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ${HAZARDS_TR.kn}, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯ.`,
   },
   "About mugilu: the open sky of India": {
     hi: "mugilu के बारे में: भारत का खुला आकाश",
@@ -327,7 +337,7 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   },
   [`mugilu shows the ${HAZARDS} over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.`]:
     {
-      hi: "mugilu अभी भारत में किसी भी बिंदु पर वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ दिखाता है, और आपके लिए सबसे बुरे खतरे को नाम देता है। परियोजना, इसके खुले डेटा स्रोतों, और इस पर कैसे निर्माण करें, इसके बारे में।",
+      hi: `mugilu अभी भारत में किसी भी बिंदु पर ${HAZARDS_TR.hi} दिखाता है, और आपके लिए सबसे बुरे खतरे को नाम देता है। परियोजना, इसके खुले डेटा स्रोतों, और इस पर कैसे निर्माण करें, इसके बारे में।`,
       kn: "mugilu ಈಗ ಭಾರತದ ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳನ್ನು ತೋರಿಸುತ್ತದೆ, ಮತ್ತು ನಿಮಗೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸುತ್ತದೆ. ಯೋಜನೆ, ಅದರ ಮುಕ್ತ ದತ್ತಾಂಶ ಮೂಲಗಳು ಮತ್ತು ಅದರ ಮೇಲೆ ಹೇಗೆ ನಿರ್ಮಿಸುವುದು ಎಂಬುದರ ಬಗ್ಗೆ.",
     },
   "How mugilu works: the Ambient read explained": {
@@ -356,8 +366,8 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   // place-page title and description, in the words people search ("Delhi AQI today")
   "{place} AQI today: {aqi} {band}": { hi: "{place} AQI आज: {aqi} {band}", kn: "{place} AQI ಇಂದು: {aqi} {band}" },
   [`${HAZARDS_SHORT} now`]: {
-    hi: "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ अभी",
-    kn: "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಈಗ",
+    hi: `${HAZARDS_SHORT_TR.hi} अभी`,
+    kn: `${HAZARDS_SHORT_TR.kn} ಈಗ`,
   },
   "{place} AQI {aqi} ({band}) right now, from the {station} station {km} km away.": {
     hi: "{place} AQI अभी {aqi} ({band}) है, {km} km दूर {station} स्टेशन से।",
@@ -396,8 +406,8 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   },
   // /c conditions <meta description> framing (place name is prepended, stays verbatim).
   [`The ${HAZARDS} over this spot, with the single worst hazard named for you.`]: {
-    hi: "इस स्थान पर वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ, साथ में आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।",
-    kn: "ಈ ಸ್ಥಳದ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯದೊಂದಿಗೆ.",
+    hi: `इस स्थान पर ${HAZARDS_TR.hi}, साथ में आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।`,
+    kn: `ಈ ಸ್ಥಳದ ಮೇಲಿನ ${HAZARDS_TR.kn}, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯದೊಂದಿಗೆ.`,
   },
   "A serious warning is active. Do what the officials tell you.": {
     hi: "एक गंभीर चेतावनी सक्रिय है। आधिकारिक मार्गदर्शन का पालन करें।",
@@ -1631,6 +1641,22 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Species of {state}": { hi: "{state} की प्रजातियाँ", kn: "{state}: ಜೀವಪ್ರಭೇದಗಳು" },
   "Nearby places": { hi: "आस-पास के स्थान", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು" },
   "all places": { hi: "सभी स्थान", kn: "ಎಲ್ಲಾ ಸ್ಥಳಗಳು" },
+  // The /places directory (its hazard lists come from hazards.ts).
+  [`Every place in India: ${HAZARDS_SHORT} by district · mugilu`]: {
+    hi: `भारत का हर स्थान: ज़िलेवार ${HAZARDS_SHORT_TR.hi} · mugilu`,
+    kn: `ಭಾರತದ ಪ್ರತಿಯೊಂದು ಸ್ಥಳ: ಜಿಲ್ಲಾವಾರು ${HAZARDS_SHORT_TR.kn} · mugilu`,
+  },
+  [`Browse the sky over every district and major city in India: the ${HAZARDS}, one page each.`]: {
+    hi: `भारत के हर ज़िले और बड़े शहर का आकाश देखें: ${HAZARDS_TR.hi}, हर एक का अपना पेज।`,
+    kn: `ಭಾರತದ ಪ್ರತಿ ಜಿಲ್ಲೆ ಮತ್ತು ಪ್ರಮುಖ ನಗರದ ಆಕಾಶವನ್ನು ನೋಡಿ: ${HAZARDS_TR.kn}, ಪ್ರತಿಯೊಂದಕ್ಕೂ ಒಂದು ಪುಟ.`,
+  },
+  "Every place, by state": { hi: "हर स्थान, राज्यवार", kn: "ಪ್ರತಿಯೊಂದು ಸ್ಥಳ, ರಾಜ್ಯವಾರು" },
+  [`The sky over every district and major city in India, one page each. Pick a place to see its ${HAZARDS} right now.`]:
+    {
+      hi: `भारत के हर ज़िले और बड़े शहर का आकाश, हर एक का अपना पेज। कोई स्थान चुनें और देखें: वहाँ अभी ${HAZARDS_TR.hi}।`,
+      kn: `ಭಾರತದ ಪ್ರತಿ ಜಿಲ್ಲೆ ಮತ್ತು ಪ್ರಮುಖ ನಗರದ ಆಕಾಶ, ಪ್ರತಿಯೊಂದಕ್ಕೂ ಒಂದು ಪುಟ. ಒಂದು ಸ್ಥಳವನ್ನು ಆರಿಸಿ: ಅಲ್ಲಿನ ಈಗಿನ ${HAZARDS_TR.kn}.`,
+    },
+  "places across India": { hi: "भारत भर के स्थान", kn: "ಭಾರತದಾದ್ಯಂತದ ಸ್ಥಳಗಳು" },
   "air reading": { hi: "वायु के आँकड़े:", kn: "ವಾಯು ಗುಣಮಟ್ಟ ಮಾಹಿತಿ" },
   // the weather taken from the 4-hourly grid when the live call failed (draft, pending native review)
   "weather reading": { hi: "मौसम के आँकड़े:", kn: "ಹವಾಮಾನ ಮಾಹಿತಿ" },
