@@ -2,7 +2,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
-import { ALERTS_JS, renderAlertsBox } from "../src/alerts-ui";
+import { ALERTS_JS } from "../src/alerts-ui";
+import { alertsBox } from "../src/ui/components";
 import { renderConditionsPage, renderTerms } from "../src/page";
 import type { Conditions } from "../src/types";
 
@@ -211,8 +212,8 @@ const C = {
 } as unknown as Conditions;
 
 test("a place's page carries the box, hidden until the script decides, with the opt-in notice; only when alerts are set up", () => {
-  const box = renderAlertsBox(KEY, "en");
-  assert.match(box, /<section class="alerts" id="alerts" hidden data-key="BP4z9/);
+  const box = alertsBox(KEY, "en");
+  assert.match(box, /<section class="panel" id="alerts" hidden data-key="BP4z9/);
   assert.match(box, /data-lang="en"/);
   assert.match(box, /approximately 1 km/);
   for (const id of IDS) assert.ok(box.includes(`id="${id}"`), id);
@@ -228,28 +229,23 @@ test("the Terms page's privacy section says what turning alerts on keeps", () =>
 });
 
 test("each note shows only in its own state: what is kept before, what is deleted after", () => {
-  const box = renderAlertsBox(KEY, "en");
-  assert.match(box, /<p class="alerts-note" id="alerts-note-off" hidden>[^<]*keeps this place/);
-  assert.match(box, /<p class="alerts-note" id="alerts-note-on" hidden>[^<]*deletes this place/);
+  const box = alertsBox(KEY, "en");
+  assert.match(box, /<p class="t-meta" id="alerts-note-off" hidden>[^<]*keeps this place/);
+  assert.match(box, /<p class="t-meta" id="alerts-note-on" hidden>[^<]*deletes this place/);
   assert.doesNotMatch(box.match(/id="alerts-note-off"[^<]*/)![0], /deletes/);
 });
 
-test("on a laptop the box sits in the left rail; on a phone it still comes after the layers", () => {
+test("the box sits in the secondary band, after the readings, at every width (no reordering)", () => {
   const html = renderConditionsPage(C, "everyone", "https://mugilu.live/c/14.91,79.99", "en", KEY);
-  const left = html.slice(html.indexOf('<div class="cx-l">'), html.indexOf('<div class="cx-r">'));
-  assert.match(left, /<section class="alerts" id="alerts"/);
-  assert.match(
-    html,
-    /@media\(max-width:959px\)\{\.cx\{display:flex;flex-direction:column\}\.cx-cols,\.cx-l\{display:contents\}/,
-  );
-  assert.match(html, /\.cx-r\{order:1\}\.cx \.alerts\{order:2\}\.cx footer\{order:3\}/);
+  assert.ok(html.indexOf('class="flow"') < html.indexOf('id="alerts"'), "after the readings in the DOM");
+  assert.doesNotMatch(html, /[{;]order:/, "no CSS reordering: DOM order is reading order");
 });
 
 test("the box has no heading repeating the button: the button says what it does", () => {
-  const box = renderAlertsBox(KEY, "en");
+  const box = alertsBox(KEY, "en");
   assert.doesNotMatch(box, /<h2/);
   assert.match(
     box,
-    /<section class="alerts" id="alerts" hidden data-key="[^"]+" data-lang="en" aria-label="Send me official warnings for this place">/,
+    /<section class="panel" id="alerts" hidden data-key="[^"]+" data-lang="en" aria-label="Send me official warnings for this place">/,
   );
 });

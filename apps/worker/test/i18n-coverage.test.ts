@@ -80,7 +80,7 @@ const LEAKS = [
 for (const lang of ["hi", "kn"] as Lang[]) {
   const pages = {
     page: renderConditionsPage(c, "asthma", "https://mugilu.live/c/new-delhi", lang),
-    kiosk: renderKioskPage(c, "asthma", "https://mugilu.live/c/new-delhi", "<svg></svg>", lang),
+    kiosk: renderKioskPage(c, "asthma", "https://mugilu.live/c/new-delhi", lang),
     embed: renderEmbed(c, "asthma", "https://mugilu.live", lang),
   };
   for (const [name, html] of Object.entries(pages)) {

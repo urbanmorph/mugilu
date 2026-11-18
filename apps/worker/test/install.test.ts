@@ -230,7 +230,7 @@ test("pages: install strings follow the page language", () => {
 });
 
 test("kiosk + embed: no install button (kiosk keeps the manifest link)", () => {
-  const kiosk = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>");
+  const kiosk = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi");
   assert.match(kiosk, /rel="manifest"/);
   assert.doesNotMatch(kiosk, /id="install-app"/);
   assert.ok(!kiosk.includes(INSTALL_JS));
@@ -254,7 +254,7 @@ test("pages: every page, language, kiosk and embed opt into viewport-fit=cover",
     renderHome(undefined, undefined, undefined, "kn"),
     renderAbout(),
     renderConditionsPage(cond()),
-    renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>"),
+    renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi"),
     renderEmbed(cond(), "everyone", "https://mugilu.live"),
   ];
   for (const html of pages) {
@@ -275,7 +275,7 @@ test("pages: header clears the top/side insets, the page end clears the bottom o
 });
 
 test("kiosk + embed: the full-bleed frame/card is padded on all four sides, landscape and portrait", () => {
-  const kiosk = rules(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>"), ".k");
+  const kiosk = rules(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi"), ".k");
   const embed = rules(renderEmbed(cond(), "everyone", "https://mugilu.live"), "body");
   assert.equal(kiosk.length, 2, "landscape rule + portrait override");
   for (const rule of [...kiosk, ...embed.filter((r) => r.includes("padding"))]) {

@@ -25,7 +25,6 @@ import {
   renderWarningsPage,
   renderMethodology,
 } from "./page";
-import { qrSvg } from "./qr";
 import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec, mcpJson } from "./meta";
 import { geocodeList } from "./geocode";
@@ -460,9 +459,8 @@ export default {
           REFRESH_AFTER_SECONDS,
         );
       if (kiosk) {
-        const qrTarget = persona === "everyone" ? canonical : `${canonical}?as=${persona}`;
         return cachedResponse(
-          renderKioskPage(conditions, persona, canonical, qrSvg(qrTarget), lang),
+          renderKioskPage(conditions, persona, canonical, lang),
           "text/html; charset=utf-8",
         );
       }

@@ -116,7 +116,7 @@ test("the place page and the home page (where the installed app opens) carry it;
   assert.ok(renderConditionsPage(C).includes(FRESHEN_JS));
   assert.ok(renderHome().includes(FRESHEN_JS));
   assert.ok(
-    !renderKioskPage(C, "everyone", "https://mugilu.live/c/x", "<svg/>").includes(FRESHEN_JS),
+    !renderKioskPage(C, "everyone", "https://mugilu.live/c/x").includes(FRESHEN_JS),
     "the display has its own refresh",
   );
   assert.ok(!renderEmbed(C, "everyone", "https://mugilu.live").includes(FRESHEN_JS));

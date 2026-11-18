@@ -315,6 +315,8 @@ export interface ReadRow {
   mini: string;
   /** The short value for the display's quiet line, e.g. "12 km/h". */
   brief: string;
+  /** Today's high against the normal, when it stands out (heat only), markup. */
+  normal?: string;
   /** The Ambient read's headline hazard. */
   driver: boolean;
   /** One of the persona's own hazards. */
@@ -415,6 +417,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
         ...normal,
       ],
       mini: gauges.join(""),
+      normal: normal.join(""),
       brief: `${round(h.apparent_c)}°`,
     });
   }
@@ -536,13 +539,15 @@ export function headText(risk: AmbientRisk, lang: Lang): string {
 export const ambientKicker = (risk: AmbientRisk, lang: Lang) =>
   `Ambient · ${t(PERSONA_LABEL[risk.persona], lang)}`;
 
-/** The level hero: the Ambient read on its level's fill, shape and word, the advice under it. */
-export function ambientPlate(risk: AmbientRisk, lang: Lang): string {
+/** The level hero: the Ambient read on its level's fill, shape and word, the advice under it.
+ *  `more` (markup) follows the advice: the screen display's official warning. */
+export function ambientPlate(risk: AmbientRisk, lang: Lang, more = ""): string {
   const say = ambientSummary(risk, (en) => t(en, lang));
   const head = headText(risk, lang);
   const extra =
-    (say.action ? `<p class="t-lead">${esc(say.action)}</p>` : "") +
-    (say.also ? `<p class="row-c">${ico("people")}<span>${esc(say.also)}</span></p>` : "");
+    (say.action ? `<p class="t-lead act">${esc(say.action)}</p>` : "") +
+    (say.also ? `<p class="row-c also">${ico("people")}<span>${esc(say.also)}</span></p>` : "") +
+    more;
   return plate({
     fill: risk.band,
     shape: LEVEL_SHAPE[risk.band],

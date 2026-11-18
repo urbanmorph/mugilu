@@ -37,7 +37,7 @@ test("heatLevelOf: the worst of feels-like, wet-bulb and WBGT", () => {
 });
 
 test("the dust word on the page agrees with the Ambient read", () => {
-  const word = (d: number) => renderConditionsPage(cond(d)).match(/µg\/m³<\/span> <b>([^<]+)<\/b>/)![1];
+  const word = (d: number) => renderConditionsPage(cond(d)).match(/µg\/m³<\/span> <b class="ql">([^<]+)<\/b>/)![1];
   for (const [d, w] of [
     [60, "low"],
     [100, "moderate"],

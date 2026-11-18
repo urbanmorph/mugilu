@@ -197,7 +197,7 @@ test("warnings (kn): heading + empty state localised", () => {
 });
 
 test("kiosk (?kiosk) is chromeless: no header bar, footer nav or language switcher bleeds through", () => {
-  const html = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "<svg></svg>", "kn");
+  const html = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "kn");
   assert.match(html, /<html lang="kn">/); // still localized + Indic fonts
   assert.match(html, /Noto Serif Kannada/);
   assert.doesNotMatch(html, /class="langsw"/); // no language switcher on a wall display

@@ -134,7 +134,7 @@ test("AQI band labels: CPCB's names, the same on the page and in the Markdown", 
     attribution: "",
     disclaimer: "",
   } as unknown as Conditions;
-  assert.match(renderConditionsPage(c), /AQI<\/span> <b[^>]*>Satisfactory<\/b>/);
+  assert.match(renderConditionsPage(c), /<span class="chip b-satisfactory">[\s\S]*?Satisfactory<\/span>/);
   const s = {
     name: "X",
     city: "Y",

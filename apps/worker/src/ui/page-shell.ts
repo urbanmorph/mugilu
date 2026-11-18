@@ -3,7 +3,7 @@ import { SW_REGISTER } from "../sw";
 import { esc } from "../html";
 import type { Lang } from "../i18n";
 import type { RiskBand } from "../score";
-import { headTags, relTimeJs, type ShellOpts } from "./shell";
+import { VIEWPORT, headTags, relTimeJs, type ShellOpts } from "./shell";
 import { tokensCss } from "./tokens";
 import { STANDARD_CSS } from "./standard";
 import { SEGMENTED_JS, siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
@@ -58,7 +58,27 @@ ${kiosk ? "" : `<script>${THEME_HEAD_JS}</script>`}
 </head>
 <body class="mg"${bodyAttrs}>
 ${kiosk ? "" : siteHeader(path, lang)}<main id="main" tabindex="-1">${body}</main>${kiosk ? "" : siteFooter(path, lang)}
-<script>${kiosk ? "" : INSTALL_JS + THEME_JS + SEGMENTED_JS}${SW_REGISTER}${relTimeJs(lang)}${js}</script>
+<script>${kiosk ? "" : INSTALL_JS + THEME_JS + SEGMENTED_JS + SW_REGISTER}${relTimeJs(lang)}${js}</script>
 </body>
+</html>`;
+}
+
+// ── phase2b: the embed card's document ───────────────────────────────────────────────
+/** The embed card's own document (it lives in other sites' iframes): the same two stylesheets
+ *  and fonts, no header, footer, analytics beacon or service worker. Light or dark follows the
+ *  host's system; the wash is the read's. */
+export function embedShell(
+  title: string,
+  body: string,
+  o: { lang: Lang; tint: { hue: string; level: RiskBand }; js?: string },
+): string {
+  return `<!doctype html>
+<html lang="${o.lang}">
+<head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark">
+<title>${esc(title)}</title>
+${fontsLink(o.lang)}
+<style>${tokensCss()}${STANDARD_CSS}</style>
+</head>
+<body class="mg" data-embed data-tint="${esc(o.tint.hue)}" data-level="${o.tint.level}"><main id="main">${body}</main>${o.js ? `<script>${o.js}</script>` : ""}</body>
 </html>`;
 }

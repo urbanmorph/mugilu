@@ -79,7 +79,7 @@ test("every page colours severity and band TEXT from the canonical variables, ne
   const pages = {
     place: renderConditionsPage(C),
     embed: renderEmbed(C, "everyone", "https://mugilu.live"),
-    kiosk: renderKioskPage(C, "everyone", "https://mugilu.live/c/delhi", "<svg></svg>"),
+    kiosk: renderKioskPage(C, "everyone", "https://mugilu.live/c/delhi"),
     station: renderStationPage(
       {
         id: "cpcb-1",

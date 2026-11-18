@@ -41,7 +41,7 @@ test("renderConditionsPage: a notable high vs normal is said on the heat layer, 
   t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T06:00:00Z") }); // the high's own day, IST
   const html = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }));
   assert.match(html, /The high today is 41°C\. That is 5°C above normal for late May\./);
-  assert.match(html, /Today's high is a model value \(Open-Meteo\)\. The normal is from ERA5 data for 1991-2020\./);
+  assert.match(html, /Today(&#39;|')s high is a model value \(Open-Meteo\)\. The normal is from ERA5 data for 1991-2020\./);
   const hi = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }), "everyone", undefined, "hi");
   assert.match(hi, /आज का अनुमानित अधिकतम तापमान 41°C है, जो मई के अंत में सामान्य से 5°C अधिक है/);
   assert.doesNotMatch(hi, /Today.s high/);
@@ -71,8 +71,7 @@ test("renderConditionsPage: a valid HTML document with the brand and place", () 
 
 test("renderConditionsPage: has a back-to-search link (consistent with other pages)", () => {
   const html = renderConditionsPage(conditions());
-  assert.match(html, /class="cxback"/);
-  assert.match(html, /Look up another place/);
+  assert.match(html, /<p class="links t-meta back"><a href="\/">← Look up another place<\/a>/);
 });
 
 test("renderConditionsPage: a sub-zero reading renders as Cold (directional thermal)", () => {
@@ -162,38 +161,37 @@ test("renderConditionsPage: falls back to coords when no station/air", () => {
 
 test("renderConditionsPage: cross-links nearby places in the same state (internal linking)", () => {
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru");
-  assert.match(html, /class="nearby"/);
+  assert.match(html, /<nav class="panel" aria-label="Nearby places">/);
   assert.match(html, /Nearby:/);
-  assert.match(html, /<a href="\/c\/[a-z][a-z0-9-]*">/); // links to other named pages, not coords
+  assert.match(html, /<a class="ptile" href="\/c\/[a-z][a-z0-9-]*">/); // links to other named pages, not coords
   assert.match(html, /href="\/places"/); // and a path to the full directory
 });
 
 test("renderConditionsPage: no nearby block on a bare-coordinate page (no state anchor)", () => {
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/12.97,77.59");
-  assert.doesNotMatch(html, /class="nearby"/);
+  assert.doesNotMatch(html, /aria-label="Nearby places"/);
 });
 
 test("renderConditionsPage: shows the persona's own step when its trigger drives the read", () => {
   const moderateAir = conditions({ air: { ...conditions().air!, aqi: 150, band: "moderate" } });
-  assert.match(renderConditionsPage(moderateAir, "asthma"), /class="amb-act">[^<]*exercise hard/);
-  assert.doesNotMatch(renderConditionsPage(moderateAir, "everyone"), /class="amb-act"/);
+  assert.match(renderConditionsPage(moderateAir, "asthma"), /class="t-lead act">[^<]*exercise hard/);
+  assert.doesNotMatch(renderConditionsPage(moderateAir, "everyone"), /class="t-lead act"/);
 });
 
 test("renderEmbed: a persona card carries that group's own step", () => {
   const moderateAir = conditions({ air: { ...conditions().air!, aqi: 150, band: "moderate" } });
-  assert.match(renderEmbed(moderateAir, "asthma", "https://mugilu.live"), /class="eact">[^<]*exercise hard/);
-  assert.doesNotMatch(renderEmbed(moderateAir, "everyone", "https://mugilu.live"), /class="eact"/);
+  assert.match(renderEmbed(moderateAir, "asthma", "https://mugilu.live"), /class="esay">[^<]*exercise hard/);
+  assert.doesNotMatch(renderEmbed(moderateAir, "everyone", "https://mugilu.live"), /class="esay">[^<]*exercise hard/);
 });
 
-test("kiosk + embed carry a not-medical-advice disclaimer (no room for the full one)", () => {
+test("the embed carries the full disclaimer from 400px wide and the short live line below; the kiosk the full one", () => {
   const c = conditions();
+  const embed = renderEmbed(c, "asthma", "https://mugilu.live");
+  assert.match(embed, /class="t-legal disc-long">Informational only, not for medical, emergency, or safety-critical decisions\./);
+  assert.match(embed, /class="t-legal disc-short">Informational only, not medical advice\./);
   assert.match(
-    renderEmbed(c, "asthma", "https://mugilu.live"),
-    /class="edisc">Informational only, not medical advice\./,
-  );
-  assert.match(
-    renderKioskPage(c, "asthma", "https://mugilu.live/c/12.97,77.59", "<svg></svg>"),
-    /class="kdisc">Informational only, not medical advice\./,
+    renderKioskPage(c, "asthma", "https://mugilu.live/c/12.97,77.59"),
+    /class="t-legal">Informational only, not for medical, emergency, or safety-critical decisions\./,
   );
   assert.match(renderEmbed(c, "asthma", "https://mugilu.live", "hi"), /चिकित्सीय सलाह नहीं/);
 });
@@ -260,15 +258,16 @@ test("renderConditionsPage: warnings over the spot stand out; nearby ones get on
   const html = renderConditionsPage(
     conditions({ warnings: [w("Lightning", true)], nearby_warnings: [w("Heavy Rain", false)] }),
   );
-  assert.match(html, /class="warn"[^>]*>[\s\S]*?Lightning/);
-  const nearby = html.match(/<p class="near-warn">([\s\S]*?)<\/p>/);
+  assert.match(html, /<section class="wplate" aria-label="Official warning">[\s\S]*?Lightning/);
+  const nearby = html.match(/<p class="notice quiet">[\s\S]*?<span>([\s\S]*?)<\/span><\/p>/);
   assert.ok(nearby, "a nearby line");
   assert.match(nearby[1], /Near this point, but not at it/);
   assert.match(nearby[1], /Heavy Rain/);
-  const boxes = [...html.matchAll(/<div class="warn"[\s\S]*?<\/div><\/div>/g)].map((m) => m[0]);
-  assert.equal(boxes.length, 1, "one warning box: the one over the spot");
+  const boxes = [...html.matchAll(/<section class="wplate"[\s\S]*?<\/section>/g)].map((m) => m[0]);
+  assert.equal(boxes.length, 1, "one warning plate: the one over the spot");
   assert.doesNotMatch(boxes[0], /Heavy Rain/);
-  assert.doesNotMatch(renderConditionsPage(conditions()), /class="near-warn"/);
+  assert.match(boxes[0], /Severe · until Fri Oct 23, 10:20/, "the SACHET level and the end time");
+  assert.doesNotMatch(renderConditionsPage(conditions()), /class="wplate"|Near this point/);
 });
 
 test("renderConditionsPage: many nearby warnings of one kind are counted, not repeated", () => {
@@ -289,14 +288,14 @@ test("renderConditionsPage: many nearby warnings of one kind are counted, not re
       nearby_warnings: [w("1", "Lightning"), w("2", "Lightning"), w("3", "Lightning"), w("4", "Heavy Rain")],
     }),
   );
-  const line = html.match(/<p class="near-warn">([\s\S]*?)<\/p>/)![1];
+  const line = html.match(/<p class="notice quiet">[\s\S]*?<span>([\s\S]*?)<\/span><\/p>/)![1];
   assert.match(line, /Lightning \(3\)/);
   assert.match(line, /Heavy Rain \(until Fri Oct 23, 15:10\)/);
   assert.equal(line.match(/Lightning/g)!.length, 1);
 });
 
 // The order the layers appear in, read from the rendered page.
-const layerOrder = (html: string) => [...html.matchAll(/<div class="lyr[^"]*" data-k="([a-z]+)"/g)].map((m) => m[1]);
+const layerOrder = (html: string) => [...html.matchAll(/<div class="rrow[^"]*" data-k="([a-z]+)"/g)].map((m) => m[1]);
 
 test("renderConditionsPage: on a calm day, layers follow what people check first, sun beside heat, then rain", () => {
   const html = renderConditionsPage(
@@ -316,7 +315,7 @@ test("renderConditionsPage: the worst hazard comes first, then whatever else is 
     }),
   );
   assert.deepEqual(layerOrder(html).slice(0, 3), ["sun", "dust", "air"]);
-  assert.match(html, /<div class="lyr on" data-k="sun"/);
+  assert.match(html, /<div class="rrow on" data-k="sun"/);
 });
 
 test("renderConditionsPage: rain falling now moves up past calm layers", () => {
@@ -351,35 +350,32 @@ test("renderConditionsPage: a cold driver lights the heat layer", () => {
   const html = renderConditionsPage(
     conditions({ heat: { temp_c: -2, humidity_pct: 60, apparent_c: -6, wet_bulb_c: -3, source: "open-meteo" } }),
   );
-  assert.match(html, /<div class="lyr on" data-k="heat"/);
+  assert.match(html, /<div class="rrow on" data-k="heat"/);
   assert.equal(layerOrder(html)[0], "heat");
 });
 
-test("renderConditionsPage: laptops get two columns, the reading pinned beside the layers", () => {
-  const html = renderConditionsPage(conditions());
-  assert.match(html, /<div class="cx-l">[\s\S]*class="amb"[\s\S]*<\/div>\s*<div class="cx-r">\s*<dl class="strata">/);
-  assert.match(html, /@media\(min-width:960px\)\{[^}]*main:has\(>\.cx\)\{max-width:/);
-  // The pinned rail is held inside the two columns, so scrolling never slides it over
-  // the sources and disclaimer in the footer below them.
-  assert.match(
-    html,
-    /<div class="cx-cols">\s*<div class="cx-l">[\s\S]*<div class="cx-r">[\s\S]*<\/dl>\s*<\/div>\s*<\/div>\s*<footer>/,
-  );
-  assert.match(html, /\.cx-cols\{display:grid;/);
-  assert.match(html, /\.cx-l\{position:sticky;/);
+test("renderConditionsPage: bands, not columns: hero, warnings, readings, then the secondary band", () => {
+  const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru", "en", "KEY");
+  const at = (s: string) => html.indexOf(s);
+  assert.ok(at('<section class="band phero">') < at('class="flow"'), "the hero band first");
+  assert.match(html, /<div class="ptitle stack">[\s\S]*<h1 class="t-title loc"[\s\S]*<\/div><section class="plate /, "the plate right after the title");
+  assert.ok(at('class="flow"') < at('id="alerts"'), "alerts after the readings");
+  assert.ok(at('class="flow"') < at('aria-label="Air stations near here"') || !html.includes("Air stations near here"));
+  assert.match(html, /<div class="lane l\d">/, "the secondary band shares one row");
 });
 
 // The graphics on each layer (glyphs.ts), drawn against the limits the read uses.
 const layerHtml = (html: string, k: string) =>
-  html.match(new RegExp(`<div class="lyr[^"]*" data-k="${k}">[\\s\\S]*?</dd></div>`))?.[0] ?? "";
+  html.match(new RegExp(`<div class="rrow[^"]*" data-k="${k}">[\\s\\S]*?(?=<div class="rrow|</div></section>)`))?.[0] ?? "";
 
-test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit, not a line of numbers", () => {
+test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit, its band chip and years of life lost", () => {
   const html = renderConditionsPage(conditions({ air: { ...conditions().air!, pollutants: { pm25: 64, pm10: 218 } } }));
   const air = layerHtml(html, "air");
-  assert.match(air, /<div class="prs">/);
-  assert.match(air, /<div class="pr over"><span>PM10<\/span>/);
-  assert.doesNotMatch(air, /class="poll"/);
-  assert.match(air, /class="lb"/, "years of life lost as blocks");
+  assert.match(air, /<div class="bars" style="--lim:40\.0%">/);
+  assert.match(air, /<div class="brow b-moderate"><span>PM10<\/span>/);
+  assert.match(air, /<span class="chip b-satisfactory">/);
+  assert.match(air, /The dashed line is the CPCB limit\./);
+  assert.match(air, /~2\.0 years of life lost/, "one decimal");
 });
 
 test("renderConditionsPage: hot heat shows wet-bulb and WBGT against their thresholds", () => {
@@ -389,8 +385,8 @@ test("renderConditionsPage: hot heat shows wet-bulb and WBGT against their thres
     }),
   );
   const heat = layerHtml(html, "heat");
-  assert.equal([...heat.matchAll(/<div class="g"/g)].length, 2);
-  assert.match(heat, /wet-bulb 24°/);
+  assert.equal([...heat.matchAll(/<div class="gauge/g)].length, 2);
+  assert.match(heat, /wet-bulb 24° <b class="ql">safe<\/b>/);
   assert.match(heat, /WBGT 33°/);
 });
 
@@ -399,19 +395,19 @@ test("renderConditionsPage: cold heat shows feels-like against the cold threshol
     conditions({ heat: { temp_c: 2, humidity_pct: 60, apparent_c: -1, wet_bulb_c: 0, source: "open-meteo" } }),
   );
   const heat = layerHtml(html, "heat");
-  assert.equal([...heat.matchAll(/<div class="g"/g)].length, 1);
-  assert.equal([...heat.matchAll(/class="gt"/g)].length, 3);
-  assert.match(heat, /class="gf" style="left:22.5%;width:0%"/, "a dot, not a bar that reads as heat");
+  assert.equal([...heat.matchAll(/<div class="gauge/g)].length, 1);
+  assert.equal([...heat.matchAll(/class="tk"/g)].length, 3);
+  assert.match(heat, /class="f" style="left:22.5%;width:0%"/, "a mark, not a bar that reads as heat");
 });
 
 test("renderConditionsPage: a notable high vs normal draws today against the normal", (t) => {
   t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T08:00:00Z") });
   const html = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL } as Partial<Conditions>));
   const heat = layerHtml(html, "heat");
-  assert.match(heat, /class="gm" style="left:75%"/, "41 on a 26-46 ruler around the normal of 36");
+  assert.match(heat, /class="mk" style="left:75%"/, "41 on a 26-46 ruler around the normal of 36");
 });
 
-test("renderConditionsPage: wind gets a compass, rain drops, sun the UV steps, visibility and smoke a ruler", () => {
+test("renderConditionsPage: wind, visibility and smoke a ruler, sun the UV steps, rain its chance", () => {
   const html = renderConditionsPage(
     conditions({
       wind: { speed_kmh: 18, gust_kmh: 46, direction_deg: 270, source: "open-meteo" },
@@ -421,42 +417,32 @@ test("renderConditionsPage: wind gets a compass, rain drops, sun the UV steps, v
       smoke: { count: 3, frp_sum: 12, nearest_km: 42, radius_km: 100, source: "firms" },
     } as Partial<Conditions>),
   );
-  assert.match(layerHtml(html, "wind"), /<svg class="cmp"[\s\S]*rotate\(90 /);
-  assert.match(layerHtml(html, "rain"), /<svg class="drops"/);
-  assert.match(layerHtml(html, "sun"), /<span class="uv"/);
-  assert.match(layerHtml(html, "fog"), /class="gf" style="left:0%;width:50%"/, "1 km halfway on 100 m-10 km");
-  assert.match(layerHtml(html, "smoke"), /class="gm" style="left:42%"/);
-  assert.doesNotMatch(html, /class="scale/, "the old gradient bars are gone");
+  assert.match(layerHtml(html, "wind"), /class="gauge moderate"[\s\S]*from W · 18 km\/h steady/);
+  assert.match(layerHtml(html, "rain"), /<span class="num">40%<\/span><span class="qa">chance of rain<\/span>/);
+  assert.doesNotMatch(layerHtml(html, "rain"), /class="chip/, "rain carries no hazard level");
+  assert.match(layerHtml(html, "sun"), /<span class="uvs"/);
+  assert.match(layerHtml(html, "fog"), /class="f" style="left:0%;width:50%"/, "1 km halfway on 100 m-10 km");
+  assert.match(layerHtml(html, "smoke"), /class="mk" style="left:42%"/);
 });
 
 // What each persona should look at on the right: their own layers tagged, the
 // reading that matters most to them picked out, the rest quieter.
 const tagged = (html: string) => layerOrder(html).filter((k) => /<span class="fy">/.test(layerHtml(html, k)));
 
-test("renderConditionsPage: a persona's own layers carry a 'for you' tag; the others are quieter", () => {
+test("renderConditionsPage: a persona's own layers carry a 'for you' tag", () => {
   const c = conditions({ uv: { index: 7, source: "open-meteo" } });
   assert.deepEqual(tagged(renderConditionsPage(c, "asthma")), ["air", "dust"]);
   assert.deepEqual(tagged(renderConditionsPage(c, "child")).sort(), ["air", "dust", "heat", "sun"]);
   assert.deepEqual(tagged(renderConditionsPage(c)), [], "everyone: no tags");
-  assert.match(
-    renderConditionsPage(c, "asthma"),
-    /<div class="lyr[^"]*\bquiet\b[^"]*" data-k="(fog|wind|rain)"|<div class="lyr quiet" data-k="heat"/,
-  );
-  assert.doesNotMatch(renderConditionsPage(c), /class="lyr[^"]*\bquiet\b/);
   // The headline hazard (UV 7 here) is never quiet, even when it is not the persona's trigger.
-  assert.match(renderConditionsPage(c, "asthma"), /<div class="lyr on" data-k="sun"/);
+  assert.match(renderConditionsPage(c, "asthma"), /<div class="rrow on" data-k="sun"/);
 });
 
-test("renderConditionsPage: the reading that matters most to a persona is picked out", () => {
-  const air = { ...conditions().air!, pollutants: { pm25: 40, pm10: 90, no2: 20 } };
+test("renderConditionsPage: the heat reading that matters most to a persona is picked out", () => {
   const heat = { temp_c: 38, humidity_pct: 40, apparent_c: 41, wet_bulb_c: 26, wbgt_c: 31, source: "open-meteo" };
-  const keys = (html: string) => [...html.matchAll(/<div class="pr[^"]*\bkey\b[^"]*"><span>([^<]+)/g)].map((m) => m[1]);
-  assert.deepEqual(keys(renderConditionsPage(conditions({ air }), "asthma")), ["PM2.5", "PM10"]);
-  assert.deepEqual(keys(renderConditionsPage(conditions({ air }), "heart")), ["PM2.5"]);
-  assert.deepEqual(keys(renderConditionsPage(conditions({ air }))), []);
-  assert.match(renderConditionsPage(conditions({ heat }), "outdoor"), /<span class="gl key">WBGT 31°/);
-  assert.match(renderConditionsPage(conditions({ heat }), "elderly"), /<span class="gl key">wet-bulb 26°/);
-  assert.doesNotMatch(renderConditionsPage(conditions({ heat })), /class="gl key"/);
+  assert.match(renderConditionsPage(conditions({ heat }), "outdoor"), /<p class="key">WBGT 31°/);
+  assert.match(renderConditionsPage(conditions({ heat }), "elderly"), /<p class="key">wet-bulb 26°/);
+  assert.doesNotMatch(renderConditionsPage(conditions({ heat })), /<p class="key">/);
 });
 
 test("renderEmbed: the card's readings follow the order every surface uses", () => {
@@ -497,7 +483,7 @@ test("renderConditionsPage: the title says AQI, its number and band, the way peo
 
 test("renderConditionsPage: a named city links its ward map (bharatlas) and its state's species (yellide)", () => {
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/jaipur");
-  assert.match(html, /<nav class="nearby around" aria-label="Around Jaipur">Around Jaipur:/);
+  assert.match(html, /<p><b>Around Jaipur:<\/b>/);
   assert.match(
     html,
     /<a href="https:\/\/bharatlas\.com\/view\/wards_jaipur">Find your ward: Jaipur ward map \(bharatlas\)<\/a>/,

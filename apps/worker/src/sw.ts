@@ -12,7 +12,11 @@
 // It also shows opt-in alerts (alerts.ts): one notification per official
 // warning, which opens the place's page.
 
-import { LANGS, t, type Lang } from "./i18n";
+import { LANGS, lp, t, type Lang } from "./i18n";
+import { esc } from "./html";
+import { tokensCss } from "./ui/tokens";
+import { STANDARD_CSS } from "./ui/standard";
+import { THEME_HEAD_JS, THEME_JS, ico, linkButton, siteFooter, siteHeader } from "./ui/components";
 
 export const SW_PATH = "/sw.js";
 /** The id of the conditions page's hidden note that the worker shows on a saved copy. */
@@ -23,8 +27,22 @@ const KEEP = 20;
 /** Registers the worker on ordinary pages (not the kiosk display or the embed card). */
 export const SW_REGISTER = `if('serviceWorker'in navigator)navigator.serviceWorker.register('${SW_PATH}',{updateViaCache:'none'}).catch(function(){});`;
 
+/** Where the offline pages' stylesheet goes back in (it travels once, not once per language). */
+const CSS_SLOT = "/*@css*/";
+
+/** The offline page, the standard's: header, the message and a way home, footer. No network,
+ *  so the two stylesheets are inline and the fonts fall back to the system's. */
 function offlinePage(lang: Lang): string {
-  return `<!doctype html><html lang="${lang}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${t("You are offline", lang)} · mugilu</title><body style="font:17px/1.5 system-ui,sans-serif;max-width:36em;margin:0 auto;padding:24px"><h1>${t("You are offline", lang)}</h1><p>${t("mugilu shows the sky right now, so it needs a connection. Places you have opened on this device keep their last reading.", lang)}</p><p><a href="/">${t("See your places", lang)}</a></p>`;
+  const title = t("You are offline", lang);
+  return (
+    `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
+    `<meta name="color-scheme" content="light dark"><title>${esc(title)} · mugilu</title><script>${THEME_HEAD_JS}</script>` +
+    `<style>${CSS_SLOT}</style></head><body class="mg">${siteHeader("/offline", lang)}` +
+    `<main id="main" tabindex="-1"><section class="wrap pad stack">${ico("offline")}<h1 class="t-title">${esc(title)}</h1>` +
+    `<p class="t-lead">${esc(t("mugilu shows the sky right now, so it needs a connection. Places you have opened on this device keep their last reading.", lang))}</p>` +
+    `${linkButton(lp("/", lang), t("See your places", lang), true)}</section></main>${siteFooter("/offline", lang)}` +
+    `<script>${THEME_JS}</script></body></html>`
+  );
 }
 const OFFLINE_PAGES = Object.fromEntries(LANGS.map((L) => [L, offlinePage(L)]));
 
@@ -32,6 +50,7 @@ export const SW_JS = String.raw`const CACHE = 'mugilu-readings';
 const KEEP = ${KEEP};
 const HIDDEN = 'id="${OFFLINE_NOTE_ID}" hidden';
 const OFFLINE = ${JSON.stringify(OFFLINE_PAGES)};
+const CSS = ${JSON.stringify(tokensCss() + STANDARD_CSS)};
 // A place's page, by name or coordinate (/c/lucknow, /hi/c/26.85,80.95), not its data files.
 const isPlace = (path) => /^(\/(hi|kn))?\/c\/[^/]+$/.test(path) && !/\.(json|md|png)$/.test(path);
 const isHome = (path) => /^(\/(hi|kn))?\/?$/.test(path);
@@ -68,7 +87,7 @@ async function saved(key) {
 }
 
 const offline = (path) =>
-  new Response(OFFLINE[langOf(path)], { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } });
+  new Response(OFFLINE[langOf(path)].replace('${CSS_SLOT}', () => CSS), { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
 async function page(event, url) {
   // The installed app's launch marker (?src=pwa) does not change the page: the

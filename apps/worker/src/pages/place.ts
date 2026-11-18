@@ -32,6 +32,7 @@ import {
   PLACE_RECORDER,
   airLag,
   ambientPlate,
+  grapLine,
   readRowHtml,
   readRows,
   readTint,
@@ -146,9 +147,11 @@ export function renderConditionsPage(
   const base = lp(path, lang);
   const screen = lp(`/c/${slug}?kiosk${risk.persona !== "everyone" ? `&as=${risk.persona}` : ""}`, lang);
 
-  const readings = band(`<div class="flow">${readRows(c, risk, lang)
-    .map((r) => readRowHtml(r, lang))
-    .join("")}</div>`);
+  // GRAP sits in the Air reading; with no air reading here it still shows, on its own.
+  const readings =
+    band(`<div class="flow">${readRows(c, risk, lang)
+      .map((r) => readRowHtml(r, lang))
+      .join("")}</div>`) + (c.grap && !c.air ? band(grapLine(c.grap, lang)) : "");
   const alertsCol = stack(
     (alertsKey ? alertsBox(alertsKey, lang) : "") + linkButton(screen, t("Put this on a screen", lang), false, "screen"),
   );

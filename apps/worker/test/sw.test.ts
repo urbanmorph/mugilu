@@ -161,7 +161,21 @@ test("offline, a place never opened here gets a plain offline page, as a 503, in
   assert.match(res.headers.get("content-type") ?? "", /^text\/html/);
   const body = await res.text();
   assert.match(body, /lang="kn"/);
-  assert.match(body, /href="\/"/);
+  assert.match(body, /href="\/kn"/, "See your places opens the home page in the page's language");
+});
+
+test("the offline page is the standard's: both stylesheets inline, header, one main with its h1, footer, disclaimer", async () => {
+  w.state.online = false;
+  const body = await (await w.page("/warnings"))!.text();
+  assert.match(body, /<style>[^<]*\.mg\{[^<]*\.mg \.sh\{/, "tokens then the components, inline (no network)");
+  assert.match(body, /<body class="mg">[\s\S]*<header class="sh">[\s\S]*<main id="main"[^>]*>[\s\S]*<h1 class="t-title">You are offline<\/h1>/);
+  assert.match(body, /<a class="btn primary" href="\/">See your places<\/a>/);
+  assert.match(body, /<footer class="sf">[\s\S]*Informational only, not for medical, emergency, or safety-critical decisions\./);
+  assert.equal((body.match(/<main/g) ?? []).length, 1);
+});
+
+test("the worker carries the stylesheet once for all three offline pages", () => {
+  assert.equal(SW_JS.split(".mg .sh{").length - 1, 1);
 });
 
 test("the home page is saved when the worker installs, so the installed app opens offline", async () => {
@@ -249,7 +263,7 @@ test("a place's page carries the hidden last-reading note, with the reading's ti
 
 test("ordinary pages register the worker; the kiosk display and the embed card do not", () => {
   assert.ok(renderHome().includes(SW_REGISTER));
-  const kiosk = renderKioskPage(C, "everyone", "https://mugilu.live/c/bengaluru", "<svg></svg>");
+  const kiosk = renderKioskPage(C, "everyone", "https://mugilu.live/c/bengaluru");
   const embed = renderEmbed(C, "everyone", "https://mugilu.live");
   assert.ok(!kiosk.includes(SW_REGISTER));
   assert.ok(!embed.includes(SW_REGISTER));
