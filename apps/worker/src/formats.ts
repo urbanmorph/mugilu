@@ -1,7 +1,7 @@
 import type { NormalizedStation, Snapshot, AirPollutants } from "./types";
 import { AIR_SOURCE, providerName } from "./sources";
 import { AQI_BAND_LABEL } from "./aqi";
-import { istStamp } from "./html";
+import { istStamp } from "./ist";
 
 function n(v: number | undefined | null): string {
   return v === undefined || v === null || !Number.isFinite(v) ? "n/a" : String(v);

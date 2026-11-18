@@ -12,7 +12,7 @@ import type { Persona } from "./score";
 import { BAND_COLOR, BAND_ON_FILL, NEUTRAL, ON_FILL, RISK_COLOR } from "./palette";
 import { briefs, gaugePos, type Brief } from "./readings";
 import { placeLabel } from "./readings";
-import { istStamp } from "./html";
+import { istStamp } from "./ist";
 import { heatVsNormalLine, heatVsNormalShown } from "./heatnormals";
 import { AQI_BAND_LABEL } from "./aqi";
 import { BAND_SHAPE, LEVEL_SHAPE, SHAPE, DISCLAIMER_FULL, type ShapeName } from "./ui/components";

@@ -5,7 +5,7 @@ import { placeLabel } from "../readings";
 import { esc } from "../html";
 import { ambientRisk, ambientSummary, type AmbientRisk, type Persona } from "../score";
 import { lp, t, type Lang } from "../i18n";
-import { istTime } from "../ui/shell";
+import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import { embedCard, panel } from "../ui/components";
 import { headText, readRows, readTint } from "./read";

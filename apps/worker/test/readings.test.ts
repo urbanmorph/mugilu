@@ -78,7 +78,7 @@ test("placeLabel: the place, else the station's city, else the coordinate (an em
 });
 
 test("istStamp: one IST format for images and Markdown; a missing time is empty, not an error", async () => {
-  const { istStamp } = await import("../src/html");
+  const { istStamp } = await import("../src/ist");
   assert.equal(istStamp("2026-10-25T07:00:00Z"), "25 Oct, 12:30 IST");
   assert.equal(istStamp("2026-10-25T07:00:00Z", true), "25 Oct 2026, 12:30 IST");
   assert.equal(istStamp(""), "");

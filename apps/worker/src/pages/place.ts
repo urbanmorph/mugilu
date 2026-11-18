@@ -10,7 +10,8 @@ import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
 import { HAZARDS } from "../hazards";
 import { ALERTS_JS } from "../alerts-ui";
-import { HOME_OG, SITE, istTime, ld, relTime } from "../ui/shell";
+import { HOME_OG, SITE, ld, relTime } from "../ui/shell";
+import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {
   alertsBox,

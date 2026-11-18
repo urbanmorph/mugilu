@@ -11,7 +11,8 @@ import { type IndiaMap } from "../indiamap";
 import { officialCyclone, type WarningsSnapshot } from "../sachet";
 import { DUST_PHRASE, airBand, dustBand, heatBand, heatPhrase } from "./read";
 import { alertParts } from "./warnings";
-import { CLIENT_ESC, HOME_OG, SITE, istTime, ld, relTime } from "../ui/shell";
+import { CLIENT_ESC, HOME_OG, SITE, ld, relTime } from "../ui/shell";
+import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {
   band,

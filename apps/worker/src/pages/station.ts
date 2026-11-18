@@ -99,7 +99,7 @@ export function renderStationPage(
   const desc = live
     ? fill(t("{station} ({city}) AQI {aqi} ({band}) right now, measured by {provider}.", lang))
     : `${s.name}${where ? ` (${where})` : ""}: ${t("air quality station", lang)}, ${provider}.`;
-  const when = s.ts ? relTime(new Date(s.ts).toISOString()) : "n/a";
+  const when = s.ts ? relTime(s.ts) : "n/a";
 
   // The plate: the AQI on its band's fill; stale, greyed with no level shape.
   const lead = subIndices(s).sort((a, b) => b.si - a.si)[0];

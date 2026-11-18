@@ -6,7 +6,8 @@ import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { type IndiaMap } from "../indiamap";
 import { officialCyclone, type WarningsSnapshot } from "../sachet";
 import { alertParts } from "./warnings";
-import { HOME_OG, SITE, istTime, ld } from "../ui/shell";
+import { HOME_OG, SITE, ld } from "../ui/shell";
+import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {
   backLink,

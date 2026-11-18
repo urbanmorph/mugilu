@@ -1,3 +1,4 @@
+import { isoOf, istTime } from "../ist";
 import { esc } from "../html";
 import { LANGS, langUrl, t, type Lang } from "../i18n";
 import { installHead } from "../install";
@@ -94,24 +95,11 @@ export function relTimeJs(lang: Lang): string {
   return `(function(){${relFn}window.mgRel=function(){var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});};mgRel();})();`;
 }
 
-/** Short IST stamp, e.g. "14:32 IST · 27 Jun". The time travels on embeds/PNGs. */
-export const IST_HM = new Intl.DateTimeFormat("en-IN", {
-  timeZone: "Asia/Kolkata",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-export const IST_DM = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
-export function istTime(iso: string): string {
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? "" : `${IST_HM.format(d)} IST · ${IST_DM.format(d)}`;
-}
-
 /** A relative-time element: the worker renders the absolute IST time (the no-JS /
  *  crawler fallback); the shell script upgrades it to "X ago" at view-time, so a
  *  cached page never shows a stale "N min ago" baked in at render time. */
-export function relTime(iso: string): string {
-  return `<time data-rel datetime="${iso}">${istTime(iso)}</time>`;
+export function relTime(w: Date | string | number): string {
+  return `<time data-rel datetime="${esc(typeof w === "string" ? w : isoOf(w))}">${istTime(w)}</time>`;
 }
 
 /** The one client-side escape, for text and attribute positions alike (& < > " '). */

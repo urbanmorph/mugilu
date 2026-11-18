@@ -19,27 +19,3 @@ export class Html {
 export const trusted = (markup: string): Html => new Html(markup);
 /** A label that is text (escaped) or trusted markup (kept as is). */
 export const textOrHtml = (s: string | Html): string => (s instanceof Html ? s.markup : esc(s));
-
-const IST_SHORT = new Intl.DateTimeFormat("en-IN", {
-  timeZone: "Asia/Kolkata",
-  day: "numeric",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-const IST_YEAR = new Intl.DateTimeFormat("en-IN", {
-  timeZone: "Asia/Kolkata",
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-
-/** An IST stamp for images and Markdown: "25 Oct, 12:29 IST" (or "25 Oct 2026, 12:29 IST"). */
-export function istStamp(iso: string, withYear = false): string {
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? "" : (withYear ? IST_YEAR : IST_SHORT).format(d) + " IST";
-}
