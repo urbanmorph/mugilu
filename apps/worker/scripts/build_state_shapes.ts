@@ -3,10 +3,16 @@
 // data in the India map's pixels (the projection in indiamap.ts).
 //
 // Source: bharatlas lgd_states (Local Government Directory, CC0 / CC-BY), already projected
-// and simplified to about 1.5 km (supporting-docs/redesign/gen/states.json, 43 KB gzipped).
+// and simplified to about 1.5 km (supporting-docs/redesign/gen/states.json). Each outline is then
+// simplified again to TOLERANCE map pixels (the detail the map can show) and written with
+// relative steps; every ring is kept, so small islands stay clickable.
 // Usage: npx tsx scripts/build_state_shapes.ts <lgd-projected.json>
 import { readFileSync, writeFileSync } from "node:fs";
 import { slugPlacesByState } from "../src/slugs";
+import { simplifyPath } from "./simplify-path";
+
+/** Map pixels: below this a bend is not visible at the /places map's size. */
+const TOLERANCE = 0.4;
 
 const norm = (s: string) =>
   s
@@ -32,5 +38,6 @@ for (const [lgd, d] of Object.entries(src)) {
 }
 const missing = names.filter((n) => !out[n]);
 if (missing.length) throw new Error(`no outline for: ${missing.join(", ")}`);
+for (const k of Object.keys(out)) out[k] = simplifyPath(out[k], TOLERANCE);
 writeFileSync(new URL("../data/states.json", import.meta.url), JSON.stringify(out));
 console.log(`${Object.keys(out).length} states written`);
