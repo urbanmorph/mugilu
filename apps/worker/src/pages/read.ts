@@ -38,15 +38,10 @@ import { HAZARDS_SHORT } from "../hazards";
 import { cycloneIn } from "../sachet";
 import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnormals";
 
-// The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
-// (inline CSS, no framework). All pages share chrome via shell().
-//
-// ── Design language (one set, applied to EVERY page) ────────────────────────
-// Editorial serif display (--serif) for headlines/leads; system sans (--sans)
-// for data and labels; mono (--mono) for coordinate/format stamps; hairline
-// rules (--hair); a condition- or sky-tinted atmospheric backdrop; and the
-// inline Lucide-style line icons in ICON/icon(), never emoji. Tokens live in
-// BASE_CSS :root and reach home, /c, about, terms and 404 alike.
+// What a read is made of, shared by the place page, the kiosk, the embed and the share
+// images: the rows in order of risk, the plate, the warning band, the tint. Pages compose
+// these with the signage components (ui/components.ts); the look is the standard's
+// (ui/tokens.ts + ui/standard.ts), never set here.
 
 export /** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
 function isHttpUrl(u: string): boolean {

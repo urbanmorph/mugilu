@@ -118,7 +118,7 @@ function airDotsLayer(m: IndiaMap): string {
   for (const d of m.dots) by.set(d.band, (by.get(d.band) ?? "") + `M${r1(px(d.lon))} ${r1(py(d.lat))}h0`);
   if (!by.size) return "";
   return (
-    `<path d="${[...by.values()].join("")}" stroke="var(--card)" stroke-width="7" stroke-linecap="round"/>` +
+    `<path d="${[...by.values()].join("")}" stroke="var(--bg)" stroke-width="7" stroke-linecap="round"/>` +
     [...by].map(([b, d]) => `<path d="${d}" class="lvs b-${b}" stroke-width="5" stroke-linecap="round"/>`).join("")
   );
 }

@@ -6,39 +6,6 @@ import { ld, UM_ICON } from "../ui/shell";
 import { cardBody, cardGrid, cardStack, faq, pull } from "../ui/components";
 import { P, splitAs, textPage } from "./text";
 
-// Old-shell styles still used by /display, /warnings and 404 until those pages move to the
-// signage shell (phase 2); the text pages below no longer use them.
-export const ABOUT_CSS = `
-body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg)),var(--bg) 42%) var(--bg) no-repeat}
-.ahero{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,8.5vw,3rem);line-height:1.05;letter-spacing:-.02em;margin:1.3rem 0 .6rem}
-.alead{font-family:var(--serif);font-size:1.22rem;line-height:1.42;margin:0 0 .4rem;max-width:34ch}
-.alead2{line-height:1.55;margin:0 0 1rem}.alead2 a{color:var(--sky)}
-.ah{display:flex;align-items:center;gap:.45rem;font:600 .76rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:2.1rem 0 .7rem}
-.ah .ic{width:15px;height:15px;color:var(--sky);flex:none}
-.atext{font-size:1.04rem;line-height:1.62;margin:0 0 .9rem}.atext a{color:var(--sky)}.atext b{font-weight:700}
-.abuild{font-size:.96rem;line-height:1.55;color:var(--muted);border-left:3px solid color-mix(in srgb,var(--sky) 45%,var(--line));padding:.15rem 0 .15rem 1rem;margin:.2rem 0 .9rem}
-.amuted{color:var(--muted);margin:0 0 .6rem}
-.alist{list-style:none;margin:0 0 1rem;padding:0}
-.alist li{display:flex;gap:11px;align-items:flex-start;padding:7px 0;line-height:1.45}
-.alist li .ic{margin-top:2px;color:var(--sky);flex:none}
-.alist li .t{flex:1;min-width:0}
-.alist.on{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 14px}
-.builtby{display:flex;gap:15px;align-items:center;margin:2.3rem 0 0}
-.builtby>a{flex:none}.builtby img{border-radius:10px;display:block}
-.bb-by{margin:0 0 .6rem;font-size:1rem}.bb-by a{color:var(--sky)}
-.builtby .star{display:inline-flex;align-items:center;gap:.45rem;border:1px solid var(--line);border-radius:999px;padding:6px 13px;color:var(--ink);font-weight:600;text-decoration:none;font-size:.84rem}
-.builtby .star:hover{border-color:var(--muted);background:color-mix(in srgb,var(--ink) 5%,transparent)}
-.builtby .star svg{width:15px;height:15px}
-.adisc{color:var(--muted);font-size:.82rem;line-height:1.5;border-top:1px solid var(--hair);padding-top:1.1rem;margin-top:2.3rem}
-.aback{margin:1.3rem 0 0}.aback a{color:var(--sky);text-decoration:none;font-weight:600;font-family:var(--mono);font-size:.85rem;letter-spacing:.02em}
-.ax code{overflow-wrap:anywhere}
-.axw{max-width:42rem;margin:0 auto}.toc{display:none}
-@media(min-width:1100px){.axw{max-width:none;display:grid;grid-template-columns:minmax(0,13rem) minmax(0,42rem);gap:3.5rem;justify-content:center;align-items:start}
-.toc{display:flex;flex-direction:column;gap:.55rem;position:sticky;top:1.6rem;margin-top:5.2rem;padding-left:.9rem;border-left:2px solid var(--line);font-size:.9rem;line-height:1.35}
-.toc b{font:600 .72rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem}
-.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--ink)}}
-`;
-
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
 export const SOURCES_FAQ =

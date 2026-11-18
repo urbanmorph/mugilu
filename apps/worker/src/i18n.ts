@@ -3,7 +3,7 @@
 // The KEY is the English source string: t("Popular:", lang). An unwired or
 // untranslated string falls back to English automatically, so pages can be
 // localised incrementally. hi drafts come from Sarvam + native review; kn from
-// a native review pass. To add a language L: extend Lang/LANGS/LANG_NAME/LANG_FONT
+// a native review pass. To add a language L: extend Lang/LANGS/LANG_NAME
 // and fill TR[...][L]. Brand terms (mugilu, SACHET, NDMA, IMD, QR) stay in Latin.
 
 import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "./hazards";
@@ -38,46 +38,6 @@ export function langUrl(canonical: string, lang: Lang): string {
   const base = u.pathname === "/" ? "/" : u.pathname.replace(/\/$/, "");
   const p = lp(base, lang);
   return u.origin + (p === "/" ? "" : p) + u.search;
-}
-
-// Per-language display + body font stacks. System-Indic-first (no web-font
-// download): Noto Serif/Sans are present on modern Android, iOS, Windows, macOS.
-export const LANG_FONT: Record<Lang, { serif: string; sans: string } | null> = {
-  en: null,
-  hi: {
-    serif: "'Noto Serif Devanagari','Tiro Devanagari Hindi',Georgia,serif",
-    sans: "'Noto Sans Devanagari',ui-sans-serif,system-ui,sans-serif",
-  },
-  kn: {
-    serif: "'Noto Serif Kannada','Tiro Kannada',Georgia,serif",
-    sans: "'Noto Sans Kannada',ui-sans-serif,system-ui,sans-serif",
-  },
-};
-
-// Indic scripts stack matras above and below the baseline, so the tight Latin
-// display line-heights (.95-1.05) clip them. Swap the font vars and relax the
-// display line-heights + give body copy a little more leading. Appended AFTER
-// the page CSS in shell(), so it wins on cascade order without !important.
-export function langCss(lang: Lang): string {
-  const f = LANG_FONT[lang];
-  if (!f) return "";
-  return (
-    ":root{--serif:" +
-    f.serif +
-    ";--sans:" +
-    f.sans +
-    "}" +
-    "body{line-height:1.6}" +
-    // Display headings: relax the tight Latin line-heights (.95-1.05) and drop the negative
-    // tracking so stacked matras / conjuncts don't clip or crowd.
-    ".hero,.tagline,.loc,.amb-head,.ahero,.eamb,.kname,.khead,.wcat,.covers{line-height:1.25;letter-spacing:normal}" +
-    // Leads sat at 1.42 in Latin; Indic needs MORE leading, not less (was wrongly 1.25).
-    ".alead,.amb-say{line-height:1.55}" +
-    // Eyebrow / dt label rows used line-height:1, which clips Indic matras.
-    ".ah,.amb-eye,.lyr dt{line-height:1.35}" +
-    // The footer back-link carries translated text; the mono stack has no Indic glyphs.
-    ".aback a{font-family:var(--sans)}"
-  );
 }
 
 // en -> { hi, kn }. Generated from the native-reviewed sheets; edit there and regenerate.

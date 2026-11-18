@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { INSTALL_JS, webManifest } from "../src/install";
+import { NEUTRAL } from "../src/palette";
 import { renderHome, renderKioskPage, renderEmbed, renderAbout, renderConditionsPage } from "../src/page";
 import type { Conditions } from "../src/types";
 
@@ -287,4 +288,10 @@ test("kiosk + embed: the full-bleed frame/card is padded on all four sides (notc
     for (const side of ["top", "right", "bottom", "left"])
       assert.match(rule, new RegExp(`env\\(safe-area-inset-${side}\\)`));
   }
+});
+
+test("the app and browser chrome take the header bar's colour, from the palette", () => {
+  const m = webManifest("en");
+  assert.equal(m.theme_color, NEUTRAL.light.bar);
+  assert.equal(m.background_color, NEUTRAL.light.bg);
 });

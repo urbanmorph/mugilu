@@ -32,27 +32,6 @@ export const BAND_TEXT: Record<string, [string, string]> = {
   unknown: ["#475569", "#94a3b8"],
 };
 
-/** The text colours as CSS variables. No argument: the stylesheet rule, light on :root and
- *  dark under prefers-color-scheme. "dark": the bare declarations, for a surface that is
- *  always dark (the kiosk). */
-export function paletteCss(only?: "dark"): string {
-  const vars = (i: 0 | 1) =>
-    Object.entries(RISK_TEXT)
-      .map(([k, v]) => `--rt-${k}:${v[i]};`)
-      .join("") +
-    Object.entries(BAND_TEXT)
-      .map(([k, v]) => `--bt-${k}:${v[i]};`)
-      .join("");
-  if (only === "dark") return vars(1);
-  return `:root{${vars(0)}}@media(prefers-color-scheme:dark){:root{${vars(1)}}}`;
-}
-
-/** A hazard level (0-3) as a colour: the risk ramp for 1-3, and `quiet` for 0 (a
- *  muted token on the pages, a slate on the dark image). */
-export function levelColor(level: number, quiet = "var(--muted)"): string {
-  return [quiet, RISK_COLOR.moderate, RISK_COLOR.high, RISK_COLOR.severe][level] ?? quiet;
-}
-
 // CPCB AQI band colours (good -> severe), plus a neutral "unknown".
 export const BAND_COLOR: Record<string, string> = {
   good: "#16a34a",

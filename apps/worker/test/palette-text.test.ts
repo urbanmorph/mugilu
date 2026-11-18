@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BAND_TEXT, RISK_TEXT, HAZARD_TINT, TINT_STRENGTH, paletteCss } from "../src/palette";
+import { BAND_TEXT, RISK_TEXT, HAZARD_TINT, TINT_STRENGTH } from "../src/palette";
 import { renderConditionsPage, renderEmbed, renderKioskPage, renderStationPage } from "../src/page";
 import type { Conditions, NormalizedStation } from "../src/types";
 
@@ -44,13 +44,6 @@ test("every text colour holds 4.5:1 on its theme's page and card, under any haza
   };
   for (const [k, pair] of Object.entries(RISK_TEXT)) check(`risk ${k}`, pair, k as keyof typeof TINT_STRENGTH);
   for (const [k, pair] of Object.entries(BAND_TEXT)) check(`band ${k}`, pair, LEVEL[k]);
-});
-
-test("paletteCss: one variable per colour, light by default and dark under prefers-color-scheme", () => {
-  const css = paletteCss();
-  assert.match(css, /^:root\{[^}]*--rt-moderate:#895306;[^}]*--bt-vpoor:#a41919;/);
-  assert.match(css, /@media\(prefers-color-scheme:dark\)\{:root\{[^}]*--rt-moderate:#facc15;/);
-  assert.match(paletteCss("dark"), /^--rt-low:#4ade80;--rt-moderate:#facc15;/); // for a surface that is always dark (the kiosk)
 });
 
 const C = {

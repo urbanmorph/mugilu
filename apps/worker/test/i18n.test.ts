@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { t, lp, langUrl, langCss, LANG_NAME, LANGS, TR } from "../src/i18n";
+import { t, lp, langUrl, LANG_NAME, LANGS, TR } from "../src/i18n";
 import {
   renderHome,
   renderNotFound,
@@ -62,14 +62,6 @@ test("langUrl(): inserts the prefix into a canonical URL, home + deep + query", 
   assert.equal(langUrl("https://mugilu.live", "kn"), "https://mugilu.live/kn");
   assert.equal(langUrl("https://mugilu.live/warnings", "hi"), "https://mugilu.live/hi/warnings");
   assert.equal(langUrl("https://mugilu.live/go?q=delhi", "kn"), "https://mugilu.live/kn/go?q=delhi");
-});
-
-test("langCss(): none for English; Indic font vars + relaxed line-height otherwise", () => {
-  assert.equal(langCss("en"), "");
-  assert.match(langCss("kn"), /Noto Serif Kannada/);
-  assert.match(langCss("kn"), /Noto Sans Kannada/);
-  assert.match(langCss("hi"), /Noto Serif Devanagari/);
-  assert.match(langCss("hi"), /line-height/);
 });
 
 test("renderHome(en): unchanged English, html lang=en, unprefixed canonical", () => {
