@@ -431,7 +431,7 @@ export default {
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
           const { conditions, usage } = await lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName });
           // A reading built while an upstream was down is served, never cached.
-          const res = renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
+          const res = await renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
           return { res, usage, store: !conditions.degraded };
         },
         (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
@@ -445,7 +445,7 @@ export default {
       persona: Persona,
       canonicalPath: string,
       placeName?: string,
-    ): Response {
+    ): Response | Promise<Response> {
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
       // with /c/lucknow for the same place. Arbitrary points stay self-canonical.
