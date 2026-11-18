@@ -246,7 +246,8 @@ function footerNav(lang: Lang): string {
   const nav = (path: string, en: string) => `<a href="${lp(path, lang)}">${t(en, lang)}</a>`;
   return (
     `${nav("/about", "about")} · ${nav("/methodology", "how it works")} · ` +
-    `${nav("/places", "all places")} · ${nav("/about#build", "build on it")} · ${nav("/terms", "terms")} · ` +
+    `${nav("/places", "all places")} · ${nav("/about#build", "build on it")} · ${nav("/mcp", "MCP server")} · ` +
+    `${nav("/terms", "terms")} · ` +
     `<a href="https://github.com/urbanmorph/mugilu">${t("code", lang)}</a> · ` +
     `<a href="https://github.com/urbanmorph/mugilu/blob/main/PDGI.md">${t("a digital commons", lang)}</a>`
   );
@@ -1552,7 +1553,7 @@ export function renderAbout(lang: Lang = "en"): string {
   <p class="ah" id="build">${icon("code")}<span>${t("Build on it", lang)}</span></p>
   <p class="atext">${t("mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.", lang)}</p>
   <ul class="alist">
-    <li>${icon("code")}<span class="t"><b>${t("For AI agents", lang)}</b>: ${t("an MCP server at {mcp} (tools for conditions, place search, nearest stations, warnings and the national picture; plus resources and prompts). Listed in {llms}.", lang).replace("{mcp}", `<a href="/mcp">/mcp</a>`).replace("{llms}", `<a href="/llms.txt">llms.txt</a>`)}</span></li>
+    <li>${icon("code")}<span class="t"><b>${t("For AI agents", lang)}</b>: ${t("connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.", lang).replace("{mcp}", `<a href="/mcp">/mcp</a>`).replace("{llms}", `<a href="/llms.txt">llms.txt</a>`)}</span></li>
     <li>${icon("layers")}<span class="t"><b>${t("For developers", lang)}</b>: ${t("a documented {openapi}, and every reading as {json} or {md}.", lang).replace("{openapi}", `<a href="/openapi.json">${aboutOpenapi}</a>`).replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`).replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`)}</span></li>
     <li>${icon("pin")}<span class="t"><b>${t("Embed it", lang)}</b>: ${t("a live card in one line of HTML ({embed}), or a {png}.", lang).replace("{embed}", `<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>`).replace("{png}", `<a href="/c/12.97,77.59.png">${aboutSnapshot}</a>`)}</span></li>
     <li>${icon("sun")}<span class="t"><b>${t("Put it on a screen", lang)}</b>: ${t("a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.", lang).replace("{display}", `<a href="/display">/display</a>`)}</span></li>

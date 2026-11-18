@@ -365,3 +365,13 @@ test("every translation keeps its placeholders, its script, the Latin names and 
     }
   assert.deepEqual(bad, []);
 });
+
+test("footer links the MCP page in every language; build on it stays for the data formats", () => {
+  const en = renderHome(undefined, undefined, undefined, "en");
+  assert.match(en, /<footer class="foot">[\s\S]*<a href="\/mcp">MCP server<\/a>/);
+  assert.match(en, /<a href="\/about#build">build on it<\/a>/);
+  const hi = renderHome(undefined, undefined, undefined, "hi");
+  assert.match(hi, /<a href="\/hi\/mcp">MCP सर्वर<\/a>/);
+  const kn = renderHome(undefined, undefined, undefined, "kn");
+  assert.match(kn, /<a href="\/kn\/mcp">MCP ಸರ್ವರ್<\/a>/);
+});
