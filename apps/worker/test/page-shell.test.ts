@@ -55,3 +55,10 @@ test("pageShell: no tint means no wash; a kiosk is always dark, chromeless, with
   assert.ok(!/class="sh"/.test(k) && !/class="sf"/.test(k));
   assert.match(k, /<main id="main" tabindex="-1"><div class="kio">/);
 });
+
+test("fonts: non-Latin scripts load the weight axis only (they are never condensed), Latin keeps its width", () => {
+  const h = pageShell("t", "<p>x</p>", { path: "/warnings", lang: "hi", scripts: ["te", "bn"] });
+  for (const fam of ["Anek+Devanagari", "Anek+Telugu", "Anek+Bangla"])
+    assert.match(h, new RegExp(`family=${fam.replace("+", "\\+")}:wght@400\\.\\.800&`));
+  assert.match(h, /family=Anek\+Latin:wdth,wght@75\.\.100,400\.\.800/);
+});

@@ -15,11 +15,13 @@ import { SEGMENTED_JS, siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from ".
 
 /** A non-Latin script a page shows besides its UI language (warnings carry Telugu, Bengali). */
 export type Script = "hi" | "kn" | "te" | "bn";
+// Non-Latin text is never condensed (tokens: font-stretch 100% under :lang), so its fonts load the
+// weight axis alone: about a third of the bytes (Devanagari 298 KB against 826 KB with width).
 const FONT: Record<Script, string> = {
-  hi: "Anek+Devanagari:wdth,wght@75..100,400..800",
-  kn: "Anek+Kannada:wdth,wght@75..100,400..800",
-  te: "Anek+Telugu:wdth,wght@75..100,400..800",
-  bn: "Anek+Bangla:wdth,wght@75..100,400..800",
+  hi: "Anek+Devanagari:wght@400..800",
+  kn: "Anek+Kannada:wght@400..800",
+  te: "Anek+Telugu:wght@400..800",
+  bn: "Anek+Bangla:wght@400..800",
 };
 
 export interface PageOpts extends Omit<ShellOpts, "bare" | "wide"> {
