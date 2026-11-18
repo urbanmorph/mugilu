@@ -94,7 +94,7 @@ for (const lang of ["hi", "kn"] as Lang[]) {
 test("the persona 'also watch' line is localised, not an English sentence looked up whole", () => {
   assert.match(personaAlso(ambientRisk(c, "asthma"))!, /^For asthma & lungs, also watch: smoke is severe\.$/);
   const kn = renderConditionsPage(c, "asthma", undefined, "kn");
-  assert.match(kn, /class="amb-also"/);
+  assert.match(kn, /class="row-c also"/);
 });
 
 test("English pages keep their English wording", () => {

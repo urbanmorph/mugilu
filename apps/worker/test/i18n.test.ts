@@ -198,11 +198,11 @@ test("warnings (kn): heading + empty state localised", () => {
 
 test("kiosk (?kiosk) is chromeless: no header bar, footer nav or language switcher bleeds through", () => {
   const html = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "kn");
-  assert.match(html, /<html lang="kn">/); // still localized + Indic fonts
-  assert.match(html, /Noto Serif Kannada/);
-  assert.doesNotMatch(html, /class="langsw"/); // no language switcher on a wall display
-  assert.doesNotMatch(html, /class="foot"/); // no footer nav
-  assert.doesNotMatch(html, /class="bar"/); // no header bar
+  assert.match(html, /<html lang="kn" data-theme="dark">/); // still localized + Indic fonts, always dark
+  assert.match(html, /Anek\+Kannada/);
+  assert.doesNotMatch(html, /class="langs"|class="flangs"/); // no language switcher on a wall display
+  assert.doesNotMatch(html, /<footer class="sf"/); // no footer nav
+  assert.doesNotMatch(html, /<header class="sh"/); // no header bar
 });
 
 test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss present; en unchanged", () => {

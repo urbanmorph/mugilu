@@ -562,7 +562,7 @@ export function ambientPlate(risk: AmbientRisk, lang: Lang, more = ""): string {
 /** An official warning's title in IMD's own words: the category and the storm's name
  *  ("Severe Cyclonic Storm Akvan") when the message names one, else its type. */
 export function warningTitle(w: Warning): string {
-  const m = w.headline.match(
+  const m = (w.headline ?? "").match(
     /\b(super cyclonic storm|extremely severe cyclonic storm|very severe cyclonic storm|severe cyclonic storm|cyclonic storm|deep depression)\s+(?:\(\s*)?([A-Z][A-Za-z]+)\b/i,
   );
   if (m && !/^(with|over|near|lay|lays|moved|has|is|of|at|in)$/i.test(m[2])) {

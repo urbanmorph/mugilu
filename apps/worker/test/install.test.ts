@@ -243,7 +243,7 @@ test("kiosk + embed: no install button (kiosk keeps the manifest link)", () => {
 
 /** All declarations of every `selector{...}` rule in the page's CSS, one string per rule. */
 function rules(html: string, selector: string): string[] {
-  const re = new RegExp(`(?:^|[}\\s])${selector.replace(/\./g, "\\.")}\\{([^}]*)\\}`, "g");
+  const re = new RegExp(`(?:^|[}\\s])${selector.replace(/[.[\]]/g, "\\$&")}\\{([^}]*)\\}`, "g");
   return [...html.matchAll(re)].map((m) => m[1]);
 }
 
@@ -274,13 +274,12 @@ test("pages: header clears the top/side insets, the page end clears the bottom o
   }
 });
 
-test("kiosk + embed: the full-bleed frame/card is padded on all four sides, landscape and portrait", () => {
-  const kiosk = rules(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi"), ".k");
-  const embed = rules(renderEmbed(cond(), "everyone", "https://mugilu.live"), "body");
-  assert.equal(kiosk.length, 2, "landscape rule + portrait override");
-  for (const rule of [...kiosk, ...embed.filter((r) => r.includes("padding"))]) {
+test("kiosk + embed: the full-bleed frame/card is padded on all four sides (notches, TV overscan)", () => {
+  const kiosk = rules(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi"), ".mg .kio");
+  const embed = rules(renderEmbed(cond(), "everyone", "https://mugilu.live"), ".mg[data-embed]");
+  for (const rule of [kiosk.find((r) => r.includes("padding")), embed.find((r) => r.includes("padding"))]) {
+    assert.ok(rule);
     for (const side of ["top", "right", "bottom", "left"])
       assert.match(rule, new RegExp(`env\\(safe-area-inset-${side}\\)`));
   }
-  assert.ok(embed.some((r) => r.includes("safe-area")));
 });

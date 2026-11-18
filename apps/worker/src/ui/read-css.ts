@@ -3,7 +3,7 @@
 // imported once into standard.ts.
 
 export const READ_CSS = `
-.mg .fy{display:inline-block;margin-left:var(--sp2);padding:0 6px;border:2px solid currentColor;border-radius:var(--r);font-size:var(--t-xs);font-weight:800;letter-spacing:.06em;color:var(--ink);vertical-align:.1em}
+.mg .fy{display:inline-block;white-space:nowrap;margin-left:var(--sp2);padding:0 6px;border:2px solid currentColor;border-radius:var(--r);font-size:var(--t-xs);font-weight:800;letter-spacing:.06em;color:var(--ink);vertical-align:.1em}
 .mg .rrow.on .lab{color:var(--ink)}
 .mg .rrow .more .key{font-weight:800}
 .mg .uvs i.off{opacity:.25}
@@ -16,14 +16,14 @@ export const READ_CSS = `
 .mg .phero>.plate{grid-area:p;align-self:stretch;display:flex;flex-direction:column;justify-content:center}
 .mg .phero>.pwho{grid-area:w}
 }
-.mg[data-embed]{padding:var(--sp2)}
+.mg[data-embed]{padding:calc(var(--sp2) + env(safe-area-inset-top)) calc(var(--sp2) + env(safe-area-inset-right)) calc(var(--sp2) + env(safe-area-inset-bottom)) calc(var(--sp2) + env(safe-area-inset-left))}
 .mg[data-embed] .ecard{max-width:480px;height:240px}
 .mg[data-embed] .ecode{max-width:480px;margin-top:var(--sp4)}
 .framed .mg[data-embed]{padding:0}
 .framed .mg[data-embed] .ecard{max-width:none;height:100vh}
 .framed .mg[data-embed] .ecode{display:none}
 .mg[data-kiosk] main{height:100vh;height:100dvh;overflow:hidden}
-.mg .kio{position:relative}
+.mg .kio{position:relative;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .mg .kio .kveil{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;gap:var(--sp4);background:var(--bg);opacity:0;pointer-events:none}
 .mg .kio .kveil.on{opacity:.94}
 @media (prefers-reduced-motion:no-preference){.mg .kio .kveil{transition:opacity .3s}}

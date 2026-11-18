@@ -99,14 +99,14 @@ test("every page colours severity and band TEXT from the canonical variables, ne
       true,
     ),
   };
-  assert.match(pages.place, /--cond-text:var\(--rt-severe\)/);
-  assert.match(pages.place, /\.amb-head \.b\{color:var\(--cond-text\)\}/);
-  assert.match(pages.place, /<b style="color:var\(--bt-vpoor\)">Very Poor<\/b>/);
-  assert.match(pages.embed, /<b style="color:var\(--bt-vpoor\)">344<\/b>/);
-  assert.match(pages.station, /--sband:var\(--bt-vpoor\)/);
-  assert.match(pages.kiosk, /\.k\{--rt-low:#4ade80;/); // the kiosk is always dark
+  // Severity and band are classes on components (the tokens' --lv/--on), never a colour in the markup.
+  assert.match(pages.place, /<section class="plate severe stack"/);
+  assert.match(pages.place, /<span class="chip b-vpoor">[\s\S]*?Very Poor<\/span>/);
+  assert.match(pages.embed, /<a class="ecard severe"/);
+  assert.match(pages.station, /<section class="plate inline b-vpoor"/);
+  assert.match(pages.kiosk, /<html lang="en" data-theme="dark">/); // the kiosk is always dark
   for (const [name, html] of Object.entries(pages)) {
-    assert.doesNotMatch(html, /style="color:#[0-9a-f]{6}"/i, `${name}: a raw text colour`);
-    assert.match(html, /:root\{--rt-low:/, `${name}: the canonical variables`);
+    assert.doesNotMatch(html, /style="[^"]*color:/i, `${name}: a colour in the markup`);
+    assert.match(html, /\.mg \.b-vpoor\{--lv:var\(--b-vpoor\);--on:var\(--on-b-vpoor\)\}/, `${name}: the tokens`);
   }
 });

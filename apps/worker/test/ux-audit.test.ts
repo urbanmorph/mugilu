@@ -34,16 +34,17 @@ test("2. the page says when it was built; an older air reading is named separate
     source: "cpcb",
   };
   const old = renderConditionsPage(c({ air, air_as_of: "2026-10-25T05:00:00.000Z" } as Partial<Conditions>));
-  const when = old.match(/<p class="when">([\s\S]*?)<\/p>/)![1];
-  assert.match(when, /updated <time data-rel datetime="2026-10-25T07:00:00.000Z"/);
-  assert.match(when, /air reading <time data-rel datetime="2026-10-25T05:00:00.000Z"/);
+  const stampsOf = (html: string) => html.match(/<div class="stamps">([\s\S]*?)<\/div>/)![1];
+  const when = stampsOf(old);
+  assert.match(when, /<span class="k">updated<\/span><span class="v"><time data-rel datetime="2026-10-25T07:00:00.000Z"/);
+  assert.match(when, /<span class="k">air reading<\/span><span class="v"><time data-rel datetime="2026-10-25T05:00:00.000Z"/);
   const fresh = renderConditionsPage(c({ air, air_as_of: "2026-10-25T06:50:00.000Z" } as Partial<Conditions>));
-  assert.doesNotMatch(fresh.match(/<p class="when">([\s\S]*?)<\/p>/)![1], /air reading/);
+  assert.doesNotMatch(stampsOf(fresh), /air reading/);
   // Weather taken from the 4-hourly grid (the live call failed) is named the same way.
   const grid = renderConditionsPage(c({ weather_as_of: "2026-10-25T04:05:00.000Z" } as Partial<Conditions>));
   assert.match(
-    grid.match(/<p class="when">([\s\S]*?)<\/p>/)![1],
-    /weather reading <time data-rel datetime="2026-10-25T04:05:00.000Z"/,
+    stampsOf(grid),
+    /<span class="k">weather reading<\/span><span class="v"><time data-rel datetime="2026-10-25T04:05:00.000Z"/,
   );
   assert.match(
     renderConditionsPage(
@@ -91,8 +92,8 @@ test("3. warnings: an honest count, grouped by issuer with a readable name, newe
 
 test("4. the 'for you' tag never breaks inside, and wraps under the label instead of squeezing it", () => {
   const html = renderConditionsPage(c(), "child");
-  assert.match(html, /\.lyr \.fy\{[^}]*white-space:nowrap/);
-  assert.match(html, /\.lyr dt\{[^}]*flex-wrap:wrap/);
+  assert.match(html, /\.mg \.fy\{[^}]*white-space:nowrap/);
+  assert.match(html, /<p class="lab">[^<]*<span class="fy">for you<\/span><\/p>/, "inside the label line, which wraps");
 });
 
 test("5. Kannada and Hindi /c pages carry no English 'Nearby:' or 'all places'", () => {
@@ -132,8 +133,8 @@ test("6. search: a place whose name starts with the query ranks above stations t
   );
 });
 
-test("7. the embed card's cloud mark has its sky colour", () => {
-  assert.match(renderEmbed(c(), "everyone", "https://mugilu.live"), /--sky:/);
+test("7. the embed card carries the brand mark beside the place", () => {
+  assert.match(renderEmbed(c(), "everyone", "https://mugilu.live"), /<span class="ebrand"><svg class="ico f"[^>]*>[\s\S]*?<\/svg>mugilu<\/span>/);
 });
 
 test("8. the display setup page previews a live display and suggests places as you type", () => {
@@ -144,5 +145,6 @@ test("8. the display setup page previews a live display and suggests places as y
 });
 
 test("9. on laptops the layers flow in two balanced columns (no gaps under short tiles)", () => {
-  assert.match(renderConditionsPage(c()), /\.cx-r \.strata\{[^}]*column-count:2/);
+  assert.match(renderConditionsPage(c()), /\.mg \.flow\{columns:2/);
+  assert.match(renderConditionsPage(c()), /\.mg \.flow>\*\{break-inside:avoid/);
 });

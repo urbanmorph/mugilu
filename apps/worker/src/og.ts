@@ -1,11 +1,7 @@
 import { ImageResponse } from "workers-og";
 import type { NormalizedStation, Conditions } from "./types";
 import type { Persona } from "./score";
-import { conditionsOgHtml, ogText } from "./og-html";
-import { istStamp } from "./html";
-import { BAND_COLOR } from "./palette";
-
-import { AQI_BAND_LABEL } from "./aqi";
+import { conditionsOgHtml, homeOgHtml, stationOgHtml } from "./og-html";
 
 /** A 1200x630 PNG of `html`, with our own cache lifetime (workers-og sets an immutable
  *  one; these images change with the readings). */
@@ -19,63 +15,18 @@ function png(html: string, cacheControl: string): Response {
 /** Image cache lifetime: a few minutes in browsers, an hour at the edge. */
 const LIVE_IMAGE = "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400";
 
+/** /og/s/{provider}/{id}.png: one station's share image. */
 export function renderStationOg(s: NormalizedStation, generatedAt: string): Response {
-  const band = BAND_COLOR[s.band];
-  const bandLabel = AQI_BAND_LABEL[s.band];
-  const aqi = s.aqi !== null ? String(s.aqi) : "n/a";
-  const name = s.name.length > 34 ? s.name.slice(0, 32) + "…" : s.name;
-  const city = s.city || "India";
-  const updated = istStamp(generatedAt);
-
-  // Layout rules (Satori is strict):
-  //   - every div with >1 child (including implicit whitespace text nodes) must set display:flex
-  //   - text nodes count as children, so we keep multi-child divs compact with flex
-  const html =
-    `<div style="width:1200px;height:630px;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:60px 72px;font-family:sans-serif;">` +
-    `<div style="display:flex;justify-content:space-between;font-size:26px;color:#94a3b8;">` +
-    `<div style="display:flex;">mugilu · India air quality</div>` +
-    `<div style="display:flex;">${ogText(updated)}</div>` +
-    `</div>` +
-    `<div style="display:flex;flex:1;align-items:center;margin-top:32px;">` +
-    `<div style="display:flex;flex-direction:column;margin-right:64px;">` +
-    `<div style="display:flex;font-size:220px;font-weight:800;line-height:0.9;color:#e2e8f0;font-family:monospace;">${ogText(aqi)}</div>` +
-    `<div style="display:flex;font-size:32px;color:#94a3b8;margin-top:12px;">AQI (${ogText(bandLabel)})</div>` +
-    `</div>` +
-    `<div style="display:flex;flex-direction:column;flex:1;">` +
-    `<div style="display:flex;font-size:56px;font-weight:700;line-height:1.1;color:#e2e8f0;">${ogText(name)}</div>` +
-    `<div style="display:flex;font-size:36px;color:#94a3b8;margin-top:8px;">${ogText(city)}</div>` +
-    `<div style="display:flex;width:120px;height:18px;background:${band};border-radius:4px;margin-top:32px;"></div>` +
-    `</div>` +
-    `</div>` +
-    `<div style="display:flex;justify-content:space-between;font-size:22px;color:#64748b;margin-top:32px;">` +
-    `<div style="display:flex;">${ogText(s.provider.toUpperCase())} via oaq.notf.in</div>` +
-    `<div style="display:flex;">urbanmorph/mugilu</div>` +
-    `</div>` +
-    `</div>`;
-
-  return png(html, LIVE_IMAGE);
+  return png(stationOgHtml(s, generatedAt), LIVE_IMAGE);
 }
 
-// ── Conditions snapshot image (the timestamped PNG for /c/{lat},{lon}.png) ──
-/** A shareable, timestamped snapshot image of the conditions at a point (markup in
- *  og-html.ts). The time is rendered prominently because the values change; cache is short. */
+/** /c/{place}.png: the timestamped snapshot of a place's read (the time is prominent because
+ *  the values change; the cache is short). */
 export function renderConditionsOg(c: Conditions, persona: Persona): Response {
   return png(conditionsOgHtml(c, persona), LIVE_IMAGE);
 }
 
-// ── Branded card for the home + content pages (the social-share image) ──
+/** /og.png: the brand card for the home page and the content pages. */
 export function renderHomeOg(): Response {
-  const html =
-    `<div style="width:1200px;height:630px;display:flex;flex-direction:column;background:#0b1220;color:#e2e8f0;padding:72px 80px;font-family:sans-serif;">` +
-    `<div style="display:flex;flex:1;flex-direction:column;justify-content:center;">` +
-    `<div style="display:flex;font-size:128px;font-weight:800;line-height:1;color:#e2e8f0;">mugilu</div>` +
-    `<div style="display:flex;font-size:46px;color:#cbd5e1;margin-top:26px;">The open sky of India, one coordinate at a time.</div>` +
-    `<div style="display:flex;font-size:30px;color:#94a3b8;margin-top:40px;">air · heat · rain · dust · UV · official warnings - for any point, right now</div>` +
-    `</div>` +
-    `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #1f2937;padding-top:28px;">` +
-    `<div style="display:flex;font-size:28px;color:#94a3b8;">open · free · built to be built on</div>` +
-    `<div style="display:flex;font-size:28px;color:#38bdf8;">mugilu.live</div>` +
-    `</div>` +
-    `</div>`;
-  return png(html, "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800");
+  return png(homeOgHtml(), "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800");
 }
