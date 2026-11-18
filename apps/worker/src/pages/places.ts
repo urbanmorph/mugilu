@@ -34,7 +34,7 @@ export function warnedPlaces(areas: string[]): string[] {
 // The page's behaviour: find a place (filters the lists), the state picker and the map's state
 // click (open that state's list and go to it), and on phones the lists start folded except a
 // state with a warned place.
-const PLACES_JS = `(function(){var q=document.getElementById('pq'),sel=document.getElementById('ps'),F=document.querySelectorAll('.states details.fold');
+const PLACES_JS = `(function(){var q=document.getElementById('pq'),sel=document.getElementById('ps'),F=document.querySelectorAll('.flow details.fold');
 window.openState=function(id){var d=document.getElementById(id);if(!d)return;d.hidden=false;d.open=true;d.scrollIntoView({block:'start'});var s=d.querySelector('summary');if(s)s.focus({preventScroll:true});};
 if(sel)sel.addEventListener('change',function(){if(sel.value)openState(sel.value);});
 if(window.matchMedia&&matchMedia('(max-width: 999px)').matches)F.forEach(function(d){if(!d.querySelector('b')&&('#'+d.id)!==location.hash)d.open=false;});
@@ -101,7 +101,7 @@ export function renderPlaces(
     )
     .join("");
   const directory = band(
-    lane("la", [`<div class="aside">${mapPanel}</div>`, `<div class="states flow">${lists}</div>`]),
+    lane("la", [`<div class="aside">${mapPanel}</div>`, `<div class="col"><div class="flow">${lists}</div></div>`]),
   );
   const credit = band(
     `<p class="t-meta">${T("Place names: OpenStreetMap contributors (ODbL), GeoNames (CC-BY 4.0).")} ${T("Admin boundaries: LGD, via bharatlas.")}</p>`,
