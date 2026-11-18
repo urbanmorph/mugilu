@@ -2,6 +2,9 @@
 // hero, the persona tag, the UV steps, the screen display's loading veil). Tokens only;
 // imported once into standard.ts.
 
+// The landscape kiosk hides the heat tile's wet-bulb and WBGT lines: at 720p there is no room
+// for them at the 24px floor without clipping or pushing out the quiet line, and the heat chip
+// already carries the worst of the three. Portrait shows them.
 export const READ_CSS = `
 .mg .fy{display:inline-block;white-space:nowrap;margin-left:var(--sp2);padding:0 6px;border:2px solid currentColor;border-radius:var(--r);font-size:var(--t-xs);font-weight:800;letter-spacing:.06em;color:var(--ink);vertical-align:.1em}
 .mg .rrow.on .lab{color:var(--ink)}
@@ -25,9 +28,6 @@ export const READ_CSS = `
 .mg[data-kiosk] main{height:100vh;height:100dvh;overflow:hidden}
 .mg .kio{position:relative;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .mg .kio .kb{overflow:hidden}
-/* Landscape at 720p has no room for the wet-bulb and WBGT lines at the 24px floor without
-   clipping or pushing out the quiet line; the heat chip already carries the worst of the
-   three. Portrait shows them. */
 @media (orientation:landscape){.mg .kio .ktile>p.qa{display:none}}
 .mg .kio .kveil{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;gap:var(--sp4);background:var(--bg);opacity:0;pointer-events:none}
 .mg .kio .kveil.on{opacity:.94}
