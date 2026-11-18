@@ -1,4 +1,4 @@
-import type { AmbientRisk, RiskBand } from "./score";
+import type { RiskBand } from "./score";
 
 // Single source of truth for the hazard palettes, shared by the HTML pages
 // (page.ts) and the share images (og.ts) so they can never drift apart.
@@ -58,17 +58,6 @@ export const HAZARD_TINT: Record<string, string> = {
   Smoke: "#78716c",
   Warning: "#ef4444",
 };
-/** How much of the hue goes into the backdrop, per band (percent). */
-export const TINT_STRENGTH: Record<RiskBand, number> = { low: 16, moderate: 20, high: 26, severe: 34 };
-
-/** The backdrop tint for a read: its hazard's hue (clear sky when calm) at its band's strength. */
-export function tintOf(risk: Pick<AmbientRisk, "band" | "driver">): { hue: string; strength: number } {
-  return {
-    hue: HAZARD_TINT[risk.band === "low" ? "none" : risk.driver] ?? HAZARD_TINT.none,
-    strength: TINT_STRENGTH[risk.band],
-  };
-}
-
 // ── Signage design standard (supporting-docs/redesign/design-standard.md) ───────────
 // Every colour the new pages use lives here; src/ui/tokens.ts turns them into CSS.
 

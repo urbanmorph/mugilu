@@ -12,7 +12,7 @@ import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 // The signage page shell (design standard). Every page loads exactly two stylesheets,
 // tokens then components, and composes components; no page carries CSS of its own.
 // Landmarks: skip link, header, one <main id="main">, footer. The body is the token root:
-// <body class="mg" data-tint data-level> (the wash from palette.ts tintOf).
+// <body class="mg" data-tint data-level> (the wash from read.ts readTint).
 
 const FONT_PRELOAD = `<link rel="preload" href="${LATIN_FONT}" as="font" type="font/woff2" crossorigin>`;
 
@@ -47,7 +47,7 @@ ${kiosk ? "" : siteHeader(path, lang, query)}<main id="main" tabindex="-1">${bod
 </html>`;
 }
 
-// ── phase2b: the embed card's document ───────────────────────────────────────────────
+// The embed card's document.
 /** The embed card's own document (it lives in other sites' iframes): the same two stylesheets
  *  and fonts, no header, footer, analytics beacon or service worker. Light or dark follows the
  *  host's system; the wash is the read's. */

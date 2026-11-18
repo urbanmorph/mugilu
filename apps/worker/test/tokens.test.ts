@@ -13,22 +13,11 @@ import {
   MAP_HUE,
 } from "../src/palette";
 import { tokensCss } from "../src/ui/tokens";
+import { contrast, mix } from "./helpers/contrast";
 
 // The signage design standard's tokens (supporting-docs/redesign/design-standard.md),
 // generated from palette.ts so every colour has one home.
 
-const hex = (h: string) => (h.match(/\w\w/g) ?? []).map((x) => parseInt(x, 16));
-const lum = (c: number[]) => {
-  const v = c.map((x) => x / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
-};
-const contrast = (a: string | number[], b: string | number[]) => {
-  const [x, y] = [lum(typeof a === "string" ? hex(a) : a), lum(typeof b === "string" ? hex(b) : b)].sort(
-    (p, q) => q - p,
-  );
-  return (x + 0.05) / (y + 0.05);
-};
-const mix = (h: string, g: string, p: number) => hex(h).map((v, i) => v * p + hex(g)[i] * (1 - p));
 const MODES = ["light", "dark"] as const;
 
 test("the standard's neutral values", () => {

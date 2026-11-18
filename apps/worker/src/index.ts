@@ -202,7 +202,7 @@ export default {
     // The place directory: every named /c/{slug} page, grouped by state. A crawlable
     // index that gives search engines a path to all ~800 place pages (and readers a
     // way to browse), so they aren't discoverable only through the sitemap.
-    // phase2a: with the map of India (the squares as a backdrop) and the places under an
+    // With the map of India (the squares as a backdrop) and the places under an
     // official cyclone warning marked, so it follows the live snapshots.
     if (url.pathname === "/places") {
       return cached(LIVE_EDGE_TTL, async () => {
@@ -266,7 +266,7 @@ export default {
           composeHighlights(env),
           topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
           composeMap(env),
-          loadWarningsSnapshot(env).catch(() => null), // phase2a: an official cyclone is pinned
+          loadWarningsSnapshot(env).catch(() => null), // an official cyclone is pinned
         ]);
         // Only show the "India now" hero when there's something in it.
         const highlights =

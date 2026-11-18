@@ -95,22 +95,20 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     {},
   "The display link is just {link}, so you can bookmark or script it. Add {as} (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.":
     {},
-  // phase2d: the Terms privacy box labels.
+  // The Terms privacy box labels.
   Accounts: {},
   "Usage counts": {},
   Analytics: {},
   "Saved places": {},
   Alerts: {},
-  // end phase2d
-  // phase2c: /warnings, /display, 404, and the search combobox
+  // /warnings, /display, 404, and the search combobox
   "As of": {},
   Avalanche: {},
   Preview: {},
   "{n} places": {},
   "No place in India matches that. Try another spelling, or a lat,lon.": {},
   "Original alert (CAP): {issuer}, {time}": {},
-  // /phase2c
-  // phase2a: home, /places and the IndiaMap (stamps, summaries, descriptions, the not-ready state)
+  // home, /places and the IndiaMap (stamps, summaries, descriptions, the not-ready state)
   "Map layer": {},
   "Squares, heat and rain": {},
   "Air station dots": {},
@@ -149,7 +147,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Map of India with every place on mugilu. Select a state to see its places.": {},
   "Place names: OpenStreetMap contributors (ODbL), GeoNames (CC-BY 4.0).": {},
   "Admin boundaries: LGD, via bharatlas.": {},
-  // /phase2a
   // /methodology prose (kn): hand-composed from the reviewed KANNADA_GLOSSARY + existing
   // UI strings (no Sarvam pass), proper nouns/acronyms kept Latin. Pending native
   // sign-off (supporting-docs/METHODOLOGY_KANNADA_REVIEW.md). Open calls flagged there:

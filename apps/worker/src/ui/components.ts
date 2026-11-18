@@ -147,7 +147,7 @@ export function segmented(
   legend: string,
   options: SegOption[],
   legendClass = "t-kicker",
-  /** phase2b: a layout for the options, e.g. "grid2 d3" (two columns, three on wide screens). */
+  /** A layout for the options, e.g. "grid2 d3" (two columns, three on wide screens). */
   segClass = "",
 ): string {
   const opts = options
@@ -664,7 +664,7 @@ export function embedCard(o: EmbedCardOpts, lang: Lang): string {
   );
 }
 
-// ── phase2d: full-width cards (text pages) ──────────────────────────────────────────
+// Full-width cards (text pages).
 /** Cards one per row: a full-width box, or (`c1`) the label-beside-body list the MCP setup uses. */
 export function cardStack(items: string[], o: { c1?: boolean; quiet?: boolean } = {}): string {
   return `<div class="cards${o.c1 ? " c1" : ""}">${items.map((x) => `<div class="card${o.quiet ? " quiet" : ""}">${x}</div>`).join("")}</div>`;
@@ -674,9 +674,8 @@ export function cardStack(items: string[], o: { c1?: boolean; quiet?: boolean } 
 export function warnBox(head: string, paras: string[]): string {
   return `<div class="warnbox"><p class="head">${ico("warn")}${head}</p>${paras.map((p) => `<p>${p}</p>`).join("")}</div>`;
 }
-// ── end phase2d ─────────────────────────────────────────────────────────────────────
 
-// ── phase2c: the Search combobox's behaviour ─────────────────────────────────────────
+// The Search combobox's behaviour.
 /** The "use my location" button `id` (rendered hidden): shown only where the browser can
  *  locate; a fix calls `onFix(lat, lon)` (the name of a page function, given 4-decimal
  *  strings), a refusal says so, and the label (icon included) comes back after either. */
@@ -707,4 +706,3 @@ q.addEventListener('keydown',function(e){if(e.key==='Escape'){hide();return;}if(
 ac.addEventListener('mousedown',function(e){var li=e.target.closest('li');if(li){e.preventDefault();go(+li.getAttribute('data-i'));}});
 q.addEventListener('blur',function(){setTimeout(hide,150);});})();`;
 }
-// ── /phase2c ─────────────────────────────────────────────────────────────────────────

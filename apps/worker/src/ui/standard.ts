@@ -1,35 +1,11 @@
 // The second of the two stylesheets every page loads (after tokens.ts): one definition per
 // component of the design standard, tokens only (no literal colours or sizes). Ported from the
 // standard's board stylesheet: the boards' size pins became media queries (desktop from 1000px,
-// the kiosk's portrait by orientation). Edit here; a new component is added to the standard first.
-// phase2b: the place read's components live in read-css.ts.
-import { READ_CSS } from "./read-css";
+// the kiosk's portrait by orientation). This is the only stylesheet source: pages never carry
+// their own CSS, and a new component is added to the standard first.
 
-// phase2c: the display preview (a live screen display, scaled into a 16:9 frame) and the
-// chosen place tile on /display. The install sheet: the board specimen showed it always open
-// (display:block); on a page it shows only when opened, as a centred dialog.
-const PHASE2C_CSS = `.mg .pvframe{position:relative;aspect-ratio:16/9;overflow:hidden;border:2px solid var(--ink);border-radius:var(--r);background:var(--ink)}
-.mg .pvframe iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
-.mg .tiles a[aria-current]{background:var(--ink);color:var(--bg)}
-@media (forced-colors:active){.mg .tiles a[aria-current]{forced-color-adjust:none;background:Highlight;color:HighlightText}}
-.mg dialog.isheet:not([open]){display:none}
-.mg dialog.isheet[open]{position:fixed;inset:0;margin:auto;max-width:min(30rem,calc(100% - 2 * var(--gut)));height:max-content;z-index:10}
-`;
-// /phase2c
-
-/** Pull-to-refresh (freshen.ts, the installed app only): a marker that turns as you pull. */
-/** The language names in their own scripts (header and footer): the system face, so two words do
- *  not download a whole Indic font on every page; a page in that language loads it anyway. */
-const LANG_NAMES_CSS = `.mg :is(.langs,.flangs) :lang(hi),.mg :is(.langs,.flangs) :lang(kn){font-family:system-ui,sans-serif}
-`;
-
-const PULL_CSS = `#ptr{position:fixed;left:50%;top:env(safe-area-inset-top,0px);z-index:60;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:var(--muted);border:2px solid var(--line);transform:translate(-50%,-48px);pointer-events:none}
-#ptr.go{color:var(--ink);border-color:var(--ink)}
-@media (prefers-reduced-motion: no-preference){#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}}
-`;
-
-export const STANDARD_CSS =
-  `
+/** The components of design-standard.md section 4, and the layouts of section 3a. */
+const COMPONENTS_CSS = `
 body{margin:0}
 .mg *,.mg *::before,.mg *::after{box-sizing:border-box}
 .mg{position:relative;padding:0 0 var(--sp6)}
@@ -55,7 +31,6 @@ body{margin:0}
 .mg svg.shape{fill:currentColor;flex:none}
 .mg .wrap{width:min(100%,calc(var(--col) + 2 * var(--gut)));margin:0 auto;padding:0 var(--gut)}
 .mg .pad{padding-top:var(--sp5)}
-.mg .pad-d{padding-top:var(--sp6)}
 .mg .stack>*+*{margin-top:var(--sp4)}
 .mg .row-c{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2) var(--sp3)}
 .mg .band{padding-top:var(--sp5)}
@@ -65,7 +40,6 @@ body{margin:0}
 .mg .col{display:flex;flex-direction:column;gap:var(--sp4)}
 .mg .col>.grow{flex:1 1 auto}
 .mg .flow>*{break-inside:avoid;margin:0 0 var(--sp4)}
-.mg .sep{display:block;height:0;border-top:2px solid var(--ink)}
 .mg .fill{background:var(--lv);color:var(--on)}
 .mg .sh{background:var(--bar);color:var(--on-bar);border-bottom:1px solid var(--bar-rule)}
 .mg .sh .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp4);padding-top:var(--sp2);padding-bottom:0}
@@ -90,7 +64,6 @@ body{margin:0}
 .mg .btn.primary{background:var(--ink);color:var(--bg)}
 .mg .btn[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .mg .btn[disabled]{border-style:dashed;border-color:var(--muted);color:var(--muted);cursor:not-allowed}
-.mg .btns{display:flex;flex-wrap:wrap;gap:var(--sp2)}
 .mg .segf{display:grid;gap:var(--sp2)}
 .mg .segf>legend{padding:0;margin-bottom:var(--sp2)}
 .mg .segf>.seg:not(.grid2){justify-self:start}
@@ -103,7 +76,6 @@ body{margin:0}
 .mg .seg :is(label:has(input:focus-visible),a:focus-visible){outline:3px solid var(--focus);outline-offset:-6px}
 .mg .seg.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;background:var(--ink);overflow:visible}
 .mg .seg.grid2 :is(label,a){border:0;padding:var(--sp1) var(--sp2)}
-.mg .seg.inv{border-color:var(--on-bar)}
 .mg .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--r);border:2px solid var(--lv,var(--ink));background:var(--lv,transparent);color:var(--on,var(--ink));font-size:var(--t-xs);font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .mg .chip svg{width:16px;height:16px}
 .mg .lkey{display:flex;flex-wrap:wrap;gap:var(--sp2)}
@@ -224,25 +196,16 @@ body{margin:0}
 .mg .idx a{display:inline-flex;align-items:center;justify-content:center;min-width:var(--hit);min-height:var(--hit);padding:0 var(--sp2);border:2px solid var(--ink);border-radius:var(--r);font-size:var(--t-sm);font-weight:700;text-decoration:none}
 .mg .plist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 var(--sp3)}
 .mg .plist a{display:flex;align-items:center;min-height:var(--hit);border-bottom:1px solid var(--line);font-size:var(--t-sm);text-decoration:none}
-.mg .states{display:grid;gap:var(--sp3)}
 .mg .ph{padding:var(--sp5) 0 var(--sp4);display:grid;gap:var(--sp3)}
 .mg .ph .t-lead{max-width:60ch}
 .mg .back{font-weight:700;font-size:var(--t-sm)}
 .mg .cnum{display:inline-flex;flex:none;width:28px;height:28px;align-items:center;justify-content:center;border-radius:50%;border:2px solid var(--ink);font-size:var(--t-xs);font-weight:800;font-stretch:100%}
 .mg .cnum.solid{width:36px;height:36px;background:var(--ink);color:var(--bg);font-size:var(--t-lg)}
 .mg .step{display:grid;gap:var(--sp3)}
-.mg .step>h2,.mg .steph{display:flex;align-items:center;gap:var(--sp3)}
+.mg .step>h2{display:flex;align-items:center;gap:var(--sp3)}
 .mg .howto{display:grid;gap:0;counter-reset:h}
 .mg .howto li{display:grid;grid-template-columns:32px minmax(0,1fr);gap:var(--sp3);padding:var(--sp3) 0;border-top:1px solid var(--line);counter-increment:h}
 .mg .howto li::before{content:counter(h);display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border:2px solid var(--ink);border-radius:50%;font-size:var(--t-xs);font-weight:800}
-.mg .mg.pvm{padding:0;border-radius:var(--r)}
-.mg .pv{background:var(--bg);border-radius:var(--r);padding:var(--sp2);aspect-ratio:16/9;min-height:auto;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:var(--sp2)}
-.mg .pv .pl{display:flex;flex-direction:column;gap:var(--sp1);padding:var(--sp3)}
-.mg .pv .pl .w{font-size:var(--t-2xl);font-weight:800;font-stretch:75%;line-height:.9;text-transform:uppercase}
-.mg .pv .pl .t-kicker,.mg .pv .pl .a,.mg .pv .rd{font-size:var(--t-xs)}
-.mg .pv .pl .a{font-weight:600;line-height:1.3;margin-top:auto}
-.mg .pv .rd{display:grid;align-content:space-evenly;gap:var(--sp1);color:var(--ink);font-weight:700}
-.mg .pv .rd span{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:2px 0}
 .mg .nf{border:3px solid var(--ink);border-radius:var(--r);padding:var(--sp5);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp4);margin-top:var(--sp5);background:var(--bg)}
 .mg .nf>.ico{width:72px;height:72px}
 .mg .sheet{margin-top:var(--sp5)}
@@ -305,7 +268,6 @@ body{margin:0}
 .mg .mlg svg{width:18px;height:18px;flex:none}
 .mg .mlg .sq{stroke:var(--ink);stroke-width:1.2}
 .mg .msvg .mcells path{stroke:var(--ink);stroke-width:.7;stroke-linejoin:round}
-.mg .msvg .mcalm{fill:none;stroke:none}
 .mg .f-air{fill:var(--mair)}
 .mg .f-heat{fill:var(--mheat)}
 .mg .f-cold{fill:var(--mcold)}
@@ -341,7 +303,6 @@ body{margin:0}
 .mg .kio h1.kname{margin:0}
 .mg .kio .kname,.mg .kio .kclock{font-size:var(--t-xl);font-weight:800;font-stretch:80%;text-transform:uppercase;font-variant-numeric:tabular-nums}
 .mg .kio .kb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);min-height:0}
-.mg .kio .kload{display:grid;place-items:center;align-content:center;gap:var(--sp4);height:100%;text-align:center}
 .mg .kio .plate{display:flex;flex-direction:column;justify-content:center;padding:var(--sp5) var(--gut)}
 .mg .kio .plate .shape{width:1.2em;height:1.2em;font-size:var(--t-3xl)}
 .mg .kio .ktiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;padding:0 var(--sp5)}
@@ -369,11 +330,6 @@ body{margin:0}
 .mg .ecard .efoot{display:flex;justify-content:space-between;font-size:var(--t-xs);font-weight:700;margin-top:auto}
 .mg .ecard .t-legal{line-height:1.25}
 .mg .ecard .disc-long{display:none}
-.mg .og{width:1200px;height:630px;display:flex;flex-direction:column;border:2px solid var(--ink);overflow:hidden;background:var(--bg);color:var(--ink)}
-.mg .og .ogtop{display:flex;justify-content:space-between;align-items:center;background:var(--bar);color:var(--on-bar);padding:var(--sp4) var(--sp6);font-size:var(--t-sm);font-weight:800}
-.mg .og .ogmid{flex:1;display:flex;min-height:0}
-.mg .og .ogmid>*{display:flex;flex-direction:column;justify-content:center}
-.mg .og .ogfoot{display:flex;justify-content:space-between;align-items:center;gap:var(--sp5);padding:var(--sp3) var(--sp6);border-top:2px solid var(--ink);font-size:var(--t-xs)}
 @media (min-width:1000px){
 .mg .band{padding-top:var(--sp6)}
 .mg .lane{gap:var(--sp5)}
@@ -405,12 +361,9 @@ body{margin:0}
 .mg .fbar .check .c{margin-left:var(--sp2)}
 .mg .flow>.rrow{border:2px solid var(--ink);border-radius:var(--r);padding:var(--sp4);background:var(--bg)}
 .mg .tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
-.mg .states{grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
 .mg .ph{padding:var(--sp7) 0 var(--sp5)}
 .mg .howto.cards4{grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp4)}
 .mg .howto.cards4 li{grid-template-columns:minmax(0,1fr);align-content:start;border:2px solid var(--ink);border-radius:var(--r);padding:var(--sp4)}
-.mg .pv .pl .w{font-size:var(--t-3xl)}
-.mg .pv .pl .t-kicker,.mg .pv .pl .a,.mg .pv .rd{font-size:var(--t-sm)}
 .mg .nf{width:760px;margin:var(--sp8) auto 0;padding:var(--sp7)}
 .mg .sheet{border:3px solid var(--ink);border-radius:var(--r);background:var(--bg);padding:var(--sp7) var(--sp7) var(--sp4)}
 .mg .hero{grid-template-columns:minmax(0,1fr);gap:var(--sp5)}
@@ -435,7 +388,7 @@ body{margin:0}
 .mg[data-kiosk] .qr .qrimg{width:220px;height:220px}
 .mg .kio .kb{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
 .mg .kio .plate{justify-content:flex-start;gap:var(--sp4);padding:var(--sp7) var(--gut)}
-.mg .kio .ktiles{grid-template-columns:1fr;gap:0;padding:var(--sp3) var(--gut)}
+.mg .kio .ktiles{grid-template-columns:1fr;gap:0}
 .mg .kio .ktile{padding:var(--sp5) 0}
 .mg .kio .ktile .lab,.mg .kio .ktile .qa,.mg .kio .kquiet{font-size:var(--k2)}
 .mg .kio .ktile .num{font-size:var(--k3)}
@@ -444,11 +397,65 @@ body{margin:0}
 @media (forced-colors:active){.mg .seg :is(label:has(input:checked),a[aria-current]){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
 @container (min-width:400px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
-${PHASE2C_CSS}${READ_CSS}${PULL_CSS}${LANG_NAMES_CSS}` +
-  // phase2d: the page clears the notch and the home bar (every page opts into viewport-fit=cover);
-  // the hidden attribute wins over a component's display (Install app, the alert states).
-  `.mg .sh{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+`;
+
+/** Display preview: a live screen display scaled into a 16:9 frame; the chosen place tile. The install sheet shows only when opened, as a centred dialog. */
+const PREVIEW_CSS = `
+.mg .pvframe{position:relative;aspect-ratio:16/9;overflow:hidden;border:2px solid var(--ink);border-radius:var(--r);background:var(--ink)}
+.mg .pvframe iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
+.mg .tiles a[aria-current]{background:var(--ink);color:var(--bg)}
+@media (forced-colors:active){.mg .tiles a[aria-current]{forced-color-adjust:none;background:Highlight;color:HighlightText}}
+.mg dialog.isheet:not([open]){display:none}
+.mg dialog.isheet[open]{position:fixed;inset:0;margin:auto;max-width:min(30rem,calc(100% - 2 * var(--gut)));height:max-content;z-index:10}
+`;
+
+/** A place's read: ReadingRow, the place hero, the persona tag, the UV steps, the embed card, the screen display and its loading veil. The landscape kiosk hides the heat tile's wet-bulb and WBGT lines: at 720p they do not fit at the 24px floor; portrait shows them. */
+const READ_CSS = `
+.mg .fy{display:inline-block;white-space:nowrap;margin-left:var(--sp2);padding:0 6px;border:2px solid currentColor;border-radius:var(--r);font-size:var(--t-xs);font-weight:800;letter-spacing:.06em;color:var(--ink);vertical-align:.1em}
+.mg .rrow.on .lab{color:var(--ink)}
+.mg .rrow .more .key{font-weight:800}
+.mg .uvs i.off{opacity:.25}
+.mg .uvs i.now{outline:2px solid var(--ink);outline-offset:1px}
+.mg .phero{display:grid;gap:var(--sp4)}
+.mg .ptitle h1{overflow-wrap:anywhere}
+@media (min-width:1000px){
+.mg .phero{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"t p" "w p";column-gap:var(--sp5);align-items:start}
+.mg .phero>.ptitle{grid-area:t}
+.mg .phero>.plate{grid-area:p;align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+.mg .phero>.pwho{grid-area:w}
+}
+.mg[data-embed]{padding:calc(var(--sp2) + env(safe-area-inset-top)) calc(var(--sp2) + env(safe-area-inset-right)) calc(var(--sp2) + env(safe-area-inset-bottom)) calc(var(--sp2) + env(safe-area-inset-left))}
+.mg[data-embed] .ecard{max-width:480px;height:240px}
+.mg[data-embed] .ecode{max-width:480px;margin-top:var(--sp4)}
+.framed .mg[data-embed]{padding:0}
+.framed .mg[data-embed] .ecard{max-width:none;height:100vh}
+.framed .mg[data-embed] .ecode{display:none}
+.mg[data-kiosk] main{height:100vh;height:100dvh;overflow:hidden}
+.mg .kio{position:relative;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.mg .kio .kb{overflow:hidden}
+@media (orientation:landscape){.mg .kio .ktile>p.qa{display:none}}
+.mg .kio .kveil{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;gap:var(--sp4);background:var(--bg);opacity:0;pointer-events:none}
+.mg .kio .kveil.on{opacity:.94}
+@media (prefers-reduced-motion:no-preference){.mg .kio .kveil{transition:opacity .3s}}
+`;
+
+/** Pull-to-refresh (the installed app only): a marker that turns as you pull. */
+const PULL_CSS = `
+#ptr{position:fixed;left:50%;top:env(safe-area-inset-top,0px);z-index:60;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:var(--muted);border:2px solid var(--line);transform:translate(-50%,-48px);pointer-events:none}
+#ptr.go{color:var(--ink);border-color:var(--ink)}
+@media (prefers-reduced-motion: no-preference){#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}}
+`;
+
+/** Language names in their own scripts use the system face, so two words never download an Indic font. */
+const LANG_NAMES_CSS = `
+.mg :is(.langs,.flangs) :lang(hi),.mg :is(.langs,.flangs) :lang(kn){font-family:system-ui,sans-serif}
+`;
+
+/** Safe areas (every page opts into viewport-fit=cover); the hidden attribute wins over a component's display. */
+const SAFE_AREA_CSS = `
+.mg .sh{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 body{padding-bottom:env(safe-area-inset-bottom)}
 .mg [hidden]{display:none!important}
 `;
-// end phase2d
+
+export const STANDARD_CSS = COMPONENTS_CSS + PREVIEW_CSS + READ_CSS + PULL_CSS + LANG_NAMES_CSS + SAFE_AREA_CSS;

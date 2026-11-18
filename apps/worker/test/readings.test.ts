@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { briefs } from "../src/readings";
 import { ambientRisk } from "../src/score";
-import { HAZARD_TINT, TINT_STRENGTH, tintOf } from "../src/palette";
+import { HAZARD_TINT } from "../src/palette";
+import { readTint } from "../src/pages/read";
 import type { Conditions } from "../src/types";
 
 const base = {
@@ -48,9 +49,9 @@ test("briefs: each carries a gauge against the thresholds the read uses", () => 
   assert.deepEqual(air.gauge.ticks, [100, 200, 300]);
 });
 
-test("tintOf: the hue names the hazard, the strength its band; a calm read is clear-sky blue", () => {
-  assert.deepEqual(tintOf(ambientRisk(hot)), { hue: HAZARD_TINT.Heat, strength: TINT_STRENGTH.severe });
-  assert.deepEqual(tintOf(ambientRisk(calm)), { hue: HAZARD_TINT.none, strength: TINT_STRENGTH.low });
+test("readTint: the hue names the hazard, the level its band; a calm read is clear sky", () => {
+  assert.deepEqual(readTint(ambientRisk(hot)), { hue: "Heat", level: "severe" });
+  assert.deepEqual(readTint(ambientRisk(calm)), { hue: "none", level: "low" });
   for (const h of ["Air", "Heat", "Cold", "UV", "Dust", "Wind", "Fog", "Smoke", "Warning"])
     assert.ok(HAZARD_TINT[h], h);
 });

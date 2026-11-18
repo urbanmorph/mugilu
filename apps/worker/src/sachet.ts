@@ -232,7 +232,7 @@ export function renderWarningsMarkdown(snap: WarningsSnapshot | null): string {
   return out.join("\n");
 }
 
-// phase2a ─ the official cyclone: IMD's own category and the storm's name, from the newest
+// The official cyclone: IMD's own category and the storm's name, from the newest
 // SACHET warning about it (the JTWC track gives position, never the category).
 const CYCLONE_RE =
   /\b((?:super |extremely severe |very severe |severe )?cyclonic storm)\b(?:\s+["“']?([A-Za-z]{3,})\b)?/i;
