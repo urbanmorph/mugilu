@@ -52,10 +52,12 @@ export function renderMethodology(lang: Lang = "en"): string {
   const normal = splitAs(NORMAL_KEY, NORMAL_KEY, lang, 3);
   const normalBody = normal ? P(normal[0]) + cardGrid([P(normal[1]), P(normal[2])]) : whole(NORMAL_KEY);
 
+  // The table's name differs from its section's ("The thresholds"): two landmarks never share one.
+  const [hazard, ...words] = [t("Hazard", lang), ...LEVELS.slice(1).map((k) => t(LEVEL_WORD[k], lang))];
   const table = dataTable(
-    [t("Hazard", lang), ...LEVELS.slice(1).map((k) => t(LEVEL_WORD[k], lang))].map((label) => ({ label })),
+    [hazard, ...words].map((label) => ({ label })),
     THRESHOLD_ROWS.map((r) => [esc(t(r.hazard, lang)), ...r.cells.map(esc)]),
-    t("The thresholds", lang),
+    `${hazard}: ${words.join(", ")}`,
     ["", "fill moderate", "fill high", "fill severe"],
   );
 

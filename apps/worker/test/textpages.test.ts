@@ -46,6 +46,16 @@ for (const [page, render] of Object.entries(PAGES)) {
   });
 }
 
+test("signage shell: the iOS install sheet stays closed until Install app opens it (a modal)", () => {
+  const html = renderAbout("en");
+  assert.match(html, /<dialog class="isheet" id="install-guide"/);
+  assert.match(html, /\.mg dialog\.isheet:not\(\[open\]\)\{display:none\}/);
+  assert.match(html, /\.mg dialog\.isheet:modal\{position:fixed/);
+  // the hidden attribute wins over a component's display (Install app, the alert states)
+  assert.match(html, /<button type="button" class="btn" id="install-app" hidden>/);
+  assert.match(html, /\.mg \[hidden\]\{display:none!important\}/);
+});
+
 test("text pages: no slot leaks and no English fallback for the reviewed paragraphs in hi and kn", () => {
   for (const lang of ["hi", "kn"] as const) {
     const pages = [renderAbout(lang), renderMethodology(lang), renderTerms(lang)];
