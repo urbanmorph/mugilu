@@ -1,6 +1,6 @@
 import { t, type Lang } from "../i18n";
 import { cardBody, cardGrid, pairs, pull, warnBox } from "../ui/components";
-import { P, plain, splitAs, textPage } from "./text";
+import { P, plain, splitInto, textPage } from "./text";
 
 // The live paragraphs, as keys (pages/text.ts splits them at sentence ends to fill the boxes).
 const WARRANTY =
@@ -20,17 +20,23 @@ export function renderTerms(lang: Lang = "en"): string {
   const en = lang === "en";
 
   // Split before marking up: the bold first sentence would hide its full stop.
-  const w = splitAs(WARRANTY.replace("NDMA", "<b>NDMA</b>").replace("IMD", "<b>IMD</b>"), WARRANTY, lang, 4);
-  const warranty = w
-    ? warnBox(en ? `<b>${w[0]}</b>` : w[0], [`${w[1]} ${w[2]}`, w[3]])
-    : warnBox(t(WARRANTY, lang), []);
+  const warranty = splitInto(
+    WARRANTY.replace("NDMA", "<b>NDMA</b>").replace("IMD", "<b>IMD</b>"),
+    WARRANTY,
+    lang,
+    4,
+    (w) => warnBox(en ? `<b>${w[0]}</b>` : w[0], [`${w[1]} ${w[2]}`, w[3]]),
+    (whole) => warnBox(whole, []),
+  );
 
-  const repo = a("https://github.com/urbanmorph/mugilu", en ? "repository" : t("repository", lang));
+  const repo = a("https://github.com/urbanmorph/mugilu", t("repository", lang));
   const licenceEn = LICENCE.replace("code is MIT", "<b>code is MIT</b>")
     .replace("data is not relicensed", "<b>data is not relicensed</b>")
     .replace("non-commercial, for individuals", "<b>non-commercial, for individuals</b>");
-  const l = splitAs(licenceEn, LICENCE, lang, 3)?.map((s) => s.replace("{repo}", repo));
-  const licence = l ? cardGrid([P(l[0]), P(l[1])]) + P(l[2]) : P(t(LICENCE, lang).replace("{repo}", repo));
+  const licence = splitInto(licenceEn, LICENCE, lang, 3, (l) => cardGrid([P(l[0]), P(l[1])]) + P(l[2])).replace(
+    "{repo}",
+    repo,
+  );
 
   const sources: [string, string][] = [
     [
@@ -74,17 +80,22 @@ export function renderTerms(lang: Lang = "en"): string {
   ];
 
   const privacyEn = PRIVACY.replace("Cloudflare Web Analytics", "<b>Cloudflare Web Analytics</b>");
-  const p = splitAs(privacyEn, PRIVACY, lang, 4);
   const alerts = t(ALERTS, lang);
-  const privacy = p
-    ? pairs([
+  const privacy = splitInto(
+    privacyEn,
+    PRIVACY,
+    lang,
+    4,
+    (p) =>
+      pairs([
         [t("Accounts", lang), p[0]],
         [t("Usage counts", lang), p[1]],
         [t("Analytics", lang), p[2]],
         [t("Saved places", lang), p[3]],
         [t("Alerts", lang), alerts],
-      ])
-    : P(`${t(PRIVACY, lang)} ${alerts}`);
+      ]),
+    (whole) => P(`${whole} ${alerts}`),
+  );
   const commons = t("A digital commons by {um}, alongside {bl} and {md}.", lang)
     .replace("{um}", a("https://urbanmorph.com", "urbanmorph"))
     .replace("{bl}", a("https://bharatlas.com", "bharatlas"))

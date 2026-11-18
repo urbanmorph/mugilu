@@ -2,7 +2,7 @@ import { esc, trusted } from "../html";
 import { RISK_BANDS, THRESHOLD_ROWS } from "../score";
 import { lp, t, type Lang } from "../i18n";
 import { cardGrid, cardStack, dataTable, LEVEL_SHAPE, LEVEL_WORD, pull, shape } from "../ui/components";
-import { P, splitAs, textPage } from "./text";
+import { marked, P, splitAs, splitInto, textPage } from "./text";
 
 // The live paragraphs, as keys. English renders its markup version; hi/kn their reviewed
 // translation, split at sentence ends to fill the boxes (pages/text.ts).
@@ -26,29 +26,34 @@ const levelStrip = (lang: Lang) =>
 
 /** Glass-box methodology: how the Ambient read is computed, with the public thresholds. */
 export function renderMethodology(lang: Lang = "en"): string {
-  const whole = (key: string) => P(t(key, lang));
   const lead = splitAs(LEAD, LEAD, lang, 3);
 
-  const one = splitAs(ONE_EN, ONE_KEY, lang, 4);
-  const oneBody = one
-    ? P(one[0]) + levelStrip(lang) + cardGrid([P(one[1]), P(one[2])]) + pull(one[3])
-    : P(lang === "en" ? ONE_EN : t(ONE_KEY, lang)) + levelStrip(lang);
+  const oneBody = splitInto(
+    ONE_EN,
+    ONE_KEY,
+    lang,
+    4,
+    (s) => P(s[0]) + levelStrip(lang) + cardGrid([P(s[1]), P(s[2])]) + pull(s[3]),
+    (whole) => P(whole) + levelStrip(lang),
+  );
 
-  const who = splitAs(WHO_EN, WHO_KEY, lang, 4);
-  const whoBody = who ? cardGrid([P(who[0]), P(who[1]), P(who[2])], 3) + pull(who[3]) : whole(WHO_KEY);
+  const whoBody = splitInto(WHO_EN, WHO_KEY, lang, 4, (s) => cardGrid([P(s[0]), P(s[1]), P(s[2])], 3) + pull(s[3]));
 
   // The note carries two links; word order differs across languages, so the slots are filled
   // after lookup.
   const scoreLink = `<a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>`;
-  const termsLink = `<a href="${lp("/terms", lang)}">${lang === "en" ? "terms &amp; attribution" : t("terms & attribution", lang)}</a>`;
+  const termsLink = `<a href="${lp("/terms", lang)}">${marked("terms & attribution", lang, "terms &amp; attribution")}</a>`;
   const fill = (s: string) => s.replace("{score}", scoreLink).replace("{terms}", termsLink);
-  const note = splitAs(NOTE_KEY, NOTE_KEY, lang, 3);
-  const noteBody = note
-    ? cardGrid([P(note[0]), P(note[1])], 2, true) + cardStack([P(fill(note[2]))], { quiet: true })
-    : P(fill(t(NOTE_KEY, lang)));
+  const noteBody = splitInto(
+    NOTE_KEY,
+    NOTE_KEY,
+    lang,
+    3,
+    (s) => cardGrid([P(s[0]), P(s[1])], 2, true) + cardStack([P(fill(s[2]))], { quiet: true }),
+    (whole) => P(fill(whole)),
+  );
 
-  const normal = splitAs(NORMAL_KEY, NORMAL_KEY, lang, 3);
-  const normalBody = normal ? P(normal[0]) + cardGrid([P(normal[1]), P(normal[2])]) : whole(NORMAL_KEY);
+  const normalBody = splitInto(NORMAL_KEY, NORMAL_KEY, lang, 3, (s) => P(s[0]) + cardGrid([P(s[1]), P(s[2])]));
 
   // The table's name differs from its section's ("The thresholds"): two landmarks never share one.
   const hazard = t("Hazard", lang);

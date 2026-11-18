@@ -4,7 +4,7 @@ import { t, type Lang } from "../i18n";
 import { HAZARDS } from "../hazards";
 import { ld, UM_ICON } from "../ui/shell";
 import { cardBody, cardGrid, cardStack, faq, pull } from "../ui/components";
-import { P, lineBreakAfterComma, splitAs, textPage } from "./text";
+import { P, lineBreakAfterComma, marked, splitInto, textPage } from "./text";
 
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
@@ -49,28 +49,32 @@ const REF =
 
 /** The About page: the origin story and the two sides (for people, and as infrastructure). */
 export function renderAbout(lang: Lang = "en"): string {
-  const en = lang === "en";
-  const sathya = en
-    ? SATHYA.replace("Sathya Sankaran", `<a href="https://www.sathyasankaran.com">Sathya Sankaran</a>`)
-    : t(SATHYA, lang);
+  const sathya = marked(
+    SATHYA,
+    lang,
+    SATHYA.replace("Sathya Sankaran", `<a href="https://www.sathyasankaran.com">Sathya Sankaran</a>`),
+  );
 
   // For people: one paragraph over three boxes (two sentences, the line in a pull quote, the close).
-  const people = splitAs(FOR_PEOPLE, FOR_PEOPLE, lang, 4);
-  const peopleBody = people ? P(`${people[0]} ${people[1]}`) + pull(people[2]) + P(people[3]) : P(t(FOR_PEOPLE, lang));
+  const peopleBody = splitInto(FOR_PEOPLE, FOR_PEOPLE, lang, 4, (s) => P(`${s[0]} ${s[1]}`) + pull(s[2]) + P(s[3]));
 
   // Where it comes from: the first sentence as a pull quote, the credits in a box, the licence.
-  const where = splitAs(boldSourceNames(SOURCES_ABOUT), SOURCES_ABOUT, lang, 3);
-  const whereBody = where ? pull(where[0]) + cardStack([P(where[1])]) + P(where[2]) : P(t(SOURCES_ABOUT, lang));
+  const whereBody = splitInto(
+    boldSourceNames(SOURCES_ABOUT),
+    SOURCES_ABOUT,
+    lang,
+    3,
+    (s) => pull(s[0]) + cardStack([P(s[1])]) + P(s[2]),
+  );
 
   const freeEn = FREE.replace("non-commercial, for good", "<b>non-commercial, for good</b>")
     .replace("bharatlas", `<a href="https://bharatlas.com">bharatlas</a>`)
     .replace("mdshare", `<a href="https://mdshare.live">mdshare</a>`);
-  const free = splitAs(freeEn, FREE, lang, 3);
-  const freeBody = free ? pull(free[0]) + P(`${free[1]} ${free[2]}`) : P(t(FREE, lang));
+  const freeBody = splitInto(freeEn, FREE, lang, 3, (s) => pull(s[0]) + P(`${s[1]} ${s[2]}`));
 
-  const ref = en ? REF.replace("?ref=your-app", "<b>?ref=your-app</b>") : t(REF, lang);
-  const openapi = en ? "OpenAPI spec" : t("OpenAPI spec", lang);
-  const snapshot = en ? "snapshot image" : t("snapshot image", lang);
+  const ref = marked(REF, lang, REF.replace("?ref=your-app", "<b>?ref=your-app</b>"));
+  const openapi = t("OpenAPI spec", lang);
+  const snapshot = t("snapshot image", lang);
   const build = cardGrid([
     cardBody(
       t("For AI agents", lang),
@@ -115,9 +119,11 @@ export function renderAbout(lang: Lang = "en"): string {
     ),
   ]);
 
-  const builtBy = en
-    ? `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`
-    : t("Built by urbanmorph, led by Sathya Sankaran.", lang);
+  const builtBy = marked(
+    "Built by urbanmorph, led by Sathya Sankaran.",
+    lang,
+    `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`,
+  );
   const credit =
     `<div class="credit"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"><div>${P(builtBy)}` +
     `<p class="links"><a href="https://github.com/urbanmorph/mugilu">${t("Source on GitHub, drop a star if it's useful", lang)}</a></p></div></div>`;
