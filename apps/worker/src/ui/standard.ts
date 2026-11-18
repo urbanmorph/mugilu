@@ -2,6 +2,16 @@
 // component of the design standard, tokens only (no literal colours or sizes). Ported from the
 // standard's board stylesheet: the boards' size pins became media queries (desktop from 1000px,
 // the kiosk's portrait by orientation). Edit here; a new component is added to the standard first.
+
+// phase2c: the display preview (a live screen display, scaled into a 16:9 frame) and the
+// chosen place tile on /display.
+const PHASE2C_CSS = `.mg .pvframe{position:relative;aspect-ratio:16/9;overflow:hidden;border:2px solid var(--ink);border-radius:var(--r);background:var(--ink)}
+.mg .pvframe iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
+.mg .tiles a[aria-current]{background:var(--ink);color:var(--bg)}
+@media (forced-colors:active){.mg .tiles a[aria-current]{forced-color-adjust:none;background:Highlight;color:HighlightText}}
+`;
+// /phase2c
+
 export const STANDARD_CSS = `
 body{margin:0}
 .mg *,.mg *::before,.mg *::after{box-sizing:border-box}
@@ -417,4 +427,4 @@ body{margin:0}
 @media (forced-colors:active){.mg .seg label:has(input:checked){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
 @container (min-width:400px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
-`;
+${PHASE2C_CSS}`;
