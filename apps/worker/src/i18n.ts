@@ -419,6 +419,15 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   Station: { hi: "स्टेशन", kn: "ನಿಲ್ದಾಣ" },
   Distance: { hi: "दूरी", kn: "ದೂರ" },
   "On this page": { hi: "इस पेज पर", kn: "ಈ ಪುಟದಲ್ಲಿ" },
+  // putting a place on a screen (/c and /display)
+  "Put this on a screen": { hi: "इसे स्क्रीन पर लगाएँ", kn: "ಇದನ್ನು ಸ್ಕ್ರೀನ್ ಮೇಲೆ ಹಾಕಿ" },
+  "A city, area or address": { hi: "कोई शहर, इलाका या पता", kn: "ನಗರ, ಪ್ರದೇಶ ಅಥವಾ ವಿಳಾಸ" },
+  "A display can show a city, a neighbourhood or an exact point. Search for it above, or use where this screen stands.":
+    {
+      hi: "स्क्रीन किसी शहर, इलाके या एक सटीक जगह का हाल दिखा सकती है। ऊपर खोजें, या वही जगह इस्तेमाल करें जहाँ यह स्क्रीन लगी है।",
+      kn: "ಸ್ಕ್ರೀನ್ ಒಂದು ನಗರ, ಪ್ರದೇಶ ಅಥವಾ ನಿಖರವಾದ ಸ್ಥಳವನ್ನು ತೋರಿಸಬಹುದು. ಮೇಲೆ ಹುಡುಕಿ, ಅಥವಾ ಈ ಸ್ಕ್ರೀನ್ ಇರುವ ಸ್ಥಳವನ್ನೇ ಬಳಸಿ.",
+    },
+  "Use this screen's location": { hi: "इस स्क्रीन की जगह इस्तेमाल करें", kn: "ಈ ಸ್ಕ್ರೀನ್ ಇರುವ ಸ್ಥಳವನ್ನು ಬಳಸಿ" },
   // the header nav on the wide pages
   Places: { hi: "स्थान", kn: "ಸ್ಥಳಗಳು" },
   Warnings: { hi: "चेतावनियाँ", kn: "ಎಚ್ಚರಿಕೆಗಳು" },
