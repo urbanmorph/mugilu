@@ -23,16 +23,19 @@ import { BAND_SHAPE, LEVEL_SHAPE, SHAPE, DISCLAIMER_FULL, type ShapeName } from 
 export const ogText = (s: string) => s.replace(/[<>]/g, "");
 
 const N = NEUTRAL.light;
-const FONT = "font-family:sans-serif;";
+/** The share images are set in Anek Latin, as the pages are (og.ts hands Satori the font). */
+const FONT = "font-family:'Anek Latin';";
 
 /** A flex box (Satori needs display:flex on any div with more than one child). */
 const box = (style: string, ...children: string[]) => `<div style="display:flex;${style}">${children.join("")}</div>`;
 /** A line of text. */
 const txt = (style: string, s: string) => box(style, ogText(s));
 
-/** A level's shape, filled. */
+/** A level's shape, filled: an SVG image (Satori draws images, but no inline <svg> from HTML). */
 const shapeSvg = (kind: ShapeName, size: number, colour: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24"><path d="${SHAPE[kind]}" fill="${colour}" fill-rule="evenodd"/></svg>`;
+  `<img width="${size}" height="${size}" src="data:image/svg+xml;base64,${btoa(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${SHAPE[kind]}" fill="${colour}" fill-rule="evenodd"/></svg>`,
+  )}">`;
 
 /** The frame: the black bar, the middle, the foot. */
 function frame(top: [string, string], mid: string, foot: [string, string]): string {

@@ -82,3 +82,11 @@ test("conditionsOgHtml: text is written as is, never as HTML entities (the rende
   assert.match(html, /For asthma & lungs, treat it as high\./);
   assert.doesNotMatch(html, /&amp;|&lt;|&gt;/);
 });
+
+test("share images: the level shape as an image (Satori draws no inline <svg> from HTML), set in Anek Latin", () => {
+  for (const html of [conditionsOgHtml(c, "everyone"), homeOgHtml()]) {
+    assert.doesNotMatch(html, /<svg/);
+    assert.match(html, /font-family:'Anek Latin'/);
+  }
+  assert.match(conditionsOgHtml(c, "everyone"), /<img width="96" height="96" src="data:image\/svg\+xml;base64,/);
+});

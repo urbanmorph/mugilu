@@ -65,3 +65,9 @@ invocation_logs = false
 [vars]
 OAQ_BROKER_URL = "https://us-central1-oaqdms.cloudfunctions.net/brokerData"
 OAQ_BASE_URL = "https://oaq.notf.in/v1"
+
+# The share images' font (og.ts): TTF files bundled as binary Data modules.
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = false
