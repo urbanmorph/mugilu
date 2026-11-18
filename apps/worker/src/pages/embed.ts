@@ -3,7 +3,7 @@ import { AQI_BAND_LABEL } from "../aqi";
 import { briefs, placeLabel } from "../readings";
 import { esc } from "../html";
 import { ambientRisk, ambientSummary, smokeLevel, type AmbientRisk, type Persona } from "../score";
-import { t, type Lang } from "../i18n";
+import { lp, t, type Lang } from "../i18n";
 import { istTime } from "../ui/shell";
 import { embedShell } from "../ui/page-shell";
 import { embedCard, panel } from "../ui/components";
@@ -34,11 +34,12 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const slug = `${c.location.lat},${c.location.lon}`;
   const placeName = placeLabel(c);
 
-  const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${placeName}" loading="lazy"></iframe>`;
-  const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${placeName}" width="600">`;
+  // The snippets are pasted into other sites: every attribute escaped.
+  const iframe = `<iframe src="${siteUrl}${lp(`/embed/${slug}`, lang)}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${esc(placeName)}" loading="lazy"></iframe>`;
+  const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${esc(placeName)}" width="600">`;
   const card = embedCard(
     {
-      href: `${siteUrl}/c/${slug}`,
+      href: `${siteUrl}${lp(`/c/${slug}`, lang)}`,
       place: placeName,
       level: risk.band,
       headline: headText(risk, lang).replace(/\.$/, ""),

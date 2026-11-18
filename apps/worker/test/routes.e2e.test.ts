@@ -176,3 +176,20 @@ test("the place page's persona switch is links: no script needed, crawlable, arr
   assert.match(page, /<a href="\/c\/delhi">/);
   assert.doesNotMatch(page, /name="who"/);
 });
+
+test("the language links keep the persona, and the 404 page's lead to home", async () => {
+  const page = await html("/c/delhi?as=asthma");
+  assert.match(page, /<a href="\/hi\/c\/delhi\?as=asthma" lang="hi" hreflang="hi">/);
+  const res = await w.get("/no-such-page", { headers: { accept: "text/html" } });
+  const nf = await res.text();
+  assert.match(nf, /<a href="\/hi" lang="hi" hreflang="hi">/);
+  assert.doesNotMatch(nf, /href="\/hi\/404"/);
+});
+
+test("station links and the embed snippet are encoded and escaped", async () => {
+  const { stationPath } = await import("../src/pages/read");
+  assert.equal(stationPath("cpcb", 'x"/../y'), "/s/cpcb/x%22%2F..%2Fy");
+  const embed = await html("/hi/embed/28.61,77.21");
+  // The copy-paste snippet is shown as text, so its quotes are entities.
+  assert.match(embed, /iframe src=&quot;https:\/\/mugilu\.live\/hi\/embed\/28\.61,77\.21&quot;/);
+});

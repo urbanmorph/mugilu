@@ -207,7 +207,9 @@ export default {
     if (url.pathname === "/places") {
       return cached(LIVE_EDGE_TTL, async () => {
         const [map, warnings] = await Promise.all([composeMap(env), loadWarningsSnapshot(env).catch(() => null)]);
-        return cachedResponse(renderPlaces(lang, { map, warnings }), "text/html; charset=utf-8");
+        const res = cachedResponse(renderPlaces(lang, { map, warnings }), "text/html; charset=utf-8");
+        // A missing grid or warnings snapshot is passing: serve it, but do not keep it for the TTL.
+        return { res, store: !!map?.cells.length && warnings !== null };
       });
     }
 

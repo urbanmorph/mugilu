@@ -37,6 +37,7 @@ import {
   readRows,
   readTint,
   searchTitle,
+  stationPath,
   warningBand,
 } from "./read";
 
@@ -82,7 +83,7 @@ function stationsPanel(c: Conditions, lang: Lang): string {
   const rows = c.nearby_stations
     .map(
       (s) =>
-        `<a class="srow" href="${lp(`/s/${s.provider}/${s.raw_id}`, lang)}"><span class="n">${esc(s.name)}</span>` +
+        `<a class="srow" href="${esc(lp(stationPath(s.provider, s.raw_id), lang))}"><span class="n">${esc(s.name)}</span>` +
         `<span class="a">${s.aqi ?? ""}</span>${bandChip(s.band, t(AQI_BAND_LABEL[s.band] ?? "n/a", lang))}</a>`,
     )
     .join("");
@@ -170,7 +171,7 @@ export function renderConditionsPage(
           [`/c/${slug}.json`, t("JSON", lang)],
           [`/c/${slug}.md`, t("Markdown", lang)],
           [`/c/${slug}.png`, t("PNG", lang)],
-          [`/embed/${slug}`, t("Embed", lang)],
+          [lp(`/embed/${slug}`, lang), t("Embed", lang)],
           [lp(`/c/${slug}?kiosk`, lang), t("Display", lang)],
         ]) +
         linkRow(
@@ -229,6 +230,7 @@ export function renderConditionsPage(
     : undefined;
   return pageShell(title, body + PLACE_RECORDER + FRESHEN, {
     path,
+    query: risk.persona !== "everyone" ? `?as=${risk.persona}` : "",
     desc,
     canonical,
     jsonLd: dataset,

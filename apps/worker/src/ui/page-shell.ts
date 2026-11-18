@@ -19,6 +19,8 @@ const FONT_PRELOAD = `<link rel="preload" href="${LATIN_FONT}" as="font" type="f
 export interface PageOpts extends Omit<ShellOpts, "bare" | "wide"> {
   /** The page's language-agnostic path: the current nav item and the language links. */
   path: string;
+  /** A query the language links keep (the persona, ?as=asthma). */
+  query?: string;
   /** The page wash: the hazard's hue and the read's level. None: no wash. */
   tint?: { hue: string; level: RiskBand };
   /** The screen display: always dark, no header or footer (its own footer carries the disclaimer). */
@@ -28,7 +30,7 @@ export interface PageOpts extends Omit<ShellOpts, "bare" | "wide"> {
 }
 
 export function pageShell(title: string, body: string, opts: PageOpts): string {
-  const { path, lang = "en", tint, kiosk, js = "" } = opts;
+  const { path, query = "", lang = "en", tint, kiosk, js = "" } = opts;
   const bodyAttrs = kiosk ? " data-kiosk" : tint ? ` data-tint="${esc(tint.hue)}" data-level="${tint.level}"` : "";
   return `<!doctype html>
 <html lang="${lang}"${kiosk ? ' data-theme="dark"' : ""}>
@@ -39,7 +41,7 @@ ${kiosk ? "" : `<script>${THEME_HEAD_JS}</script>`}
 <style>${FONT_FACES}${tokensCss()}${STANDARD_CSS}</style>
 </head>
 <body class="mg"${bodyAttrs}>
-${kiosk ? "" : siteHeader(path, lang)}<main id="main" tabindex="-1">${body}</main>${kiosk ? "" : siteFooter(path, lang)}
+${kiosk ? "" : siteHeader(path, lang, query)}<main id="main" tabindex="-1">${body}</main>${kiosk ? "" : siteFooter(path, lang, "", query)}
 <script>${kiosk ? "" : INSTALL_JS + THEME_JS + SW_REGISTER}${relTimeJs(lang)}${js}</script>
 </body>
 </html>`;

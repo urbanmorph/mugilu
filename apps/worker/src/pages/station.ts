@@ -24,7 +24,7 @@ import {
   stack,
   wrap,
 } from "../ui/components";
-import { readTint } from "./read";
+import { readTint, stationPath } from "./read";
 
 /** The CPCB sub-index of each pollutant (its place on the 0-500 AQI scale), where it has one. */
 function subIndices(s: NormalizedStation) {
@@ -54,7 +54,7 @@ function pollutantPanel(s: NormalizedStation, lang: Lang): string {
 function nearbyPanel(nearby: NearStation[], lang: Lang): string {
   if (!nearby.length) return "";
   const rows = nearby.map((n) => [
-    `<a href="${lp(`/s/${n.provider}/${n.raw_id}`, lang)}">${esc(n.name)}</a>`,
+    `<a href="${esc(lp(stationPath(n.provider, n.raw_id), lang))}">${esc(n.name)}</a>`,
     n.aqi != null ? bandChip(n.band, `${n.aqi} ${t(AQI_BAND_LABEL[n.band] ?? "", lang)}`) : "",
     n.distance_km != null ? `${n.distance_km.toFixed(1)} km` : "",
   ]);
@@ -79,7 +79,7 @@ export function renderStationPage(
 ): string {
   const bandWord = t(AQI_BAND_LABEL[s.band] ?? "", lang);
   const live = fresh && s.aqi != null;
-  const path = `/s/${s.provider}/${s.raw_id}`;
+  const path = stationPath(s.provider, s.raw_id);
   const canonical = `${SITE}${path}`;
   const provider = providerName(s.provider);
   const where = [s.city, s.state].filter(Boolean).join(", ");
@@ -137,8 +137,8 @@ export function renderStationPage(
   const refs = stack(
     `<p class="t-meta">${esc(t("Sources", lang))}: ${esc(provider)} via OAQ, via mugilu.</p>` +
       linkRow([
-        [`${path}.json`, "JSON"],
-        [`${path}.md`, "Markdown"],
+        [`${path}.json`, t("JSON", lang)],
+        [`${path}.md`, t("Markdown", lang)],
       ]) +
       `<p class="back"><a href="${lp("/", lang)}">← ${esc(t("Look up another place", lang))}</a></p>`,
   );

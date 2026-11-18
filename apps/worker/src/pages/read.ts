@@ -163,6 +163,10 @@ if(location.hash)try{history.replaceState(null,'',location.pathname+location.sea
 }catch(e){}})();
 </script>`;
 
+/** A station's page path. The provider and id come from upstream data, so each is encoded. */
+export const stationPath = (provider: string, id: string) =>
+  `/s/${encodeURIComponent(provider)}/${encodeURIComponent(id)}`;
+
 // ── The readings ─────────────────────────────────────────────────────────────────
 // One model of a place's readings, drawn as the place page's rows (the standard's .rrow),
 // the screen display's tiles and the embed card's figures, so they never disagree.

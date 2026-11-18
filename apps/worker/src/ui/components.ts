@@ -74,11 +74,17 @@ const current = (on: boolean) => (on ? ' aria-current="page"' : "");
 
 /** The language switch: each language in its own script, the current one bold. A landmark
  *  once (the header); in the footer a plain group. Links are path-only, so they work on any host. */
-export function langSwitch(path: string, lang: Lang, where: "header" | "footer"): string {
+/** Pages with no counterpart in another language (the 404 and offline pages) switch to home. */
+const NO_COUNTERPART = new Set(["/404", "/offline"]);
+
+/** The language links: this page (and its query, such as ?as=asthma) in each language. */
+export function langSwitch(path: string, lang: Lang, where: "header" | "footer", query = ""): string {
+  const to = NO_COUNTERPART.has(path) ? "/" : path;
+  const q = NO_COUNTERPART.has(path) ? "" : query;
   const items = LANGS.map((L) =>
     L === lang
       ? `<b>${LANG_NAME[L]}</b>`
-      : `<a href="${esc(lp(path, L))}" lang="${L}" hreflang="${L}">${LANG_NAME[L]}</a>`,
+      : `<a href="${esc(lp(to, L) + q)}" lang="${L}" hreflang="${L}">${LANG_NAME[L]}</a>`,
   ).join(" · ");
   const label = esc(t("Language", lang));
   return where === "header"
@@ -88,13 +94,13 @@ export function langSwitch(path: string, lang: Lang, where: "header" | "footer")
 
 /** SiteHeader. DOM order is the reading order at every width: skip link, brand, Install app,
  *  nav, language. `path` is the language-agnostic path of this page. */
-export function siteHeader(path: string, lang: Lang): string {
+export function siteHeader(path: string, lang: Lang, query = ""): string {
   const nav = NAV.map(([p, en]) => `<a href="${lp(p, lang)}"${current(p === path)}>${esc(t(en, lang))}</a>`).join("");
   return (
     `<header class="sh"><a class="skip" href="#main">${esc(t("Skip to content", lang))}</a><div class="wrap">` +
     `<a class="brand" href="${lp("/", lang)}"><svg class="ico f" aria-hidden="true" viewBox="0 0 24 24"><path d="${CLOUD}"/></svg>mugilu</a>` +
     installButton(lang, { button: "btn", dialog: "isheet" }) +
-    `<nav class="nav" aria-label="${esc(t("Main", lang))}">${nav}</nav>${langSwitch(path, lang, "header")}</div></header>`
+    `<nav class="nav" aria-label="${esc(t("Main", lang))}">${nav}</nav>${langSwitch(path, lang, "header", query)}</div></header>`
   );
 }
 
@@ -116,13 +122,13 @@ const FOOT_LINKS: [href: string, label: string, external?: boolean][] = [
 ];
 
 /** SiteFooter: site links, the language switch, the theme switch, the disclaimer. */
-export function siteFooter(path: string, lang: Lang, extra = ""): string {
+export function siteFooter(path: string, lang: Lang, extra = "", query = ""): string {
   const links = FOOT_LINKS.map(
     ([h, en, ext]) => `<a href="${ext ? h : lp(h, lang)}"${current(!ext && h === path)}>${esc(t(en, lang))}</a>`,
   ).join(" · ");
   return (
     `<footer class="sf"><div class="wrap"><nav class="flinks" aria-label="${esc(t("Site", lang))}">${links}</nav>` +
-    `<div class="frow">${langSwitch(path, lang, "footer")}${themeSwitch(lang)}</div>${extra}` +
+    `<div class="frow">${langSwitch(path, lang, "footer", query)}${themeSwitch(lang)}</div>${extra}` +
     `<p class="disc">${esc(t(DISCLAIMER_FULL, lang))}</p></div></footer>`
   );
 }
