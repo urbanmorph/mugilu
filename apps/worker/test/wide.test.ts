@@ -5,6 +5,8 @@ import {
   renderConditionsPage,
   renderDisplayBuilder,
   renderHome,
+  renderMcpPage,
+  renderNotFound,
   renderMethodology,
   renderPlaces,
   renderStationPage,
@@ -96,14 +98,18 @@ test("wide pages: a header nav to the main pages, and the wide layout from 960 p
     const nav = html.match(/<nav class="topnav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? "";
     for (const p of ["/places", "/warnings", "/display", "/methodology", "/about"])
       assert.match(nav, new RegExp(`href="${p}"`), `${name} nav ${p}`);
-    assert.match(html, /@media\(min-width:960px\)\{body\.wide main\{max-width:1180px/, name);
+    assert.match(
+      html,
+      /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}body\.wide main\{max-width:1180px/,
+      name,
+    );
   }
   // in Hindi the nav links carry the prefix and the labels are Hindi
   const hi = renderPlaces("hi").match(/<nav class="topnav"[^>]*>([\s\S]*?)<\/nav>/)![1];
   assert.match(hi, /href="\/hi\/warnings">चेतावनियाँ</);
 });
 
-test("the place pages and the home page keep their own layouts", () => {
+test("every page shares the header nav and the footer width; home and /c keep their own body layouts", () => {
   const c = {
     location: { lat: 28.61, lon: 77.21 },
     as_of: "2026-11-18T11:05:00.000Z",
@@ -118,10 +124,14 @@ test("the place pages and the home page keep their own layouts", () => {
     attribution: "x",
     disclaimer: "y",
   } as unknown as Conditions;
-  for (const html of [renderConditionsPage(c), renderHome()]) {
-    assert.doesNotMatch(html, /<body class="wide">/);
-    assert.doesNotMatch(html, /class="topnav"/);
+  for (const html of [renderConditionsPage(c), renderHome(), renderMcpPage(), renderNotFound()]) {
+    assert.match(html, /<nav class="topnav"[^>]*>[\s\S]*href="\/warnings"/);
+    assert.match(html, /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}/);
   }
+  for (const html of [renderConditionsPage(c), renderHome()]) assert.doesNotMatch(html, /<body class="wide">/);
+  for (const html of [renderMcpPage(), renderNotFound()]) assert.match(html, /<body class="wide">/);
+  // phones: the nav is a second row under the logo, scrolling sideways if it must
+  assert.match(renderHome(), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
 });
 
 test("warningType: the kind of hazard, from the headline", () => {
@@ -195,4 +205,10 @@ test("tinted backdrops: a station by its air band, /warnings by its warnings, ca
   assert.match(renderWarningsPage({ ...SNAP, alerts: [] } as WarningsSnapshot), /:root\{--tint:#38bdf8;--tk:16%\}/);
   // the explainer pages stay neutral
   assert.doesNotMatch(renderAbout(), /--tint:/);
+});
+
+test("text pages: long inline code (the MCP inspector command) wraps instead of pushing the page sideways", () => {
+  assert.match(renderMcpPage(), /\.ax code\{overflow-wrap:anywhere\}/);
+  // each list item's text in one cell (.t), so the row's label, code and words don't split into columns
+  assert.doesNotMatch(renderMcpPage(), /<li><(b|code)>/);
 });

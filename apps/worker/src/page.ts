@@ -211,7 +211,7 @@ ${paletteCss()}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937;--warn-text:#fbbf24}}
 *{box-sizing:border-box}html,body{margin:0}
 body{font:16px/1.5 var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
-.bar{display:flex;align-items:center;padding:calc(14px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 14px calc(18px + env(safe-area-inset-left));border-bottom:1px solid var(--line)}
+.bar{display:flex;flex-wrap:wrap;row-gap:10px;align-items:center;padding:calc(14px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 14px calc(18px + env(safe-area-inset-left));border-bottom:1px solid var(--line)}
 .brand{font-weight:700;letter-spacing:-.02em;color:var(--ink);text-decoration:none;font-size:1.1rem}
 main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .foot{max-width:560px;margin:0 auto;padding:18px;color:var(--muted);font-size:.78rem;border-top:1px solid var(--line)}
@@ -221,8 +221,9 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .langsw a:hover{border-color:var(--muted)}
 .langsw b{color:var(--ink);font-weight:600}
 .ic{width:18px;height:18px;flex:none;vertical-align:-.18em}
-.topnav{display:none}
-@media(min-width:960px){body.wide main{max-width:1180px;padding-top:28px}body.wide :is(.foot,.langsw){max-width:1180px}.topnav{display:flex;gap:1.6rem;margin:0 1.4rem 0 auto;font-size:.95rem}.topnav a{color:var(--ink);text-decoration:none}.topnav a:hover,.topnav a[aria-current]{text-decoration:underline;text-underline-offset:.3em}}
+.topnav{order:3;flex-basis:100%;display:flex;gap:1.1rem;overflow-x:auto;white-space:nowrap;scrollbar-width:none;font-size:.88rem}
+.topnav a{color:var(--ink);text-decoration:none}.topnav a:hover,.topnav a[aria-current]{text-decoration:underline;text-underline-offset:.3em}
+@media(min-width:960px){:is(.foot,.langsw){max-width:1180px}body.wide main{max-width:1180px;padding-top:28px}.topnav{order:0;flex-basis:auto;overflow:visible;gap:1.6rem;margin:0 1.4rem 0 auto;font-size:.95rem}}
 `;
 
 const SITE = "https://mugilu.live";
@@ -359,7 +360,7 @@ ${CF_BEACON_TOKEN && !noBeacon ? `<script defer src="https://static.cloudflarein
 ${
   bare
     ? body
-    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a>${wide ? topNav(canonical, lang) : ""}${installButton(lang)}</header>
+    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a>${topNav(canonical, lang)}${installButton(lang)}</header>
 <main>${body}</main>
 <footer class="foot">${footerNav(lang)}</footer>
 ${canonical ? langSwitcher(canonical, lang) : ""}
@@ -1557,6 +1558,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 .builtby .star svg{width:15px;height:15px}
 .adisc{color:var(--muted);font-size:.82rem;line-height:1.5;border-top:1px solid var(--hair);padding-top:1.1rem;margin-top:2.3rem}
 .aback{margin:1.3rem 0 0}.aback a{color:var(--sky);text-decoration:none;font-weight:600;font-family:var(--mono);font-size:.85rem;letter-spacing:.02em}
+.ax code{overflow-wrap:anywhere}
 .axw{max-width:42rem;margin:0 auto}.toc{display:none}
 @media(min-width:1100px){.axw{max-width:none;display:grid;grid-template-columns:minmax(0,13rem) minmax(0,42rem);gap:3.5rem;justify-content:center;align-items:start}
 .toc{display:flex;flex-direction:column;gap:.55rem;position:sticky;top:1.6rem;margin-top:5.2rem;padding-left:.9rem;border-left:2px solid var(--line);font-size:.9rem;line-height:1.35}
@@ -1891,7 +1893,7 @@ export function renderNotFound(lang: Lang = "en"): string {
   <h1 class="ahero">${t("Not here.", lang)}</h1>
   <p class="alead">${lead}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
-  return shell("Not found: mugilu", body, ABOUT_CSS, { desc: SITE_DESC, ogImage: HOME_OG, lang });
+  return shell("Not found: mugilu", body, ABOUT_CSS, { desc: SITE_DESC, ogImage: HOME_OG, lang, wide: true });
 }
 
 const METHOD_CSS = `
@@ -1914,7 +1916,9 @@ export function renderMcpPage(lang: Lang = "en"): string {
     const first = d.split(". ")[0].replace(/\.$/, "");
     return first.length > 120 ? first.split(": ")[0] : first; // a long first sentence: just its opening clause
   };
-  const tools = TOOLS.map((x) => `<li><code>${x.name}</code>: ${esc(lead(x.description))}.</li>`).join("\n    ");
+  const tools = TOOLS.map(
+    (x) => `<li><span class="t"><code>${x.name}</code>: ${esc(lead(x.description))}.</span></li>`,
+  ).join("\n    ");
   const body = `<article class="ax">
   <h1 class="ahero">mugilu MCP server for AI assistants</h1>
   <p class="alead">Ask Claude, Cursor or any MCP client what the sky over a place in India is doing right now: ${HAZARDS}. No key, no install, read only.</p>
@@ -1923,9 +1927,9 @@ export function renderMcpPage(lang: Lang = "en"): string {
   <p class="atext">The server address (JSON-RPC 2.0 over Streamable HTTP, protocol 2025-06-18):</p>
   <p class="abuild"><code>${endpoint}</code></p>
   <ul class="alist">
-    <li><b>Claude or Cursor:</b> add <code>${endpoint}</code> as a custom connector.</li>
-    <li><b>Claude Code:</b> <code>claude mcp add --transport http mugilu ${endpoint}</code></li>
-    <li><b>MCP Inspector:</b> <code>npx @modelcontextprotocol/inspector --cli ${endpoint} --transport http --method tools/list</code></li>
+    <li><span class="t"><b>Claude or Cursor:</b> add <code>${endpoint}</code> as a custom connector.</span></li>
+    <li><span class="t"><b>Claude Code:</b> <code>claude mcp add --transport http mugilu ${endpoint}</code></span></li>
+    <li><span class="t"><b>MCP Inspector:</b> <code>npx @modelcontextprotocol/inspector --cli ${endpoint} --transport http --method tools/list</code></span></li>
   </ul>
   <p class="atext">Then ask, for example, "is it safe for my asthmatic kid to play outside in Indiranagar right now?"</p>
 
@@ -1949,12 +1953,13 @@ export function renderMcpPage(lang: Lang = "en"): string {
     isAccessibleForFree: true,
     provider: { "@type": "Organization", name: "Urban Morph", url: "https://urbanmorph.com" },
   });
-  return shell("MCP server for AI assistants: mugilu", body, ABOUT_CSS, {
+  return shell("MCP server for AI assistants: mugilu", withToc(body, lang), ABOUT_CSS, {
     desc: `Connect Claude, Cursor or any MCP client to mugilu: live ${HAZARDS_SHORT} for any place in India. No key, read only.`,
     canonical: endpoint,
     jsonLd,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -2236,7 +2241,6 @@ ${AC_CSS}.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2re
    Only with a map, and only where :has() works; otherwise the one column stays. */
 @supports selector(:has(a)){@media(min-width:960px){
 main:has(>.hm .imap){max-width:1180px;padding-top:28px}
-body:has(.hm .imap) :is(.foot,.langsw){max-width:1180px}
 .hm:has(.imap){display:grid;grid-template-columns:minmax(0,26rem) minmax(0,1fr);grid-template-rows:repeat(14,auto) 1fr;column-gap:3.5rem;align-items:start}
 .hm>*,.hero-now>*{grid-column:1}
 .hm:has(.imap) .hero-now{display:contents}
