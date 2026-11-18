@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderKioskPage, renderDisplayBuilder } from "../src/page";
+import { renderKioskPage, renderDisplayBuilder, renderConditionsPage } from "../src/page";
 import type { Conditions } from "../src/types";
 
 function conditions(overrides: Partial<Conditions> = {}): Conditions {
@@ -135,4 +135,31 @@ test("renderKioskPage: a calm day still fills four tiles, and a persona gets the
   assert.match(html, /--tint:#38bdf8/);
   const outdoor = renderKioskPage(conditions(), "outdoor", "https://mugilu.live/c/x", "<svg/>");
   assert.match(outdoor, /class="kact"/);
+});
+
+// A display can be any place: a city, a neighbourhood, an exact point, or wherever the
+// screen stands. /display says so, and every place page offers its own display.
+test("renderDisplayBuilder: any place, not only cities, and a button for where the screen is", () => {
+  const html = renderDisplayBuilder("everyone");
+  assert.match(html, /placeholder="A city, area or address"/);
+  assert.match(html, /A display can show a city, a neighbourhood or an exact point/);
+  assert.match(html, /<button id="dhere"[^>]*hidden>[\s\S]*Use this screen&#39;s location<\/button>/);
+  assert.match(html, /getCurrentPosition[\s\S]*'\/c\/'\+p\.coords\.latitude\.toFixed\(4\)[\s\S]*\?kiosk/);
+  // a chosen persona carries into the located display too
+  assert.match(renderDisplayBuilder("elderly"), /'\?kiosk'\+"&as=elderly"/);
+});
+
+test("renderConditionsPage: a visible 'Put this on a screen' for this exact point and persona", () => {
+  const c = conditions();
+  const html = renderConditionsPage(c, "elderly", "https://mugilu.live/c/delhi");
+  const slug = `${c.location.lat},${c.location.lon}`;
+  assert.match(
+    html,
+    new RegExp(
+      `<a class="toscreen" href="/c/${slug.replace(".", "\\.")}\\?kiosk&amp;as=elderly">[\\s\\S]*Put this on a screen</a>`,
+    ),
+  );
+  // inside the left rail, with the read, not only in the footer's format row
+  const rail = html.slice(html.indexOf('<div class="cx-l">'), html.indexOf('<div class="cx-r">'));
+  assert.match(rail, /class="toscreen"/);
 });

@@ -150,3 +150,7 @@ test("renderHome: the Your places script defines its own esc (the typeahead's is
   const block = yp.slice(0, yp.indexOf("})();"));
   assert.match(block, /function esc\(/);
 });
+
+test("renderHome: the 'use my location' button keeps its style (shared with the display setup)", () => {
+  assert.match(renderHome(), /\.nearme\{display:inline-flex/);
+});

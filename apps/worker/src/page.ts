@@ -436,6 +436,7 @@ ${TINT_BODY_CSS}
 .raw a{color:var(--cond-text);text-decoration:none}
 .raw a:hover{text-decoration:underline}
 .grap{margin:.9rem 0 0;font-size:.92rem;line-height:1.5;color:var(--muted)}.grap a{color:var(--sky)}
+.toscreen{display:inline-flex;align-items:center;gap:.4rem;margin:1rem 0 0;font-size:.92rem;color:var(--sky);text-decoration:none}.toscreen:hover{text-decoration:underline}.toscreen .ic{width:16px;height:16px}
 .nearby{margin:1.1rem 0 0;font-size:.9rem;line-height:1.9;color:var(--muted)}.nearby a{color:var(--cond-text);text-decoration:none}.nearby a:hover{text-decoration:underline}
 .cxback{margin:1.1rem 0 0;font-size:.9rem}.cxback a{color:var(--muted);text-decoration:none}.cxback a:hover{color:var(--ink)}
 @media(min-width:960px){
@@ -476,6 +477,7 @@ function warnColor(color: string): string {
 // Inline Lucide-style line icons (MIT). currentColor + one stroke weight, so each
 // inherits its context colour (muted by default, the condition hue on the driver).
 const ICON: Record<string, string> = {
+  screen: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
   air: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>',
   heat: '<path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
   cold: '<path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"/>',
@@ -923,6 +925,7 @@ export function renderConditionsPage(
       ${say.action ? `<p class="amb-act">${esc(say.action)}</p>` : ""}
       ${say.also ? `<p class="amb-also">${icon("users")}${esc(say.also)}</p>` : ""}
       <nav class="who" aria-label="${esc(t("Who is this for", lang))}">${pills}</nav>
+      <a class="toscreen" href="${lp(`/c/${slug}?kiosk${risk.persona !== "everyone" ? `&amp;as=${risk.persona}` : ""}`, lang)}">${icon("screen")}${t("Put this on a screen", lang)}</a>
     </section>
     ${alertsKey ? renderAlertsBox(alertsKey, lang) : ""}
     </div>
@@ -1409,6 +1412,7 @@ const DISPLAY_CSS = `
 .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(8rem,1fr));gap:.55rem;margin:.1rem 0 .3rem}
 .dtile{padding:.7rem .9rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);text-decoration:none;font-weight:600;text-align:center}
 .dtile:hover{border-color:var(--ink)}
+.dnote{color:var(--muted);font-size:.92rem;line-height:1.5;margin:.6rem 0 .7rem}
 .dhow{margin:.1rem 0 .5rem 1.1rem}.dhow li{margin:.35rem 0;line-height:1.5}
 .dprev{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#080d18;margin:.4rem 0 1.4rem}
 .dprev iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
@@ -1458,11 +1462,13 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     <form class="dsearch" action="${lp("/go", lang)}" method="get">
       <input type="hidden" name="kiosk" value="1">
       ${persona !== "everyone" ? `<input type="hidden" name="as" value="${persona}">` : ""}
-      <input id="dq" name="q" placeholder="${esc(t("Any place in India", lang))}" autocomplete="off" autocapitalize="off" aria-label="${esc(t("Any place in India", lang))}">
+      <input id="dq" name="q" placeholder="${esc(t("A city, area or address", lang))}" autocomplete="off" autocapitalize="off" aria-label="${esc(t("A city, area or address", lang))}">
       <button type="submit">${t("Open display", lang)}</button>
     </form>
     <ul id="dac" class="ac" role="listbox"></ul>
     </div>
+    <p class="dnote">${t("A display can show a city, a neighbourhood or an exact point. Search for it above, or use where this screen stands.", lang)}</p>
+    <button id="dhere" class="nearme" type="button" hidden>${icon("pin")} ${esc(t("Use this screen's location", lang))}</button>
     <div class="dgrid">${tiles}</div>
 
     <p class="ah">${icon("layers")}<span>${t("How it runs", lang)}</span></p>
@@ -1477,8 +1483,9 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>
   <script>var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};${typeaheadJs("dq", "dac", `'?kiosk'+${JSON.stringify(asQ)}`)}
+  ${nearMeJs("dhere", `'?kiosk'+${JSON.stringify(asQ)}`, lang)}
   (function(){var b=document.querySelector('.dprev'),f=b&&b.querySelector('iframe');if(!f)return;function fit(){f.style.transform='scale('+b.clientWidth/1280+')';}fit();addEventListener('resize',fit);})();</script>`;
-  return shell("Put mugilu on a screen: mugilu", body, ABOUT_CSS + DISPLAY_CSS + AC_CSS, {
+  return shell("Put mugilu on a screen: mugilu", body, ABOUT_CSS + DISPLAY_CSS + AC_CSS + NEARME_CSS, {
     desc: "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
@@ -2172,6 +2179,18 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
   });
 }
 
+// The "use my location" button (home, and the display setup): shown only where the
+// browser can locate, it opens /c for the spot, plus `suffix` (a JS expression, e.g. the
+// kiosk flag), and tells the reader if the location is off.
+const NEARME_CSS = `.nearme{display:inline-flex;align-items:center;gap:.4rem;font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;margin:0 0 1rem}
+.nearme .ic{width:16px;height:16px;color:var(--sky)}`;
+function nearMeJs(id: string, suffix: string, lang: Lang): string {
+  const LP = JSON.stringify(lang === "en" ? "" : "/" + lang);
+  return `(function(){var b=document.getElementById('${id}');if(!b||!navigator.geolocation)return;var label=b.textContent,LOC=${JSON.stringify(t("Finding your location…", lang))},NOLOC=${JSON.stringify(t("Your location is not available.", lang))};b.hidden=false;
+b.onclick=function(){b.textContent=LOC;navigator.geolocation.getCurrentPosition(function(p){location.href=${LP}+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4)+${suffix};},function(){b.textContent=NOLOC;});};
+addEventListener('pageshow',function(){b.textContent=label;});})();`;
+}
+
 /** The suggestion list's style (home and the display setup page). */
 const AC_CSS = `.acwrap{position:relative}
 .ac{list-style:none;margin:4px 0 0;padding:4px;position:absolute;left:0;right:0;z-index:9;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
@@ -2215,8 +2234,6 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg
 .search button{font-size:1rem;font-weight:600;padding:12px 18px;border:0;border-radius:12px;background:color-mix(in srgb,var(--sky) 86%,#000);color:#fff;cursor:pointer}
 ${AC_CSS}.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:46ch}.shint b{color:var(--ink);font-weight:600}
 .exq{color:var(--ink)}
-.nearme{display:inline-flex;align-items:center;gap:.4rem;font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;margin:0 0 1rem}
-.nearme .ic{width:16px;height:16px;color:var(--sky)}
 .notice{color:var(--warn-text);font-size:.9rem;margin:.2rem 0 1rem}
 .cities{color:var(--muted);font-size:.9rem;line-height:1.9}.cities a{color:var(--sky);text-decoration:none}
 .yourplaces{margin:0 0 1.2rem}
@@ -2330,9 +2347,7 @@ export function renderHome(
   var YP=${JSON.stringify(t("Your places", lang))};
   var LOC=${JSON.stringify(t("Finding your location…", lang))},NOLOC=${JSON.stringify(t("Your location is not available.", lang))},NAME=${JSON.stringify(t("Type a name for this place (for example, Home or Office)", lang))};
   var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};
-  var b=document.getElementById('nearme'),label=b.textContent;
-  if(navigator.geolocation){b.hidden=false;b.onclick=function(){b.textContent=LOC;navigator.geolocation.getCurrentPosition(function(p){location.href=LP+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);},function(){b.textContent=NOLOC;});};}
-  addEventListener('pageshow',function(){b.textContent=label;});
+  ${nearMeJs("nearme", "''", lang)}
   // Warm the edge + upstreams for a /c URL so the click lands instantly (dedup).
   function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
   ${typeaheadJs("q", "ac", "''")}
@@ -2386,7 +2401,7 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell(t(`mugilu: ${HAZARDS_SHORT} anywhere in India`, lang), body, HOME_CSS + MAP_CSS, {
+  return shell(t(`mugilu: ${HAZARDS_SHORT} anywhere in India`, lang), body, HOME_CSS + MAP_CSS + NEARME_CSS, {
     desc: t(SITE_DESC, lang),
     canonical: SITE,
     jsonLd: site,
