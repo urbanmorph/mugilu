@@ -83,7 +83,7 @@ export function llmsTxt(siteUrl: string): string {
 
 ## No key; name your app
 No key or sign-up for the API or the MCP server. Please send a \`User-Agent\` that names your app (for example \`my-app/1.0\`). We read it only to tell apps, AI tools and crawlers apart, so our counts of how each mode is used stay honest. We don't store it, and we don't track who you are.
-AI apps send their own name when they connect. We count calls by app (Claude, Cursor, …) and keep nothing else.
+We count MCP calls by the app name your client sends, and keep nothing else.
 
 ## What a conditions response carries
 The JSON is a versioned, self-describing contract: a "schema" and "version", and a

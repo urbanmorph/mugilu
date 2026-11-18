@@ -116,7 +116,7 @@ Air and official warnings change hourly; weather at most every 15 minutes. Each 
 
 ## Use it from an AI assistant (MCP)
 
-mugilu runs a remote MCP server (JSON-RPC 2.0 over Streamable HTTP, protocol version 2025-06-18). No key or install is needed. AI apps send their own name when they connect. We count calls by app (Claude, Cursor, …) and keep nothing else.
+mugilu runs a remote MCP server (JSON-RPC 2.0 over Streamable HTTP, protocol version 2025-06-18). No key or install is needed. We count MCP calls by the app name your client sends, and keep nothing else.
 
 ```text
 https://mugilu.live/mcp

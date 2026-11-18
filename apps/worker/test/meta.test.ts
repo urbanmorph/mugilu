@@ -24,11 +24,7 @@ test("llms.txt + OpenAPI: one honest User-Agent request, and the MCP count by ap
     "Please send a `User-Agent` that names your app (for example `my-app/1.0`). We read it only to tell apps, AI tools and crawlers apart, so our counts of how each mode is used stay honest. We don't store it, and we don't track who you are.";
   const t = llmsTxt("https://mugilu.live");
   assert.ok(t.includes(ask));
-  assert.ok(
-    t.includes(
-      "AI apps send their own name when they connect. We count calls by app (Claude, Cursor, …) and keep nothing else.",
-    ),
-  );
+  assert.ok(t.includes("We count MCP calls by the app name your client sends, and keep nothing else."));
   const s = openApiSpec("https://mugilu.live") as any;
   assert.ok(s.info.description.includes(ask));
 });
