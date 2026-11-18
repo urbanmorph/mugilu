@@ -25,7 +25,8 @@ import {
   type MapPlace,
 } from "../indiamap";
 import { relTime } from "./shell";
-import { panel, segmented, stack, stamp, stamps } from "./components";
+import { LEVEL_WORD, panel, segmented, SHAPE, stack, stamp, stamps } from "./components";
+import { RISK_BANDS } from "../score";
 import outlines from "../../data/states.json";
 
 // IndiaMap: one component for home and /places (design standard §4). The squares are
@@ -34,7 +35,6 @@ import outlines from "../../data/states.json";
 // (the keyboard and screen-reader path to what the map shows). Styles: standard.ts.
 
 type Layer = "w" | "a" | "h" | "r";
-const LEVEL = ["Low", "Moderate", "High", "Severe"];
 const RAIN = ["", "Heavy", "Very heavy", "Extremely heavy"];
 const LABEL: Record<Layer, string> = {
   w: "Map of India. Each square is coloured by what is worst in it now.",
@@ -214,7 +214,7 @@ function summaries(m: IndiaMap, lang: Lang): string {
   const heat = [3, 2, 1]
     .map((l) => [l, m.cells.filter((c) => c.heat === l).length] as const)
     .filter(([, n]) => n > 0)
-    .map(([l, n]) => sentence(`Heat is ${LEVEL[l].toLowerCase()} in X.`, n, lang));
+    .map(([l, n]) => sentence(`Heat is ${LEVEL_WORD[RISK_BANDS[l]].toLowerCase()} in X.`, n, lang));
   const rainy = m.cells.filter((c) => c.rain).length;
   return (
     sum("w", b(worst.length ? worst.join(" ") : esc(t("Nothing is high or severe anywhere right now.", lang)))) +
@@ -232,7 +232,7 @@ function summaries(m: IndiaMap, lang: Lang): string {
           m.cells,
           (c) => c.heat,
           (c) => c.heatAt,
-          LEVEL,
+          RISK_BANDS.map((b) => LEVEL_WORD[b]),
           lang,
         ),
     ) +
@@ -341,8 +341,7 @@ export const stateAnchor = (state: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")}`;
 
-const WMARK =
-  '<symbol id="wmark" viewBox="0 0 24 24"><path class="wm-bg" d="M12 2 23 21H1z"/><path class="wm-fg" d="M12 9v5M12 17.5v.5" fill="none"/></symbol>';
+const WMARK = `<symbol id="wmark" viewBox="0 0 24 24"><path class="wm-bg" d="${SHAPE.triangle}"/><path class="wm-fg" d="M12 9v5M12 17.5v.5" fill="none"/></symbol>`;
 
 /** The /places map: the What's-worst squares faint behind (when the grid is in), every state an
  *  outline to select (LGD via bharatlas), every place a neutral dot, warned places marked. The
@@ -410,7 +409,7 @@ export function placesKey(lang: Lang, warned: boolean): string {
   return (
     `<p class="mkey"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="f-ink" cx="12" cy="12" r="5"/></svg>${esc(t("Each dot is a place on mugilu. Select a state to see its places.", lang))}</span>` +
     (warned
-      ? `<span><svg viewBox="0 0 24 24" aria-hidden="true"><path class="f-ink" d="M12 2 23 21H1z"/></svg>${esc(t("Under an official warning now", lang))}</span>`
+      ? `<span><svg viewBox="0 0 24 24" aria-hidden="true"><path class="f-ink" d="${SHAPE.triangle}"/></svg>${esc(t("Under an official warning now", lang))}</span>`
       : "") +
     `</p>`
   );

@@ -1,5 +1,5 @@
 import { esc, trusted } from "../html";
-import { THRESHOLD_ROWS } from "../score";
+import { RISK_BANDS, THRESHOLD_ROWS } from "../score";
 import { lp, t, type Lang } from "../i18n";
 import { cardGrid, cardStack, dataTable, LEVEL_SHAPE, LEVEL_WORD, pull, shape } from "../ui/components";
 import { P, splitAs, textPage } from "./text";
@@ -17,11 +17,9 @@ const NOTE_KEY =
 const NORMAL_KEY =
   "On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo. It shows only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.";
 
-const LEVELS = ["low", "moderate", "high", "severe"] as const;
-
 /** The level strip: 0-3 as their fills, shapes and words (the sentence above names them). */
 const levelStrip = (lang: Lang) =>
-  `<div class="levels" aria-hidden="true">${LEVELS.map(
+  `<div class="levels" aria-hidden="true">${RISK_BANDS.map(
     (k, i) =>
       `<div class="fill ${k}"><span class="n">${i}</span>${shape(LEVEL_SHAPE[k])}${esc(t(LEVEL_WORD[k], lang))}</div>`,
   ).join("")}</div>`;
@@ -53,14 +51,15 @@ export function renderMethodology(lang: Lang = "en"): string {
   const normalBody = normal ? P(normal[0]) + cardGrid([P(normal[1]), P(normal[2])]) : whole(NORMAL_KEY);
 
   // The table's name differs from its section's ("The thresholds"): two landmarks never share one.
-  const [hazard, ...words] = [t("Hazard", lang), ...LEVELS.slice(1).map((k) => t(LEVEL_WORD[k], lang))];
-  // Each level column is headed by its shape and word, as on every chip.
-  const heads = LEVELS.slice(1).map((k, i) => ({ label: trusted(shape(LEVEL_SHAPE[k]) + esc(words[i])) }));
+  const hazard = t("Hazard", lang);
+  // Each level column is headed by its shape and word on its level's fill, as on every chip.
+  const levels = RISK_BANDS.slice(1);
+  const words = levels.map((k) => t(LEVEL_WORD[k], lang));
+  const heads = levels.map((k, i) => ({ label: trusted(shape(LEVEL_SHAPE[k]) + esc(words[i])), cls: `fill ${k}` }));
   const table = dataTable(
     [{ label: hazard }, ...heads],
     THRESHOLD_ROWS.map((r) => [esc(t(r.hazard, lang)), ...r.cells.map(esc)]),
     `${hazard}: ${words.join(", ")}`,
-    ["", "fill moderate", "fill high", "fill severe"],
   );
 
   return textPage({

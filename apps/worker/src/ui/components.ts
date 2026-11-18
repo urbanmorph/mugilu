@@ -99,7 +99,7 @@ export function siteHeader(path: string, lang: Lang, query = ""): string {
   const nav = NAV.map(([p, en]) => `<a href="${lp(p, lang)}"${current(p === path)}>${esc(t(en, lang))}</a>`).join("");
   return (
     `<header class="sh"><a class="skip" href="#main">${esc(t("Skip to content", lang))}</a><div class="wrap">` +
-    `<a class="brand" href="${lp("/", lang)}"><svg class="ico f" aria-hidden="true" viewBox="0 0 24 24"><path d="${CLOUD}"/></svg>mugilu</a>` +
+    `<a class="brand" href="${lp("/", lang)}">${ico("cloud")}mugilu</a>` +
     installButton(lang, { button: "btn", dialog: "isheet" }) +
     `<nav class="nav" aria-label="${esc(t("Main", lang))}">${nav}</nav>${langSwitch(path, lang, "header", query)}</div></header>`
   );
@@ -200,7 +200,6 @@ export const THEME_JS = `(function(){var r=document.documentElement,v='system';t
 document.querySelectorAll('input[name=theme]').forEach(function(i){i.checked=i.value===v;i.addEventListener('change',function(){if(!i.checked)return;if(i.value==='system')r.removeAttribute('data-theme');else r.setAttribute('data-theme',i.value);try{i.value==='system'?localStorage.removeItem('${THEME_KEY}'):localStorage.setItem('${THEME_KEY}',i.value);}catch(e){}});});})();`;
 
 // ── Search (ARIA combobox) ───────────────────────────────────────────────────────────
-const SEARCH_ICON = "M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM16 16l5 5";
 
 export interface SearchOpts {
   id: string;
@@ -229,7 +228,7 @@ export function searchBox(o: SearchOpts): string {
     `<form class="search" role="search" aria-label="${label}" action="${esc(o.action)}" method="get">` +
     (o.showLabel ? `<label for="${id}">${label}</label>` : "") +
     (o.hidden ?? []).map(([n, v]) => `<input type="hidden" name="${esc(n)}" value="${esc(v)}">`).join("") +
-    `<div class="sbox"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${SEARCH_ICON}"/></svg>` +
+    `<div class="sbox">${ico("search")}` +
     `<input type="search" name="q" id="${id}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-list"` +
     `${o.showLabel ? "" : ` aria-label="${label}"`}${o.placeholder ? ` placeholder="${esc(o.placeholder)}"` : ""} autocomplete="off" required>` +
     (o.button
@@ -431,14 +430,16 @@ export interface Column {
   label: string | Html;
   /** Right-aligned (numbers). */
   num?: boolean;
+  /** Classes for the header cell (a level fill). */
+  cls?: string;
 }
 /** DataTable: a real table with scoped headers, scrolling inside its own region when wide. */
-export function dataTable(cols: Column[], rows: string[][], caption?: string, headClass?: string[]): string {
+export function dataTable(cols: Column[], rows: string[][], caption?: string): string {
   const th = cols
-    .map(
-      (c, i) =>
-        `<th scope="col"${c.num || headClass?.[i] ? ` class="${[c.num && "r", headClass?.[i]].filter(Boolean).join(" ")}"` : ""}>${textOrHtml(c.label)}</th>`,
-    )
+    .map((c) => {
+      const cls = [c.num && "r", c.cls].filter(Boolean).join(" ");
+      return `<th scope="col"${cls ? ` class="${cls}"` : ""}>${textOrHtml(c.label)}</th>`;
+    })
     .join("");
   const body = rows
     .map(
