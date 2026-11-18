@@ -33,7 +33,7 @@ var W={now:${s("just now")},min:${s("X min ago")},h:${s("X hours ago")},d:${s("X
 function ago(){var a=document.getElementById('ago');if(!a)return;var t=a.getAttribute('data-t');if(!t)return;var s=Math.max(0,(Date.now()-new Date(t).getTime())/1000);a.textContent=s<90?W.now:(s<3600?W.min.replace('X',Math.round(s/60)):s<86400?W.h.replace('X',Math.round(s/3600)):W.d.replace('X',Math.round(s/86400)));}
 function p(x){return x<10?'0'+x:''+x}
 function clock(){var c=document.getElementById('clk');if(c){var d=new Date();c.textContent=p(d.getHours())+':'+p(d.getMinutes());}}
-function fit(){var pl=document.querySelector('.kio .plate'),hd=pl&&pl.querySelector('.t-plate');if(!hd)return;hd.style.fontSize='';var s=parseFloat(getComputedStyle(hd).fontSize),g=0;while(pl.scrollHeight>pl.clientHeight+1&&s>24&&g++<40){s-=4;hd.style.fontSize=s+'px';}}
+function fit(){var pl=document.querySelector('.kio .plate'),hd=pl&&pl.querySelector('.t-plate');if(!hd)return;hd.style.fontSize='';var drop=[].slice.call(pl.querySelectorAll('.also,.knorm'));drop.forEach(function(e){e.hidden=false;});var s0=parseFloat(getComputedStyle(hd).fontSize),s=s0,g=0;function over(){return pl.scrollHeight>pl.clientHeight+1;}function shrink(to){while(over()&&s>to&&g++<60){s-=4;hd.style.fontSize=s+'px';}}shrink(s0*.6);while(over()&&drop.length)drop.pop().hidden=true;shrink(24);}
 function veil(){return document.querySelector('.kveil');}
 function showLoad(){var v=veil();if(!v)return;var w=v.querySelector('.t-title'),i=0;(function nx(){if(w)w.textContent=verbs[i++%verbs.length]+'…';vbT=setTimeout(nx,1500);})();v.classList.add('on');}
 function hideLoad(){var v=veil();if(!v)return;v.classList.remove('on');clearTimeout(vbT);}
@@ -45,6 +45,10 @@ window.addEventListener('resize',fit);setTimeout(fit,300);
 start();
 })();`;
 };
+
+/* fit(): the level word is what a screen is read for, so when the plate overflows it gives
+   up to 40% of its size first, then today-vs-normal and the also-watch line go, and only then
+   does the word shrink further (to the 24px floor). */
 
 /** A reading as a display tile: label, figure, its word and level, its one graphic. */
 function tile(r: ReadRow): string {

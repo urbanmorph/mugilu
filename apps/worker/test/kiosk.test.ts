@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderKioskPage, renderDisplayBuilder, renderConditionsPage } from "../src/page";
 import type { Conditions } from "../src/types";
+import { kioskJs } from "../src/pages/kiosk";
 
 function conditions(overrides: Partial<Conditions> = {}): Conditions {
   return {
@@ -166,4 +167,10 @@ test("renderConditionsPage: a visible 'Put this on a screen' for this exact poin
   );
   // a button of its own beside the alerts, not only in the format row
   assert.ok(html.indexOf('class="btn" href="/c/') < html.indexOf('class="links t-meta"'));
+});
+
+test("kiosk fit: the level word keeps 60% of its size before the also-watch and normal lines go", () => {
+  const js = kioskJs("en");
+  assert.match(js, /shrink\(s0\*\.6\);while\(over\(\)&&drop\.length\)drop\.pop\(\)\.hidden=true;shrink\(24\);/);
+  assert.match(js, /querySelectorAll\('\.also,\.knorm'\)/);
 });
