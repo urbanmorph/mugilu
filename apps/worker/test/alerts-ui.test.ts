@@ -147,11 +147,12 @@ test("if notifications are refused, it says how to allow them and sends nothing"
   const b = browser({ permission: "denied" });
   await b.tap("alerts-on");
   assert.deepEqual(b.posts, []);
-  assert.deepEqual(shown(b), ["alerts", "alerts-on", "alerts-denied", "alerts-note-off"]);
+  // Only the way to allow them: a turn-on button beside "blocked" would only fail again.
+  assert.deepEqual(shown(b), ["alerts", "alerts-denied"]);
 });
 
 test("if the browser already blocks notifications, it says so when the page opens, before any tap", () => {
-  assert.deepEqual(shown(browser({ state: "denied" })), ["alerts", "alerts-on", "alerts-denied", "alerts-note-off"]);
+  assert.deepEqual(shown(browser({ state: "denied" })), ["alerts", "alerts-denied"]);
   // Allowed in the browser's settings later: the hint is gone, and turning alerts on is one tap.
   assert.deepEqual(shown(browser({ state: "granted" })), ["alerts", "alerts-on", "alerts-note-off"]);
 });
@@ -248,4 +249,17 @@ test("the box has no heading repeating the button: the button says what it does"
     box,
     /<section class="panel" id="alerts" hidden data-key="[^"]+" data-lang="en" aria-label="Send me official warnings for this place">/,
   );
+});
+
+test("alerts box: blocked notifications show only the blocked notice; state messages are announced", async () => {
+  const { ALERTS_JS } = await import("../src/alerts-ui");
+  const { alertsBox } = await import("../src/ui/components");
+  assert.match(
+    ALERTS_JS,
+    /var denied=function\(\)\{\['alerts-on','alerts-state','alerts-note-on','alerts-note-off'\]\.forEach/,
+  );
+  assert.match(ALERTS_JS, /if\(Notification\.permission==='denied'\)denied\(\);else show\(\)/);
+  const box = alertsBox("k", "en");
+  assert.match(box, /<div class="stack" role="status"><p class="notice err" id="alerts-denied" hidden>/);
+  assert.match(box, /id="alerts-ios" hidden>[^<]*<\/p><\/div>/);
 });

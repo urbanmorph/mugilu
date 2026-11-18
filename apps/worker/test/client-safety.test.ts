@@ -47,3 +47,15 @@ test("the place recorder keeps only numeric coordinates", () => {
   const [p] = record("/c/28.6,77.2", "", "Somewhere", "28.6,77.2");
   assert.equal(typeof p.lat, "number");
 });
+
+import { alertParts } from "../src/pages/warnings";
+
+test("an alert's CAP link is a link only when it is a web address", () => {
+  const a = { issuer: "IMD Visakhapatnam", sent: "Wed, 18 Nov 2026 11:17:00 GMT", headline: "x" };
+  assert.match(
+    alertParts({ ...a, link: "https://sachet.ndma.gov.in/cap?id=1" } as never, "en").cap,
+    /^<a href="https:/,
+  );
+  assert.equal(alertParts({ ...a, link: "javascript:alert(1)" } as never, "en").cap, "");
+  assert.equal(alertParts({ ...a, link: "javascript:alert(1)" } as never, "en").time, "16:47 IST · 18 Nov");
+});

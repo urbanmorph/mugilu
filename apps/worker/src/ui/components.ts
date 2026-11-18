@@ -616,10 +616,11 @@ export function alertsBox(publicKey: string, lang: Lang): string {
     `<button type="button" class="btn primary" id="alerts-on">${ico("bell")}${T("Send me official warnings for this place")}</button>` +
     `<div class="notice stack" id="alerts-state" hidden><p>${T("Alerts are on for this place.")} <button type="button" class="btn" id="alerts-off">${T("Turn off")}</button></p>` +
     `<p class="t-meta" id="alerts-note-on" hidden>${T("When you turn off alerts, mugilu deletes this place and the push address of your browser.")}</p></div>` +
+    `<div class="stack" role="status">` +
     `<p class="notice err" id="alerts-denied" hidden>${T("Your browser blocks notifications from mugilu. Allow them in the site settings of your browser. Then try again.")}</p>` +
     `<p class="notice err" id="alerts-full" hidden>${T("Alerts are on for 12 places. That is the limit. Turn off alerts for one place first.")}</p>` +
     `<p class="notice err" id="alerts-failed" hidden>${T("Alerts could not be turned on. Try again.")}</p>` +
-    `<p class="notice quiet" id="alerts-ios" hidden>${T("On iPhone and iPad, first add mugilu to your Home Screen (Share, then Add to Home Screen). Open mugilu from the Home Screen. Then turn on alerts here.")}</p>` +
+    `<p class="notice quiet" id="alerts-ios" hidden>${T("On iPhone and iPad, first add mugilu to your Home Screen (Share, then Add to Home Screen). Open mugilu from the Home Screen. Then turn on alerts here.")}</p></div>` +
     `<p class="t-meta" id="alerts-note-off" hidden>${T("Alerts are opt-in. When you turn on alerts, mugilu keeps this place (to approximately 1 km) and the push address of your browser. mugilu uses them only to send you official NDMA/IMD warnings for this place.")}</p>` +
     `</div></section>`
   );

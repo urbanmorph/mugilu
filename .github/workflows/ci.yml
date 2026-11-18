@@ -45,10 +45,10 @@ jobs:
   # (pr-<number>-mugilu-worker.<subdomain>.workers.dev). It is not deployed: production
   # traffic stays on the live version, and a preview version runs no crons. It shares
   # the production KV, R2 and D1, so writes made on the preview (alerts, usage counts)
-  # are real. Forks get no secrets and no preview.
+  # are real. Forks and Dependabot get no secrets, so they get no preview (and no red check).
   preview:
     needs: test
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

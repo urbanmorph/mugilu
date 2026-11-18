@@ -3,6 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2026-01-01"
 # No workers.dev address for production (the custom domains serve it), but preview URLs on,
 # so each PR's uploaded version is reviewable at pr-<number>-mugilu-worker.knerav.workers.dev.
+# Checked on PR #90: the pr-90 alias answers 200 with workers_dev off.
 workers_dev = false
 preview_urls = true
 account_id = "6ba72cdd965276a57d19bf0aadc4d551"

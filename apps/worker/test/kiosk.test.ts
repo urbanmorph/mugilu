@@ -174,3 +174,11 @@ test("kiosk fit: the level word keeps 60% of its size before the also-watch and 
   assert.match(js, /shrink\(s0\*\.6\);while\(over\(\)&&drop\.length\)drop\.pop\(\)\.hidden=true;shrink\(24\);/);
   assert.match(js, /querySelectorAll\('\.also,\.knorm'\)/);
 });
+
+test("kiosk refresh: one loading loop at a time, stopped on success and on failure", async () => {
+  const { kioskJs } = await import("../src/pages/kiosk");
+  const js = kioskJs("en");
+  assert.match(js, /function showLoad\(\)\{clearTimeout\(vbT\);/);
+  assert.match(js, /function hideLoad\(\)\{clearTimeout\(vbT\);/);
+  assert.match(js, /replaceChild\([^)]*\)[^;]*;hideLoad\(\);start\(\);/);
+});

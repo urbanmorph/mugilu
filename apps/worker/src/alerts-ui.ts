@@ -20,10 +20,11 @@ if(ios&&!installed){box.hidden=false;$('alerts-on').hidden=true;$('alerts-ios').
 box.hidden=false;
 var say=function(id){['alerts-denied','alerts-full','alerts-failed'].forEach(function(m){$(m).hidden=m!==id})};
 var show=function(){var on=list().indexOf(here)>=0;$('alerts-on').hidden=on;$('alerts-state').hidden=!on;$('alerts-note-off').hidden=on;$('alerts-note-on').hidden=!on};
+var denied=function(){['alerts-on','alerts-state','alerts-note-on','alerts-note-off'].forEach(function(m){$(m).hidden=true});say('alerts-denied')};
 var post=function(path,body){return fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(r){if(!r.ok)throw r.status})};
 var key=function(s){var b=atob(s.replace(/-/g,'+').replace(/_/g,'/')),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
 $('alerts-on').addEventListener('click',function(){say();
-return Notification.requestPermission().then(function(p){if(p!=='granted'){say('alerts-denied');return}
+return Notification.requestPermission().then(function(p){if(p!=='granted'){denied();return}
 return navigator.serviceWorker.ready.then(function(reg){return reg.pushManager.getSubscription().then(function(s){return s||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key(box.getAttribute('data-key'))})})})
 .then(function(s){return post('/push/subscribe',{subscription:s.toJSON(),lat:lat,lon:lon,label:h.textContent.trim(),lang:box.getAttribute('data-lang')})})
 .then(function(){var L=list();if(L.indexOf(here)<0)L.push(here);keep(L);show()})}).catch(function(e){say(e===409?'alerts-full':'alerts-failed')})});
@@ -31,4 +32,4 @@ $('alerts-off').addEventListener('click',function(){say();var L=list().filter(fu
 return navigator.serviceWorker.ready.then(function(reg){return reg.pushManager.getSubscription()}).then(function(s){if(!s)return;
 return post('/push/unsubscribe',L.length?{endpoint:s.endpoint,lat:lat,lon:lon}:{endpoint:s.endpoint}).then(function(){if(!L.length)return s.unsubscribe()})})
 .then(function(){keep(L);show()}).catch(function(){say('alerts-failed')})});
-show();if(Notification.permission==='denied')say('alerts-denied')})();`;
+if(Notification.permission==='denied')denied();else show()})();`;
