@@ -48,8 +48,8 @@ function pollutantPanel(s: NormalizedStation, lang: Lang): string {
   }));
   if (!items.length) return "";
   return panel(
-    barRows(items, 20) +
-      `<p class="t-meta">${esc(t("Each bar is the pollutant on CPCB's 0-500 AQI scale, in its band's colour.", lang))} ${esc(t("The dashed line is the CPCB limit.", lang))}</p>`,
+    barRows(items, 20, lang) +
+      `<p class="t-meta">${esc(t("Each bar is the pollutant on CPCB's 0-500 AQI scale, in its band's colour.", lang))}</p>`,
   );
 }
 

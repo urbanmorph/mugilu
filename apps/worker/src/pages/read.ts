@@ -131,10 +131,13 @@ export const KEY_READING: Record<Persona, { pollutants: string[]; heat?: "wbgt" 
   heart: { pollutants: ["pm25"], heat: "wetbulb" },
 };
 
+/** The air reading is called out separately when it is this much older than the page. */
+const AIR_LAG_MS = 30 * 60_000;
+
 /** Whether the air reading is older than the page by half an hour or more (stations
  *  report on their own clock, often an hour or two behind), so it is named apart. */
 export function airLag(c: Conditions): boolean {
-  return !!c.air_as_of && Date.parse(c.as_of) - Date.parse(c.air_as_of) >= 30 * 60_000;
+  return !!c.air_as_of && Date.parse(c.as_of) - Date.parse(c.air_as_of) >= AIR_LAG_MS;
 }
 
 // Records this /c visit into the browser's "Your places" list (first-party,
@@ -221,9 +224,9 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
   if (c.air) {
     const band = c.air.band ?? "unknown";
     const bandWord = t(AQI_BAND_LABEL[band] ?? "n/a", lang);
-    const bars = pollutantBars(c.air.pollutants);
+    const bars = pollutantBars(c.air.pollutants, lang);
     const worst = worstPollutant(c.air.pollutants, keyReading.pollutants);
-    const more = bars ? [bars, `<p class="t-legal">${esc(t("The dashed line is the CPCB limit.", lang))}</p>`] : [];
+    const more = bars ? [bars] : [];
     more.push(
       `<p class="t-meta">${
         c.air.station ? `${esc(t("measured", lang))} · ${c.air.station.distance_km} km` : esc(t("modelled", lang))

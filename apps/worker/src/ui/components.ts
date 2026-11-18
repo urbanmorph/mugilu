@@ -413,8 +413,9 @@ export interface BarRowItem {
   /** The band class for the fill (e.g. "poor"), none for a quiet bar. */
   band?: string;
 }
-/** BarRow list: each pollutant on one 0-500 scale; the dashed line is the CPCB limit at `limPct`. */
-export function barRows(items: BarRowItem[], limPct: number): string {
+/** BarRow list: each pollutant on one 0-500 scale; the dashed line is the CPCB limit at `limPct`.
+ *  With `lang`, the list carries its own key line saying so. */
+export function barRows(items: BarRowItem[], limPct: number, lang?: Lang): string {
   const rows = items
     .map(
       (b) =>
@@ -422,7 +423,8 @@ export function barRows(items: BarRowItem[], limPct: number): string {
         `<i class="f" style="width:${Math.max(0, Math.min(100, b.pct)).toFixed(1)}%"></i><i class="lim"></i></span><b>${b.value}</b></div>`,
     )
     .join("");
-  return `<div class="bars" style="--lim:${limPct.toFixed(1)}%">${rows}</div>`;
+  const key = lang ? `<p class="t-legal">${esc(t("The dashed line is the CPCB limit.", lang))}</p>` : "";
+  return `<div class="bars" style="--lim:${limPct.toFixed(1)}%">${rows}</div>${key}`;
 }
 
 export interface Column {

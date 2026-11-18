@@ -2,7 +2,7 @@ import { esc } from "../html";
 import { t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { TOOLS } from "../mcptools";
-import { SITE } from "../ui/shell";
+import { ld, SITE } from "../ui/shell";
 import { cardGrid, cardStack, ico, pull, type IconName } from "../ui/components";
 import { P, textPage } from "./text";
 
@@ -54,7 +54,7 @@ export function renderMcpPage(lang: Lang = "en"): string {
     3,
     true,
   );
-  const jsonLd = JSON.stringify({
+  const jsonLd = ld({
     "@context": "https://schema.org",
     "@type": "WebAPI",
     name: "mugilu MCP server",

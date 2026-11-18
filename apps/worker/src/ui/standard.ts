@@ -4,6 +4,14 @@
 // the kiosk's portrait by orientation). This is the only stylesheet source: pages never carry
 // their own CSS, and a new component is added to the standard first.
 
+/** The display preview frames a real screen display drawn at this size, then scales it down. */
+export const PREVIEW_W = 1280;
+export const PREVIEW_H = 720;
+
+/** The desktop breakpoint, for page scripts that follow the same layout switch as the CSS. */
+export const DESKTOP = "(min-width:1000px)";
+export const MOBILE = "(max-width:999.98px)";
+
 /** The components of design-standard.md section 4, and the layouts of section 3a. */
 const COMPONENTS_CSS = `
 body{margin:0}
@@ -402,7 +410,7 @@ body{margin:0}
 /** Display preview: a live screen display scaled into a 16:9 frame; the chosen place tile. The install sheet shows only when opened, as a centred dialog. */
 const PREVIEW_CSS = `
 .mg .pvframe{position:relative;aspect-ratio:16/9;overflow:hidden;border:2px solid var(--ink);border-radius:var(--r);background:var(--ink)}
-.mg .pvframe iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
+.mg .pvframe iframe{position:absolute;top:0;left:0;width:${PREVIEW_W}px;height:${PREVIEW_H}px;border:0;transform-origin:0 0;pointer-events:none}
 .mg .tiles a[aria-current]{background:var(--ink);color:var(--bg)}
 @media (forced-colors:active){.mg .tiles a[aria-current]{forced-color-adjust:none;background:Highlight;color:HighlightText}}
 .mg dialog.isheet:not([open]){display:none}
@@ -457,9 +465,5 @@ const SAFE_AREA_CSS = `
 body{padding-bottom:env(safe-area-inset-bottom)}
 .mg [hidden]{display:none!important}
 `;
-
-/** The desktop breakpoint, for page scripts that follow the same layout switch as the CSS. */
-export const DESKTOP = "(min-width:1000px)";
-export const MOBILE = "(max-width:999.98px)";
 
 export const STANDARD_CSS = COMPONENTS_CSS + PREVIEW_CSS + READ_CSS + PULL_CSS + LANG_NAMES_CSS + SAFE_AREA_CSS;

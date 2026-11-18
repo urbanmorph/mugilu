@@ -16,10 +16,23 @@ export const VIEWPORT = `<meta name="viewport" content="width=device-width, init
 export const SITE = "https://mugilu.live";
 export const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
-export /** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
+/** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
  *  otherwise break out of the tag). */
-function ld(obj: object): string {
+export function ld(obj: object): string {
   return JSON.stringify(obj).replace(/</g, "\\u003c");
+}
+
+/** A schema.org BreadcrumbList from the site's home down to this page. */
+export function breadcrumb(...items: [name: string, url: string][]): object {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: [["mugilu", SITE], ...items].map(([name, item], i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name,
+      item,
+    })),
+  };
 }
 
 // Cloudflare Web Analytics (RUM) beacon token. PUBLIC (it ships in every page's

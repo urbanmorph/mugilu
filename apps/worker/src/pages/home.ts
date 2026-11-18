@@ -221,12 +221,12 @@ export function renderHome(
       "@type": "Organization",
       name: "urbanmorph",
       url: "https://urbanmorph.com",
-      logo: "https://mugilu.live/apple-touch-icon.png",
+      logo: `${SITE}/apple-touch-icon.png`,
       sameAs: ["https://github.com/urbanmorph"],
     },
     potentialAction: {
       "@type": "SearchAction",
-      target: { "@type": "EntryPoint", urlTemplate: "https://mugilu.live/go?q={search_term_string}" },
+      target: { "@type": "EntryPoint", urlTemplate: `${SITE}/go?q={search_term_string}` },
       "query-input": "required name=search_term_string",
     },
   });

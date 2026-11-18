@@ -1,3 +1,4 @@
+import { PREVIEW_W } from "../ui/standard";
 import { START_CITIES } from "../slugs";
 import { langPrefixJs, withPersona } from "../links";
 import { esc } from "../html";
@@ -33,7 +34,7 @@ function displayJs(persona: Persona, lang: Lang): string {
   const LP = langPrefixJs(lang);
   return `(function(){var LP=${LP},place=${JSON.stringify(FIRST)},as=${JSON.stringify(persona)};
 var fr=document.querySelector('.pvframe'),f=fr&&fr.querySelector('iframe'),open=document.getElementById('dopen'),code=document.getElementById('dlink'),form=document.querySelector('form.search'),tiles=[].slice.call(document.querySelectorAll('.tiles a[data-slug]'));
-function fit(){if(f)f.style.transform='scale('+fr.clientWidth/1280+')';}fit();addEventListener('resize',fit);
+function fit(){if(f)f.style.transform='scale('+fr.clientWidth/${PREVIEW_W}+')';}fit();addEventListener('resize',fit);
 function q(){return as==='everyone'?'':'&as='+as;}
 function url(){return LP+'/c/'+place+'?kiosk'+q();}
 function set(){var u=url();if(f&&f.getAttribute('src')!==u)f.setAttribute('src',u);open.href=u;code.textContent=u;

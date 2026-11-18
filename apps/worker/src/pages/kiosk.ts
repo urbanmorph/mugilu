@@ -25,6 +25,10 @@ export const KIOSK_VERBS = [
   "Looking up",
 ];
 
+/** The display refreshes its data every 14 minutes, and reloads the whole page every 20th time. */
+const REFRESH_MS = 14 * 60_000;
+const RELOAD_EVERY = 20;
+
 /** The display's script, with its words in the page's language (X is the number). */
 export const kioskJs = (lang: Lang) => {
   const s = (en: string) => JSON.stringify(t(en, lang)).replace(/</g, "\\u003c");
@@ -38,8 +42,8 @@ function fit(){var pl=document.querySelector('.kio .plate'),hd=pl&&pl.querySelec
 function veil(){return document.querySelector('.kveil');}
 function showLoad(){clearTimeout(vbT);var v=veil();if(!v)return;var w=v.querySelector('.t-title'),i=0;(function nx(){if(w)w.textContent=verbs[i++%verbs.length]+'…';vbT=setTimeout(nx,1500);})();v.classList.add('on');}
 function hideLoad(){clearTimeout(vbT);var v=veil();if(v)v.classList.remove('on');}
-function refresh(){showLoad();if(++n%20===0){setTimeout(function(){location.reload();},500);return;}fetch(location.href,{cache:'no-store'}).then(function(r){return r.ok?r.text():Promise.reject();}).then(function(h){var d=new DOMParser().parseFromString(h,'text/html'),nk=d.querySelector('.kio'),ck=document.querySelector('.kio');if(!nk||!ck)throw 0;ck.parentNode.replaceChild(document.importNode(nk,true),ck);hideLoad();start();}).catch(function(){hideLoad();refT=setTimeout(refresh,60000);});}
-function start(){clearInterval(clkI);clearInterval(agoI);clearTimeout(refT);clock();rel();fit();clkI=setInterval(clock,15000);agoI=setInterval(rel,30000);refT=setTimeout(refresh,840000);}
+function refresh(){showLoad();if(++n%${RELOAD_EVERY}===0){setTimeout(function(){location.reload();},500);return;}fetch(location.href,{cache:'no-store'}).then(function(r){return r.ok?r.text():Promise.reject();}).then(function(h){var d=new DOMParser().parseFromString(h,'text/html'),nk=d.querySelector('.kio'),ck=document.querySelector('.kio');if(!nk||!ck)throw 0;ck.parentNode.replaceChild(document.importNode(nk,true),ck);hideLoad();start();}).catch(function(){hideLoad();refT=setTimeout(refresh,60000);});}
+function start(){clearInterval(clkI);clearInterval(agoI);clearTimeout(refT);clock();rel();fit();clkI=setInterval(clock,15000);agoI=setInterval(rel,30000);refT=setTimeout(refresh,${REFRESH_MS});}
 function lock(){try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(function(){});}catch(e){}}
 lock();document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')lock();});
 window.addEventListener('resize',fit);setTimeout(fit,300);

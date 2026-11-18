@@ -6,7 +6,7 @@ import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { type IndiaMap } from "../indiamap";
 import { officialCyclone, type WarningsSnapshot } from "../sachet";
 import { alertParts } from "./warnings";
-import { HOME_OG, SITE, ld } from "../ui/shell";
+import { breadcrumb, HOME_OG, SITE, ld } from "../ui/shell";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {
@@ -132,15 +132,8 @@ export function renderPlaces(
     `<p class="t-meta">${T("Place names: OpenStreetMap contributors (ODbL), GeoNames (CC-BY 4.0).")} ${T("Admin boundaries: LGD, via bharatlas.")}</p>`,
   );
 
-  const canonical = "https://mugilu.live/places";
-  const crumb = ld({
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "mugilu", item: SITE },
-      { "@type": "ListItem", position: 2, name: "Places", item: canonical },
-    ],
-  });
+  const canonical = `${SITE}/places`;
+  const crumb = ld({ "@context": "https://schema.org", ...breadcrumb(["Places", canonical]) });
   return pageShell(
     t(`Every place in India: ${HAZARDS_SHORT} by district · mugilu`, lang),
     wrap(head + warnBox + directory + credit),

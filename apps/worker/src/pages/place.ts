@@ -10,7 +10,7 @@ import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
 import { HAZARDS } from "../hazards";
 import { ALERTS_JS } from "../alerts-ui";
-import { HOME_OG, SITE, ld, relTime } from "../ui/shell";
+import { breadcrumb, HOME_OG, SITE, ld, relTime } from "../ui/shell";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {
@@ -205,7 +205,7 @@ export function renderConditionsPage(
             url: canonical,
             isAccessibleForFree: true,
             creator: { "@type": "Organization", name: "mugilu", url: SITE },
-            license: "https://mugilu.live/terms",
+            license: `${SITE}/terms`,
             temporalCoverage: c.as_of,
             spatialCoverage: {
               "@type": "Place",
@@ -217,13 +217,7 @@ export function renderConditionsPage(
               { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${canonical}.md` },
             ],
           },
-          {
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              { "@type": "ListItem", position: 1, name: "mugilu", item: SITE },
-              { "@type": "ListItem", position: 2, name: placeName, item: canonical },
-            ],
-          },
+          breadcrumb([placeName, canonical]),
         ],
       })
     : undefined;

@@ -4,6 +4,7 @@
 // and .uvs; a level is a class (--lv), never a colour. All are aria-hidden: the
 // reading's text carries every number they show.
 
+import type { Lang } from "./i18n";
 import { aqiBand, cpcbLimit, subIndex } from "./aqi";
 import { pollutantParts } from "./formats";
 import { gaugePos } from "./readings";
@@ -49,7 +50,8 @@ const LIMIT_SPAN = 2.5;
 
 /** One BarRow per pollutant against its CPCB standard; an over-limit bar takes the CPCB band
  *  of its own sub-index, so the one driving the AQI stands out. */
-export function pollutantBars(p: AirPollutants): string {
+/** Each pollutant against its CPCB limit; with `lang`, the key line under the bars. */
+export function pollutantBars(p: AirPollutants, lang?: Lang): string {
   const items = pollutantParts(p).flatMap((x) => {
     const limit = cpcbLimit(x.key);
     if (limit == null) return [];
@@ -62,7 +64,7 @@ export function pollutantBars(p: AirPollutants): string {
       },
     ];
   });
-  return items.length ? barRows(items, 100 / LIMIT_SPAN) : "";
+  return items.length ? barRows(items, 100 / LIMIT_SPAN, lang) : "";
 }
 
 /** The one pollutant a small tile shows: the persona's own (first present), else
