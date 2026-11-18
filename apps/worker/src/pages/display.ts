@@ -3,7 +3,19 @@ import { PERSONAS, PERSONA_LABEL, type Persona } from "../score";
 import { lp, t, type Lang } from "../i18n";
 import { HOME_OG, SITE } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
-import { backLink, band, button, comboboxJs, ico, lane, panel, searchBox, segmented, wrap } from "../ui/components";
+import {
+  backLink,
+  band,
+  button,
+  comboboxJs,
+  ico,
+  lane,
+  panel,
+  searchBox,
+  segmented,
+  stack,
+  wrap,
+} from "../ui/components";
 
 // The cities offered as a start (the live list), by slug.
 const CITIES: [slug: string, name: string][] = [
@@ -104,19 +116,21 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       ? "For an always-on unattended screen, point a kiosk-browser app (for example Fully Kiosk on Android) at the same link so it auto-starts."
       : t("For an always-on unattended screen, point a kiosk-browser app at the same link so it auto-starts.", lang);
   const how = panel(
-    `<ol class="howto cards4">${[
-      T(
-        "Open the display link in the screen's browser: a smart TV, a cheap streaming stick, or an old tablet in a stand.",
-      ),
-      T("Press full-screen (F11 with a keyboard, or the browser's full-screen control)."),
-      T(
-        "Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.",
-      ),
-      esc(step4),
-    ]
-      .map((s) => `<li><span>${s}</span></li>`)
-      .join("")}</ol>` +
-      `<p class="t-meta">The display link is just <code>/c/{place}?kiosk</code>, so you can bookmark or script it. Add <code>?as=elderly</code> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>`,
+    stack(
+      `<ol class="howto cards4">${[
+        T(
+          "Open the display link in the screen's browser: a smart TV, a cheap streaming stick, or an old tablet in a stand.",
+        ),
+        T("Press full-screen (F11 with a keyboard, or the browser's full-screen control)."),
+        T(
+          "Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.",
+        ),
+        esc(step4),
+      ]
+        .map((s) => `<li><span>${s}</span></li>`)
+        .join("")}</ol>` +
+        `<p class="t-meta">The display link is just <code>/c/{place}?kiosk</code>, so you can bookmark or script it. Add <code>?as=elderly</code> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>`,
+    ),
     { title: t("How it runs", lang) },
   );
 

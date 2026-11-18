@@ -4,11 +4,14 @@
 // the kiosk's portrait by orientation). Edit here; a new component is added to the standard first.
 
 // phase2c: the display preview (a live screen display, scaled into a 16:9 frame) and the
-// chosen place tile on /display.
+// chosen place tile on /display. The install sheet: the board specimen showed it always open
+// (display:block); on a page it shows only when opened, as a centred dialog.
 const PHASE2C_CSS = `.mg .pvframe{position:relative;aspect-ratio:16/9;overflow:hidden;border:2px solid var(--ink);border-radius:var(--r);background:var(--ink)}
 .mg .pvframe iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
 .mg .tiles a[aria-current]{background:var(--ink);color:var(--bg)}
 @media (forced-colors:active){.mg .tiles a[aria-current]{forced-color-adjust:none;background:Highlight;color:HighlightText}}
+.mg dialog.isheet:not([open]){display:none}
+.mg dialog.isheet[open]{position:fixed;inset:0;margin:auto;max-width:min(30rem,calc(100% - 2 * var(--gut)));height:max-content;z-index:10}
 `;
 // /phase2c
 

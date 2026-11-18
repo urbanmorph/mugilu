@@ -32,22 +32,27 @@ export function issuerName(issuer: string): string {
 // What a warning is about, read from its headline (every SACHET alert carries the same
 // category, "Met"). The first that matches wins: "thunderstorm and rain" is a storm, and an
 // avalanche comes first because DGRE writes "danger level", which is also a river's. Words in
-// English, Hindi, Kannada, Bengali and Telugu: the offices write in all of them. A sea-wave
+// English, Hindi, Kannada, Bengali, Telugu and Odia: the offices write in all of them. A sea-wave
 // alert with no hazard word stays under Other, as its English equivalent does.
 export const WARNING_TYPES: [key: string, label: string, re: RegExp, icon: IconName][] = [
   ["avalanche", "Avalanche", /avalanche|हिमस्खलन|ಹಿಮಕುಸಿತ|তুষারধস|హిమపాతం/i, "snow"],
   [
     "storm",
     "Thunderstorm, lightning",
-    /thunder|lightning|squall|hail|गरज|बिजली|वज्रपात|आंधी|ಗುಡುಗು|ಸಿಡಿಲು|ಮಿಂಚು|বজ্র|বিদ্যুৎ চমকা|ঝড়|ఉరుము|పిడుగు|మెరుపు/i,
+    /thunder|lightning|squall|hail|गरज|बिजली|वज्रपात|आंधी|ಗುಡುಗು|ಸಿಡಿಲು|ಮಿಂಚು|বজ্র|বিদ্যুৎ চমকা|ঝড়|ఉరుము|పిడుగు|మెరుపు|ବଜ୍ରପାତ|ଘଡ଼ଘଡ଼ି/i,
     "storm",
   ],
-  ["flood", "Flood, river level", /flood|river|danger level|water level|बाढ़|नदी|ಪ್ರವಾಹ|বন্যা|నదీ|వరద/i, "flood"],
-  ["rain", "Rain, snow", /rain|snow|वर्षा|बारिश|ಮಳೆ|বৃষ্টি|వర్ష/i, "rain"],
-  ["wind", "Wind, cyclone", /wind|gale|cyclone|dust storm|हवा|चक्रवात|ಗಾಳಿ|ಚಂಡಮಾರುತ|ঘূর্ণিঝড়|తుపాను|తుఫాను|గాలి/i, "wind"],
-  ["heat", "Heat", /heat|hot|लू|गर्मी|ಬಿಸಿ|তাপপ্রবাহ|వడగాల్పు/i, "heat"],
-  ["cold", "Cold, frost", /cold|frost|शीत|ठंड|ಚಳಿ|শৈত্যপ্রবাহ|చలి/i, "cold"],
-  ["fog", "Fog", /fog|कोहरा|ಮಂಜು|কুয়াশা|పొగమంచు/i, "fog"],
+  ["flood", "Flood, river level", /flood|river|danger level|water level|बाढ़|नदी|ಪ್ರವಾಹ|বন্যা|నదీ|వరద|ବନ୍ୟା/i, "flood"],
+  ["rain", "Rain, snow", /rain|snow|वर्षा|बारिश|ಮಳೆ|বৃষ্টি|వర్ష|ବର୍ଷା/i, "rain"],
+  [
+    "wind",
+    "Wind, cyclone",
+    /wind|gale|cyclone|dust storm|हवा|चक्रवात|ಗಾಳಿ|ಚಂಡಮಾರುತ|ঘূর্ণিঝড়|తుపాను|తుఫాను|గాలి|ବାତ୍ୟା|ପବନ/i,
+    "wind",
+  ],
+  ["heat", "Heat", /heat|hot|लू|गर्मी|ಬಿಸಿ|তাপপ্রবাহ|వడగాల్పు|ତାପପ୍ରବାହ/i, "heat"],
+  ["cold", "Cold, frost", /cold|frost|शीत|ठंड|ಚಳಿ|শৈত্যপ্রবাহ|చలి|ଶୀତ/i, "cold"],
+  ["fog", "Fog", /fog|कोहरा|ಮಂಜು|কুয়াশা|పొగమంచు|କୁହୁଡ଼ି/i, "fog"],
 ];
 const OTHER: [string, string, RegExp, IconName] = ["other", "Other", /$^/, "warn"];
 const typeOf = (headline: string) => WARNING_TYPES.find(([, , re]) => re.test(headline)) ?? OTHER;
@@ -68,14 +73,17 @@ export function stormTitle(headline: string): string | undefined {
   return `${title(m[1])} ${title(m[2])}`;
 }
 
-/** The script a headline is written in, when it is not Latin (its lang and its font). */
-function scriptOf(s: string): Script | undefined {
+/** The language a headline is written in, when it is not Latin (its lang attribute). */
+function scriptOf(s: string): string | undefined {
   if (/[ఀ-౿]/.test(s)) return "te";
   if (/[ঀ-৿]/.test(s)) return "bn";
+  if (/[଀-୿]/.test(s)) return "or";
   if (/[ಀ-೿]/.test(s)) return "kn";
   if (/[ऀ-ॿ]/.test(s)) return "hi";
   return undefined;
 }
+/** The scripts the shell loads a font for (Odia falls back to the system's). */
+const FONTED: string[] = ["hi", "kn", "te", "bn"] satisfies Script[];
 
 // Applies the filters: a warning stays when its kind and office are ticked and it holds the
 // search text; an office's list hides when none of its warnings show. On wide screens the
@@ -113,7 +121,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     const office = issuerName(a.issuer || "");
     const [type, label, , icon] = typeOf(a.headline || "");
     const script = scriptOf(a.headline || "");
-    if (script) scripts.add(script);
+    if (script && FONTED.includes(script)) scripts.add(script as Script);
     return warningRow({
       icon,
       kind: t(label, lang),

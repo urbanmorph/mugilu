@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { renderDisplayBuilder, renderNotFound, renderWarningsPage, warningType } from "../src/page";
 import { stormTitle } from "../src/pages/warnings";
 import type { WarningsSnapshot } from "../src/sachet";
+import { STANDARD_CSS } from "../src/ui/standard";
 
 // Phase 2C of the signage redesign: /warnings, /display and the 404 page on the new shell
 // (supporting-docs/redesign boards SignWarnings/DeskWarnings, SignDisplay/DeskDisplay,
@@ -47,6 +48,11 @@ test("warningType: avalanche is tested first, so DGRE's 'danger level' is not a 
 test("warningType: Bengali and Telugu headlines are sorted by hazard, not left under Other", () => {
   assert.equal(warningType(BENGALI), "storm");
   assert.notEqual(warningType(TELUGU), "other");
+  // Odia (IMD Bhubaneswar): lightning with moderate rain
+  assert.equal(
+    warningType("ଭାରତ ପାଣିପାଗ ବିଭାଗର ସୂଚନା ଅନୁଯାୟୀ, ଆପଣଙ୍କ ଅଞ୍ଚଳରେ ବଜ୍ରପାତ ସହିତ ମଧ୍ୟମ ଧରଣର ବର୍ଷା ହେବାର ସମ୍ଭାବନା ଅଛି ।"),
+    "storm",
+  );
   // a sea-wave alert with no hazard word stays under Other, as its English equivalent does
   assert.equal(warningType("నవంబర్13సా.4.00 నుంచి సముద్రంలో 3-6.2 మీటర్ల ఎత్తులో భారీఅలలు వచ్చే అవకాశం ఉంది."), "other");
 });
@@ -172,6 +178,11 @@ test("404: the live copy, a place search and the way back", () => {
   assert.match(html, /<label for="nq">Look up a place in India<\/label>/);
   assert.match(html, /placeholder="A place in India, or lat,lon"/);
   assert.match(html, /← back to mugilu/);
+});
+
+test("the install sheet shows only when opened (it is not the board specimen)", () => {
+  assert.match(STANDARD_CSS, /\.mg dialog\.isheet:not\(\[open\]\)\{display:none\}/);
+  assert.match(STANDARD_CSS, /\.mg dialog\.isheet\[open\]\{position:fixed;/);
 });
 
 test("404 (kn): localised, the example link prefixed", () => {
