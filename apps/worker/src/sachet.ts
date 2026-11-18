@@ -231,3 +231,34 @@ export function renderWarningsMarkdown(snap: WarningsSnapshot | null): string {
   out.push("---", "Source: NDMA / IMD via SACHET, mirrored by mugilu.");
   return out.join("\n");
 }
+
+// phase2a ─ the official cyclone: IMD's own category and the storm's name, from the newest
+// SACHET warning about it (the JTWC track gives position, never the category).
+const CYCLONE_RE = /\b((?:super |extremely severe |very severe |severe )?cyclonic storm)\s+["“']?([A-Za-z]{3,})\b/i;
+const NOT_A_NAME = new Set(["over", "near", "with", "lays", "lay", "moved", "moving", "centred", "centered", "likely"]);
+const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+export interface OfficialCyclone {
+  /** IMD's category and the name, e.g. "Severe Cyclonic Storm Akvan". */
+  title: string;
+  name: string;
+  alert: FeedAlert;
+  /** The areas the warning names ("Cyclone Warning for A, B, C"), as written. */
+  areas: string[];
+}
+
+/** The newest active warning that names a cyclone, with its category and areas. */
+export function officialCyclone(snap: WarningsSnapshot | null | undefined): OfficialCyclone | undefined {
+  const newest = [...(snap?.alerts ?? [])].sort((a, b) => Date.parse(b.sent) - Date.parse(a.sent));
+  for (const alert of newest) {
+    const m = alert.headline.match(CYCLONE_RE);
+    if (!m || NOT_A_NAME.has(m[2].toLowerCase())) continue;
+    const list = alert.headline.match(/warning for\s+([^.]+)/i)?.[1] ?? "";
+    const areas = list
+      .split(/,|\band\b/i)
+      .map((a) => a.trim())
+      .filter(Boolean);
+    return { title: titleCase(`${m[1]} ${m[2]}`), name: titleCase(m[2]), alert, areas };
+  }
+  return undefined;
+}

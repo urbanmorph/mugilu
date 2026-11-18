@@ -24,7 +24,6 @@ import {
 import { RISK_COLOR, levelColor, tintOf } from "../palette";
 import { lp, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT } from "../hazards";
-import { renderIndiaMap, type IndiaMap } from "../indiamap";
 import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnormals";
 import { relTime } from "../ui/shell";
 
@@ -113,63 +112,6 @@ export const airBand = (b: NormalizedStation["band"]): RiskBand => RISK_BANDS[ai
  *  plus a worst-air row from the hourly snapshot, each row state-qualified (so
  *  the place is recognisable), stamped with its own freshness, and coloured by
  *  its severity; the whole card takes the tint of the worst extreme, like /c. */
-export function renderHero(
-  h: NationalHighlights | undefined,
-  meta?: { gridAsOf?: string; airAsOf?: string; map?: IndiaMap },
-  lang: Lang = "en",
-): string {
-  const rows: string[] = [];
-  let worst: RiskBand = "low";
-  // Place + state names are proper nouns from the gazetteer: kept as-is (English)
-  // in every language; transliterating them would be unreliable.
-  const place = (name: string, state?: string) => esc(state ? `${name}, ${state}` : name);
-  const age = (iso?: string) => (iso ? ` <span class="age">· ${relTime(iso)}</span>` : "");
-  // "feels 41°": in Kannada/Hindi the verb follows the number ("41° ಅನಿಸುತ್ತದೆ").
-  const feels = (c: number) =>
-    lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
-  const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
-    if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
-    return `<a class="hl" style="--hue:var(--rt-${band})" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
-  };
-  if (h?.hottest) {
-    rows.push(
-      row(
-        heatBand(h.hottest.apparent_c, h.hottest.wet_bulb_c),
-        h.hottest.lat,
-        h.hottest.lon,
-        `${icon("heat")}${t("Hottest", lang)}: <b>${place(h.hottest.name, h.hottest.state)}</b>, ${feels(h.hottest.apparent_c)}, ${t(heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c), lang)}`,
-        meta?.gridAsOf,
-      ),
-    );
-  }
-  if (h?.dustiest) {
-    rows.push(
-      row(
-        dustBand(h.dustiest.dust_ug_m3),
-        h.dustiest.lat,
-        h.dustiest.lon,
-        `${icon("dust")}${t("Dustiest", lang)}: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${t(DUST_PHRASE[dustBand(h.dustiest.dust_ug_m3)], lang)}`,
-        meta?.gridAsOf,
-      ),
-    );
-  }
-  if (h?.worstAir) {
-    rows.push(
-      row(
-        airBand(h.worstAir.band),
-        h.worstAir.lat,
-        h.worstAir.lon,
-        `${icon("air")}${t("Worst air", lang)}: <b>${place([h.worstAir.station, h.worstAir.name].filter(Boolean).join(", "), h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(AQI_BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
-        meta?.airAsOf,
-      ),
-    );
-  }
-  const map = meta?.map ? renderIndiaMap(meta.map, lang, relTime) : "";
-  return rows.length || map
-    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("India now", lang)}</h2>${map}${rows.join("")}</section>`
-    : "";
-}
-
 export function warnColor(color: string): string {
   switch (color.toLowerCase()) {
     case "red":

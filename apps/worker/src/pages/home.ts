@@ -4,57 +4,33 @@ import { slugForName } from "../slugs";
 import { lp, t, type Lang } from "../i18n";
 import { FRESHEN } from "../freshen";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
-import { MAP_CSS, MAP_JS, type IndiaMap } from "../indiamap";
-import { icon, renderHero } from "./read";
-import { AC_CSS, CLIENT_ESC, HOME_OG, NEARME_CSS, SITE, ld, nearMeJs, shell, typeaheadJs } from "../ui/shell";
-
-export const HOME_CSS = `
-body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 14%,var(--bg)),var(--bg) 44%) var(--bg) no-repeat}
-.hero{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8vw,2.7rem);letter-spacing:-.02em;line-height:1.05;margin:1.4rem 0 .5rem}
-.tagline{font-family:var(--serif);font-size:1.18rem;line-height:1.4;margin:0 0 .8rem;color:var(--ink)}
-.covers{display:flex;flex-wrap:wrap;gap:.35rem 1rem;margin:0 0 1.4rem;color:var(--muted);font-size:.92rem}
-.covers span{display:inline-flex;align-items:center;gap:.35rem}
-.covers .ic{width:16px;height:16px;color:var(--sky)}
-.search{display:flex;gap:8px;margin:0 0 .8rem}
-.search input{flex:1;font-size:1rem;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
-.search button{font-size:1rem;font-weight:600;padding:12px 18px;border:0;border-radius:12px;background:color-mix(in srgb,var(--sky) 86%,#000);color:#fff;cursor:pointer}
-${AC_CSS}.shint{color:var(--muted);font-size:.86rem;line-height:1.5;margin:-.2rem 0 .9rem;max-width:46ch}.shint b{color:var(--ink);font-weight:600}
-.exq{color:var(--ink)}
-.notice{color:var(--warn-text);font-size:.9rem;margin:.2rem 0 1rem}
-.cities{color:var(--muted);font-size:.9rem;line-height:1.9}.cities a{color:var(--sky);text-decoration:none}
-.yourplaces{margin:0 0 1.2rem}
-.yourplaces h2{margin:0 0 .4rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.pl{display:flex;align-items:center;gap:.55rem;padding:3px 0}
-.pl a{flex:1;color:var(--ink);text-decoration:none;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pl .plfav{background:none;border:0;cursor:pointer;font-size:1.05rem;color:var(--muted);padding:0;line-height:1}
-.pl .plfav.on{color:var(--sky)}
-.pl .plx{background:none;border:0;cursor:pointer;color:var(--muted);font-size:.95rem;padding:0 .15rem;opacity:.45;line-height:1}
-.pl .plx:hover{opacity:1}
-.hero-now{margin:0 0 1.4rem;border:1px solid color-mix(in srgb,var(--cond,var(--sky)) 32%,var(--line));border-radius:14px;padding:14px 16px;background:linear-gradient(180deg,color-mix(in srgb,var(--cond,var(--sky)) 13%,var(--card)),var(--card))}
-.hero-now h2{margin:0 0 .5rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.hero-now .hl{display:block;text-decoration:none;color:var(--ink);padding:5px 0;font-size:.98rem;line-height:1.35}
-.hero-now .hl b{font-weight:700}
-.hero-now .age{color:var(--muted);font-weight:400;font-size:.85em}
-.hero-now .hl .ic{width:18px;height:18px;color:var(--hue,var(--sky));margin-right:8px;vertical-align:-.2em}
-/* iPads in portrait: one column, wider, so the map is bigger. */
-@media(min-width:700px) and (max-width:959px){main:has(>.hm){max-width:720px}.hm .msvg{max-width:560px;margin:0 auto}}
-/* Laptops and iPads in landscape: search, the India-now rows and places on the left, the map
-   on the right. The India-now card opens up so its rows join the left column; the map takes
-   the card's look. The last row (1fr) takes the map's height so the left rows stay packed.
-   Only with a map, and only where :has() works; otherwise the one column stays. */
-@supports selector(:has(a)){@media(min-width:960px){
-main:has(>.hm .imap){max-width:1180px;padding-top:28px}
-.hm:has(.imap){display:grid;grid-template-columns:minmax(0,26rem) minmax(0,1fr);grid-template-rows:repeat(14,auto) 1fr;column-gap:3.5rem;align-items:start}
-.hm>*,.hero-now>*{grid-column:1}
-.hm:has(.imap) .hero-now{display:contents}
-.hero-now>.imap{grid-column:2;grid-row:1/-1;margin:0;border:1px solid color-mix(in srgb,var(--cond,var(--sky)) 32%,var(--line));border-radius:14px;padding:16px 20px;background:linear-gradient(180deg,color-mix(in srgb,var(--cond,var(--sky)) 13%,var(--card)),var(--card))}
-.hm .msvg{max-width:min(100%,calc((100svh - 230px) * .9));margin:0 auto}
-.hero{margin-top:.4rem}
-.nearme{justify-self:start}
-.hero-now>h2{margin:.4rem 0 .3rem}
-.hero-now>.hl:last-of-type{margin-bottom:1.4rem}
-}}
-`;
+import { AQI_BAND_LABEL } from "../aqi";
+import { RISK_BANDS, type RiskBand } from "../score";
+import { type IndiaMap } from "../indiamap";
+import { officialCyclone, type WarningsSnapshot } from "../sachet";
+import { DUST_PHRASE, airBand, dustBand, heatBand, heatPhrase } from "./read";
+import { issuerName } from "./warnings";
+import { CLIENT_ESC, HOME_OG, SITE, istTime, ld, nearMeJs, relTime } from "../ui/shell";
+import { pageShell } from "../ui/page-shell";
+import {
+  band,
+  button,
+  ico,
+  lane,
+  levelChip,
+  linkButton,
+  notice,
+  placeTile,
+  placeTiles,
+  searchBox,
+  stack,
+  warningPlate,
+  wrap,
+  yourPlacesSlot,
+  type IconName,
+} from "../ui/components";
+import { indiaMap, MAP_JS } from "../ui/map";
+import { searchJs } from "../ui/search";
 
 export const CITIES = [
   { name: "Delhi", lat: 28.61, lon: 77.21 },
@@ -65,6 +41,119 @@ export const CITIES = [
   { name: "Hyderabad", lat: 17.39, lon: 78.49 },
 ];
 
+/** "Popular": real top lookups (D1) first, then the seed cities, eight at most, each linked to
+ *  its canonical /c/{slug} when it has one. A long ward name gives way to its city. */
+function popularTiles(popular: { label: string; lat: number; lon: number }[], lang: Lang): string {
+  const shortPlace = (label: string) => {
+    const seg = label.split(",").map((s) => s.trim());
+    return seg[0].length > 14 && seg.length > 1 ? seg[seg.length - 1] : seg[0];
+  };
+  const seen = new Set<string>();
+  const tiles: string[] = [];
+  for (const p of [...popular.map((x) => ({ ...x, name: shortPlace(x.label) })), ...CITIES]) {
+    const k = p.name.toLowerCase();
+    if (seen.has(k) || tiles.length >= 8) continue;
+    seen.add(k);
+    const s = slugForName(p.name);
+    tiles.push(placeTile(lp(s ? `/c/${s}` : `/c/${p.lat},${p.lon}`, lang), p.name));
+  }
+  return placeTiles(tiles);
+}
+
+/** The national highlights: hottest, dustiest, worst air, each a link with its level and time. */
+function highlightRows(
+  h: NationalHighlights | undefined,
+  meta: { gridAsOf?: string; airAsOf?: string },
+  lang: Lang,
+): string {
+  // Place and state names are proper nouns from the gazetteer, kept as they are in every language.
+  const place = (name: string, state?: string) => esc(state ? `${name}, ${state}` : name);
+  // "feels 41°": in Kannada and Hindi the verb follows the number.
+  const feels = (c: number) =>
+    lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
+  const row = (
+    icon: IconName,
+    label: string,
+    name: string,
+    say: string,
+    level: RiskBand,
+    lat: number,
+    lon: number,
+    iso?: string,
+  ) =>
+    `<a class="hl" href="${lp(`/c/${lat},${lon}`, lang)}">${ico(icon)}<span class="stack">` +
+    `<span><span class="t-meta">${esc(t(label, lang))}:</span> <b class="t-value">${name}</b></span>` +
+    `<span class="row-c"><span>${say}</span>${levelChip(level, lang)}</span>` +
+    (iso ? `<span class="t-meta">${relTime(iso)}</span>` : "") +
+    `</span></a>`;
+  const rows: string[] = [];
+  if (h?.hottest) {
+    const { name, state, lat, lon, apparent_c, wet_bulb_c } = h.hottest;
+    const say = `${feels(apparent_c)}, ${esc(t(heatPhrase(apparent_c, wet_bulb_c), lang))}`;
+    rows.push(
+      row("heat", "Hottest", place(name, state), say, heatBand(apparent_c, wet_bulb_c), lat, lon, meta.gridAsOf),
+    );
+  }
+  if (h?.dustiest) {
+    const { name, state, lat, lon, dust_ug_m3 } = h.dustiest;
+    const b = dustBand(dust_ug_m3);
+    rows.push(row("dust", "Dustiest", place(name, state), esc(t(DUST_PHRASE[b], lang)), b, lat, lon, meta.gridAsOf));
+  }
+  if (h?.worstAir) {
+    const w = h.worstAir;
+    const name = place([w.station, w.name].filter(Boolean).join(", "), w.state);
+    const say = `AQI ${w.aqi} ${esc(t(AQI_BAND_LABEL[w.band] ?? "", lang))}`;
+    rows.push(row("air", "Worst air", name, say, airBand(w.band), w.lat, w.lon, meta.airAsOf));
+  }
+  return rows.length ? `<div>${rows.join("")}</div>` : "";
+}
+
+/** The newest official cyclone warning, as a plate: IMD's category and the storm's name. */
+function cyclonePlate(c: ReturnType<typeof officialCyclone>, lang: Lang): string {
+  if (!c) return "";
+  const who = esc(issuerName(c.alert.issuer));
+  const when = esc(istTime(new Date(c.alert.sent).toISOString()));
+  const cap = esc(
+    t("Original alert (CAP): X, Y", lang)
+      .replace("X", issuerName(c.alert.issuer))
+      .replace("Y", istTime(new Date(c.alert.sent).toISOString())),
+  );
+  return band(
+    warningPlate({
+      bar: [
+        `<a href="${lp("/warnings", lang)}">${esc(t("Active warnings", lang))}</a>`,
+        `<span>${who}</span>`,
+        `<span>${when}</span>`,
+        `<a href="${esc(c.alert.link)}" rel="noopener" aria-label="${cap}">CAP</a>`,
+      ],
+      title: c.title,
+      icon: "cyclone",
+      body: `<p>${esc(c.alert.headline)}</p>`,
+      label: t("Active warnings", lang),
+    }),
+  );
+}
+
+/** Your places: recents and favourites from this browser (first-party, no login), as .yp rows. */
+const yourPlacesJs = (lang: Lang) => {
+  const S = (s: string) => JSON.stringify(t(s, lang));
+  return `(function(){var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;var ul=yp.querySelector('ul.yp'),LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)},FAV=${S("Favourite X")},REN=${S("Rename X")},DEL=${S("Remove X")},NAME=${S("Type a name for this place (for example, Home or Office)")};
+${CLIENT_ESC}
+function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
+function load(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}}
+function save(L){try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}}
+function nm(p){return p.name||p.label||(p.lat+', '+p.lon);}
+function ord(L){return L.slice().sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});}
+function lab(s,p){return esc(s.replace('X',nm(p)));}
+function render(){var L=ord(load());if(!L.length){yp.hidden=true;return;}yp.hidden=false;
+ul.innerHTML=L.map(function(p){return '<li data-id="'+esc(p.id)+'"><button type="button" data-a="fav" aria-pressed="'+(p.fav?'true':'false')+'" title="Favourite" aria-label="'+lab(FAV,p)+'">'+(p.fav?'\\u2605':'\\u2606')+'</button><a href="'+LP+'/c/'+esc(p.lat)+','+esc(p.lon)+'">'+esc(nm(p))+'</a><button type="button" data-a="ren" title="Rename" aria-label="'+lab(REN,p)+'">\\u270e</button><button type="button" data-a="del" title="Remove" aria-label="'+lab(DEL,p)+'">\\u00d7</button></li>';}).join('');
+L.slice(0,4).forEach(function(p){pf(LP+'/c/'+p.lat+','+p.lon);});
+if(L[0]&&!render.sr){render.sr=1;try{var sr=document.createElement('script');sr.type='speculationrules';sr.textContent=JSON.stringify({prerender:[{source:'list',urls:[LP+'/c/'+L[0].lat+','+L[0].lon]}]});document.head.appendChild(sr);}catch(e){}}}
+ul.addEventListener('click',function(e){var b=e.target.closest('button[data-a]');if(!b)return;var id=b.closest('li').getAttribute('data-id'),a=b.getAttribute('data-a');var L=load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
+if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt(NAME,p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});save(L);render();});
+render();})();`;
+};
+
 export function renderHome(
   notFound?: string,
   highlights?: NationalHighlights,
@@ -73,100 +162,70 @@ export function renderHome(
     airAsOf?: string;
     popular?: { label: string; lat: number; lon: number }[];
     map?: IndiaMap;
+    warnings?: WarningsSnapshot | null;
   },
   lang: Lang = "en",
 ): string {
-  // "Popular" = real top-lookups (D1) first, then seed cities to fill (deduped),
-  // so it's useful from day one and grows into real data. Short, recognisable
-  // label: the district/city, or the metro city when the first segment is a long
-  // ward name ("Dharmaraya Swamy Temple Ward, Bengaluru").
-  const shortPlace = (label: string) => {
-    const seg = label.split(",").map((s) => s.trim());
-    return seg[0].length > 14 && seg.length > 1 ? seg[seg.length - 1] : seg[0];
-  };
-  const seen = new Set<string>();
-  const links: string[] = [];
-  const addPlace = (name: string, lat: number, lon: number) => {
-    const k = name.toLowerCase();
-    if (seen.has(k) || links.length >= 8) return;
-    seen.add(k);
-    // Link the canonical /c/{slug} when the place has one (the metros, most districts)
-    // so the internal link points at the page that actually indexes, not a coordinate
-    // URL that just canonicalises to it. Wards and arbitrary points stay coordinate.
-    const s = slugForName(name);
-    const href = s ? `/c/${s}` : `/c/${lat},${lon}`;
-    links.push(`<a href="${lp(href, lang)}">${esc(name)}</a>`);
-  };
-  for (const p of meta?.popular ?? []) addPlace(shortPlace(p.label), p.lat, p.lon);
-  for (const c of CITIES) addPlace(c.name, c.lat, c.lon);
-  const cityLinks = links.join(" · ");
-  const noticeMsg =
+  const T = (s: string) => esc(t(s, lang));
+  const covers = (
+    [
+      ["air", "air"],
+      ["heat", "heat"],
+      ["rain", "rain"],
+      ["sun", "UV"],
+      ["dust", "dust"],
+      ["warn", "warnings"],
+    ] as [IconName, string][]
+  )
+    .map(([i, l]) => `<span>${ico(i)}${T(l)}</span>`)
+    .join("");
+  const examples = `(<span lang="kn">ಬೆಂಗಳೂರು</span> · <span lang="hi">दिल्ली</span> · <span lang="ta">சென்னை</span>)`;
+  const hint =
     lang === "en"
-      ? `No place found for "${esc(notFound ?? "")}". Type the name of a city or a place.`
-      : esc(t('No place found for "X". Type the name of a city or a place.', lang)).replace("X", esc(notFound ?? ""));
-  const notice = notFound ? `<p class="notice">${noticeMsg}</p>` : "";
-  const cover = (ic: string, en: string) => `<span>${icon(ic)} ${t(en, lang)}</span>`;
-  const shint =
-    lang === "en"
-      ? `Type the name of a place in India, in any language (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). You then see <b>its sky</b>: air, heat, rain and dust.`
-      : `${t("Type the name of a place in India, in any language", lang)} (<span class="exq">ಬೆಂಗಳೂರು · दिल्ली · சென்னை</span>). ${t("You then see its sky: air, heat, rain and dust.", lang)}`;
+      ? `Type the name of a place in India, in any language ${examples}. You then see <b>its sky</b>: air, heat, rain and dust.`
+      : `${T("Type the name of a place in India, in any language")} ${examples}. ${T("You then see its sky: air, heat, rain and dust.")}`;
+  const missing = notFound
+    ? notice("err", T('No place found for "X". Type the name of a city or a place.').replace("X", esc(notFound)))
+    : "";
+  const official = officialCyclone(meta?.warnings);
 
-  const body = `<div class="hm">
-  <h1 class="hero">${t("What is it like outside now?", lang)}</h1>
-  <p class="tagline">${t("The open sky of India, one coordinate at a time.", lang)}</p>
-  <p class="covers">${cover("air", "air")}${cover("heat", "heat")}${cover("rain", "rain")}${cover("sun", "UV")}${cover("dust", "dust")}${cover("warn", "warnings")}</p>
-  <div class="acwrap">
-    <form class="search" action="${lp("/go", lang)}" method="get" role="search">
-      <input id="q" name="q" type="search" placeholder="${esc(t("A place in India, or lat,lon", lang))}" autocomplete="off" autofocus aria-label="${esc(t("Look up a place in India", lang))}">
-      <button type="submit">${t("Go", lang)}</button>
-    </form>
-    <ul id="ac" class="ac" role="listbox"></ul>
-  </div>
-  <p class="shint">${shint}</p>
-  <button id="nearme" class="nearme" type="button" hidden>${icon("pin")} ${t("Use my location", lang)}</button>
-  ${notice}
-  ${renderHero(highlights, meta, lang)}
-  <div id="yp" class="yourplaces" hidden></div>
-  <p class="cities">${t("Popular:", lang)} ${cityLinks}</p>
-  </div>
-  <script>
-  var YP=${JSON.stringify(t("Your places", lang))};
-  var LOC=${JSON.stringify(t("Finding your location…", lang))},NOLOC=${JSON.stringify(t("Your location is not available.", lang))},NAME=${JSON.stringify(t("Type a name for this place (for example, Home or Office)", lang))};
-  var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};
-  ${nearMeJs("nearme", "''", lang)}
-  // Warm the edge + upstreams for a /c URL so the click lands instantly (dedup).
-  function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
-  ${typeaheadJs("q", "ac", "''")}
-  ${MAP_JS(lang)}
-  // Your places: recents + favourites from localStorage (first-party, no login).
-  (function(){
-    var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;
-    ${CLIENT_ESC}
-    function load(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}}
-    function save(L){try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}}
-    function nm(p){return p.name||p.label||(p.lat+', '+p.lon);}
-    function ord(L){return L.slice().sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});}
-    function render(){
-      var L=ord(load());
-      if(!L.length){yp.hidden=true;return;}
-      yp.hidden=false;
-      yp.innerHTML='<h2>'+YP+'</h2>'+L.map(function(p){return '<div class="pl" data-id="'+esc(p.id)+'"><button class="plfav'+(p.fav?' on':'')+'" data-a="fav" type="button" aria-pressed="'+(p.fav?'true':'false')+'" title="Favourite">'+(p.fav?'\\u2605':'\\u2606')+'</button><a href="'+LP+'/c/'+esc(p.lat)+','+esc(p.lon)+'">'+esc(nm(p))+'</a><button class="plx" data-a="ren" type="button" title="Rename">\\u270e</button><button class="plx" data-a="del" type="button" title="Remove">\\u00d7</button></div>';}).join('');
-      L.slice(0,4).forEach(function(p){pf(LP+'/c/'+p.lat+','+p.lon);});
-      if(L[0]&&!render.sr){render.sr=1;try{var sr=document.createElement('script');sr.type='speculationrules';sr.textContent=JSON.stringify({prerender:[{source:'list',urls:[LP+'/c/'+L[0].lat+','+L[0].lon]}]});document.head.appendChild(sr);}catch(e){}}
-    }
-    yp.addEventListener('click',function(e){
-      var btn=e.target.closest('button[data-a]');if(!btn)return;
-      var id=btn.closest('.pl').getAttribute('data-id'),a=btn.getAttribute('data-a');
-      var L=load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
-      if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt(NAME,p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});
-      save(L);render();
-    });
-    render();
-  })();
-  </script>
-  ${FRESHEN}`;
+  const hero = band(
+    lane("l2", [
+      stack(
+        `<h1 class="t-title">${T("What is it like outside now?")}</h1><p class="t-lead">${T("The open sky of India, one coordinate at a time.")}</p><p class="covers">${covers}</p>`,
+      ),
+      stack(
+        missing +
+          searchBox({
+            id: "q",
+            label: t("Look up a place in India", lang),
+            placeholder: t("A place in India, or lat,lon", lang),
+            button: t("Go", lang),
+            action: lp("/go", lang),
+          }) +
+          `<p class="t-meta">${hint}</p>` +
+          button(t("Use my location", lang), { icon: "pin", id: "nearme", hidden: true }),
+      ),
+    ]),
+  );
+  const aside = highlightRows(highlights, meta ?? {}, lang);
+  const places = band(
+    lane("l2", [
+      yourPlacesSlot(lang),
+      `<div class="col"><div class="stack"><p class="t-kicker">${T("Popular:")}</p>${popularTiles(meta?.popular ?? [], lang)}</div><div class="grow"></div>${linkButton(lp("/display", lang), t("Put this on a screen", lang), false, "screen")}</div>`,
+    ]),
+  );
+  const levels = band(`<div class="lkey">${RISK_BANDS.map((b) => levelChip(b, lang)).join("")}</div>`);
+  const body =
+    wrap(
+      hero +
+        cyclonePlate(official, lang) +
+        band(indiaMap(meta?.map, lang, { cyclone: official?.title, aside })) +
+        places +
+        levels,
+    ) + FRESHEN;
 
-  // schema.org WebSite + SearchAction (enables a search box in results; credits the publisher).
+  // schema.org WebSite + SearchAction (a search box in results; credits the publisher).
   const site = ld({
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -187,11 +246,13 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell(t(`mugilu: ${HAZARDS_SHORT} anywhere in India`, lang), body, HOME_CSS + MAP_CSS + NEARME_CSS, {
+  return pageShell(t(`mugilu: ${HAZARDS_SHORT} anywhere in India`, lang), body, {
+    path: "/",
     desc: t(SITE_DESC, lang),
     canonical: SITE,
     jsonLd: site,
     ogImage: HOME_OG,
     lang,
+    js: searchJs(lang) + MAP_JS(lang) + nearMeJs("nearme", "''", lang) + yourPlacesJs(lang),
   });
 }

@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { airDots, LAND_PATH, MAP_CSS, mapCells, renderIndiaMap, STATE_PATH } from "../src/indiamap";
+import { airDots, LAND_PATH, mapCells, STATE_PATH } from "../src/indiamap";
+import { indiaMap } from "../src/ui/map";
 import { renderHome } from "../src/page";
+import { tokensCss } from "../src/ui/tokens";
 import type { ConditionsPoint, NormalizedStation } from "../src/types";
 import type { Cyclone } from "../src/cyclones";
 
@@ -95,7 +97,7 @@ test("STATE_PATH: the borders between states, open lines, light enough for the h
   assert.ok(!STATE_PATH.includes("Z"), "borders are lines, not closed rings");
   assert.ok(STATE_PATH.split("M").length > 60, "every border between two states");
   assert.ok(STATE_PATH.length < 16_000, `${STATE_PATH.length} chars`);
-  const html = renderIndiaMap({ cells: [], dots: [], cyclones: [] });
+  const html = indiaMap({ cells: [], dots: [], cyclones: [] }, "en");
   assert.match(html, /<path class="mstates" d="M/); // drawn on every layer
 });
 
@@ -110,119 +112,117 @@ const CYCLONE: Cyclone = {
   basin: "bay",
 };
 
-test("renderIndiaMap: four layers, a legend for each, warnings named as off the map", () => {
-  const html = renderIndiaMap({ cells: mapCells(GRID, STATIONS, []), dots: airDots(STATIONS), cyclones: [] });
-  for (const id of ["ml-w", "ml-a", "ml-h", "ml-r"]) assert.match(html, new RegExp(`id="${id}"`));
-  assert.match(html, /<label for="ml-w">What&#39;s worst<\/label>/);
-  assert.match(html, /<label for="ml-a">Air<\/label>/);
-  assert.match(html, /<label for="ml-h">Heat<\/label>/);
-  assert.match(html, /<label for="ml-r">Rain<\/label>/);
+test("indiaMap: four layers, a legend for each, warnings named as off the map", () => {
+  const html = indiaMap({ cells: mapCells(GRID, STATIONS, []), dots: airDots(STATIONS), cyclones: [] }, "en");
+  for (const v of ["w", "a", "h", "r"]) assert.match(html, new RegExp(`name="layer" value="${v}"`));
+  assert.match(html, />What&#39;s worst<\/label>/);
   assert.match(html, /role="img" aria-label="[^"]+"/);
   assert.match(html, /clipPath/);
-  assert.match(html, /Very Poor<\/span><span><i style="background:#7f1d1d"><\/i>Severe/); // every band a dot can take
+  assert.match(html, /class="lvf b-severe"[^>]*><\/svg>Severe/); // every band a dot can take
   assert.match(html, /Official warnings are not on this map/);
   assert.doesNotMatch(html, /—/);
-  assert.doesNotMatch(html, /class="mcy"|class="mcard"/); // no cyclone, no glyph or card
+  assert.doesNotMatch(html, /class="mcy"|See the rain/); // no cyclone, no glyph or note
 });
 
-test("renderIndiaMap: What's worst colours a square by its hazard, only where high or severe", () => {
-  const html = renderIndiaMap({ cells: mapCells(GRID, STATIONS, []), dots: [], cyclones: [] });
+test("indiaMap: What's worst paints a square by its hazard, only where high or severe", () => {
+  const html = indiaMap({ cells: mapCells(GRID, STATIONS, []), dots: [], cyclones: [] }, "en");
   const worst = html.match(/<g class="L Lw">(.*?)<\/g>/)![1];
-  assert.match(worst, /fill="var\(--mheat\)"/); // Churu
-  assert.match(worst, /fill="var\(--mair\)"/); // Delhi
-  assert.match(worst, /fill="var\(--mcold\)"/); // Leh
+  assert.match(worst, /fill="url\(#m-heat\)"/); // Churu, hatched
+  assert.match(worst, /class="f-air"/); // Delhi
+  assert.match(worst, /fill="url\(#m-cold\)"/); // Leh, dotted
   assert.equal(worst.match(/<path/g)!.length, 3); // calm squares are left as land
-  assert.doesNotMatch(worst, /fill-opacity/); // all three severe: full strength
-  // The legend names hazards only; each chip shows its two strengths, and one line says which is which.
-  const lg = html.match(/<p class="mlg Lw">(.*?)<\/p>/)![1];
-  assert.match(lg, /Air.*Heat.*Cold/);
-  assert.equal(lg.match(/class="pair"/g)!.length, 3);
-  assert.doesNotMatch(lg, />High<|>Severe</); // levels are not chips: no grey or white square to look for
+  assert.doesNotMatch(worst, /opacity/);
   assert.match(html, /Small: high\. Full: severe\./);
   assert.match(html, /Air includes smoke and dust/);
 });
 
-test("renderIndiaMap: Rain says when no heavy rain is forecast, and colours it when it is", () => {
-  const dry = renderIndiaMap({ cells: mapCells(GRID, [], []), dots: [], cyclones: [] });
+test("indiaMap: Rain says when no heavy rain is forecast, and paints it when it is", () => {
+  const dry = indiaMap({ cells: mapCells(GRID, [], []), dots: [], cyclones: [] }, "en");
   assert.match(dry, /No heavy rain is forecast in the next 24 hours/);
-  const wet = renderIndiaMap({
-    cells: mapCells([pt("Kakinada", 16.9, 82.2, { apparent_c: 28, rain_24h_mm: 150 })], [], []),
-    dots: [],
-    cyclones: [],
-  });
+  const wet = indiaMap(
+    {
+      cells: mapCells([pt("Kakinada", 16.9, 82.2, { apparent_c: 28, rain_24h_mm: 150 })], [], []),
+      dots: [],
+      cyclones: [],
+    },
+    "en",
+  );
   assert.doesNotMatch(wet, /No heavy rain/);
-  assert.match(wet, /<g class="L Lr"><path fill="var\(--mrain2\)"/);
+  assert.match(wet, /<g class="L Lr"><path fill="url\(#m-r2\)"/);
   assert.match(wet, /Very heavy/);
   assert.match(wet, /often underestimate/);
 });
 
-test("renderIndiaMap: no Rain layer until the grid carries a forecast", () => {
+test("indiaMap: no Rain layer until the grid carries a forecast", () => {
   const old = GRID.map((p) => ({ ...p, wx: { ...p.wx, rain_24h_mm: undefined } }));
-  const html = renderIndiaMap({ cells: mapCells(old, [], []), dots: [], cyclones: [CYCLONE] });
-  assert.doesNotMatch(html, /ml-r|No heavy rain|See the rain/);
+  const html = indiaMap({ cells: mapCells(old, [], []), dots: [], cyclones: [CYCLONE] }, "en");
+  assert.doesNotMatch(html, /value="r"|No heavy rain|See the rain/);
 });
 
-test("renderIndiaMap: a cyclone is drawn on the map and told in words, with IMD named", () => {
-  const html = renderIndiaMap({ cells: mapCells(GRID, [], []), dots: [], cyclones: [CYCLONE] });
+test("indiaMap: a cyclone is drawn on the map and told in words, with IMD named and its own stamp", () => {
+  const html = indiaMap({ cells: mapCells(GRID, [], []), dots: [], cyclones: [CYCLONE] }, "en");
   assert.match(html, /class="mcy"/);
   assert.match(html, /A cyclone can form in the Bay of Bengal\. It moves west\./);
   assert.match(html, /JTWC/);
-  assert.match(html, /IMD/);
-  assert.match(html, /<label for="ml-r" class="mto">See the rain<\/label>/); // the card opens the Rain layer
-  const named = renderIndiaMap({
-    cells: [],
-    dots: [],
-    cyclones: [{ ...CYCLONE, kind: "warning", id: "03B", name: "Montha", moving: "NW", track: [{ lat: 17, lon: 87 }] }],
-  });
-  assert.match(named, /Cyclone Montha is in the Bay of Bengal\. It moves north-west\./);
-  // When JTWC placed it, as the other layers say how old they are.
-  assert.doesNotMatch(named, /class="mcard">[\s\S]*class="age"/);
-  const dated = renderIndiaMap(
-    { cells: [], dots: [], cyclones: [{ ...CYCLONE, at: "2026-11-03T09:00:00.000Z" }] },
+  assert.match(html, /<a href="https:\/\/mausam\.imd\.gov\.in\/" rel="noopener">IMD<\/a>/);
+  assert.match(html, /data-layer-to="r">See the rain<\/button>/);
+  const named = indiaMap(
+    {
+      cells: [],
+      dots: [],
+      cyclones: [
+        { ...CYCLONE, kind: "warning", id: "03B", name: "Montha", moving: "NW", track: [{ lat: 17, lon: 87 }] },
+      ],
+    },
     "en",
-    (iso) => `at ${iso}`,
   );
-  assert.match(dated, /class="mcard"><p><b>[^<]*<\/b> <span class="age">· at 2026-11-03T09:00:00\.000Z<\/span><\/p>/);
+  assert.match(named, /Cyclone Montha is in the Bay of Bengal\. It moves north-west\./);
+  assert.doesNotMatch(named, /<span class="k">JTWC<\/span>/); // no time from JTWC, no stamp
+  const dated = indiaMap({ cells: [], dots: [], cyclones: [{ ...CYCLONE, at: "2026-11-03T09:00:00.000Z" }] }, "en");
+  assert.match(
+    dated,
+    /<span class="k">JTWC<\/span><span class="v">as of <time data-rel datetime="2026-11-03T09:00:00\.000Z">/,
+  );
 });
 
-test("renderIndiaMap: in Hindi the words are Hindi, the names stay", () => {
-  const html = renderIndiaMap(
+test("indiaMap: in Hindi the words are Hindi, the names stay", () => {
+  const html = indiaMap(
     { cells: mapCells(GRID, [], []), dots: [], cyclones: [{ ...CYCLONE, name: "Montha", kind: "warning" }] },
     "hi",
   );
   assert.doesNotMatch(html, /Official warnings are not on this map/);
-  assert.doesNotMatch(
-    html,
-    /What&#39;s worst|>Cold<|No heavy rain|See the rain|Extremely heavy|weather model|smoke and dust/,
-  );
+  // The strings the live map already had; the redesign's new ones (the layer label, the summaries,
+  // the reworded square note) are translated in the language pass, last.
+  assert.doesNotMatch(html, /What&#39;s worst|>Cold<|No heavy rain|See the rain|Extremely heavy|weather model/);
   assert.doesNotMatch(html, /is in the Bay of Bengal/);
   assert.match(html, /Montha/);
 });
 
-test("renderHome: the India now section carries the map when there is one", () => {
+test("renderHome: the map band carries the map when there is one", () => {
   const map = { cells: mapCells(GRID, STATIONS, []), dots: airDots(STATIONS), cyclones: [CYCLONE] };
   const html = renderHome(undefined, undefined, { map });
-  assert.match(html, /<section class="hero-now"/);
-  assert.match(html, /class="imap"/);
+  assert.match(html, /<svg class="msvg"/);
   assert.match(html, /A cyclone can form/);
-  assert.doesNotMatch(html, /This is not a map/);
-  assert.doesNotMatch(renderHome(), /class="imap"/); // no data, no map
+  assert.doesNotMatch(renderHome(), /<svg class="msvg"/); // no data: the not-ready notice
 });
 
-test("renderIndiaMap: a high square is a smaller square in the full colour, never a faded one", () => {
+test("indiaMap: a high square is a smaller square in the full paint, never a faded one", () => {
   const cells = [
     { lon: 77, lat: 28, worst: 3, what: "air" as const, heat: 0 },
     { lon: 78, lat: 28, worst: 2, what: "air" as const, heat: 0 },
   ];
-  const html = renderIndiaMap({ cells, dots: [], cyclones: [] });
+  const html = indiaMap({ cells, dots: [], cyclones: [] }, "en");
   const worst = html.match(/<g class="L Lw">(.*?)<\/g>/)![1];
-  assert.doesNotMatch(worst, /opacity/); // fading mixes the hues toward the land and they blur together
+  assert.doesNotMatch(worst, /opacity/);
   const sides = [...worst.matchAll(/h([\d.]+)v([\d.]+)/g)].map((m) => +m[2]);
   assert.equal(sides.length, 2);
-  assert.ok(Math.min(...sides) < Math.max(...sides) * 0.7, `sides ${sides}`); // high is visibly smaller
+  assert.ok(Math.min(...sides) < Math.max(...sides) * 0.7, `sides ${sides}`);
 });
 
-test("MAP_CSS: air, heat and cold are plum, orange-red and blue, chosen to stay apart for colour-blind readers", () => {
-  assert.match(MAP_CSS, /--mair:#7b2872;--mheat:#e75c2e;--mcold:#238ce4/);
-  assert.equal(MAP_CSS.match(/--mair:#b778be;--mheat:#d02026;--mcold:#256de7/g)?.length, 2); // both dark-mode rules
+test("map tokens: air, heat and cold are plum, orange-red and blue, chosen to stay apart for colour-blind readers", () => {
+  const css = tokensCss();
+  assert.match(css, /--mair:#7b2872/);
+  assert.match(css, /--mheat:#e75c2e/);
+  assert.match(css, /--mcold:#238ce4/);
+  assert.match(css, /--mair:#b778be/); // dark
 });

@@ -65,7 +65,7 @@ test("/places: the title, description and lede carry the shared list, in each la
   const en = renderPlaces("en");
   assert.ok(title(en).includes(HAZARDS_SHORT), title(en));
   assert.ok(desc(en).includes(HAZARDS), desc(en));
-  assert.ok(en.match(/<p class="lede">([^<]*)</)![1].includes(HAZARDS));
+  assert.ok(en.match(/<p class="t-lead">([^<]*)</)![1].includes(HAZARDS));
   for (const [lang, list, short] of [
     ["hi", "वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ", "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ"],
     ["kn", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು"],
@@ -73,7 +73,7 @@ test("/places: the title, description and lede carry the shared list, in each la
     const html = renderPlaces(lang);
     assert.ok(title(html).includes(short), title(html));
     assert.ok(desc(html).includes(list), desc(html));
-    assert.ok(html.match(/<p class="lede">([^<]*)</)![1].includes(list));
+    assert.ok(html.match(/<p class="t-lead">([^<]*)</)![1].includes(list));
   }
 });
 

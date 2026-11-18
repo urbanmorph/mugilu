@@ -3,16 +3,12 @@ import type { FireDetection } from "./firms";
 import type { Cyclone } from "./cyclones";
 import type { Env } from "./index";
 import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf } from "./score";
-import { BAND_COLOR, MAP_HUE, RISK_COLOR } from "./palette";
-import { AQI_BAND_LABEL } from "./aqi";
 import { isPlausible } from "./plausible";
 import { inIndia, type Ring } from "./india";
 import { loadCyclones, loadFires, loadGrid, loadSnapshot } from "./snapshot";
-import { esc } from "./html";
 
 /** Append to a list in a map of lists. */
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => (m.get(k) ?? m.set(k, []).get(k)!).push(v);
-import { lp, t, type Lang } from "./i18n";
 import outline from "../data/india.json";
 import states from "../data/state-lines.json";
 
@@ -22,7 +18,8 @@ import states from "../data/state-lines.json";
 // the next 24 hours' forecast, for a cyclone. Built from what the crons already collect
 // (the district grid, the air stations, the fires), so it costs no extra upstream
 // call. Official warnings are not on it: the national feed carries no areas, so a
-// place's page is where they show. Inline SVG, no map library, no tiles.
+// place's page is where they show. Inline SVG, no map library, no tiles. This module is
+// the data and the projection; ui/map.ts draws it (home and /places).
 
 /** What a square's worst read is, in three groups a map can tell apart: smoke and
  *  dust are air. UV is left out, since it follows the time of day everywhere. */
@@ -43,11 +40,20 @@ export interface MapCell {
   heat: number;
   /** Rain in the next 24 hours as IMD's class (0-3); absent until the grid has a forecast. */
   rain?: number;
+  /** The district behind the square's heat and its rain: the map's worst places, as links. */
+  heatAt?: MapPlace;
+  rainAt?: MapPlace;
+}
+/** A district point, named so a reader can place it. */
+export interface MapPlace {
+  name: string;
+  state?: string;
+  lat: number;
+  lon: number;
 }
 type Worst = Pick<MapCell, "worst" | "what">;
 const beats = (a: Worst, b: Worst) =>
   a.worst > b.worst || (a.worst === b.worst && ORDER.indexOf(a.what!) < ORDER.indexOf(b.what!));
-const maxOf = (a?: number, b?: number) => (a == null ? b : b == null ? a : Math.max(a, b));
 export interface MapDot {
   lat: number;
   lon: number;
@@ -59,6 +65,8 @@ export interface IndiaMap {
   cyclones: Cyclone[];
   gridAsOf?: string;
   airAsOf?: string;
+  /** Measured stations by AQI band, for the Air layer's summary. */
+  airCounts?: Partial<Record<NormalizedStation["band"], number>>;
 }
 
 const key = (lon: number, lat: number) => `${Math.floor(lon)},${Math.floor(lat)}`;
@@ -101,13 +109,16 @@ export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[
     const rain = p.wx.rain_24h_mm == null ? undefined : rainLevelOf(p.wx.rain_24h_mm);
     return { p, k, ...w, heat: heatLevelOf(p.wx), rain };
   });
-  const cellOf = ({ worst, what, heat, rain }: (typeof scored)[number], lon: number, lat: number): MapCell => ({
+  const at = ({ name, state, lat, lon }: ConditionsPoint): MapPlace => ({ name, state, lat, lon });
+  const cellOf = ({ p, worst, what, heat, rain }: (typeof scored)[number], lon: number, lat: number): MapCell => ({
     lon,
     lat,
     worst,
     what,
     heat,
     rain,
+    heatAt: at(p),
+    rainAt: rain == null ? undefined : at(p),
   });
   const cells = new Map<string, MapCell>();
   for (const s of scored) {
@@ -115,8 +126,8 @@ export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[
     if (!c) cells.set(s.k, cellOf(s, Math.floor(s.p.lon), Math.floor(s.p.lat)));
     else {
       if (beats(s, c)) [c.worst, c.what] = [s.worst, s.what];
-      c.heat = Math.max(c.heat, s.heat);
-      c.rain = maxOf(c.rain, s.rain);
+      if (s.heat > c.heat) [c.heat, c.heatAt] = [s.heat, at(s.p)];
+      if (s.rain != null && (c.rain == null || s.rain > c.rain)) [c.rain, c.rainAt] = [s.rain, at(s.p)];
     }
   }
   if (scored.length)
@@ -151,17 +162,24 @@ export function airDots(stations: NormalizedStation[]): MapDot[] {
   return dots;
 }
 
+/** Measured stations by AQI band (stations with a reading). */
+export function airCounts(stations: NormalizedStation[]): IndiaMap["airCounts"] {
+  const n: NonNullable<IndiaMap["airCounts"]> = {};
+  for (const s of stations) if (s.aqi != null) n[s.band] = (n[s.band] ?? 0) + 1;
+  return n;
+}
+
 // The projection: plain longitude/latitude, longitude squeezed by cos 22° (India's
 // middle) so the country keeps its shape. View box in px at S per degree.
-const LON0 = 67.5;
-const LAT1 = 37.6;
-const S = 12;
-const KX = Math.cos((22 * Math.PI) / 180);
-const VW = Math.round((98.2 - LON0) * KX * S);
-const VH = Math.round((LAT1 - 6) * S);
-const px = (lon: number) => (lon - LON0) * KX * S;
-const py = (lat: number) => (LAT1 - lat) * S;
-const r1 = (n: number) => Math.round(n * 10) / 10;
+export const LON0 = 67.5;
+export const LAT1 = 37.6;
+export const S = 12;
+export const KX = Math.cos((22 * Math.PI) / 180);
+export const VW = Math.round((98.2 - LON0) * KX * S);
+export const VH = Math.round((LAT1 - 6) * S);
+export const px = (lon: number) => (lon - LON0) * KX * S;
+export const py = (lat: number) => (LAT1 - lat) * S;
+export const r1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Douglas-Peucker: drop points within `tol` px of the line they sit on. */
 function simplify(pts: [number, number][], tol: number): [number, number][] {
@@ -217,7 +235,11 @@ export const STATE_PATH = (states as unknown as { lines: [number, number][][] })
 
 /** The squares of one layer, one path per fill; `fill` gives a square's fill
  *  attributes, or nothing to leave it as land. */
-function cellPaths(cells: MapCell[], fill: (c: MapCell) => string | undefined, size = (_c: MapCell) => 1): string {
+export function cellPaths(
+  cells: MapCell[],
+  fill: (c: MapCell) => string | undefined,
+  size = (_c: MapCell) => 1,
+): string {
   const by = new Map<string, string[]>();
   for (const c of cells) {
     const f = fill(c);
@@ -232,16 +254,9 @@ function cellPaths(cells: MapCell[], fill: (c: MapCell) => string | undefined, s
   }
   return [...by].map(([f, d]) => `<path ${f} d="${d.join("")}"/>`).join("");
 }
-/** What's worst: the hazard's colour where high or severe; calmer squares stay land. High is a
- *  smaller square in the full colour: fading it toward the land blurred the hues together. */
-const HIGH_SIZE = 0.6;
-const worstFill = (c: MapCell) => (c.what && c.worst >= 2 ? `fill="var(--m${c.what})"` : undefined);
-const worstSize = (c: MapCell) => (c.worst < 3 ? HIGH_SIZE : 1);
-const heatFill = (c: MapCell) =>
-  `fill="${c.heat ? RISK_COLOR[(["low", "moderate", "high", "severe"] as const)[c.heat]] : "var(--m0)"}"`;
-const rainFill = (c: MapCell) => (c.rain ? `fill="var(--mrain${c.rain})"` : undefined);
 
-const DIR_SENTENCE: Record<string, string> = {
+/** The way a cyclone moves, in words. */
+export const DIR_SENTENCE: Record<string, string> = {
   N: "It moves north.",
   NE: "It moves north-east.",
   E: "It moves east.",
@@ -262,19 +277,8 @@ const STEP: Record<string, [number, number]> = {
   NW: [-0.7, 0.7],
 };
 
-/** What a cyclone is doing, in words. */
-export function cycloneSentence(c: Cyclone, lang: Lang): string {
-  const sea = c.basin === "arabian" ? "Arabian Sea" : "Bay of Bengal";
-  const where =
-    c.kind === "alert"
-      ? t(`A cyclone can form in the ${sea}.`, lang)
-      : c.name
-        ? t(`Cyclone X is in the ${sea}.`, lang).replace("X", esc(c.name))
-        : t(`A cyclone is in the ${sea}.`, lang);
-  return c.moving ? `${where} ${t(DIR_SENTENCE[c.moving], lang)}` : where;
-}
-
-function cycloneGlyph(c: Cyclone): string {
+/** The cyclone on the map: its centre, its forecast track and an arrowhead. */
+export function cycloneGlyph(c: Cyclone): string {
   const x = px(c.lon);
   const y = py(c.lat);
   if (x < 0 || x > VW || y < 0 || y > VH) return "";
@@ -300,120 +304,6 @@ function cycloneGlyph(c: Cyclone): string {
   return `<g class="mcy">${line}${head}<circle cx="${r1(x)}" cy="${r1(y)}" r="7.5" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/><path d="${spiral}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/></g>`;
 }
 
-/** The map block: four layers switched by radio buttons (CSS only; Rain only once the
- *  grid has a forecast), a legend and a note per layer, the cyclone drawn and told in
- *  words. `stamp` renders a snapshot's time the way the page does. */
-export function renderIndiaMap(m: IndiaMap, lang: Lang = "en", stamp: (iso: string) => string = esc): string {
-  const age = (iso?: string) => (iso ? ` <span class="age">· ${stamp(iso)}</span>` : "");
-  const chip = (color: string, label: string) =>
-    `<span><i style="background:${color}"></i>${esc(t(label, lang))}</span>`;
-  // What's worst: a chip per hazard, a small square (high) and a full one (severe), as on the map.
-  const pair = (hazard: MapHazard, label: string) =>
-    `<span><i class="pair" style="--c:var(--m${hazard})"></i>${esc(t(label, lang))}</span>`;
-  const what =
-    pair("air", "Air") +
-    pair("heat", "Heat") +
-    pair("cold", "Cold") +
-    `<span>${esc(t("Small: high. Full: severe.", lang))}</span>`;
-  const hasRain = m.cells.some((c) => c.rain != null);
-  const rainy = m.cells.some((c) => c.rain);
-  const rainLg = ["Heavy", "Very heavy", "Extremely heavy"].map((l, i) => chip(`var(--mrain${i + 1})`, l)).join("");
-  const risk = [
-    chip("var(--m0)", "Low"),
-    chip(RISK_COLOR.moderate, "Moderate"),
-    chip(RISK_COLOR.high, "High"),
-    chip(RISK_COLOR.severe, "Severe"),
-  ].join("");
-  const bands = (["good", "satisfactory", "moderate", "poor", "vpoor", "severe"] as const)
-    .map((b) => chip(BAND_COLOR[b], AQI_BAND_LABEL[b]))
-    .join("");
-  const dotsBy = new Map<string, string[]>();
-  for (const d of m.dots) push(dotsBy, d.band, `M${r1(px(d.lon))} ${r1(py(d.lat))}h0`);
-  const allDots = [...dotsBy.values()].flat().join("");
-  const dots = allDots
-    ? `<path d="${allDots}" stroke="var(--card)" stroke-width="7" stroke-linecap="round"/>` +
-      [...dotsBy]
-        .map(
-          ([b, d]) =>
-            `<path d="${d.join("")}" stroke="${BAND_COLOR[b] ?? BAND_COLOR.unknown}" stroke-width="5" stroke-linecap="round"/>`,
-        )
-        .join("")
-    : "";
-  const cys = m.cyclones.filter((c) => c.basin);
-  const cyText = cys.length
-    ? `<div class="mcard">${cys.map((c) => `<p><b>${cycloneSentence(c, lang)}</b>${age(c.at)}</p>`).join("")}<p class="msrc">${esc(
-        t("Track: JTWC (US Navy). For official warnings, follow IMD.", lang),
-      ).replace("IMD", '<a href="https://mausam.imd.gov.in/" rel="noopener">IMD</a>')}</p>${
-        hasRain ? `<p><label for="ml-r" class="mto">${esc(t("See the rain", lang))}</label></p>` : ""
-      }</div>`
-    : "";
-  return `<div class="imap">
-<input type="radio" name="ml" id="ml-w" checked><input type="radio" name="ml" id="ml-a"><input type="radio" name="ml" id="ml-h">${hasRain ? '<input type="radio" name="ml" id="ml-r">' : ""}
-<div class="mseg"><label for="ml-w">${esc(t("What's worst", lang))}</label><label for="ml-a">${esc(t("Air", lang))}</label><label for="ml-h">${esc(t("Heat", lang))}</label>${hasRain ? `<label for="ml-r">${esc(t("Rain", lang))}</label>` : ""}</div>
-<svg class="msvg" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${esc(t("Map of India. Each square is coloured by what is worst in it now.", lang))}">
-<defs><path id="mland" d="${LAND_PATH}"/><clipPath id="mclip"><use href="#mland"/></clipPath></defs>
-<use href="#mland" class="mland"/>
-<g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, worstFill, worstSize)}</g><g class="L Lh">${cellPaths(m.cells, heatFill)}</g>${hasRain ? `<g class="L Lr">${cellPaths(m.cells, rainFill)}</g>` : ""}</g>
-<path class="mstates" d="${STATE_PATH}"/>
-<use href="#mland" class="mline"/>
-<g class="L La">${dots}</g>
-${cys.map(cycloneGlyph).join("")}
-</svg>
-<p class="mlg Lw">${what}</p><p class="mlg La">${bands}</p><p class="mlg Lh">${risk}</p>${hasRain ? `<p class="mlg Lr">${rainLg}</p>` : ""}
-<p class="mnote Lw">${esc(t("Each square, about 100 km across, has the colour of what is worst in it, where that is high or severe. Air includes smoke and dust. Select a square to see that place.", lang))}${age(m.gridAsOf)}</p>
-<p class="mnote La">${esc(t("Each dot is an air station, with the colour of its reading.", lang))}${age(m.airAsOf)}</p>
-<p class="mnote Lh">${esc(t("Heat is modelled for each district.", lang))}${age(m.gridAsOf)}</p>${
-    hasRain
-      ? `${rainy ? "" : `<p class="mnote Lr"><b>${esc(t("No heavy rain is forecast in the next 24 hours.", lang))}</b></p>`}<p class="mnote Lr">${esc(t("Rain forecast for the next 24 hours, from a weather model. Models often underestimate the rain a cyclone brings.", lang))}${age(m.gridAsOf)}</p>`
-      : ""
-  }
-<p class="mnote">${esc(t("Official warnings are not on this map. Look up a place to see them.", lang))}</p>
-${cyText}
-</div>`;
-}
-
-/** Select a square: open that place's page (the clicked coordinate, so a coastal
- *  square lands on land). The squares are clipped to India, so a click is always in it. */
-export const MAP_JS = (lang: Lang) =>
-  `(function(){var s=document.querySelector('.msvg');if(!s)return;s.addEventListener('click',function(e){if(!e.target.closest('.mland,.mcells,.La'))return;var p=s.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(s.getScreenCTM().inverse());location.href=${JSON.stringify(lp("/c/", lang))}+(${LAT1}-q.y/${S}).toFixed(2)+','+(${LON0}+q.x/${r1(KX * S * 1e4) / 1e4}).toFixed(2);});})();`;
-
-/** The map's colour variables for one theme, from palette.ts. */
-const mapVars = (m: "light" | "dark") => {
-  const h = MAP_HUE[m];
-  return `--m0:${h.calm};--mland:${h.land};--mair:${h.air};--mheat:${h.heat};--mcold:${h.cold};--mrain1:${h.rain1};--mrain2:${h.rain2};--mrain3:${h.rain3}`;
-};
-
-export const MAP_CSS = `
-:root{${mapVars("light")}}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){${mapVars("dark")}}}
-:root[data-theme="dark"]{${mapVars("dark")}}
-.imap{position:relative;margin:.2rem 0 .8rem}
-.imap input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.mseg{display:inline-flex;max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:0 0 .6rem}
-.mseg label{min-height:40px;display:flex;align-items:center;padding:0 13px;white-space:nowrap;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;border-left:1px solid var(--line)}
-.mseg label:first-child{border-left:0}
-@media(max-width:360px){.mseg label{padding:0 9px;font-size:.82rem}}
-#ml-w:checked~.mseg [for=ml-w],#ml-a:checked~.mseg [for=ml-a],#ml-h:checked~.mseg [for=ml-h],#ml-r:checked~.mseg [for=ml-r]{background:var(--ink);color:var(--bg)}
-#ml-w:focus-visible~.mseg [for=ml-w],#ml-a:focus-visible~.mseg [for=ml-a],#ml-h:focus-visible~.mseg [for=ml-h],#ml-r:focus-visible~.mseg [for=ml-r]{outline:2px solid var(--sky);outline-offset:-2px}
-.msvg{display:block;width:100%;max-width:440px;height:auto;cursor:pointer}
-.mland{fill:var(--mland)}.mline{fill:none;stroke:var(--muted);stroke-width:.8;stroke-linejoin:round}
-.mstates{fill:none;stroke:var(--ink);stroke-opacity:.6;stroke-width:.75;stroke-linejoin:round;stroke-linecap:round}
-.mcells path{stroke:var(--card);stroke-width:.6}
-.imap .L,.imap .mlg,.imap .mnote.Lw,.imap .mnote.La,.imap .mnote.Lh,.imap .mnote.Lr{display:none}
-#ml-w:checked~.mnote.Lw,#ml-a:checked~.mnote.La,#ml-h:checked~.mnote.Lh,#ml-r:checked~.mnote.Lr{display:block}
-#ml-w:checked~svg .Lw,#ml-a:checked~svg .La,#ml-h:checked~svg .Lh,#ml-r:checked~svg .Lr{display:inline}
-#ml-w:checked~.Lw,#ml-a:checked~.La,#ml-h:checked~.Lh,#ml-r:checked~.Lr{display:flex}
-.mlg{flex-wrap:wrap;gap:.3rem .8rem;margin:.5rem 0 0;font-size:.8rem;color:var(--muted)}
-.mlg span{display:inline-flex;align-items:center;gap:.35rem}
-.mlg i{width:12px;height:12px;border-radius:3px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 12%,transparent)}
-.mlg i.pair{width:22px;border-radius:0;box-shadow:none;background:linear-gradient(var(--c),var(--c)) 1px 50%/7px 7px no-repeat,linear-gradient(var(--c),var(--c)) 100% 50%/12px 12px no-repeat}
-.mnote{margin:.4rem 0 0;font-size:.8rem;color:var(--muted)}
-.mcard{margin:.8rem 0 0;padding:10px 14px;border:1px solid var(--ink);border-radius:12px;background:var(--card)}
-.mcard p{margin:0;line-height:1.45}.mcard p+p{margin-top:.3rem}
-.mcard .msrc{font-size:.8rem;color:var(--muted)}
-.mcard .mto{color:var(--sky);font-weight:600;text-decoration:underline;cursor:pointer}
-`;
-
 /** The map's data, from the snapshots the crons write (each read is memoised). */
 export async function composeMap(env: Env): Promise<IndiaMap | undefined> {
   const [grid, snap, fires, cy] = await Promise.all([
@@ -430,5 +320,6 @@ export async function composeMap(env: Env): Promise<IndiaMap | undefined> {
     cyclones: cy?.systems ?? [],
     gridAsOf: grid.generated_at,
     airAsOf: snap?.generated_at,
+    airCounts: airCounts(stations),
   };
 }

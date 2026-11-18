@@ -84,7 +84,6 @@ const SNAP: WarningsSnapshot = {
 
 const WIDE = [
   ["/warnings", renderWarningsPage(SNAP)],
-  ["/places", renderPlaces()],
   ["/s/…", renderStationPage(st(), near, true)],
   ["/about", renderAbout()],
   ["/methodology", renderMethodology()],
@@ -104,8 +103,8 @@ test("wide pages: a header nav to the main pages, and the wide layout from 960 p
       name,
     );
   }
-  // in Hindi the nav links carry the prefix and the labels are Hindi
-  const hi = renderPlaces("hi").match(/<nav class="topnav"[^>]*>([\s\S]*?)<\/nav>/)![1];
+  // in Hindi the nav links carry the prefix and the labels are Hindi (the signage header, /places)
+  const hi = renderPlaces("hi").match(/<nav class="nav"[^>]*>([\s\S]*?)<\/nav>/)![1];
   assert.match(hi, /href="\/hi\/warnings">चेतावनियाँ</);
 });
 
@@ -124,14 +123,16 @@ test("every page shares the header nav and the footer width; home and /c keep th
     attribution: "x",
     disclaimer: "y",
   } as unknown as Conditions;
-  for (const html of [renderConditionsPage(c), renderHome(), renderMcpPage(), renderNotFound()]) {
+  for (const html of [renderConditionsPage(c), renderMcpPage(), renderNotFound()]) {
     assert.match(html, /<nav class="topnav"[^>]*>[\s\S]*href="\/warnings"/);
     assert.match(html, /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}/);
   }
-  for (const html of [renderConditionsPage(c), renderHome()]) assert.doesNotMatch(html, /<body class="wide">/);
+  assert.doesNotMatch(renderConditionsPage(c), /<body class="wide">/);
   for (const html of [renderMcpPage(), renderNotFound()]) assert.match(html, /<body class="wide">/);
   // phones: the nav is a second row under the logo, scrolling sideways if it must
-  assert.match(renderHome(), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
+  assert.match(renderConditionsPage(c), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
+  // the signage pages (home first) carry the signage header's nav instead
+  assert.match(renderHome(), /<nav class="nav" aria-label="Main">[\s\S]*href="\/warnings"/);
 });
 
 test("warningType: the kind of hazard, from the headline", () => {
@@ -157,10 +158,10 @@ test("/warnings: filters by type and office, cards carry what the filters read, 
   assert.match(html, /\.wlist\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 });
 
-test("/places: a state index and a search, each state an anchor", () => {
+test("/places: a state picker and a search, each state an anchor", () => {
   const html = renderPlaces();
-  assert.match(html, /<nav class="pindex" aria-label="States">[\s\S]*href="#st-delhi">Delhi</);
-  assert.match(html, /<section class="st" id="st-delhi">/);
+  assert.match(html, /<option value="st-delhi">Delhi<\/option>/);
+  assert.match(html, /<details class="fold" open id="st-delhi">/);
   assert.match(html, /<input[^>]*id="pq"/);
 });
 
