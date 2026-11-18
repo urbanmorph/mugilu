@@ -91,6 +91,13 @@ const SLUGS = new Map<string, SlugPlace>();
 }
 
 /** Resolve a slug ("lucknow") to its place, or undefined. */
+/** The slug (and optional .json/.md/.png) in a /c/{slug} path, or null. A slug may start with a digit
+ *  ("24 Paraganas North" → 24-paraganas-north); a coordinate never matches, since it has a comma or a dot. */
+export function slugFromPath(path: string): { slug: string; ext?: "json" | "md" | "png" } | null {
+  const m = path.match(/^\/c\/([a-z0-9][a-z0-9-]*)(?:\.(json|md|png))?$/);
+  return m ? { slug: m[1], ...(m[2] ? { ext: m[2] as "json" | "md" | "png" } : {}) } : null;
+}
+
 export function placeBySlug(slug: string): SlugPlace | undefined {
   return SLUGS.get(slug.toLowerCase());
 }

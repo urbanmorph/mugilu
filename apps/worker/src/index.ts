@@ -49,7 +49,7 @@ import {
 } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
-import { placeBySlug, slugForName, slugLabel } from "./slugs";
+import { placeBySlug, slugForName, slugFromPath, slugLabel } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
 import { loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
@@ -496,9 +496,9 @@ export default {
 
     // Named place: /c/{slug}.{json,md,png} (e.g. /c/lucknow), keyword URLs for
     // search. Resolve the slug to its centroid and serve the same conditions.
-    const slugMatch = url.pathname.match(/^\/c\/([a-z][a-z0-9-]*)(?:\.(json|md|png))?$/);
+    const slugMatch = slugFromPath(url.pathname);
     if (slugMatch) {
-      const [, slug, ext] = slugMatch;
+      const { slug, ext } = slugMatch;
       const place = placeBySlug(slug);
       if (!place)
         return new Response(renderNotFound(lang), {

@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { placeBySlug, slugForName, allSlugPlaces, slugPlacesByState, siblingPlaces, slugLabel } from "../src/slugs";
+import {
+  placeBySlug,
+  slugForName,
+  allSlugPlaces,
+  slugPlacesByState,
+  siblingPlaces,
+  slugLabel,
+  slugFromPath,
+} from "../src/slugs";
 import { sitemapXml } from "../src/meta";
 
 test("slugs: major cities get clean keyword slugs, not LGD district names", () => {
@@ -70,4 +78,14 @@ test("slugLabel: a place whose state has the same name is said once (Delhi, not 
   assert.equal(slugLabel({ name: "Chandigarh", state: "Chandigarh" } as never), "Chandigarh");
   assert.equal(slugLabel({ name: "New Delhi", state: "Delhi" } as never), "New Delhi, Delhi");
   assert.equal(slugLabel({ name: "Leh" } as never), "Leh");
+});
+
+test("slugs: every slug in the sitemap is one the /c/ route accepts (24 Parganas starts with a digit)", () => {
+  // the route took only letter-first slugs, so /c/24-paraganas-north was listed in the sitemap but answered 404
+  for (const p of allSlugPlaces()) assert.equal(slugFromPath(`/c/${p.slug}`)?.slug, p.slug, p.slug);
+  assert.deepEqual(slugFromPath("/c/24-paraganas-north.json"), { slug: "24-paraganas-north", ext: "json" });
+  // coordinates and anything else stay out
+  assert.equal(slugFromPath("/c/12.97,77.59"), null);
+  assert.equal(slugFromPath("/c/-bad"), null);
+  assert.equal(slugFromPath("/c/Delhi"), null);
 });
