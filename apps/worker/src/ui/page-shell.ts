@@ -1,0 +1,64 @@
+import { INSTALL_JS } from "../install";
+import { SW_REGISTER } from "../sw";
+import { esc } from "../html";
+import type { Lang } from "../i18n";
+import type { RiskBand } from "../score";
+import { headTags, relTimeJs, type ShellOpts } from "./shell";
+import { tokensCss } from "./tokens";
+import { STANDARD_CSS } from "./standard";
+import { SEGMENTED_JS, siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
+
+// The signage page shell (design standard). Every page loads exactly two stylesheets,
+// tokens then components, and composes components; no page carries CSS of its own.
+// Landmarks: skip link, header, one <main id="main">, footer. The body is the token root:
+// <body class="mg" data-tint data-level> (the wash from palette.ts tintOf).
+
+/** A non-Latin script a page shows besides its UI language (warnings carry Telugu, Bengali). */
+export type Script = "hi" | "kn" | "te" | "bn";
+const FONT: Record<Script, string> = {
+  hi: "Anek+Devanagari:wdth,wght@75..100,400..800",
+  kn: "Anek+Kannada:wdth,wght@75..100,400..800",
+  te: "Anek+Telugu:wdth,wght@75..100,400..800",
+  bn: "Anek+Bangla:wdth,wght@75..100,400..800",
+};
+
+export interface PageOpts extends Omit<ShellOpts, "bare" | "wide"> {
+  /** The page's language-agnostic path: the current nav item and the language links. */
+  path: string;
+  /** The page wash: the hazard's hue and the read's level. None: no wash. */
+  tint?: { hue: string; level: RiskBand };
+  /** Scripts the page shows besides its UI language (fonts are loaded for those only). */
+  scripts?: Script[];
+  /** The screen display: always dark, no header or footer (its own footer carries the disclaimer). */
+  kiosk?: boolean;
+  /** Page behaviour (never styles), appended after the shared scripts. */
+  js?: string;
+}
+
+function fontsLink(lang: Lang, scripts: Script[] = []): string {
+  const want = new Set<Script>(scripts);
+  if (lang !== "en") want.add(lang);
+  const fam = ["Anek+Latin:wdth,wght@75..100,400..800", ...[...want].map((s) => FONT[s])];
+  return (
+    `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` +
+    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fam.map((f) => `family=${f}`).join("&amp;")}&amp;display=swap">`
+  );
+}
+
+export function pageShell(title: string, body: string, opts: PageOpts): string {
+  const { path, lang = "en", tint, scripts, kiosk, js = "" } = opts;
+  const bodyAttrs = kiosk ? " data-kiosk" : tint ? ` data-tint="${esc(tint.hue)}" data-level="${tint.level}"` : "";
+  return `<!doctype html>
+<html lang="${lang}"${kiosk ? ' data-theme="dark"' : ""}>
+<head>
+${headTags(title, opts)}
+${fontsLink(lang, scripts)}
+${kiosk ? "" : `<script>${THEME_HEAD_JS}</script>`}
+<style>${tokensCss()}${STANDARD_CSS}</style>
+</head>
+<body class="mg"${bodyAttrs}>
+${kiosk ? "" : siteHeader(path, lang)}<main id="main" tabindex="-1">${body}</main>${kiosk ? "" : siteFooter(path, lang)}
+<script>${kiosk ? "" : INSTALL_JS + THEME_JS + SEGMENTED_JS}${SW_REGISTER}${relTimeJs(lang)}${js}</script>
+</body>
+</html>`;
+}

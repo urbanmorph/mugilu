@@ -127,11 +127,11 @@ export interface ShellOpts {
   wide?: boolean;
 }
 
-export function shell(
+/** The head tags every page shares: icons, install meta, title, description, canonical and
+ *  hreflang alternates, Open Graph and Twitter cards, JSON-LD and the analytics beacon. */
+export function headTags(
   title: string,
-  body: string,
-  css: string,
-  { desc = SITE_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex, wide }: ShellOpts = {},
+  { desc = SITE_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", noindex }: ShellOpts = {},
 ): string {
   const cur = canonical ? langUrl(canonical, lang) : undefined;
   // hreflang alternates for every language + x-default (English) so search
@@ -147,16 +147,7 @@ export function shell(
     LANGS.filter((L) => L !== lang)
       .map((L) => `<meta property="og:locale:alternate" content="${ogLoc[L]}">`)
       .join("");
-  // Client-side relative time. English keeps singular/plural; other languages use
-  // the reviewed "X … ago" templates (the X slot survives translation).
-  const relFn =
-    lang === "en"
-      ? `function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}`
-      : `function r(ms){var m=Math.round(ms/6e4);if(m<1)return ${JSON.stringify(t("just now", lang))};if(m<60)return ${JSON.stringify(t("X min ago", lang))}.replace('X',m);var h=Math.round(m/60);if(h<24)return ${JSON.stringify(t("X hours ago", lang))}.replace('X',h);var d=Math.round(h/24);return ${JSON.stringify(t("X days ago", lang))}.replace('X',d);}`;
-  return `<!doctype html>
-<html lang="${lang}">
-<head>
-<meta charset="utf-8">
+  return `<meta charset="utf-8">
 ${VIEWPORT}
 <meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -177,7 +168,25 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}"><meta property=
 <meta name="twitter:description" content="${esc(desc)}">
 ${ogImage ? `<meta name="twitter:image" content="${esc(ogImage)}">` : ""}
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
-${CF_BEACON_TOKEN && !noBeacon ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${CF_BEACON_TOKEN}"}'></script>` : ""}
+${CF_BEACON_TOKEN && !noBeacon ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${CF_BEACON_TOKEN}"}'></script>` : ""}`;
+}
+
+/** Client-side relative time for every <time data-rel>. English keeps singular/plural; other
+ *  languages use the reviewed "X … ago" templates (the X slot survives translation). */
+export function relTimeJs(lang: Lang): string {
+  const relFn =
+    lang === "en"
+      ? `function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}`
+      : `function r(ms){var m=Math.round(ms/6e4);if(m<1)return ${JSON.stringify(t("just now", lang))};if(m<60)return ${JSON.stringify(t("X min ago", lang))}.replace('X',m);var h=Math.round(m/60);if(h<24)return ${JSON.stringify(t("X hours ago", lang))}.replace('X',h);var d=Math.round(h/24);return ${JSON.stringify(t("X days ago", lang))}.replace('X',d);}`;
+  return `(function(){${relFn}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();`;
+}
+
+export function shell(title: string, body: string, css: string, opts: ShellOpts = {}): string {
+  const { canonical, lang = "en", bare, wide } = opts;
+  return `<!doctype html>
+<html lang="${lang}">
+<head>
+${headTags(title, opts)}
 <style>${BASE_CSS}${bare ? "" : INSTALL_CSS}${css}${langCss(lang)}</style>
 </head>
 <body${wide ? ' class="wide"' : ""}>
@@ -191,7 +200,7 @@ ${canonical ? langSwitcher(canonical, lang) : ""}
 <script>${INSTALL_JS}${SW_REGISTER}</script>`
 }
 <script>
-(function(){${relFn}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();
+${relTimeJs(lang)}
 </script>
 </body>
 </html>`;
