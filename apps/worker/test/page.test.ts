@@ -477,7 +477,7 @@ test("renderConditionsPage: the title says AQI, its number and band, the way peo
   const desc = (html: string) => html.match(/<meta name="description" content="([^"]*)"/)![1];
   assert.equal(
     title(renderConditionsPage(delhi)),
-    "Delhi AQI today: 344 Very Poor · air quality, heat and warnings now · mugilu",
+    "Delhi AQI today: 344 Very Poor · air, heat, cold, fog and warnings now · mugilu",
   );
   assert.match(
     desc(renderConditionsPage(delhi)),
@@ -485,13 +485,13 @@ test("renderConditionsPage: the title says AQI, its number and band, the way peo
   );
   assert.equal(
     title(renderConditionsPage(delhi, "everyone", undefined, "hi")),
-    "Delhi AQI आज: 344 बहुत खराब · वायु गुणवत्ता, गर्मी और चेतावनियाँ अभी · mugilu",
+    "Delhi AQI आज: 344 बहुत खराब · वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ अभी · mugilu",
   );
   assert.match(title(renderConditionsPage(delhi, "everyone", undefined, "kn")), /^Delhi AQI ಇಂದು: 344 /);
   // with no air reading, the title names what there is
   assert.equal(
     title(renderConditionsPage(conditions({ place: "Leh", air: null }))),
-    "Leh: air, heat, rain and warnings right now · mugilu",
+    "Leh: air, heat, cold, fog and warnings now · mugilu",
   );
 });
 

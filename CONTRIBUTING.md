@@ -9,7 +9,7 @@ The product is one Cloudflare Worker in `apps/worker`. (`apps/site` is the retir
 ```bash
 pnpm install
 cp apps/worker/.dev.vars.example apps/worker/.dev.vars
-# fill in OAQ_API_KEY and CLOUDFLARE_API_TOKEN
+# fill in OAQ_API_KEY, ADMIN_KEY (gates the admin routes), FIRMS_MAP_KEY (optional, for the fire layer) and CLOUDFLARE_API_TOKEN
 cd apps/worker
 pnpm dev         # wrangler dev on http://localhost:8787
 pnpm test        # the test suite

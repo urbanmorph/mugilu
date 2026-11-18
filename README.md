@@ -1,6 +1,6 @@
 # mugilu
 
-**The open sky of India, one coordinate at a time.** Air quality, heat, rain, fog, smoke, UV and official warnings for any place in India, as a web page, an API and an MCP server for AI assistants.
+**The open sky of India, one coordinate at a time.** Air, heat, cold, rain, wind, fog, dust, smoke, UV and official warnings for any place in India, as a web page, an API and an MCP server for AI assistants.
 
 [![License: MIT](https://img.shields.io/github/license/urbanmorph/mugilu?color=0284c7)](./LICENSE)
 [![Live site](https://img.shields.io/badge/live-mugilu.live-0284c7)](https://mugilu.live)
@@ -122,7 +122,7 @@ mugilu runs a remote MCP server (JSON-RPC 2.0 over Streamable HTTP, protocol ver
 https://mugilu.live/mcp
 ```
 
-It is published in the official [MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.sathya-sankaran/mugilu) as `io.github.sathya-sankaran/mugilu` (version 1.0.1; the entry is in [`server.json`](./server.json)) and is listed on Glama.
+It is published in the official [MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.sathya-sankaran/mugilu) as `io.github.sathya-sankaran/mugilu` (version 1.0.2; the entry is in [`server.json`](./server.json)) and is listed on Glama.
 
 - **Claude or Cursor:** add `https://mugilu.live/mcp` as a custom connector, then ask, for example, *"is it safe for my asthmatic kid to play outside in Indiranagar right now?"*
 - **Claude Code:** `claude mcp add --transport http mugilu https://mugilu.live/mcp`
@@ -163,13 +163,13 @@ mugilu's code is MIT. The data is **not** relicensed: each source keeps its own 
 | Geography and place names | Place search from OpenStreetMap contributors (ODbL) and GeoNames (CC-BY 4.0, via the Open-Meteo geocoder); admin boundaries from [bharatlas](https://bharatlas.com) |
 | Health impact (years of life lost) | The [AQLI](https://aqli.epic.uchicago.edu/) methodology (U Chicago EPIC) |
 
-The heat normals are built offline on a 1° grid by [`apps/worker/scripts/build-heat-normals.ts`](./apps/worker/scripts/build-heat-normals.ts) and shipped in `apps/worker/data/heat-normals.json`; coverage is still being completed. The full methodology, with every threshold, is at [/methodology](https://mugilu.live/methodology).
+The heat normals are built offline on a 1° grid by [`apps/worker/scripts/build-heat-normals.ts`](./apps/worker/scripts/build-heat-normals.ts) and shipped in `apps/worker/data/heat-normals.json`, covering 388 of the 389 1° cells over India. The full methodology, with every threshold, is at [/methodology](https://mugilu.live/methodology).
 
 ## How it works
 
 mugilu is a single Cloudflare Worker ([`apps/worker`](./apps/worker)).
 
-- **Crons** ([`wrangler.toml`](./apps/worker/wrangler.toml)): hourly jobs refresh the air snapshot, NASA FIRMS fires and NDMA/SACHET warnings into R2 and send opt-in warning alerts; every four hours a national heat, rain, UV and dust grid is sampled; a daily job refreshes the place hierarchy and prunes old referrer rows.
+- **Crons** ([`wrangler.toml`](./apps/worker/wrangler.toml)): hourly jobs refresh the air snapshot (each hour also kept in an air archive), NASA FIRMS fires, JTWC cyclone tracks and NDMA/SACHET warnings into R2 and send opt-in warning alerts; every four hours a national heat, rain, UV and dust grid is sampled and kept in a conditions archive (`/health/archives` shows when each archive last grew); a daily job refreshes the place hierarchy, prunes old referrer rows and pings [IndexNow](https://www.indexnow.org) (paused until 21 Nov 2026, then at most weekly and only for pages not yet announced).
 - **Requests:** `/c/{lat},{lon}` assembles the nearest-station air, live Open-Meteo weather, fires and point warnings into one normalized schema, so each source is a swappable adapter.
 - **Caching:** pages that are the same for everyone are cached at the edge for a few minutes; degraded builds are never stored.
 - **Storage:** R2 holds the refreshed snapshots. D1 holds only aggregate usage metrics and opt-in alert subscriptions, and is never on the read path.
@@ -183,6 +183,7 @@ apps/worker/            the product: one Cloudflare Worker
   src/mcp.ts            MCP server (JSON-RPC over Streamable HTTP)
   src/mcptools.ts       MCP tool definitions
   src/sources.ts        data sources, licences and attribution
+  src/meta.ts           llms.txt, sitemap and the OpenAPI 3.1 spec (served live at /openapi.json)
   src/page.ts           HTML templates
   src/i18n.ts           English, Hindi and Kannada strings
   test/                 node:test suite (run with tsx)
@@ -194,7 +195,6 @@ apps/site/              the retired static site from the OAQ days, kept for refe
 scripts/                gazetteer and state-line builders (Python)
 docs/                   README images
 server.json             MCP Registry entry
-openapi.yaml            API description (OpenAPI 3.1)
 PDGI.md                 how mugilu follows the PDGI principles
 ```
 
@@ -247,7 +247,7 @@ In short:
 ## Principles
 
 - **Free, open, MIT.** For individuals. Non-commercial, always.
-- **Whole sky, never air alone.** Heat, rain, UV, dust and official warnings are first-class.
+- **Whole sky, never air alone.** Heat, cold, rain, wind, fog, dust, smoke, UV and official warnings are first-class.
 - **Honest about the data.** The value is in the stitching, the openness and the interface, not the data. The data belongs to others and is credited. Measured and modelled are labelled; thin-coverage layers are marked or left out.
 - **Minimal and fast.** One Worker, plain HTML readable without JavaScript, nothing heavy on the read path.
 

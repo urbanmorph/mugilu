@@ -59,10 +59,6 @@ async function main() {
   writeFile(join(dist, "docs", "data-sources", "index.html"), renderDataSources(SITE_URL));
   writeFile(join(dist, "about", "index.html"), renderAbout(SITE_URL));
 
-  // Copy openapi.yaml from repo root so /openapi.yaml works.
-  const openapiSrc = join(here, "..", "..", "openapi.yaml");
-  if (existsSync(openapiSrc)) copyFileSync(openapiSrc, join(dist, "openapi.yaml"));
-
   // 4. Station pages
   let count = 0;
   const seen = new Set<string>();

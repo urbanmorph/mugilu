@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { handleMcp } from "../src/mcp";
 import type { Env } from "../src/index";
 import { testD1 } from "./d1";
@@ -229,4 +230,16 @@ test("mcp tools/call: counts each tool by name and each tool error; one event pe
   // the conditions lookup's own facts ride its tool event (persona, air kind)
   assert.equal(u.events[1].blobs[1], "everyone");
   assert.equal(u.events[0].blobs[1], "", "a tool with no reading has no lookup facts");
+});
+
+test("mcp initialize: serverInfo.version is the version the MCP Registry lists (server.json)", async () => {
+  const server = JSON.parse(readFileSync(new URL("../../../server.json", import.meta.url), "utf8"));
+  const res = await call({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test-client", version: "1" } },
+  });
+  const j = (await res.json()) as any;
+  assert.equal(j.result.serverInfo.version, server.version);
 });

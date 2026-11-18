@@ -2,13 +2,13 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.sathya-sankaran/mugilu",
   "title": "mugilu",
-  "description": "The sky over any place in India now: air quality, heat, rain, fog, smoke, UV, official warnings.",
+  "description": "Any place in India now: air, heat, cold, rain, wind, fog, dust, smoke, UV and official warnings.",
   "repository": {
     "url": "https://github.com/urbanmorph/mugilu",
     "source": "github"
   },
   "websiteUrl": "https://mugilu.live",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "remotes": [
     {
       "type": "streamable-http",

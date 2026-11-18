@@ -2,7 +2,7 @@
   "name": "mugilu",
   "private": true,
   "version": "0.0.0",
-  "description": "mugilu: India's open sky. Air, heat, rain, UV, dust, wind, fog, smoke and official warnings for any point in India.",
+  "description": "mugilu: India's open sky. Air, heat, cold, rain, wind, fog, dust, smoke, UV and official warnings for any point in India.",
   "license": "MIT",
   "scripts": {
     "dev:worker": "pnpm --filter mugilu-worker dev",

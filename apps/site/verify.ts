@@ -179,16 +179,6 @@ for (const p of docsPages) {
 }
 ok(`${docsPages.length} docs pages present with required meta`);
 
-// ----- 8. openapi.yaml sanity -----
-if (!existsSync(join(dist, "openapi.yaml"))) fail("openapi.yaml missing");
-else {
-  const y = readFileSync(join(dist, "openapi.yaml"), "utf8");
-  if (!/^openapi:\s*3\.1/m.test(y)) fail("openapi.yaml not 3.1");
-  if (!/paths:/m.test(y)) fail("openapi.yaml missing paths");
-  if (!/components:/m.test(y)) fail("openapi.yaml missing components");
-  ok("openapi.yaml present, 3.1, has paths + components");
-}
-
 // ----- 9. robots.txt -----
 const robots = readFileSync(join(dist, "robots.txt"), "utf8");
 for (const ua of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"]) {
