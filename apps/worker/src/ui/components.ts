@@ -642,6 +642,18 @@ export function embedCard(o: EmbedCardOpts, lang: Lang): string {
   );
 }
 
+// ── phase2d: full-width cards (text pages) ──────────────────────────────────────────
+/** Cards one per row: a full-width box, or (`c1`) the label-beside-body list the MCP setup uses. */
+export function cardStack(items: string[], o: { c1?: boolean; quiet?: boolean } = {}): string {
+  return `<div class="cards${o.c1 ? " c1" : ""}">${items.map((x) => `<div class="card${o.quiet ? " quiet" : ""}">${x}</div>`).join("")}</div>`;
+}
+/** WarnBox: a bordered caution (Terms' "No warranty"): a bold first line with the warning
+ *  symbol, then paragraphs. All markup. */
+export function warnBox(head: string, paras: string[]): string {
+  return `<div class="warnbox"><p class="head">${ico("warn")}${head}</p>${paras.map((p) => `<p>${p}</p>`).join("")}</div>`;
+}
+// ── end phase2d ─────────────────────────────────────────────────────────────────────
+
 // ── phase2c: the Search combobox's behaviour ─────────────────────────────────────────
 /** The ARIA combobox for a searchBox: suggestions from /suggest as options, arrow keys move
  *  aria-activedescendant, Enter or a click picks, Escape closes, the status line says how many

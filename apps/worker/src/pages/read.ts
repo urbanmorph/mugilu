@@ -351,12 +351,11 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
     const more = bars ? [bars, `<p class="t-legal">${esc(t("The dashed line is the CPCB limit.", lang))}</p>`] : [];
     more.push(
       `<p class="t-meta">${
-        c.air.station
-          ? `${esc(t("measured", lang))} · ${c.air.station.distance_km} km`
-          : esc(t("modelled", lang))
+        c.air.station ? `${esc(t("measured", lang))} · ${c.air.station.distance_km} km` : esc(t("modelled", lang))
       }</p>`,
     );
-    if (c.air.yll != null) more.push(`<p class="t-meta">~${c.air.yll.toFixed(1)} ${esc(t("years of life lost", lang))}</p>`);
+    if (c.air.yll != null)
+      more.push(`<p class="t-meta">~${c.air.yll.toFixed(1)} ${esc(t("years of life lost", lang))}</p>`);
     if (c.grap) more.push(grapLine(c.grap, lang));
     row("air", {
       label: t("Air", lang),
@@ -511,7 +510,8 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       num: pct != null ? `${pct}%` : String(mm),
       unit: pct != null ? t("chance of rain", lang) : "mm",
       qual: pct != null ? undefined : t("now", lang),
-      more: pct != null && mm ? [`<p class="t-meta">${esc(t("X mm of rain now", lang).replace("X", String(mm)))}</p>`] : [],
+      more:
+        pct != null && mm ? [`<p class="t-meta">${esc(t("X mm of rain now", lang).replace("X", String(mm)))}</p>`] : [],
       brief: pct != null ? `${pct}%` : `${mm} mm`,
     });
   }
@@ -536,8 +536,7 @@ export function headText(risk: AmbientRisk, lang: Lang): string {
 }
 
 /** "Ambient · Everyone": the read and whose it is. */
-export const ambientKicker = (risk: AmbientRisk, lang: Lang) =>
-  `Ambient · ${t(PERSONA_LABEL[risk.persona], lang)}`;
+export const ambientKicker = (risk: AmbientRisk, lang: Lang) => `Ambient · ${t(PERSONA_LABEL[risk.persona], lang)}`;
 
 /** The level hero: the Ambient read on its level's fill, shape and word, the advice under it.
  *  `more` (markup) follows the advice: the screen display's official warning. */
@@ -625,7 +624,10 @@ export function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string
     .replace("{n}", String(g.stations))
     .replace("{stage}", ROMAN[g.stage])
     .replace("{range}", g.stage === 4 ? t("above 450", lang) : GRAP_RANGE[g.stage]);
-  return notice("info", `<b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}`);
+  return notice(
+    "info",
+    `<b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}`,
+  );
 }
 
 /** A place page's title and the description's first sentence, in the words people search:

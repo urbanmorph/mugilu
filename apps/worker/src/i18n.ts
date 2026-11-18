@@ -92,6 +92,13 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   Dark: {},
   System: {},
   "Under an official warning now": {},
+  // phase2d: the Terms privacy box labels.
+  Accounts: {},
+  "Usage counts": {},
+  Analytics: {},
+  "Saved places": {},
+  Alerts: {},
+  // end phase2d
   // phase2c: /warnings, /display, 404, and the search combobox
   "As of": {},
   Avalanche: {},

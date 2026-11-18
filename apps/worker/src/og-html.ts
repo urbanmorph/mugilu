@@ -57,7 +57,11 @@ const pos = (v: number, g: Brief["gauge"]) => gaugePos(v, g.lo, g.hi, g.log);
 /** A reading under the plate: its label, value and gauge (fill in its level, ticks in ink). */
 function stat(b: Brief, c: Conditions): string {
   const fill =
-    b.key === "air" ? (BAND_COLOR[c.air?.band ?? "unknown"] ?? BAND_COLOR.unknown) : b.level ? RISK_COLOR[RISK_BANDS[b.level]] : N.muted;
+    b.key === "air"
+      ? (BAND_COLOR[c.air?.band ?? "unknown"] ?? BAND_COLOR.unknown)
+      : b.level
+        ? RISK_COLOR[RISK_BANDS[b.level]]
+        : N.muted;
   const value = b.key === "heat" ? `feels ${b.value}` : b.value;
   const ticks = b.gauge.ticks
     .map(
@@ -87,7 +91,9 @@ export function conditionsOgHtml(c: Conditions, persona: Persona): string {
   const head = h.noun ? `${h.word} ${h.noun}.` : `${h.word}.`;
   const on = ON_FILL[risk.band];
   const n = c.heat_vs_normal;
-  const normal = heatVsNormalShown(n) ? txt(`font-size:26px;margin-top:12px;color:${on};`, heatVsNormalLine(n, "en")) : "";
+  const normal = heatVsNormalShown(n)
+    ? txt(`font-size:26px;margin-top:12px;color:${on};`, heatVsNormalLine(n, "en"))
+    : "";
   const plate = box(
     `flex-direction:column;justify-content:center;flex:1;padding:0 48px;background:${RISK_COLOR[risk.band]};color:${on};`,
     box(
@@ -130,11 +136,10 @@ export function stationOgHtml(s: NormalizedStation, generatedAt: string): string
     txt("font-size:64px;font-weight:800;line-height:1;", name.toUpperCase()),
     txt(`font-size:34px;color:${N.muted};margin-top:12px;`, s.city || "India"),
   );
-  return frame(
-    ["mugilu · India air quality", istStamp(generatedAt)],
-    box("flex:1;", plate, who),
-    [`${s.provider.toUpperCase()} via oaq.notf.in · urbanmorph/mugilu · ${DISCLAIMER_FULL}`, "mugilu.live"],
-  );
+  return frame(["mugilu · India air quality", istStamp(generatedAt)], box("flex:1;", plate, who), [
+    `${s.provider.toUpperCase()} via oaq.notf.in · urbanmorph/mugilu · ${DISCLAIMER_FULL}`,
+    "mugilu.live",
+  ]);
 }
 
 /** /og.png: the brand card for the home page and the content pages. */

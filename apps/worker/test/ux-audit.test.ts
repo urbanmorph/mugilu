@@ -36,8 +36,14 @@ test("2. the page says when it was built; an older air reading is named separate
   const old = renderConditionsPage(c({ air, air_as_of: "2026-10-25T05:00:00.000Z" } as Partial<Conditions>));
   const stampsOf = (html: string) => html.match(/<div class="stamps">([\s\S]*?)<\/div>/)![1];
   const when = stampsOf(old);
-  assert.match(when, /<span class="k">updated<\/span><span class="v"><time data-rel datetime="2026-10-25T07:00:00.000Z"/);
-  assert.match(when, /<span class="k">air reading<\/span><span class="v"><time data-rel datetime="2026-10-25T05:00:00.000Z"/);
+  assert.match(
+    when,
+    /<span class="k">updated<\/span><span class="v"><time data-rel datetime="2026-10-25T07:00:00.000Z"/,
+  );
+  assert.match(
+    when,
+    /<span class="k">air reading<\/span><span class="v"><time data-rel datetime="2026-10-25T05:00:00.000Z"/,
+  );
   const fresh = renderConditionsPage(c({ air, air_as_of: "2026-10-25T06:50:00.000Z" } as Partial<Conditions>));
   assert.doesNotMatch(stampsOf(fresh), /air reading/);
   // Weather taken from the 4-hourly grid (the live call failed) is named the same way.
@@ -134,7 +140,10 @@ test("6. search: a place whose name starts with the query ranks above stations t
 });
 
 test("7. the embed card carries the brand mark beside the place", () => {
-  assert.match(renderEmbed(c(), "everyone", "https://mugilu.live"), /<span class="ebrand"><svg class="ico f"[^>]*>[\s\S]*?<\/svg>mugilu<\/span>/);
+  assert.match(
+    renderEmbed(c(), "everyone", "https://mugilu.live"),
+    /<span class="ebrand"><svg class="ico f"[^>]*>[\s\S]*?<\/svg>mugilu<\/span>/,
+  );
 });
 
 test("8. the display setup page previews a live display and suggests places as you type", () => {

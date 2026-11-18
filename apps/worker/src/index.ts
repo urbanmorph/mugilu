@@ -459,10 +459,7 @@ export default {
           REFRESH_AFTER_SECONDS,
         );
       if (kiosk) {
-        return cachedResponse(
-          renderKioskPage(conditions, persona, canonical, lang),
-          "text/html; charset=utf-8",
-        );
+        return cachedResponse(renderKioskPage(conditions, persona, canonical, lang), "text/html; charset=utf-8");
       }
       return cachedResponse(
         renderConditionsPage(

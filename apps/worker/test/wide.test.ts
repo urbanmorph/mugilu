@@ -81,12 +81,7 @@ const SNAP: WarningsSnapshot = {
 } as WarningsSnapshot;
 
 // /warnings, /display and 404 are on the signage shell (test/redesign-warnings.test.ts).
-const WIDE = [
-  ["/places", renderPlaces()],
-  ["/about", renderAbout()],
-  ["/methodology", renderMethodology()],
-  ["/terms", renderTerms()],
-] as const;
+const WIDE = [["/places", renderPlaces()]] as const;
 
 test("wide pages: a header nav to the main pages, and the wide layout from 960 px", () => {
   for (const [name, html] of WIDE) {
@@ -120,12 +115,12 @@ test("every page shares the header nav and the footer width; home and /c keep th
     attribution: "x",
     disclaimer: "y",
   } as unknown as Conditions;
-  for (const html of [renderHome(), renderMcpPage()]) {
+  void c; // the place page is on the signage shell (test/page.test.ts)
+  for (const html of [renderHome()]) {
     assert.match(html, /<nav class="topnav"[^>]*>[\s\S]*href="\/warnings"/);
     assert.match(html, /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}/);
   }
   for (const html of [renderHome()]) assert.doesNotMatch(html, /<body class="wide">/);
-  for (const html of [renderMcpPage()]) assert.match(html, /<body class="wide">/);
   // phones: the nav is a second row under the logo, scrolling sideways if it must
   assert.match(renderHome(), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
 });
@@ -164,7 +159,7 @@ test("station page: pollutant bars on CPCB's scale with the limit, a table of th
 
 test("text pages: a contents list linking each section", () => {
   for (const html of [renderAbout(), renderMethodology(), renderTerms()]) {
-    const toc = html.match(/<nav class="toc" aria-label="On this page">([\s\S]*?)<\/nav>/)?.[1] ?? "";
+    const toc = html.match(/<nav class="panel toc" aria-label="On this page">([\s\S]*?)<\/nav>/)?.[1] ?? "";
     const links = [...toc.matchAll(/href="#([a-z0-9-]+)"/g)].map((m) => m[1]);
     assert.ok(links.length >= 3, `only ${links.length} contents links`);
     for (const id of links) assert.match(html, new RegExp(`id="${id}"`), id);
@@ -174,17 +169,25 @@ test("text pages: a contents list linking each section", () => {
 // The backdrop says what the data says, by the canonical rule (palette.ts tintOf), as on /c.
 test("tinted backdrops: a station by its air band, /warnings by its warnings, calm sky when quiet", () => {
   const body = (html: string) => html.match(/<body class="mg"[^>]*>/)![0];
-  assert.match(body(renderStationPage(st({ aqi: 344, band: "vpoor" }), near, true)), /data-tint="Air" data-level="severe"/);
+  assert.match(
+    body(renderStationPage(st({ aqi: 344, band: "vpoor" }), near, true)),
+    /data-tint="Air" data-level="severe"/,
+  );
   assert.match(body(renderStationPage(st(), near, true)), /data-tint="Air" data-level="moderate"/);
-  assert.match(body(renderStationPage(st(), near, false)), /data-tint="none" data-level="low"/, "no recent reading: calm");
+  assert.match(
+    body(renderStationPage(st(), near, false)),
+    /data-tint="none" data-level="low"/,
+    "no recent reading: calm",
+  );
   assert.match(body(renderWarningsPage(SNAP)), /data-tint="Warning" data-level="high"/);
   assert.doesNotMatch(body(renderWarningsPage({ ...SNAP, alerts: [] } as WarningsSnapshot)), /data-tint/);
   // the explainer pages stay neutral
-  assert.doesNotMatch(renderAbout(), /data-tint=|--tint:/);
+  assert.doesNotMatch(body(renderAbout()), /data-tint=/);
 });
 
 test("text pages: long inline code (the MCP inspector command) wraps instead of pushing the page sideways", () => {
-  assert.match(renderMcpPage(), /\.ax code\{overflow-wrap:anywhere\}/);
-  // each list item's text in one cell (.t), so the row's label, code and words don't split into columns
-  assert.doesNotMatch(renderMcpPage(), /<li><(b|code)>/);
+  const html = renderMcpPage();
+  assert.match(html, /\.mg code\{[^}]*overflow-wrap:anywhere/);
+  assert.match(html, /\.mg \.code\{[^}]*white-space:pre-wrap;overflow-wrap:anywhere/);
+  assert.match(html, /<code class="code">npx @modelcontextprotocol\/inspector/);
 });

@@ -96,5 +96,8 @@ test("renderConditionsPage: lists the air stations near the place, linking to ea
     /<meta name="robots" content="noindex, follow">/,
   );
   assert.match(html, /Air stations near here/);
-  assert.match(html, /<a class="srow" href="\/s\/cpcb\/1558"><span class="n">Anand Vihar<\/span><span class="a">412<\/span>/);
+  assert.match(
+    html,
+    /<a class="srow" href="\/s\/cpcb\/1558"><span class="n">Anand Vihar<\/span><span class="a">412<\/span>/,
+  );
 });

@@ -126,7 +126,14 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
 function secondary(cols: string[]): string {
   const items = cols.filter(Boolean);
   if (!items.length) return "";
-  return band(items.length === 1 ? items[0] : lane(items.length === 2 ? "l2" : "l3", items.map((x) => `<div>${x}</div>`)));
+  return band(
+    items.length === 1
+      ? items[0]
+      : lane(
+          items.length === 2 ? "l2" : "l3",
+          items.map((x) => `<div>${x}</div>`),
+        ),
+  );
 }
 
 export function renderConditionsPage(
@@ -149,11 +156,14 @@ export function renderConditionsPage(
 
   // GRAP sits in the Air reading; with no air reading here it still shows, on its own.
   const readings =
-    band(`<div class="flow">${readRows(c, risk, lang)
-      .map((r) => readRowHtml(r, lang))
-      .join("")}</div>`) + (c.grap && !c.air ? band(grapLine(c.grap, lang)) : "");
+    band(
+      `<div class="flow">${readRows(c, risk, lang)
+        .map((r) => readRowHtml(r, lang))
+        .join("")}</div>`,
+    ) + (c.grap && !c.air ? band(grapLine(c.grap, lang)) : "");
   const alertsCol = stack(
-    (alertsKey ? alertsBox(alertsKey, lang) : "") + linkButton(screen, t("Put this on a screen", lang), false, "screen"),
+    (alertsKey ? alertsBox(alertsKey, lang) : "") +
+      linkButton(screen, t("Put this on a screen", lang), false, "screen"),
   );
   const reference = band(
     stack(

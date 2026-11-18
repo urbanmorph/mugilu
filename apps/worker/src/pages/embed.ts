@@ -21,10 +21,7 @@ function cardReads(c: Conditions, risk: AmbientRisk, lang: Lang): [string, strin
   if (c.heat?.apparent_c != null) read.heat = [`${round(c.heat.apparent_c)}°`, t("feels like", lang)];
   if (c.uv?.index != null) read.sun = [String(Math.round(c.uv.index)), `UV ${t(uvWord(c.uv.index), lang)}`];
   if (c.dust?.dust_ug_m3 != null)
-    read.dust = [
-      String(Math.round(c.dust.dust_ug_m3)),
-      `${t("dust", lang)} ${t(dustBand(c.dust.dust_ug_m3), lang)}`,
-    ];
+    read.dust = [String(Math.round(c.dust.dust_ug_m3)), `${t("dust", lang)} ${t(dustBand(c.dust.dust_ug_m3), lang)}`];
   if (c.smoke && smokeLevel(c.smoke) != null) read.smoke = [String(c.smoke.count), t("fires within 100 km", lang)];
   return briefs(c, risk)
     .map((b) => read[b.key])

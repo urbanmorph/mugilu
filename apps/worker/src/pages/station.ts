@@ -106,7 +106,10 @@ export function renderStationPage(
           fill: live ? `b-${s.band}` : "nolevel",
           shape: live ? BAND_SHAPE[s.band] : undefined,
           word: `<p class="big"><span class="t-plate">${s.aqi}</span><span class="t-value">AQI · ${esc(bandWord)}</span></p>`,
-          say: live && lead ? esc(t("Prominent pollutant: {pollutant}", lang).replace("{pollutant}", lead.label)) : undefined,
+          say:
+            live && lead
+              ? esc(t("Prominent pollutant: {pollutant}", lang).replace("{pollutant}", lead.label))
+              : undefined,
           label: aqiText,
           inline: true,
         })
@@ -116,11 +119,19 @@ export function renderStationPage(
       `<h1 class="t-title">${esc(s.name)}</h1><p class="t-meta">${esc(where || "India")} · ${esc(provider)}</p></div>` +
       (live
         ? `<p class="stamp plain"><span class="k">${esc(fill(t("Measured by {provider}.", lang)))}</span><span class="v">${when}</span></p>`
-        : notice("stale", esc(t("No recent reading from this station. Last reading: X", lang)).replace("X", when), "clock")),
+        : notice(
+            "stale",
+            esc(t("No recent reading from this station. Last reading: X", lang)).replace("X", when),
+            "clock",
+          )),
   );
   const full =
     s.lat != null && s.lon != null
-      ? linkButton(lp(`/c/${s.lat},${s.lon}`, lang), `${t("The full sky here: heat, rain, warnings and what to do", lang)} →`, true)
+      ? linkButton(
+          lp(`/c/${s.lat},${s.lon}`, lang),
+          `${t("The full sky here: heat, rain, warnings and what to do", lang)} →`,
+          true,
+        )
       : "";
   const refs = stack(
     `<p class="t-meta">${esc(t("Sources", lang))}: ${esc(provider)} via OAQ, via mugilu.</p>` +

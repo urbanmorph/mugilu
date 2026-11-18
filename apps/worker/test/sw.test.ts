@@ -168,14 +168,20 @@ test("the offline page is the standard's: both stylesheets inline, header, one m
   w.state.online = false;
   const body = await (await w.page("/warnings"))!.text();
   assert.match(body, /<style>[^<]*\.mg\{[^<]*\.mg \.sh\{/, "tokens then the components, inline (no network)");
-  assert.match(body, /<body class="mg">[\s\S]*<header class="sh">[\s\S]*<main id="main"[^>]*>[\s\S]*<h1 class="t-title">You are offline<\/h1>/);
+  assert.match(
+    body,
+    /<body class="mg">[\s\S]*<header class="sh">[\s\S]*<main id="main"[^>]*>[\s\S]*<h1 class="t-title">You are offline<\/h1>/,
+  );
   assert.match(body, /<a class="btn primary" href="\/">See your places<\/a>/);
-  assert.match(body, /<footer class="sf">[\s\S]*Informational only, not for medical, emergency, or safety-critical decisions\./);
+  assert.match(
+    body,
+    /<footer class="sf">[\s\S]*Informational only, not for medical, emergency, or safety-critical decisions\./,
+  );
   assert.equal((body.match(/<main/g) ?? []).length, 1);
 });
 
 test("the worker carries the stylesheet once for all three offline pages", () => {
-  assert.equal(SW_JS.split(".mg .sh{").length - 1, 1);
+  assert.equal(SW_JS.split(".mg .kio{display:grid").length - 1, 1);
 });
 
 test("the home page is saved when the worker installs, so the installed app opens offline", async () => {

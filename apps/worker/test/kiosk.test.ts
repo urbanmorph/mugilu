@@ -72,10 +72,7 @@ test("renderDisplayBuilder: a chosen persona carries into the tiles and the sear
 test("renderKioskPage: a persona display shows that group's own step", () => {
   const c = conditions();
   const hot = { ...c, heat: { ...c.heat!, apparent_c: 42 } };
-  assert.match(
-    renderKioskPage(hot, "outdoor", "https://mugilu.live/c/delhi"),
-    /class="t-lead act">[^<]*shade/,
-  );
+  assert.match(renderKioskPage(hot, "outdoor", "https://mugilu.live/c/delhi"), /class="t-lead act">[^<]*shade/);
 });
 
 // The display, rebuilt: tiles in the order they matter, each drawn; the rest in one quiet line.

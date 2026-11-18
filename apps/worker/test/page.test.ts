@@ -41,7 +41,10 @@ test("renderConditionsPage: a notable high vs normal is said on the heat layer, 
   t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-05-25T06:00:00Z") }); // the high's own day, IST
   const html = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }));
   assert.match(html, /The high today is 41°C\. That is 5°C above normal for late May\./);
-  assert.match(html, /Today(&#39;|')s high is a model value \(Open-Meteo\)\. The normal is from ERA5 data for 1991-2020\./);
+  assert.match(
+    html,
+    /Today(&#39;|')s high is a model value \(Open-Meteo\)\. The normal is from ERA5 data for 1991-2020\./,
+  );
   const hi = renderConditionsPage(conditions({ heat_vs_normal: HOT_VS_NORMAL }), "everyone", undefined, "hi");
   assert.match(hi, /आज का अनुमानित अधिकतम तापमान 41°C है, जो मई के अंत में सामान्य से 5°C अधिक है/);
   assert.doesNotMatch(hi, /Today.s high/);
@@ -187,7 +190,10 @@ test("renderEmbed: a persona card carries that group's own step", () => {
 test("the embed carries the full disclaimer from 400px wide and the short live line below; the kiosk the full one", () => {
   const c = conditions();
   const embed = renderEmbed(c, "asthma", "https://mugilu.live");
-  assert.match(embed, /class="t-legal disc-long">Informational only, not for medical, emergency, or safety-critical decisions\./);
+  assert.match(
+    embed,
+    /class="t-legal disc-long">Informational only, not for medical, emergency, or safety-critical decisions\./,
+  );
   assert.match(embed, /class="t-legal disc-short">Informational only, not medical advice\./);
   assert.match(
     renderKioskPage(c, "asthma", "https://mugilu.live/c/12.97,77.59"),
@@ -358,7 +364,11 @@ test("renderConditionsPage: bands, not columns: hero, warnings, readings, then t
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru", "en", "KEY");
   const at = (s: string) => html.indexOf(s);
   assert.ok(at('<section class="band phero">') < at('class="flow"'), "the hero band first");
-  assert.match(html, /<div class="ptitle stack">[\s\S]*<h1 class="t-title loc"[\s\S]*<\/div><section class="plate /, "the plate right after the title");
+  assert.match(
+    html,
+    /<div class="ptitle stack">[\s\S]*<h1 class="t-title loc"[\s\S]*<\/div><section class="plate /,
+    "the plate right after the title",
+  );
   assert.ok(at('class="flow"') < at('id="alerts"'), "alerts after the readings");
   assert.ok(at('class="flow"') < at('aria-label="Air stations near here"') || !html.includes("Air stations near here"));
   assert.match(html, /<div class="lane l\d">/, "the secondary band shares one row");
@@ -366,7 +376,8 @@ test("renderConditionsPage: bands, not columns: hero, warnings, readings, then t
 
 // The graphics on each layer (glyphs.ts), drawn against the limits the read uses.
 const layerHtml = (html: string, k: string) =>
-  html.match(new RegExp(`<div class="rrow[^"]*" data-k="${k}">[\\s\\S]*?(?=<div class="rrow|</div></section>)`))?.[0] ?? "";
+  html.match(new RegExp(`<div class="rrow[^"]*" data-k="${k}">[\\s\\S]*?(?=<div class="rrow|</div></section>)`))?.[0] ??
+  "";
 
 test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit, its band chip and years of life lost", () => {
   const html = renderConditionsPage(conditions({ air: { ...conditions().air!, pollutants: { pm25: 64, pm10: 218 } } }));
