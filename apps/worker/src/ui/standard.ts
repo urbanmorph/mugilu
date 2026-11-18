@@ -95,14 +95,14 @@ body{margin:0}
 .mg .segf>legend{padding:0;margin-bottom:var(--sp2)}
 .mg .segf>.seg:not(.grid2){justify-self:start}
 .mg .seg{display:inline-flex;flex-wrap:wrap;border:2px solid var(--ink);border-radius:var(--r);overflow:hidden}
-.mg .seg label{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--hit);padding:0 var(--sp3);border-left:2px solid var(--ink);background:var(--bg);color:var(--ink);font-size:var(--t-sm);font-weight:700;text-align:center;line-height:1.2;cursor:pointer}
-.mg .seg label:first-child{border-left:0}
+.mg .seg :is(label,a){position:relative;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--hit);padding:0 var(--sp3);border-left:2px solid var(--ink);background:var(--bg);color:var(--ink);font-size:var(--t-sm);font-weight:700;text-align:center;line-height:1.2;cursor:pointer}
+.mg .seg :is(label,a):first-child{border-left:0}
 .mg .seg input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
-.mg .seg label:has(input:checked){background:var(--ink);color:var(--bg)}
-.mg .seg label:has(input:checked)::before{content:"";flex:none;width:.4em;height:.75em;margin-top:-.2em;border:solid currentColor;border-width:0 3px 3px 0;transform:rotate(45deg)}
-.mg .seg label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:-6px}
+.mg .seg :is(label:has(input:checked),a[aria-current]){background:var(--ink);color:var(--bg)}
+.mg .seg :is(label:has(input:checked),a[aria-current])::before{content:"";flex:none;width:.4em;height:.75em;margin-top:-.2em;border:solid currentColor;border-width:0 3px 3px 0;transform:rotate(45deg)}
+.mg .seg :is(label:has(input:focus-visible),a:focus-visible){outline:3px solid var(--focus);outline-offset:-6px}
 .mg .seg.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;background:var(--ink);overflow:visible}
-.mg .seg.grid2 label{border:0;padding:var(--sp1) var(--sp2)}
+.mg .seg.grid2 :is(label,a){border:0;padding:var(--sp1) var(--sp2)}
 .mg .seg.inv{border-color:var(--on-bar)}
 .mg .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--r);border:2px solid var(--lv,var(--ink));background:var(--lv,transparent);color:var(--on,var(--ink));font-size:var(--t-xs);font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .mg .chip svg{width:16px;height:16px}
@@ -441,7 +441,7 @@ body{margin:0}
 .mg .kio .ktile .num{font-size:var(--k3)}
 .mg .kio .ktiles{padding:var(--sp4) var(--sp5)}
 }
-@media (forced-colors:active){.mg .seg label:has(input:checked){forced-color-adjust:none;background:Highlight;color:HighlightText}}
+@media (forced-colors:active){.mg .seg :is(label:has(input:checked),a[aria-current]){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
 @container (min-width:400px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
 ${PHASE2C_CSS}${READ_CSS}${PULL_CSS}${LANG_NAMES_CSS}` +

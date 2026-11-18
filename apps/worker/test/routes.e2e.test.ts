@@ -168,3 +168,11 @@ test("admin and write routes stay gated", async () => {
     assert.equal(res.status, 401, p);
   }
 });
+
+test("the place page's persona switch is links: no script needed, crawlable, arrow keys never navigate", async () => {
+  const page = await html("/c/delhi?as=asthma");
+  assert.match(page, /<nav class="segf" aria-labelledby="who">/);
+  assert.match(page, /<a href="\/c\/delhi\?as=asthma" aria-current="page">/);
+  assert.match(page, /<a href="\/c\/delhi">/);
+  assert.doesNotMatch(page, /name="who"/);
+});

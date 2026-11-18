@@ -7,7 +7,7 @@ import { VIEWPORT, headTags, relTimeJs, type ShellOpts } from "./shell";
 import { FONT_FACES, LATIN_FONT } from "./fonts";
 import { tokensCss } from "./tokens";
 import { STANDARD_CSS } from "./standard";
-import { SEGMENTED_JS, siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
+import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 
 // The signage page shell (design standard). Every page loads exactly two stylesheets,
 // tokens then components, and composes components; no page carries CSS of its own.
@@ -40,7 +40,7 @@ ${kiosk ? "" : `<script>${THEME_HEAD_JS}</script>`}
 </head>
 <body class="mg"${bodyAttrs}>
 ${kiosk ? "" : siteHeader(path, lang)}<main id="main" tabindex="-1">${body}</main>${kiosk ? "" : siteFooter(path, lang)}
-<script>${kiosk ? "" : INSTALL_JS + THEME_JS + SEGMENTED_JS + SW_REGISTER}${relTimeJs(lang)}${js}</script>
+<script>${kiosk ? "" : INSTALL_JS + THEME_JS + SW_REGISTER}${relTimeJs(lang)}${js}</script>
 </body>
 </html>`;
 }

@@ -22,7 +22,7 @@ import {
   panel,
   placeTile,
   placeTiles,
-  segmented,
+  segLinks,
   stamp,
   stamps,
   stack,
@@ -40,19 +40,17 @@ import {
   warningBand,
 } from "./read";
 
-/** The persona switch: one choice of six; choosing one opens the read for that group. */
+/** The persona switch: one choice of six, each a link to the read for that group. */
 function whoSwitch(base: string, current: Persona, lang: Lang): string {
-  return segmented(
+  return segLinks(
     "who",
     t("Who is this for", lang),
     PERSONAS.map((p) => ({
-      value: p,
       label: t(PERSONA_LABEL[p], lang),
-      checked: p === current,
       href: p === "everyone" ? base : `${base}?as=${p}`,
+      current: p === current,
     })),
-    "t-kicker",
-    "grid2 d3",
+    { segClass: "grid2 d3" },
   );
 }
 

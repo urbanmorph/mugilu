@@ -100,7 +100,6 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
         value: p,
         label: t(PERSONA_LABEL[p], lang),
         checked: p === persona,
-        href: lp(p === "everyone" ? "/display" : `/display?as=${p}`, lang),
       })),
       "vh",
     ) +

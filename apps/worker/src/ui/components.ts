@@ -132,8 +132,6 @@ export interface SegOption {
   value: string;
   label: string;
   checked?: boolean;
-  /** When set, choosing this option opens this URL (the persona switch). */
-  href?: string;
 }
 
 /** Segmented: native radios in a fieldset, so keyboard, screen readers and forced colours
@@ -149,15 +147,27 @@ export function segmented(
   const opts = options
     .map(
       (o) =>
-        `<label><input type="radio" name="${esc(name)}" value="${esc(o.value)}"${o.checked ? " checked" : ""}` +
-        `${o.href ? ` data-href="${esc(o.href)}"` : ""}>${esc(o.label)}</label>`,
+        `<label><input type="radio" name="${esc(name)}" value="${esc(o.value)}"${o.checked ? " checked" : ""}>` +
+        `${esc(o.label)}</label>`,
     )
     .join("");
   return `<fieldset class="segf"><legend class="${legendClass}">${esc(legend)}</legend><div class="seg${segClass ? ` ${segClass}` : ""}">${opts}</div></fieldset>`;
 }
 
-/** Radios that carry an href open it when chosen. */
-export const SEGMENTED_JS = `document.addEventListener('change',function(e){var i=e.target;if(i&&i.matches&&i.matches('.seg input[data-href]')&&i.checked)location.href=i.getAttribute('data-href');});`;
+/** Segmented links: the segmented look for a choice that opens another page (the persona
+ *  switch), so it works without script, each choice is a crawlable link, and arrow keys
+ *  never navigate. The current one carries aria-current="page". */
+export function segLinks(
+  id: string,
+  label: string,
+  links: { label: string; href: string; current?: boolean }[],
+  o: { labelClass?: string; segClass?: string } = {},
+): string {
+  const items = links
+    .map((l) => `<a href="${esc(l.href)}"${l.current ? ' aria-current="page"' : ""}>${esc(l.label)}</a>`)
+    .join("");
+  return `<nav class="segf" aria-labelledby="${esc(id)}"><p class="${o.labelClass ?? "t-kicker"}" id="${esc(id)}">${esc(label)}</p><div class="seg${o.segClass ? ` ${o.segClass}` : ""}">${items}</div></nav>`;
+}
 
 const THEME_KEY = "mugilu-theme";
 

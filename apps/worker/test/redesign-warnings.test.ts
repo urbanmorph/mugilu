@@ -153,7 +153,7 @@ test("/display: step 2 is one Segmented for the six live personas; step 3 opens 
   const html = renderDisplayBuilder("elderly");
   for (const p of ["Everyone", "Asthma &amp; lungs", "Older adults", "Children", "Outdoor workers", "Heart condition"])
     assert.match(html, new RegExp(`>${p}</label>`), p);
-  assert.match(html, /<input type="radio" name="as" value="elderly" checked data-href="\/display\?as=elderly">/);
+  assert.match(html, /<input type="radio" name="as" value="elderly" checked>/);
   assert.match(html, /<a class="btn primary" id="dopen" href="\/c\/bengaluru\?kiosk&amp;as=elderly">/);
   assert.match(html, /<code id="dlink">\/c\/bengaluru\?kiosk&amp;as=elderly<\/code>/);
 });

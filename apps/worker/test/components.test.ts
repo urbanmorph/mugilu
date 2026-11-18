@@ -28,6 +28,7 @@ import {
   qrBlock,
   searchBox,
   segmented,
+  segLinks,
   shape,
   SHAPE,
   sheet,
@@ -90,14 +91,26 @@ test("siteFooter: links, language group, theme switch (System by default) and th
   assert.ok(!/—/.test(f));
 });
 
-test("segmented: native radios in a fieldset with a legend; href options carry data-href; values escaped", () => {
-  const s = segmented("as", "Who is this for", [
-    { value: "everyone", label: "Everyone", checked: true, href: "/c/delhi" },
-    { value: "asthma", label: "Asthma & lungs", href: "/c/delhi?as=asthma" },
+test("segmented: native radios in a fieldset with a legend; values escaped", () => {
+  const s = segmented("layer", "Map layer", [
+    { value: "w", label: "What's worst", checked: true },
+    { value: "a", label: "Air & smoke" },
   ]);
-  assert.match(s, /^<fieldset class="segf"><legend class="t-kicker">Who is this for<\/legend><div class="seg">/);
-  assert.match(s, /value="everyone" checked data-href="\/c\/delhi">Everyone/);
-  assert.match(s, /Asthma &amp; lungs/);
+  assert.match(s, /^<fieldset class="segf"><legend class="t-kicker">Map layer<\/legend><div class="seg">/);
+  assert.match(s, /value="w" checked>What&#39;s worst|value="w" checked>What's worst/);
+  assert.match(s, /Air &amp; smoke/);
+  assert.doesNotMatch(s, /data-href/);
+});
+
+test("segLinks: a choice that opens a page is a set of links, the current one aria-current", () => {
+  const s = segLinks("who", "Who is this for", [
+    { label: "Everyone", href: "/c/delhi", current: true },
+    { label: "Asthma & lungs", href: "/c/delhi?as=asthma" },
+  ]);
+  assert.match(s, /^<nav class="segf" aria-labelledby="who"><p class="t-kicker" id="who">Who is this for<\/p>/);
+  assert.match(s, /<a href="\/c\/delhi" aria-current="page">Everyone<\/a>/);
+  assert.match(s, /<a href="\/c\/delhi\?as=asthma">Asthma &amp; lungs<\/a>/);
+  assert.doesNotMatch(s, /type="radio"/);
 });
 
 test("searchBox: the ARIA combobox pattern, a polite status line, and the place lookup", () => {
