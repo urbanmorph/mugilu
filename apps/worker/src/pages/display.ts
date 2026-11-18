@@ -1,98 +1,151 @@
 import { esc } from "../html";
-import { type Persona } from "../score";
+import { PERSONAS, PERSONA_LABEL, type Persona } from "../score";
 import { lp, t, type Lang } from "../i18n";
-import { AC_CSS, HOME_OG, NEARME_CSS, SITE, nearMeJs, shell, typeaheadJs } from "../ui/shell";
-import { icon, personaLinks } from "./read";
-import { ABOUT_CSS } from "./about";
+import { HOME_OG, SITE } from "../ui/shell";
+import { pageShell } from "../ui/page-shell";
+import {
+  backLink,
+  band,
+  button,
+  comboboxJs,
+  ico,
+  lane,
+  panel,
+  searchBox,
+  segmented,
+  stack,
+  wrap,
+} from "../ui/components";
 
-export const DISPLAY_CSS = `
-.dpers{display:flex;flex-wrap:wrap;gap:.5rem;margin:.1rem 0 .2rem}
-.dpers a{padding:.34rem .8rem;border:1px solid var(--line);border-radius:999px;color:var(--muted);text-decoration:none;font-size:.92rem}
-.dpers a.on{border-color:var(--ink);color:var(--ink);font-weight:600}
-.dsearch{display:flex;gap:.5rem;margin:.2rem 0 .7rem;flex-wrap:wrap}
-.dsearch input[name=q]{flex:1;min-width:12rem;padding:.6rem .8rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);font-size:1rem}
-.dsearch button{padding:.6rem 1.1rem;border:0;border-radius:.6rem;background:var(--ink);color:var(--bg);font-weight:600;font-size:1rem;cursor:pointer}
-.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(8rem,1fr));gap:.55rem;margin:.1rem 0 .3rem}
-.dtile{padding:.7rem .9rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);text-decoration:none;font-weight:600;text-align:center}
-.dtile:hover{border-color:var(--ink)}
-.dnote{color:var(--muted);font-size:.92rem;line-height:1.5;margin:.6rem 0 .7rem}
-.dhow{margin:.1rem 0 .5rem 1.1rem}.dhow li{margin:.35rem 0;line-height:1.5}
-.dprev{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#080d18;margin:.4rem 0 1.4rem}
-.dprev iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
-@media(min-width:960px){.dcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,25rem);gap:0 3rem;align-items:start}.dright>.ah:first-child{margin-top:1.4rem}}`;
+// The cities offered as a start (the live list), by slug.
+const CITIES: [slug: string, name: string][] = [
+  ["bengaluru", "Bengaluru"],
+  ["delhi", "Delhi"],
+  ["mumbai", "Mumbai"],
+  ["chennai", "Chennai"],
+  ["kolkata", "Kolkata"],
+  ["hyderabad", "Hyderabad"],
+  ["pune", "Pune"],
+  ["ahmedabad", "Ahmedabad"],
+  ["lucknow", "Lucknow"],
+  ["jaipur", "Jaipur"],
+  ["patna", "Patna"],
+  ["guwahati", "Guwahati"],
+];
+/** The place the preview starts on. */
+const FIRST = CITIES[0][0];
 
-// The "put it on a screen" builder: pick a place (+ who it's for), open the
-// self-refreshing kiosk view. Search routes through /go?kiosk=1 (zero JS).
+// The builder in the page: picking a city, a searched place or this screen's location, or a
+// persona, updates the live preview, the Open display link and the shown link, with no
+// reload. Without script the city tiles open their display and the search goes through /go.
+function displayJs(persona: Persona, lang: Lang): string {
+  const LP = JSON.stringify(lang === "en" ? "" : "/" + lang);
+  return `(function(){var LP=${LP},place=${JSON.stringify(FIRST)},as=${JSON.stringify(persona)};
+var fr=document.querySelector('.pvframe'),f=fr&&fr.querySelector('iframe'),open=document.getElementById('dopen'),code=document.getElementById('dlink'),form=document.querySelector('form.search'),tiles=[].slice.call(document.querySelectorAll('.tiles a[data-slug]'));
+function fit(){if(f)f.style.transform='scale('+fr.clientWidth/1280+')';}fit();addEventListener('resize',fit);
+function q(){return as==='everyone'?'':'&as='+as;}
+function url(){return LP+'/c/'+place+'?kiosk'+q();}
+function set(){var u=url();if(f&&f.getAttribute('src')!==u)f.setAttribute('src',u);open.href=u;code.textContent=u;
+tiles.forEach(function(a){a.href=LP+'/c/'+a.getAttribute('data-slug')+'?kiosk'+q();if(a.getAttribute('data-slug')===place)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current');});
+var h=form&&form.querySelector('input[name=as]');if(as==='everyone'){if(h)h.remove();}else{if(!h&&form){h=document.createElement('input');h.type='hidden';h.name='as';form.prepend(h);}if(h)h.value=as;}}
+window.DSP={pick:function(x){place=x.lat+','+x.lon;set();}};
+tiles.forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();place=a.getAttribute('data-slug');set();});});
+var seg=document.getElementById('dpers');if(seg)seg.addEventListener('change',function(e){var i=e.target;if(!i||i.name!=='as')return;e.stopPropagation();as=i.value;set();try{history.replaceState(null,'',LP+'/display'+(as==='everyone'?'':'?as='+as));}catch(_){}},true);
+var b=document.getElementById('dhere');if(b&&navigator.geolocation){var label=b.innerHTML;b.hidden=false;b.onclick=function(){b.textContent=${JSON.stringify(t("Finding your location…", lang))};navigator.geolocation.getCurrentPosition(function(p){place=p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);set();b.innerHTML=label;},function(){b.textContent=${JSON.stringify(t("Your location is not available.", lang))};});};}
+})();`;
+}
+
+/** A numbered setup step. */
+const step = (n: number, title: string, body: string, grow = false) =>
+  `<section class="panel${grow ? " grow" : ""}"><div class="in step"><h2 class="t-h2"><span class="cnum solid">${n}</span>${title}</h2>${body}</div></section>`;
+
+// The "put it on a screen" builder: pick a place (+ who it's for), open the self-refreshing
+// screen display. The preview is the real display of the chosen place, scaled down.
 export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang = "en"): string {
-  const popular: [string, string][] = [
-    ["bengaluru", "Bengaluru"],
-    ["delhi", "Delhi"],
-    ["mumbai", "Mumbai"],
-    ["chennai", "Chennai"],
-    ["kolkata", "Kolkata"],
-    ["hyderabad", "Hyderabad"],
-    ["pune", "Pune"],
-    ["ahmedabad", "Ahmedabad"],
-    ["lucknow", "Lucknow"],
-    ["jaipur", "Jaipur"],
-    ["patna", "Patna"],
-    ["guwahati", "Guwahati"],
-  ];
+  const T = (s: string) => esc(t(s, lang));
   const asQ = persona !== "everyone" ? `&as=${persona}` : "";
-  const pills = personaLinks((p) => lp(p === "everyone" ? "/display" : `/display?as=${p}`, lang), persona, lang);
-  const tiles = popular
-    .map(([s, n]) => `<a class="dtile" href="${lp(`/c/${s}?kiosk${asQ}`, lang)}">${esc(n)}</a>`)
-    .join("");
-  const heading = lang === "en" ? "Put mugilu<br>on a screen." : t("Put mugilu on a screen.", lang);
+  const kiosk = (slug: string) => lp(`/c/${slug}?kiosk${asQ}`, lang);
+
+  const head =
+    `<div class="ph"><h1 class="t-title">${T("Put mugilu on a screen.")}</h1>` +
+    `<p class="t-lead">${T("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.")}</p></div>`;
+  const preview =
+    `<figure class="stack" aria-labelledby="pvk"><p class="t-kicker" id="pvk">${T("Preview")}</p>` +
+    `<div class="pvframe" aria-hidden="true"><iframe src="${esc(kiosk(FIRST))}" title="${T("Preview")}" tabindex="-1" loading="lazy"></iframe></div></figure>`;
+
+  const s1 = step(
+    1,
+    T("Pick a place"),
+    searchBox({
+      id: "dq",
+      label: t("A city, area or address", lang),
+      placeholder: t("A city, area or address", lang),
+      action: lp("/go", lang),
+      hidden: [["kiosk", "1"], ...(persona !== "everyone" ? ([["as", persona]] as [string, string][]) : [])],
+    }) +
+      button(t("Use this screen's location", lang), { id: "dhere", icon: "pin", hidden: true }) +
+      `<p class="t-meta">${T("A display can show a city, a neighbourhood or an exact point. Search for it above, or use where this screen stands.")}</p>` +
+      `<div class="tiles">${CITIES.map(
+        ([s, n]) =>
+          `<a href="${esc(kiosk(s))}" data-slug="${s}"${s === FIRST ? ' aria-current="true"' : ""}>${esc(n)}</a>`,
+      ).join("")}</div>`,
+  );
+  const s2 =
+    `<section class="panel"><div class="in step" id="dpers"><h2 class="t-h2"><span class="cnum solid">2</span>${T("Weight it for who is nearby")}</h2>` +
+    segmented(
+      "as",
+      t("Weight it for who is nearby", lang),
+      PERSONAS.map((p) => ({
+        value: p,
+        label: t(PERSONA_LABEL[p], lang),
+        checked: p === persona,
+        href: lp(p === "everyone" ? "/display" : `/display?as=${p}`, lang),
+      })),
+      "vh",
+    ) +
+    `</div></section>`;
+  const s3 = step(
+    3,
+    T("Open display"),
+    `<a class="btn primary" id="dopen" href="${esc(kiosk(FIRST))}">${ico("screen")}${T("Open display")}</a>` +
+      `<p class="t-meta"><code id="dlink">${esc(kiosk(FIRST))}</code></p>`,
+    true,
+  );
   const step4 =
     lang === "en"
       ? "For an always-on unattended screen, point a kiosk-browser app (for example Fully Kiosk on Android) at the same link so it auto-starts."
       : t("For an always-on unattended screen, point a kiosk-browser app at the same link so it auto-starts.", lang);
-  const body = `
-  <article class="ax">
-    <div class="dcols"><div class="dleft">
-    <h1 class="ahero">${heading}</h1>
-    <p class="alead">${t("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.", lang)}</p>
+  const how = panel(
+    stack(
+      `<ol class="howto cards4">${[
+        T(
+          "Open the display link in the screen's browser: a smart TV, a cheap streaming stick, or an old tablet in a stand.",
+        ),
+        T("Press full-screen (F11 with a keyboard, or the browser's full-screen control)."),
+        T(
+          "Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.",
+        ),
+        esc(step4),
+      ]
+        .map((s) => `<li><span>${s}</span></li>`)
+        .join("")}</ol>` +
+        `<p class="t-meta">The display link is just <code>/c/{place}?kiosk</code>, so you can bookmark or script it. Add <code>?as=elderly</code> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>`,
+    ),
+    { title: t("How it runs", lang) },
+  );
 
-    <div class="dprev" aria-hidden="true"><iframe src="${esc(lp(`/c/bengaluru?kiosk${asQ}`, lang))}" title="${esc(t("Put mugilu on a screen.", lang))}" tabindex="-1" loading="lazy"></iframe></div>
-    </div><div class="dright">
-
-    <p class="ah">${icon("users")}<span>${t("Weight it for who is nearby", lang)}</span></p>
-    <nav class="dpers" aria-label="Persona">${pills}</nav>
-
-    <p class="ah">${icon("pin")}<span>${t("Pick a place", lang)}</span></p>
-    <div class="acwrap">
-    <form class="dsearch" action="${lp("/go", lang)}" method="get">
-      <input type="hidden" name="kiosk" value="1">
-      ${persona !== "everyone" ? `<input type="hidden" name="as" value="${persona}">` : ""}
-      <input id="dq" name="q" placeholder="${esc(t("A city, area or address", lang))}" autocomplete="off" autocapitalize="off" aria-label="${esc(t("A city, area or address", lang))}">
-      <button type="submit">${t("Open display", lang)}</button>
-    </form>
-    <ul id="dac" class="ac" role="listbox"></ul>
-    </div>
-    <p class="dnote">${t("A display can show a city, a neighbourhood or an exact point. Search for it above, or use where this screen stands.", lang)}</p>
-    <button id="dhere" class="nearme" type="button" hidden>${icon("pin")} ${esc(t("Use this screen's location", lang))}</button>
-    <div class="dgrid">${tiles}</div>
-
-    <p class="ah">${icon("layers")}<span>${t("How it runs", lang)}</span></p>
-    <ol class="dhow">
-      <li>${t("Open the display link in the screen's browser: a smart TV, a cheap streaming stick, or an old tablet in a stand.", lang)}</li>
-      <li>${t("Press full-screen (F11 with a keyboard, or the browser's full-screen control).", lang)}</li>
-      <li>${t("Leave it. It refreshes on its own, keeps the screen awake, and if the network blips it holds the last reading and recovers.", lang)}</li>
-      <li>${step4}</li>
-    </ol>
-    <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
-    </div></div>
-    <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
-  </article>
-  <script>var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};${typeaheadJs("dq", "dac", `'?kiosk'+${JSON.stringify(asQ)}`)}
-  ${nearMeJs("dhere", `'?kiosk'+${JSON.stringify(asQ)}`, lang)}
-  (function(){var b=document.querySelector('.dprev'),f=b&&b.querySelector('iframe');if(!f)return;function fit(){f.style.transform='scale('+b.clientWidth/1280+')';}fit();addEventListener('resize',fit);})();</script>`;
-  return shell("Put mugilu on a screen: mugilu", body, ABOUT_CSS + DISPLAY_CSS + AC_CSS + NEARME_CSS, {
+  const body = wrap(
+    band(lane("l57", [head, preview])) +
+      band(lane("l2", [s1, `<div class="col">${s2}${s3}</div>`])) +
+      band(how) +
+      band(backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`)),
+  );
+  return pageShell("Put mugilu on a screen: mugilu", body, {
+    path: "/display",
     desc: "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
     lang,
-    wide: true,
+    js: displayJs(persona, lang) + comboboxJs("dq", lang, { onPick: "function(x){q.value=x.label;DSP.pick(x);}" }),
   });
 }

@@ -50,7 +50,7 @@ test("signage shell: the iOS install sheet stays closed until Install app opens 
   const html = renderAbout("en");
   assert.match(html, /<dialog class="isheet" id="install-guide"/);
   assert.match(html, /\.mg dialog\.isheet:not\(\[open\]\)\{display:none\}/);
-  assert.match(html, /\.mg dialog\.isheet:modal\{position:fixed/);
+  assert.match(html, /\.mg dialog\.isheet\[open\]\{position:fixed/);
   // the hidden attribute wins over a component's display (Install app, the alert states)
   assert.match(html, /<button type="button" class="btn" id="install-app" hidden>/);
   assert.match(html, /\.mg \[hidden\]\{display:none!important\}/);
