@@ -1,3 +1,4 @@
+import { START_CITIES } from "../slugs";
 import { langPrefixJs, withPersona } from "../links";
 import { esc } from "../html";
 import { PERSONAS, PERSONA_LABEL, type Persona } from "../score";
@@ -9,33 +10,21 @@ import {
   band,
   button,
   comboboxJs,
-  locateJs,
   ico,
   lane,
+  linkButton,
+  locateJs,
+  pageHead,
   panel,
   searchBox,
   segmented,
   stack,
+  step,
   wrap,
 } from "../ui/components";
 
-// The cities offered as a start (the live list), by slug.
-const CITIES: [slug: string, name: string][] = [
-  ["bengaluru", "Bengaluru"],
-  ["delhi", "Delhi"],
-  ["mumbai", "Mumbai"],
-  ["chennai", "Chennai"],
-  ["kolkata", "Kolkata"],
-  ["hyderabad", "Hyderabad"],
-  ["pune", "Pune"],
-  ["ahmedabad", "Ahmedabad"],
-  ["lucknow", "Lucknow"],
-  ["jaipur", "Jaipur"],
-  ["patna", "Patna"],
-  ["guwahati", "Guwahati"],
-];
 /** The place the preview starts on. */
-const FIRST = CITIES[0][0];
+const FIRST = START_CITIES[0].slug;
 
 // The builder in the page: picking a city, a searched place or this screen's location, or a
 // persona, updates the live preview, the Open display link and the shown link, with no
@@ -57,19 +46,15 @@ window.DSP.here=function(a,o){place=a+','+o;set();};
 })();`;
 }
 
-/** A numbered setup step. */
-const step = (n: number, title: string, body: string, grow = false) =>
-  `<section class="panel${grow ? " grow" : ""}"><div class="in step"><h2 class="t-h2"><span class="cnum solid">${n}</span>${title}</h2>${body}</div></section>`;
-
 // The "put it on a screen" builder: pick a place (+ who it's for), open the self-refreshing
 // screen display. The preview is the real display of the chosen place, scaled down.
 export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang = "en"): string {
   const T = (s: string) => esc(t(s, lang));
   const kiosk = (slug: string) => lp(withPersona(`/c/${slug}?kiosk`, persona), lang);
 
-  const head =
-    `<div class="ph"><h1 class="t-title">${T("Put mugilu on a screen.")}</h1>` +
-    `<p class="t-lead">${T("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.")}</p></div>`;
+  const head = pageHead(t("Put mugilu on a screen.", lang), {
+    extra: `<p class="t-lead">${T("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.")}</p>`,
+  });
   const preview =
     `<figure class="stack" aria-labelledby="pvk"><p class="t-kicker" id="pvk">${T("Preview")}</p>` +
     `<div class="pvframe" aria-hidden="true"><iframe src="${esc(kiosk(FIRST))}" title="${T("Preview")}" tabindex="-1" loading="lazy"></iframe></div></figure>`;
@@ -86,13 +71,14 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     }) +
       button(t("Use this screen's location", lang), { id: "dhere", icon: "pin", hidden: true }) +
       `<p class="t-meta">${T("A display can show a city, a neighbourhood or an exact point. Search for it above, or use where this screen stands.")}</p>` +
-      `<div class="tiles">${CITIES.map(
-        ([s, n]) =>
+      `<div class="tiles">${START_CITIES.map(
+        ({ slug: s, name: n }) =>
           `<a href="${esc(kiosk(s))}" data-slug="${s}"${s === FIRST ? ' aria-current="true"' : ""}>${esc(n)}</a>`,
       ).join("")}</div>`,
   );
-  const s2 =
-    `<section class="panel"><div class="in step" id="dpers"><h2 class="t-h2"><span class="cnum solid">2</span>${T("Weight it for who is nearby")}</h2>` +
+  const s2 = step(
+    2,
+    T("Weight it for who is nearby"),
     segmented(
       "as",
       t("Weight it for who is nearby", lang),
@@ -102,14 +88,15 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
         checked: p === persona,
       })),
       "vh",
-    ) +
-    `</div></section>`;
+    ),
+    { id: "dpers" },
+  );
   const s3 = step(
     3,
     T("Open display"),
-    `<a class="btn primary" id="dopen" href="${esc(kiosk(FIRST))}">${ico("screen")}${T("Open display")}</a>` +
+    linkButton(kiosk(FIRST), t("Open display", lang), true, "screen", "dopen") +
       `<p class="t-meta"><code id="dlink">${esc(kiosk(FIRST))}</code></p>`,
-    true,
+    { grow: true },
   );
   const step4 =
     lang === "en"

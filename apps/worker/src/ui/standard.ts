@@ -458,4 +458,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .mg [hidden]{display:none!important}
 `;
 
+/** The desktop breakpoint, for page scripts that follow the same layout switch as the CSS. */
+export const DESKTOP = "(min-width:1000px)";
+export const MOBILE = "(max-width:999.98px)";
+
 export const STANDARD_CSS = COMPONENTS_CSS + PREVIEW_CSS + READ_CSS + PULL_CSS + LANG_NAMES_CSS + SAFE_AREA_CSS;

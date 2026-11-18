@@ -167,3 +167,19 @@ export function siblingPlaces(slug: string, limit = 6): SlugPlace[] {
     .sort((a, b) => haversineKm(here.lat, here.lon, a.lat, a.lon) - haversineKm(here.lat, here.lon, b.lat, b.lon))
     .slice(0, limit);
 }
+
+/** The cities offered as a start (the display builder's tiles, home's seed for Popular), in order. */
+export const START_CITIES: SlugPlace[] = [
+  "bengaluru",
+  "delhi",
+  "mumbai",
+  "chennai",
+  "kolkata",
+  "hyderabad",
+  "pune",
+  "ahmedabad",
+  "lucknow",
+  "jaipur",
+  "patna",
+  "guwahati",
+].map((slug) => placeBySlug(slug)!);

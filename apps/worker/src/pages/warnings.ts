@@ -1,3 +1,4 @@
+import { DESKTOP } from "../ui/standard";
 import { cycloneIn, type WarningsSnapshot } from "../sachet";
 import { esc } from "../html";
 import { langAttr, lp, t, type Lang } from "../i18n";
@@ -6,18 +7,21 @@ import { HOME_OG, SITE, istTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import {
   backLink,
+  band,
   checkGroup,
   filterBar,
+  filterInput,
   fold,
   ico,
+  LIST_FILTER_JS,
   notice,
+  pageHead,
   stamp,
   stamps,
+  type IconName,
   warningPlate,
   warningRow,
   wrap,
-  band,
-  type IconName,
 } from "../ui/components";
 
 type Alert = WarningsSnapshot["alerts"][number];
@@ -65,12 +69,13 @@ export function warningType(headline: string): string {
 // Applies the filters: a warning stays when its kind and office are ticked and it holds the
 // search text; an office's list hides when none of its warnings show. On wide screens the
 // filters start open.
-const WARNINGS_JS = `(function(){var f=document.getElementById('wfilter');if(!f)return;if(matchMedia('(min-width:1000px)').matches)f.open=true;
+const WARNINGS_JS = `(function(){var f=document.getElementById('wfilter');if(!f)return;if(matchMedia(${JSON.stringify(DESKTOP)}).matches)f.open=true;
+${LIST_FILTER_JS}
 var q=document.getElementById('wq');function on(n){return [].slice.call(f.querySelectorAll('input[name='+n+']:checked')).map(function(i){return i.value})}
 function go(){var ty=on('type'),of=on('issuer'),s=(q.value||'').trim().toLowerCase();
 f.querySelectorAll('.check').forEach(function(l){l.classList.toggle('off',!l.querySelector('input').checked)});
-document.querySelectorAll('main [data-type]').forEach(function(el){el.hidden=!(ty.indexOf(el.getAttribute('data-type'))>-1&&of.indexOf(el.getAttribute('data-issuer'))>-1&&(!s||el.textContent.toLowerCase().indexOf(s)>-1))});
-document.querySelectorAll('.wsec').forEach(function(sec){sec.hidden=!sec.querySelector('[data-type]:not([hidden])')})}
+mgFilter(document.querySelectorAll('main [data-type]'),function(el){return ty.indexOf(el.getAttribute('data-type'))>-1&&of.indexOf(el.getAttribute('data-issuer'))>-1&&mgMatch(el,s)});
+mgEmpty(document.querySelectorAll('.wsec'),'[data-type]')}
 f.addEventListener('change',go);q.addEventListener('input',go)})();`;
 
 const when = (a: Alert) => Date.parse(a.sent) || 0;
@@ -155,7 +160,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     t("Filter warnings", lang),
     filterBar(
       [
-        `<div class="search"><label for="wq">${T("Find a place or district")}</label><div class="sbox">${ico("search")}<input type="search" id="wq" autocomplete="off"></div></div>`,
+        filterInput("wq", t("Find a place or district", lang)),
         checkGroup(
           "type",
           t("Type", lang),
@@ -174,11 +179,11 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     { count: alerts.length, id: "wfilter" },
   );
 
-  const head =
-    `<div class="ph"><h1 class="t-title">${T("Active warnings")}</h1>` +
-    `<p class="t-lead">${T("The latest {n} official NDMA / IMD alerts across India.").replace("{n}", String(alerts.length))}</p>` +
-    (snap ? stamps([stamp(t("As of", lang), `${esc(istTime(snap.generated_at))} · via SACHET`)]) : "") +
-    `</div>`;
+  const head = pageHead(t("Active warnings", lang), {
+    extra:
+      `<p class="t-lead">${T("The latest {n} official NDMA / IMD alerts across India.").replace("{n}", String(alerts.length))}</p>` +
+      (snap ? stamps([stamp(t("As of", lang), `${esc(istTime(snap.generated_at))} · via SACHET`)]) : ""),
+  });
   const body = wrap(
     band(head) +
       (alerts.length

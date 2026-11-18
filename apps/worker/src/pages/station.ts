@@ -8,8 +8,10 @@ import { lp, t, type Lang } from "../i18n";
 import { HOME_OG, SITE, ld, relTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import {
-  BAND_SHAPE,
+  autoLane,
+  backLink,
   band,
+  BAND_SHAPE,
   bandChip,
   barRows,
   dataTable,
@@ -18,9 +20,11 @@ import {
   linkButton,
   linkRow,
   notice,
+  pageHead,
   panel,
   plate,
   stack,
+  stamp,
   wrap,
 } from "../ui/components";
 import { readTint, stationPath } from "./read";
@@ -115,10 +119,12 @@ export function renderStationPage(
         })
       : "";
   const head = stack(
-    `<div class="ph"><p class="t-kicker row-c">${ico("station")}<span>${esc(t("Station", lang))}</span></p>` +
-      `<h1 class="t-title">${esc(s.name)}</h1><p class="t-meta">${esc(where || "India")} · ${esc(provider)}</p></div>` +
+    pageHead(s.name, {
+      kicker: { icon: "station", text: t("Station", lang) },
+      extra: `<p class="t-meta">${esc(where || "India")} · ${esc(provider)}</p>`,
+    }) +
       (live
-        ? `<p class="stamp plain"><span class="k">${esc(fill(t("Measured by {provider}.", lang)))}</span><span class="v">${when}</span></p>`
+        ? stamp(fill(t("Measured by {provider}.", lang)), when, { plain: true })
         : notice(
             "stale",
             esc(t("No recent reading from this station. Last reading: X", lang)).replace("X", when),
@@ -139,12 +145,11 @@ export function renderStationPage(
         [`${path}.json`, t("JSON", lang)],
         [`${path}.md`, t("Markdown", lang)],
       ]) +
-      `<p class="back"><a href="${lp("/", lang)}">← ${esc(t("Look up another place", lang))}</a></p>`,
+      backLink(lp("/", lang), `← ${t("Look up another place", lang)}`),
   );
-  const pair = (a: string, b: string, kind: "l2" | "l57" = "l2") => (a && b ? lane(kind, [a, b]) : a || b);
   const body = wrap(
-    band(pair(head, reading, "l57")) +
-      band(pair(live ? pollutantPanel(s, lang) : "", nearbyPanel(nearby, lang))) +
+    band(reading ? lane("l57", [head, reading]) : head) +
+      band(autoLane([live ? pollutantPanel(s, lang) : "", nearbyPanel(nearby, lang)])) +
       // One column: a button beside a block of notes would leave a hole (balance rule).
       band(stack(full + refs)),
   );

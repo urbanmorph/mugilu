@@ -2,6 +2,7 @@ import { PLACES_STORE_JS } from "../ui/places-store";
 import { type NationalHighlights } from "../highlights";
 import { esc } from "../html";
 import { langPrefixJs, placeHref } from "../links";
+import { START_CITIES } from "../slugs";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
 import { AQI_BAND_LABEL } from "../aqi";
@@ -33,15 +34,6 @@ import {
 } from "../ui/components";
 import { indiaMap, MAP_JS } from "../ui/map";
 
-export const CITIES = [
-  { name: "Delhi", lat: 28.61, lon: 77.21 },
-  { name: "Mumbai", lat: 19.07, lon: 72.88 },
-  { name: "Bengaluru", lat: 12.97, lon: 77.59 },
-  { name: "Kolkata", lat: 22.57, lon: 88.36 },
-  { name: "Chennai", lat: 13.08, lon: 80.27 },
-  { name: "Hyderabad", lat: 17.39, lon: 78.49 },
-];
-
 /** "Popular": real top lookups (D1) first, then the seed cities, eight at most, each linked to
  *  its canonical /c/{slug} when it has one. A long ward name gives way to its city. */
 function popularTiles(popular: { label: string; lat: number; lon: number }[], lang: Lang): string {
@@ -51,7 +43,7 @@ function popularTiles(popular: { label: string; lat: number; lon: number }[], la
   };
   const seen = new Set<string>();
   const tiles: string[] = [];
-  for (const p of [...popular.map((x) => ({ ...x, name: shortPlace(x.label) })), ...CITIES]) {
+  for (const p of [...popular.map((x) => ({ ...x, name: shortPlace(x.label) })), ...START_CITIES.slice(0, 6)]) {
     const k = p.name.toLowerCase();
     if (seen.has(k) || tiles.length >= 8) continue;
     seen.add(k);

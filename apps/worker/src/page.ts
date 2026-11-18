@@ -12,4 +12,4 @@ export { renderNotFound } from "./pages/notfound";
 export { renderMethodology } from "./pages/methodology";
 export { renderMcpPage } from "./pages/mcp";
 export { issuerName, renderWarningsPage, warningType } from "./pages/warnings";
-export { CITIES, renderHome } from "./pages/home";
+export { renderHome } from "./pages/home";

@@ -14,18 +14,20 @@ import { HOME_OG, SITE, istTime, ld, relTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import {
   alertsBox,
+  autoLane,
   band,
   bandChip,
   lane,
   linkButton,
   linkRow,
+  notice,
   panel,
   placeTile,
   placeTiles,
   segLinks,
+  stack,
   stamp,
   stamps,
-  stack,
   wrap,
 } from "../ui/components";
 import {
@@ -62,12 +64,18 @@ function hero(c: Conditions, plate: string, who: string, lang: Lang): string {
   if (airLag(c)) times.push(stamp(t("air reading", lang), relTime(c.air_as_of!)));
   if (c.weather_as_of) times.push(stamp(t("weather reading", lang), relTime(c.weather_as_of)));
   // Hidden until the offline worker shows a saved copy (sw.ts matches `id=".." hidden`).
-  const offline = `<p class="notice quiet" id="${OFFLINE_NOTE_ID}" hidden>${esc(
-    t(
-      "No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.",
-      lang,
-    ).replace("X", istTime(c.air_as_of ?? c.as_of)),
-  )}</p>`;
+  const offline = notice(
+    "quiet",
+    esc(
+      t(
+        "No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.",
+        lang,
+      ).replace("X", istTime(c.air_as_of ?? c.as_of)),
+    ),
+    undefined,
+    OFFLINE_NOTE_ID,
+    true,
+  );
   return (
     `<section class="band phero"><div class="ptitle stack">` +
     `<p class="t-meta">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>` +
@@ -116,23 +124,13 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
       .join(" · ");
     parts.push(`<p><b>${esc(t("Around {place}:", lang).replace("{place}", around.city))}</b> ${links}</p>`);
   }
-  return parts.length
-    ? `<nav class="panel" aria-label="${esc(t("Nearby places", lang))}"><div class="in stack">${parts.join("")}</div></nav>`
-    : "";
+  return parts.length ? panel(stack(parts.join("")), { tag: "nav", label: t("Nearby places", lang) }) : "";
 }
 
 /** The lane of equal columns for the secondary band (one, two or three of them). */
 function secondary(cols: string[]): string {
   const items = cols.filter(Boolean);
-  if (!items.length) return "";
-  return band(
-    items.length === 1
-      ? items[0]
-      : lane(
-          items.length === 2 ? "l2" : "l3",
-          items.map((x) => `<div>${x}</div>`),
-        ),
-  );
+  return items.length ? band(autoLane(items.length > 1 ? items.map((x) => `<div>${x}</div>`) : items)) : "";
 }
 
 export function renderConditionsPage(
