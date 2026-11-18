@@ -27,7 +27,7 @@ import {
 } from "./score";
 import type { AmbientRisk, Persona, RiskBand } from "./score";
 import { RISK_COLOR, BAND_COLOR, levelColor, tintOf } from "./palette";
-import { slugForName, siblingPlaces, slugPlacesByState } from "./slugs";
+import { slugForName, slugFromPath, siblingPlaces, slugPlacesByState } from "./slugs";
 import { aroundLinks } from "./sister";
 import type { Lang } from "./i18n";
 import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
@@ -839,14 +839,14 @@ export function renderConditionsPage(
   // page (canonical is /c/{slug}); arbitrary-coordinate pages have no state anchor.
   let nearby = "";
   if (canonical) {
-    const m = new URL(canonical).pathname.match(/^\/c\/([a-z][a-z0-9-]*)$/);
-    const sibs = m ? siblingPlaces(m[1]) : [];
+    const slug = slugFromPath(new URL(canonical).pathname)?.slug;
+    const sibs = slug ? siblingPlaces(slug) : [];
     if (sibs.length) {
       const near = sibs.map((s) => `<a href="${lp(`/c/${s.slug}`, lang)}">${esc(s.name)}</a>`).join(" · ");
       nearby = `<nav class="nearby" aria-label="${esc(t("Nearby places", lang))}">${t("Nearby:", lang)} ${near}</nav>`;
     }
     // The same place on the sister sites: its ward map (bharatlas) and its state's species (yellide).
-    const around = m ? aroundLinks(m[1]) : null;
+    const around = slug ? aroundLinks(slug) : null;
     if (around && (around.wards || around.species)) {
       const label = t("Around {place}:", lang).replace("{place}", around.city);
       const links = [
