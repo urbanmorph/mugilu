@@ -38,6 +38,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260701.1
         version: 4.20260702.1
+      prettier:
+        specifier: 3.10.1
+        version: 3.10.1
       tsx:
         specifier: ^4.22.5
         version: 4.22.5
@@ -541,6 +544,11 @@ packages:
   postcss-value-parser@4.2.0:
     resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
+  prettier@3.10.1:
+    resolution: {integrity: sha512-70vp3ZUYoPlFbF9uiTdXHUUCGEIp7d4+6p+8DYbkm2jP7x/3i/paXVF6dopSI3zd/CEitrZN1rc4i85xWmmXlg==}
+    engines: {node: '>=14'}
+    hasBin: true
+
   satori@0.15.2:
     resolution: {integrity: sha512-vu/49vdc8MzV5jUchs3TIRDCOkOvMc1iJ11MrZvhg9tE4ziKIEIBjBZvies6a9sfM2vQ2gc3dXeu6rCK7AztHA==}
     engines: {node: '>=16'}
@@ -994,6 +1002,8 @@ snapshots:
   pathe@2.0.3: {}
 
   postcss-value-parser@4.2.0: {}
+
+  prettier@3.10.1: {}
 
   satori@0.15.2:
     dependencies:
