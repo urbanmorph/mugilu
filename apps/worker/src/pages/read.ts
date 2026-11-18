@@ -33,7 +33,7 @@ import {
   warningPlate,
   type IconName,
 } from "../ui/components";
-import { t, type Lang } from "../i18n";
+import { langAttr, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT } from "../hazards";
 import { cycloneIn } from "../sachet";
 import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnormals";
@@ -415,7 +415,8 @@ export function headText(risk: AmbientRisk, lang: Lang): string {
 }
 
 /** "Ambient · Everyone": the read and whose it is. */
-const ambientKicker = (risk: AmbientRisk, lang: Lang) => `Ambient · ${t(PERSONA_LABEL[risk.persona], lang)}`;
+const ambientKicker = (risk: AmbientRisk, lang: Lang) =>
+  t("Ambient · {persona}", lang).replace("{persona}", t(PERSONA_LABEL[risk.persona], lang));
 
 /** The level hero: the Ambient read on its level's fill, shape and word, the advice under it.
  *  `more` (markup) follows the advice: the screen display's official warning. */
@@ -453,8 +454,9 @@ export function warningBand(c: Conditions, lang: Lang): string {
       bar: [`<span>${esc(t("Official warning", lang))} · ${esc(w.issuer)}</span>`],
       title,
       icon: /cyclon/i.test(`${title} ${w.event}`) ? "cyclone" : "warn",
-      body: meta ? `<p class="t-value">${esc(meta)}</p>` : "",
+      body: meta ? `<p class="t-value"${langAttr(meta, lang)}>${esc(meta)}</p>` : "",
       label: t("Official warning", lang),
+      lang,
     });
   });
   const near = c.nearby_warnings?.length ? notice("quiet", nearbyWarnings(c.nearby_warnings, lang), "warn") : "";

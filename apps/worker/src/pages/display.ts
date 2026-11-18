@@ -129,7 +129,14 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       ]
         .map((s) => `<li><span>${s}</span></li>`)
         .join("")}</ol>` +
-        `<p class="t-meta">The display link is just <code>/c/{place}?kiosk</code>, so you can bookmark or script it. Add <code>?as=elderly</code> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>`,
+        `<p class="t-meta">${esc(
+          t(
+            "The display link is just {link}, so you can bookmark or script it. Add {as} (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.",
+            lang,
+          ),
+        )
+          .replace("{link}", "<code>/c/{place}?kiosk</code>")
+          .replace("{as}", "<code>?as=elderly</code>")}</p>`,
     ),
     { title: t("How it runs", lang) },
   );
@@ -140,9 +147,12 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       band(how) +
       band(backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`)),
   );
-  return pageShell("Put mugilu on a screen: mugilu", body, {
+  return pageShell(`${t("Put mugilu on a screen.", lang).replace(/\.$/, "")}: mugilu`, body, {
     path: "/display",
-    desc: "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
+    desc: t(
+      "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.",
+      lang,
+    ),
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
     lang,

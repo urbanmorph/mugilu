@@ -68,8 +68,12 @@ export function renderMcpPage(lang: Lang = "en"): string {
   return textPage({
     path: "/mcp",
     lang,
-    title: "MCP server for AI assistants: mugilu",
-    desc: `Connect Claude, Cursor or any MCP client to mugilu: live ${HAZARDS_SHORT} for any place in India. No key, read only.`,
+    title: `${t("MCP server for AI assistants", lang)}: mugilu`,
+    desc: t(
+      "Connect Claude, Cursor or any MCP client to mugilu: live {hazards} for any place in India. No key, read only.",
+      lang,
+    ).replace("{hazards}", t(HAZARDS_SHORT, lang)),
+    contentLang: "en",
     canonical: endpoint,
     jsonLd,
     kicker: t("MCP server", lang),

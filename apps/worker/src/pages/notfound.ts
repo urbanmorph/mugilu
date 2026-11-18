@@ -28,7 +28,7 @@ export function renderNotFound(lang: Lang = "en"): string {
       backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`) +
       `</section>`,
   );
-  return pageShell("Not found: mugilu", body, {
+  return pageShell(`${t("Not here.", lang).replace(/\.$/, "")}: mugilu`, body, {
     path: "/404",
     desc: SITE_DESC,
     ogImage: HOME_OG,

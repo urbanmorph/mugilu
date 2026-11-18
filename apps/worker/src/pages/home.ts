@@ -1,7 +1,7 @@
 import { type NationalHighlights } from "../highlights";
 import { esc } from "../html";
 import { slugForName } from "../slugs";
-import { lp, t, type Lang } from "../i18n";
+import { langAttr, lp, t, type Lang } from "../i18n";
 import { FRESHEN } from "../freshen";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
 import { AQI_BAND_LABEL } from "../aqi";
@@ -9,7 +9,7 @@ import { RISK_BANDS, type RiskBand } from "../score";
 import { type IndiaMap } from "../indiamap";
 import { officialCyclone, type WarningsSnapshot } from "../sachet";
 import { DUST_PHRASE, airBand, dustBand, heatBand, heatPhrase } from "./read";
-import { issuerName } from "./warnings";
+import { alertParts } from "./warnings";
 import { CLIENT_ESC, HOME_OG, SITE, istTime, ld, relTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import {
@@ -112,24 +112,20 @@ function highlightRows(
 /** The newest official cyclone warning, as a plate: IMD's category and the storm's name. */
 function cyclonePlate(c: ReturnType<typeof officialCyclone>, lang: Lang): string {
   if (!c) return "";
-  const issuer = issuerName(c.alert.issuer);
-  const time = istTime(new Date(c.alert.sent).toISOString());
-  const [who, when] = [esc(issuer), esc(time)];
-  const cap = esc(
-    t("Original alert (CAP): {issuer}, {time}", lang).replace("{issuer}", issuer).replace("{time}", time),
-  );
+  const { office, time, cap } = alertParts(c.alert, lang);
   return band(
     warningPlate({
       bar: [
         `<a href="${lp("/warnings", lang)}">${esc(t("Active warnings", lang))}</a>`,
-        `<span>${who}</span>`,
-        `<span>${when}</span>`,
-        `<a href="${esc(c.alert.link)}" rel="noopener" aria-label="${cap}">CAP</a>`,
-      ],
+        `<span>${esc(office)}</span>`,
+        `<span>${esc(time)}</span>`,
+        cap,
+      ].filter(Boolean),
       title: c.title,
       icon: "cyclone",
-      body: `<p>${esc(c.alert.headline)}</p>`,
+      body: `<p${langAttr(c.alert.headline, lang)}>${esc(c.alert.headline)}</p>`,
       label: t("Active warnings", lang),
+      lang,
     }),
   );
 }

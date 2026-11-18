@@ -7,6 +7,7 @@
 // and fill TR[...][L]. Brand terms (mugilu, SACHET, NDMA, IMD, QR) stay in Latin.
 
 import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "./hazards";
+import { esc } from "./html";
 
 // The hazard lists (hazards.ts) in hi and kn, so every localised string that names them says the same list.
 const HAZARDS_TR = {
@@ -25,6 +26,30 @@ export const LANG_NAME: Record<Lang, string> = {
   hi: "\u0939\u093f\u0902\u0926\u0940",
   kn: "\u0c95\u0ca8\u0ccd\u0ca8\u0ca1",
 };
+
+/** The language a piece of quoted text is written in, from its script ("en" for Latin;
+ *  "" when it has no letters). Official warnings are quoted as issued, in any of these. */
+export function scriptLang(s: string): string {
+  if (/[\u0C00-\u0C7F]/.test(s)) return "te";
+  if (/[\u0980-\u09FF]/.test(s)) return "bn";
+  if (/[\u0B00-\u0B7F]/.test(s)) return "or";
+  if (/[\u0C80-\u0CFF]/.test(s)) return "kn";
+  if (/[\u0900-\u097F]/.test(s)) return "hi";
+  return /[A-Za-z]/.test(s) ? "en" : "";
+}
+
+/** ` lang="xx"` when quoted text is in another language than the page, so a screen reader
+ *  reads it in the right voice; "" when it is the page's own. */
+export function langAttr(s: string, page: Lang): string {
+  const l = scriptLang(s);
+  return l && l !== page ? ` lang="${l}"` : "";
+}
+
+/** Quoted text, escaped, in a span marked with its language only when it differs from the page's. */
+export function quoted(s: string, page: Lang): string {
+  const a = langAttr(s, page);
+  return a ? `<span${a}>${esc(s)}</span>` : esc(s);
+}
 
 // Path prefix. English stays unprefixed so its URLs remain the clean canonical.
 export function lp(path: string, lang: Lang): string {
@@ -52,6 +77,24 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   Dark: {},
   System: {},
   "Under an official warning now": {},
+  // Fix round 1: strings that reached hi/kn pages without a key.
+  "MCP server for AI assistants": {},
+  "Connect Claude, Cursor or any MCP client to mugilu: live {hazards} for any place in India. No key, read only.": {},
+  "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.":
+    {},
+  "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.":
+    {},
+  Readings: {},
+  JSON: {},
+  Markdown: {},
+  PNG: {},
+  Embed: {},
+  "Prominent pollutant: {pollutant}": {},
+  "Ambient · {persona}": {},
+  "Each square, about 100 km across, has the colour of what is worst in it, where that is high or severe. Air includes smoke and dust.":
+    {},
+  "The display link is just {link}, so you can bookmark or script it. Add {as} (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.":
+    {},
   // phase2d: the Terms privacy box labels.
   Accounts: {},
   "Usage counts": {},

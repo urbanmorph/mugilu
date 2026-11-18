@@ -1,10 +1,10 @@
 import { esc } from "../html";
 import { allSlugPlaces, slugPlacesByState } from "../slugs";
-import { lp, t, type Lang } from "../i18n";
+import { lp, quoted, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { type IndiaMap } from "../indiamap";
 import { officialCyclone, type WarningsSnapshot } from "../sachet";
-import { issuerName } from "./warnings";
+import { alertParts } from "./warnings";
 import { HOME_OG, SITE, istTime, ld } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import { band, ico, lane, panel, placeTile, placeTiles, stack, wrap } from "../ui/components";
@@ -65,11 +65,12 @@ export function renderPlaces(
       ]),
   );
 
+  const issued = official && alertParts(official.alert, lang);
   const warnBox = official
     ? band(
         panel(
           stack(
-            `<p><b>${esc(official.title)}</b> · ${esc(issuerName(official.alert.issuer))} · <span class="t-meta">${esc(istTime(new Date(official.alert.sent).toISOString()))}</span></p>` +
+            `<p><b>${quoted(official.title, lang)}</b> · ${esc(issued!.office)} · <span class="t-meta">${esc(issued!.time)}</span></p>` +
               placeTiles(
                 allSlugPlaces()
                   .filter((p) => isWarned.has(p.slug))

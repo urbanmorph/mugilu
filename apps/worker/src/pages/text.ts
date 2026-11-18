@@ -64,6 +64,9 @@ export interface TextPageOpts {
   sections: SheetSection[];
   /** The canonical URL when it is not SITE + path (the MCP page is the endpoint). */
   canonical?: string;
+  /** The language the page's content is written in, when it is not the page's (the MCP page
+   *  is English in every language): the sheet is marked with it for screen readers. */
+  contentLang?: Lang;
 }
 
 /** A text page: the Sheet in the signage shell, with the back link home. */
@@ -79,7 +82,8 @@ export function textPage(o: TextPageOpts): string {
     },
     o.lang,
   );
-  return pageShell(o.title, body, {
+  const marked = o.contentLang && o.contentLang !== o.lang ? `<div lang="${o.contentLang}">${body}</div>` : body;
+  return pageShell(o.title, marked, {
     path: o.path,
     lang: o.lang,
     desc: o.desc,

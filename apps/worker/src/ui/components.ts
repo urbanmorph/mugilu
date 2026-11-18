@@ -1,5 +1,5 @@
 import { esc, textOrHtml, type Html } from "../html";
-import { LANGS, LANG_NAME, lp, t, type Lang } from "../i18n";
+import { LANGS, LANG_NAME, langAttr, lp, quoted, t, type Lang } from "../i18n";
 import type { RiskBand } from "../score";
 import { installButton } from "../install";
 import { qrSvg } from "../qr";
@@ -527,12 +527,14 @@ export interface WarningPlateOpts {
   /** Markup. */
   body: string;
   label: string;
+  /** The page's language: a title quoted in another language is marked with its own. */
+  lang: Lang;
 }
 /** WarningPlate: an official warning. Warnings carry no severity, so no level colour. */
 export function warningPlate(o: WarningPlateOpts): string {
   return (
     `<section class="wplate" aria-label="${esc(o.label)}"><div class="bar">${ico("warn")}${o.bar.join("")}</div>` +
-    `<div class="in stack">${o.title ? `<h2 class="t-h2 row-c">${o.icon ? ico(o.icon) : ""}${esc(o.title)}</h2>` : ""}${o.body}</div></section>`
+    `<div class="in stack">${o.title ? `<h2 class="t-h2 row-c">${o.icon ? ico(o.icon) : ""}${quoted(o.title, o.lang)}</h2>` : ""}${o.body}</div></section>`
   );
 }
 
@@ -542,8 +544,8 @@ export interface WarningRowOpts {
   kind: string;
   /** The headline as issued (plain text; escaped here). */
   head: string;
-  /** The headline's script, when not the UI language. */
-  headLang?: string;
+  /** The page's language: a headline issued in another language is marked with its own. */
+  lang: Lang;
   /** Issuer, area, time (markup). */
   meta: string;
   /** data-* for filtering. */
@@ -553,7 +555,7 @@ export interface WarningRowOpts {
 export function warningRow(o: WarningRowOpts): string {
   return (
     `<li class="wrow" data-type="${esc(o.type)}" data-issuer="${esc(o.issuer)}">${ico(o.icon)}` +
-    `<p class="kind">${esc(o.kind)}</p><p class="head"${o.headLang ? ` lang="${esc(o.headLang)}"` : ""}>${esc(o.head)}</p>` +
+    `<p class="kind">${esc(o.kind)}</p><p class="head"${langAttr(o.head, o.lang)}>${esc(o.head)}</p>` +
     `<p class="meta">${o.meta}</p></li>`
   );
 }

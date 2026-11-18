@@ -1,6 +1,6 @@
 import { cycloneIn, type WarningsSnapshot } from "../sachet";
 import { esc } from "../html";
-import { lp, t, type Lang } from "../i18n";
+import { langAttr, lp, t, type Lang } from "../i18n";
 import { isHttpUrl } from "./read";
 import { HOME_OG, SITE, istTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
@@ -62,16 +62,6 @@ export function warningType(headline: string): string {
   return typeOf(headline)[0];
 }
 
-/** The language a headline is written in, when it is not Latin (its lang attribute). */
-function scriptOf(s: string): string | undefined {
-  if (/[ఀ-౿]/.test(s)) return "te";
-  if (/[ঀ-৿]/.test(s)) return "bn";
-  if (/[଀-୿]/.test(s)) return "or";
-  if (/[ಀ-೿]/.test(s)) return "kn";
-  if (/[ऀ-ॿ]/.test(s)) return "hi";
-  return undefined;
-}
-
 // Applies the filters: a warning stays when its kind and office are ticked and it holds the
 // search text; an office's list hides when none of its warnings show. On wide screens the
 // filters start open.
@@ -85,6 +75,16 @@ f.addEventListener('change',go);q.addEventListener('input',go)})();`;
 
 const when = (a: Alert) => Date.parse(a.sent) || 0;
 
+/** An official alert's issuing office, its IST time and a link to the original (CAP), read one
+ *  way for home, /warnings and /places. The link only when the feed's link is a web address. */
+export function alertParts(a: Alert, lang: Lang): { office: string; time: string; cap: string } {
+  const office = issuerName(a.issuer || "");
+  const time = istTime(a.sent);
+  const label = t("Original alert (CAP): {issuer}, {time}", lang).replace("{issuer}", office).replace("{time}", time);
+  const cap = isHttpUrl(a.link) ? `<a href="${esc(a.link)}" rel="noopener" aria-label="${esc(label)}">CAP</a>` : "";
+  return { office, time, cap };
+}
+
 export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "en"): string {
   const T = (s: string) => esc(t(s, lang));
   // Newest first; a storm IMD names is pinned once (its newest warning), above the lists.
@@ -97,23 +97,19 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
   }
   const isPinned = new Set(pinned.values());
 
-  const meta = (a: Alert, office: string) => {
-    const at = when(a) ? istTime(new Date(when(a)).toISOString()) : "";
-    const cap = isHttpUrl(a.link)
-      ? `<a href="${esc(a.link)}" rel="noopener" aria-label="${esc(t("Original alert (CAP): {issuer}, {time}", lang).replace("{issuer}", office).replace("{time}", at))}">CAP</a>`
-      : "";
-    return [at && esc(at), cap].filter(Boolean).join(" · ");
+  const meta = (a: Alert) => {
+    const { time, cap } = alertParts(a, lang);
+    return [time && esc(time), cap].filter(Boolean).join(" · ");
   };
   const row = (a: Alert) => {
     const office = issuerName(a.issuer || "");
     const [type, label, , icon] = typeOf(a.headline || "");
-    const script = scriptOf(a.headline || "");
     return warningRow({
       icon,
       kind: t(label, lang),
       head: a.headline || "Warning",
-      headLang: script !== lang ? script : undefined,
-      meta: meta(a, office),
+      lang,
+      meta: meta(a),
       type,
       issuer: office,
     });
@@ -138,11 +134,12 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
       const office = issuerName(a.issuer || "");
       const [type, label] = typeOf(a.headline || "");
       return `<div data-type="${type}" data-issuer="${esc(office)}">${warningPlate({
-        bar: [`<span>${esc(t(label, lang))} · ${esc(office)}</span>`, `<span>${meta(a, office)}</span>`],
+        bar: [`<span>${esc(t(label, lang))} · ${esc(office)}</span>`, `<span>${meta(a)}</span>`],
         title: name,
         icon: "cyclone",
-        body: `<p>${esc(a.headline)}</p>`,
+        body: `<p${langAttr(a.headline, lang)}>${esc(a.headline)}</p>`,
         label: name,
+        lang,
       })}</div>`;
     })
     .join("");
@@ -192,9 +189,12 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
           backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`),
       ),
   );
-  return pageShell("Active warnings: mugilu", body, {
+  return pageShell(`${t("Active warnings", lang)}: mugilu`, body, {
     path: "/warnings",
-    desc: "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
+    desc: t(
+      "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
+      lang,
+    ),
     canonical: `${SITE}/warnings`,
     ogImage: HOME_OG,
     lang,

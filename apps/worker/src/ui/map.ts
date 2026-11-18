@@ -1,5 +1,5 @@
 import { esc } from "../html";
-import { lp, t, type Lang } from "../i18n";
+import { lp, quoted, t, type Lang } from "../i18n";
 import { AQI_BAND_LABEL } from "../aqi";
 import { allSlugPlaces, slugForName } from "../slugs";
 import type { Cyclone } from "../cyclones";
@@ -265,7 +265,7 @@ export function cycloneSentence(c: Cyclone, lang: Lang, official?: string): stri
     c.kind === "alert"
       ? esc(t(`A cyclone can form in the ${sea}.`, lang))
       : named
-        ? esc(t(`X is in the ${sea}.`, lang)).replace("X", esc(official))
+        ? esc(t(`X is in the ${sea}.`, lang)).replace("X", quoted(official, lang))
         : c.name
           ? esc(t(`Cyclone X is in the ${sea}.`, lang)).replace("X", esc(c.name))
           : esc(t(`A cyclone is in the ${sea}.`, lang));

@@ -254,20 +254,34 @@ test("warningPlate and warningRow: no level colour; the headline escaped, its sc
     icon: "cyclone",
     body: "<p>x</p>",
     label: "Official warning",
+    lang: "en",
   });
   assert.match(p, /^<section class="wplate" aria-label="Official warning"><div class="bar"><svg/);
   assert.match(p, /Severe Cyclonic Storm Akvan<\/h2>/);
+  // On a Hindi page the English title is marked, so it is read in the right voice.
+  assert.match(
+    warningPlate({ bar: [], title: "Severe Cyclonic Storm Akvan", body: "", label: "x", lang: "hi" }),
+    /<span lang="en">Severe Cyclonic Storm Akvan<\/span><\/h2>/,
+  );
   const r = warningRow({
     icon: "cyclone",
     kind: "Wind, cyclone",
     head: "తుఫాను <b>",
-    headLang: "te",
+    lang: "hi",
     meta: "AP SDMA",
     type: "wind",
     issuer: "AP SDMA",
   });
   assert.match(r, /^<li class="wrow" data-type="wind" data-issuer="AP SDMA">/);
   assert.match(r, /<p class="head" lang="te">తుఫాను &lt;b&gt;<\/p>/);
+  assert.match(
+    warningRow({ icon: "rain", kind: "Rain", head: "Heavy rain", lang: "kn", meta: "", type: "rain", issuer: "x" }),
+    /<p class="head" lang="en">Heavy rain<\/p>/,
+  );
+  assert.match(
+    warningRow({ icon: "rain", kind: "Rain", head: "Heavy rain", lang: "en", meta: "", type: "rain", issuer: "x" }),
+    /<p class="head">Heavy rain<\/p>/,
+  );
 });
 
 test("checkGroup and fold: native checkboxes with counts; a disclosure with a count", () => {
