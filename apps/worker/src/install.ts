@@ -81,11 +81,12 @@ export const INSTALL_CSS = `
 .install-guide button{font:600 .9rem var(--sans);color:#fff;background:var(--sky);border:0;border-radius:8px;padding:8px 18px;cursor:pointer}
 `;
 
-/** Header button (hidden until the script decides) + the iOS guide dialog. */
-export function installButton(lang: Lang): string {
+/** Header button (hidden until the script decides) + the iOS guide dialog. The classes
+ *  default to the old pages'; the signage pages pass the standard's (btn, isheet). */
+export function installButton(lang: Lang, cls = { button: "install", dialog: "install-guide" }): string {
   return (
-    `<button type="button" class="install" id="install-app" hidden>${esc(t("Install app", lang))}</button>` +
-    `<dialog class="install-guide" id="install-guide" aria-labelledby="install-guide-title">` +
+    `<button type="button" class="${cls.button}" id="install-app" hidden>${esc(t("Install app", lang))}</button>` +
+    `<dialog class="${cls.dialog}" id="install-guide" aria-labelledby="install-guide-title">` +
     `<h2 id="install-guide-title">${esc(t("Add mugilu to your Home Screen", lang))}</h2><ol>` +
     `<li>${esc(t("Tap the Share button (the square with an arrow) in Safari's toolbar.", lang))}</li>` +
     `<li>${esc(t("Scroll down and tap Add to Home Screen.", lang))}</li>` +

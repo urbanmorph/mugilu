@@ -82,6 +82,15 @@ export function langCss(lang: Lang): string {
 
 // en -> { hi, kn }. Generated from the native-reviewed sheets; edit there and regenerate.
 export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = {
+  // ── Signage redesign: new English strings (supporting-docs/redesign copy ledger).
+  // hi/kn are filled in the final language pass; until then t() falls back to English.
+  "Skip to content": {},
+  Language: {},
+  Site: {},
+  Theme: {},
+  Light: {},
+  Dark: {},
+  System: {},
   // /methodology prose (kn): hand-composed from the reviewed KANNADA_GLOSSARY + existing
   // UI strings (no Sarvam pass), proper nouns/acronyms kept Latin. Pending native
   // sign-off (supporting-docs/METHODOLOGY_KANNADA_REVIEW.md). Open calls flagged there:
