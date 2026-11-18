@@ -266,10 +266,10 @@ test("pages: every page, language, kiosk and embed opt into viewport-fit=cover",
 });
 
 test("pages: header clears the top/side insets, the page end clears the bottom one", () => {
-  // The old shell's header is .bar; the signage shell's is .sh (the text pages are on it).
+  // Every page here is on the signage shell: the header is .sh.
   for (const [html, header] of [
-    [renderHome(), ".bar"],
-    [renderHome(undefined, undefined, undefined, "kn"), ".bar"],
+    [renderHome(), ".sh"],
+    [renderHome(undefined, undefined, undefined, "kn"), ".sh"],
     [renderAbout(), ".sh"],
   ]) {
     const bar = rules(html, header).join(";");

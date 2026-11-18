@@ -1,65 +1,117 @@
 import { esc } from "../html";
-import { slugPlacesByState } from "../slugs";
+import { allSlugPlaces, slugPlacesByState } from "../slugs";
 import { lp, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
-import { HOME_OG, SITE, ld, shell } from "../ui/shell";
+import { type IndiaMap } from "../indiamap";
+import { officialCyclone, type WarningsSnapshot } from "../sachet";
+import { issuerName } from "./warnings";
+import { HOME_OG, SITE, istTime, ld } from "../ui/shell";
+import { pageShell } from "../ui/page-shell";
+import { band, ico, lane, panel, placeTile, placeTiles, stack, wrap } from "../ui/components";
+import { MAP_JS, placesKey, placesMap, placesMapNote, stateAnchor } from "../ui/map";
 
-export const PLACES_CSS = `
-.places h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6vw,2.2rem);line-height:1.1;margin:.2rem 0 .35rem}
-.places .lede{color:var(--muted);font-size:.98rem;line-height:1.5;margin:0 0 .3rem;max-width:54ch}
-.places .count{color:var(--muted);font-size:.86rem;margin:0 0 1.7rem}
-.places .st{margin:0 0 1.6rem;break-inside:avoid}
-.places .st h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 .55rem;padding-bottom:.3rem;border-bottom:1px solid var(--hair)}
-.places .st ul{list-style:none;margin:0;padding:0;columns:2;column-gap:1.5rem}
-@media(min-width:620px){.places .st ul{columns:3}}
-@media(min-width:900px){.places .st ul{columns:4}}
-.places .st li{padding:2px 0;break-inside:avoid}
-.places .st a{color:var(--sky);text-decoration:none;font-size:.93rem}
-.places .st a:hover{text-decoration:underline}
-.pindex,.pfind{display:none}
-@media(min-width:960px){
-.pwrap{display:grid;grid-template-columns:minmax(0,12rem) minmax(0,1fr);gap:2.6rem;align-items:start}
-.pindex{display:flex;flex-direction:column;gap:.15rem;position:sticky;top:1.2rem;max-height:calc(100vh - 2.4rem);overflow:auto;font-size:.88rem;line-height:1.55}
-.pindex a{color:var(--muted);text-decoration:none}.pindex a:hover{color:var(--ink)}
-.pfind{display:flex;flex-direction:column;gap:.35rem;margin:0 0 1.4rem;max-width:22rem;font-size:.88rem;color:var(--muted)}
-.pfind[hidden]{display:none}
-.pfind input{padding:.6rem .8rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
-.pcards{columns:3;column-gap:1rem}
-.places .pcards .st{break-inside:avoid;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:.8rem 1rem;margin:0 0 1rem}
-.places .pcards .st ul{columns:2;column-gap:1rem}
-.places .pcards .st h2{border:0;padding:0;margin:0 0 .5rem}
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+const initials = (s: string) =>
+  s
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .toLowerCase();
+
+/** The places a warning names ("Cyclone Warning for ASR, Anakapalli, …"), as slugs: each area
+ *  by its name, or by its initials (IMD writes Alluri Sitharama Raju as "ASR") within the
+ *  states of the places named in full, so an abbreviation never lands across the country. */
+export function warnedPlaces(areas: string[]): string[] {
+  const all = allSlugPlaces();
+  const named = areas.flatMap((a) => all.filter((p) => norm(p.name) === norm(a)));
+  const states = new Set(named.map((p) => p.state));
+  const short = areas
+    .filter((a) => /^[A-Z]{2,5}$/.test(a))
+    .flatMap((a) => all.filter((p) => states.has(p.state) && initials(p.name) === a.toLowerCase()));
+  return [...new Set([...named, ...short].map((p) => p.slug))];
 }
-`;
 
-// The /places search (wide screens): shows only the places whose name holds the text,
-// and only the states that still have one. Hidden without the script.
-export const PLACES_FIND_JS = `(function(){var p=document.querySelector('.pfind');if(!p)return;p.hidden=false;var q=document.getElementById('pq');
-q.addEventListener('input',function(){var s=q.value.trim().toLowerCase();document.querySelectorAll('.pcards .st').forEach(function(st){var any=false;
-st.querySelectorAll('li').forEach(function(li){var ok=!s||li.textContent.toLowerCase().indexOf(s)>-1;li.hidden=!ok;if(ok)any=true});st.hidden=!any})})})();`;
+// The page's behaviour: find a place (filters the lists), the state picker and the map's state
+// click (open that state's list and go to it), and on phones the lists start folded except a
+// state with a warned place.
+const PLACES_JS = `(function(){var q=document.getElementById('pq'),sel=document.getElementById('ps'),F=document.querySelectorAll('.flow details.fold');
+window.openState=function(id){var d=document.getElementById(id);if(!d)return;d.hidden=false;d.open=true;d.scrollIntoView({block:'start'});var s=d.querySelector('summary');if(s)s.focus({preventScroll:true});};
+if(sel)sel.addEventListener('change',function(){if(sel.value)openState(sel.value);});
+if(window.matchMedia&&matchMedia('(max-width: 999px)').matches)F.forEach(function(d){if(!d.querySelector('b')&&('#'+d.id)!==location.hash)d.open=false;});
+if(q)q.addEventListener('input',function(){var s=q.value.trim().toLowerCase();F.forEach(function(d){var any=false;d.querySelectorAll('li').forEach(function(li){var ok=!s||li.textContent.toLowerCase().indexOf(s)>-1;li.hidden=!ok;if(ok)any=true;});d.hidden=!any;if(s&&any)d.open=true;});});})();`;
 
-/** The place directory: every named /c/{slug} page, grouped by state. This is the
- *  crawlable index that links all ~800 place pages, so search engines have a path
- *  to them (and readers can browse) instead of the pages being sitemap-only. */
-export function renderPlaces(lang: Lang = "en"): string {
+/** The place directory: every named /c/{slug} page, by state, with the map of India beside it
+ *  (a state opens its list, a dot its place). The crawlable index of all ~800 place pages. */
+export function renderPlaces(
+  lang: Lang = "en",
+  data: { map?: IndiaMap; warnings?: WarningsSnapshot | null } = {},
+): string {
+  const T = (s: string) => esc(t(s, lang));
   const groups = slugPlacesByState();
   const total = groups.reduce((n, g) => n + g.places.length, 0);
-  const anchor = (state: string) =>
-    `st-${state
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")}`;
-  const index = groups.map((g) => `<a href="#${anchor(g.state)}">${esc(g.state)}</a>`).join("");
-  const sections = groups
+  const official = officialCyclone(data.warnings);
+  const warned = official ? warnedPlaces(official.areas) : [];
+  const isWarned = new Set(warned);
+
+  const head = band(
+    `<div class="ph"><h1 class="t-title">${T("Every place, by state")}</h1>` +
+      `<p class="t-lead">${T(`The sky over every district and major city in India, one page each. Pick a place to see its ${HAZARDS} right now.`)}</p>` +
+      `<p class="stamp">${total} ${T("places across India")}</p></div>` +
+      lane("l2", [
+        `<div class="search"><label for="pq">${T("Find a place")}</label><div class="sbox">${ico("search")}<input type="search" id="pq" autocomplete="off"></div></div>`,
+        `<div class="search"><label for="ps">${T("States")}</label><select id="ps" class="sel"><option value="">${T("States")}</option>${groups
+          .map((g) => `<option value="${stateAnchor(g.state)}">${esc(g.state)}</option>`)
+          .join("")}</select></div>`,
+      ]),
+  );
+
+  const warnBox = official
+    ? band(
+        panel(
+          stack(
+            `<p><b>${esc(official.title)}</b> · ${esc(issuerName(official.alert.issuer))} · <span class="t-meta">${esc(istTime(new Date(official.alert.sent).toISOString()))}</span></p>` +
+              placeTiles(
+                allSlugPlaces()
+                  .filter((p) => isWarned.has(p.slug))
+                  .map((p) => placeTile(lp(`/c/${p.slug}`, lang), p.name, true, lang)),
+              ) +
+              `<p><a href="${lp("/warnings", lang)}" class="back">${T("Active warnings")} →</a></p>`,
+          ),
+          { title: t("Under an official warning now", lang), icon: "warn", id: "uw", strong: true },
+        ),
+      )
+    : "";
+
+  const { svg, dots } = placesMap(data.map, warned, lang);
+  const mapPanel = panel(
+    stack(
+      `<div class="imap places" data-layer="w">${svg}<script type="application/json">${JSON.stringify(dots)}</script></div>` +
+        placesKey(lang, warned.length > 0) +
+        placesMapNote(data.map, lang),
+    ),
+    { title: t("States", lang), icon: "pin", id: "pm" },
+  );
+  const lists = groups
     .map(
       (g) =>
-        `<section class="st" id="${anchor(g.state)}"><h2>${esc(g.state)}</h2><ul>${g.places
-          .map((p) => `<li><a href="${lp(`/c/${p.slug}`, lang)}">${esc(p.name)}</a></li>`)
-          .join("")}</ul></section>`,
+        `<details class="fold" open id="${stateAnchor(g.state)}"><summary>${esc(g.state)}<span class="n">${g.places.length}</span></summary><div class="in"><ul class="plist">` +
+        g.places
+          .map((p) => {
+            const w = isWarned.has(p.slug);
+            return `<li><a href="${lp(`/c/${p.slug}`, lang)}">${w ? `${ico("warn")}<b>${esc(p.name)}</b>` : esc(p.name)}</a></li>`;
+          })
+          .join("") +
+        `</ul></div></details>`,
     )
     .join("");
+  const directory = band(
+    lane("la", [`<div class="aside">${mapPanel}</div>`, `<div class="col"><div class="flow">${lists}</div></div>`]),
+  );
+  const credit = band(
+    `<p class="t-meta">${T("Place names: OpenStreetMap contributors (ODbL), GeoNames (CC-BY 4.0).")} ${T("Admin boundaries: LGD, via bharatlas.")}</p>`,
+  );
+
   const canonical = "https://mugilu.live/places";
-  const title = t(`Every place in India: ${HAZARDS_SHORT} by district · mugilu`, lang);
-  const desc = t(`Browse the sky over every district and major city in India: the ${HAZARDS}, one page each.`, lang);
   const crumb = ld({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -68,19 +120,17 @@ export function renderPlaces(lang: Lang = "en"): string {
       { "@type": "ListItem", position: 2, name: "Places", item: canonical },
     ],
   });
-  const body = `
-  <div class="places">
-    <h1>${t("Every place, by state", lang)}</h1>
-    <p class="lede">${t(`The sky over every district and major city in India, one page each. Pick a place to see its ${HAZARDS} right now.`, lang)}</p>
-    <p class="count">${total} ${t("places across India", lang)}</p>
-    <div class="pwrap">
-      <nav class="pindex" aria-label="States">${index}</nav>
-      <div>
-        <p class="pfind" hidden><label for="pq">${t("Find a place", lang)}</label><input type="search" id="pq" autocomplete="off"></p>
-        <div class="pcards">${sections}</div>
-      </div>
-    </div>
-  </div>
-  <script>${PLACES_FIND_JS}</script>`;
-  return shell(title, body, PLACES_CSS, { desc, canonical, jsonLd: crumb, ogImage: HOME_OG, lang, wide: true });
+  return pageShell(
+    t(`Every place in India: ${HAZARDS_SHORT} by district · mugilu`, lang),
+    wrap(head + warnBox + directory + credit),
+    {
+      path: "/places",
+      desc: t(`Browse the sky over every district and major city in India: the ${HAZARDS}, one page each.`, lang),
+      canonical,
+      jsonLd: crumb,
+      ogImage: HOME_OG,
+      lang,
+      js: PLACES_JS + MAP_JS(lang),
+    },
+  );
 }

@@ -1,11 +1,9 @@
 import { type Conditions, type NormalizedStation, type Warning } from "../types";
-import { type NationalHighlights } from "../highlights";
 import { AQI_BAND_LABEL } from "../aqi";
 import { gauge, pollutantBars, uvSteps, worstPollutant } from "../glyphs";
 import { forPersona, isDriver, km, layerBase, orderByRisk } from "../readings";
 import { esc } from "../html";
 import {
-  PERSONAS,
   PERSONA_LABEL,
   RISK_BANDS,
   THRESHOLDS,
@@ -22,7 +20,7 @@ import {
   type RiskBand,
   windLevelOf,
 } from "../score";
-import { HAZARD_TINT, RISK_COLOR } from "../palette";
+import { HAZARD_TINT } from "../palette";
 import {
   LEVEL_SHAPE,
   band,
@@ -35,11 +33,10 @@ import {
   warningPlate,
   type IconName,
 } from "../ui/components";
-import { lp, t, type Lang } from "../i18n";
+import { t, type Lang } from "../i18n";
 import { HAZARDS_SHORT } from "../hazards";
-import { renderIndiaMap, type IndiaMap } from "../indiamap";
+import { cycloneIn } from "../sachet";
 import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnormals";
-import { relTime } from "../ui/shell";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().
@@ -122,98 +119,6 @@ export const heatBand = (apparent?: number, wb?: number): RiskBand =>
   RISK_BANDS[heatLevelOf({ apparent_c: apparent, wet_bulb_c: wb })];
 export const airBand = (b: NormalizedStation["band"]): RiskBand => RISK_BANDS[airLevelOf(b) ?? 0];
 
-/** The "right now in India" hero. Heat- and dust-led from the 4-hourly grid,
- *  plus a worst-air row from the hourly snapshot, each row state-qualified (so
- *  the place is recognisable), stamped with its own freshness, and coloured by
- *  its severity; the whole card takes the tint of the worst extreme, like /c. */
-export function renderHero(
-  h: NationalHighlights | undefined,
-  meta?: { gridAsOf?: string; airAsOf?: string; map?: IndiaMap },
-  lang: Lang = "en",
-): string {
-  const rows: string[] = [];
-  let worst: RiskBand = "low";
-  // Place + state names are proper nouns from the gazetteer: kept as-is (English)
-  // in every language; transliterating them would be unreliable.
-  const place = (name: string, state?: string) => esc(state ? `${name}, ${state}` : name);
-  const age = (iso?: string) => (iso ? ` <span class="age">· ${relTime(iso)}</span>` : "");
-  // "feels 41°": in Kannada/Hindi the verb follows the number ("41° ಅನಿಸುತ್ತದೆ").
-  const feels = (c: number) =>
-    lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
-  const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
-    if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
-    return `<a class="hl" style="--hue:var(--rt-${band})" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
-  };
-  if (h?.hottest) {
-    rows.push(
-      row(
-        heatBand(h.hottest.apparent_c, h.hottest.wet_bulb_c),
-        h.hottest.lat,
-        h.hottest.lon,
-        `${icon("heat")}${t("Hottest", lang)}: <b>${place(h.hottest.name, h.hottest.state)}</b>, ${feels(h.hottest.apparent_c)}, ${t(heatPhrase(h.hottest.apparent_c, h.hottest.wet_bulb_c), lang)}`,
-        meta?.gridAsOf,
-      ),
-    );
-  }
-  if (h?.dustiest) {
-    rows.push(
-      row(
-        dustBand(h.dustiest.dust_ug_m3),
-        h.dustiest.lat,
-        h.dustiest.lon,
-        `${icon("dust")}${t("Dustiest", lang)}: <b>${place(h.dustiest.name, h.dustiest.state)}</b>, ${t(DUST_PHRASE[dustBand(h.dustiest.dust_ug_m3)], lang)}`,
-        meta?.gridAsOf,
-      ),
-    );
-  }
-  if (h?.worstAir) {
-    rows.push(
-      row(
-        airBand(h.worstAir.band),
-        h.worstAir.lat,
-        h.worstAir.lon,
-        `${icon("air")}${t("Worst air", lang)}: <b>${place([h.worstAir.station, h.worstAir.name].filter(Boolean).join(", "), h.worstAir.state)}</b>, AQI ${h.worstAir.aqi} ${t(AQI_BAND_LABEL[h.worstAir.band] ?? "", lang)}`,
-        meta?.airAsOf,
-      ),
-    );
-  }
-  const map = meta?.map ? renderIndiaMap(meta.map, lang, relTime) : "";
-  return rows.length || map
-    ? `<section class="hero-now" style="--cond:${RISK_COLOR[worst]}"><h2>${t("India now", lang)}</h2>${map}${rows.join("")}</section>`
-    : "";
-}
-
-// Inline Lucide-style line icons (MIT). currentColor + one stroke weight, so each
-// inherits its context colour (muted by default, the condition hue on the driver).
-export const ICON: Record<string, string> = {
-  screen: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
-  air: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>',
-  heat: '<path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
-  cold: '<path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"/>',
-  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
-  dust: '<path d="M5.2 6.2 6.6 7.6M2 13h2M20 13h2M17.4 7.6l1.4-1.4M22 17H2M22 21H2"/><path d="M16 13a4 4 0 0 0-8 0"/>',
-  smoke:
-    '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
-  rain: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
-  warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
-  compass: '<circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>',
-  wind: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/>',
-  fog: '<path d="M4 8h16M6 12h14M4 16h12M8 20h10"/>',
-  users:
-    '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
-  layers:
-    '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
-  heart:
-    '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>',
-  pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
-};
-ICON.clear = ICON.sun;
-
-export function icon(name: string): string {
-  return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] ?? ""}</svg>`;
-}
-
 /** Wet-bulb survivability read (~31 is the theoretical limit): the word per level. */
 export const WET_BULB = ["safe", "caution", "severe", "dangerous"];
 
@@ -229,13 +134,6 @@ export const KEY_READING: Record<Persona, { pollutants: string[]; heat?: "wbgt" 
   outdoor: { pollutants: ["pm25"], heat: "wbgt" },
   heart: { pollutants: ["pm25"], heat: "wetbulb" },
 };
-
-/** The persona toggles (understated text links), the current one marked. */
-export function personaLinks(href: (p: Persona) => string, current: Persona, lang: Lang): string {
-  return PERSONAS.map(
-    (p) => `<a${p === current ? ' class="on"' : ""} href="${href(p)}">${esc(t(PERSONA_LABEL[p], lang))}</a>`,
-  ).join("");
-}
 
 /** Whether the air reading is older than the page by half an hour or more (stations
  *  report on their own clock, often an hour or two behind), so it is named apart. */
@@ -272,29 +170,6 @@ if(location.hash)try{history.replaceState(null,'',location.pathname+location.sea
 // ── The readings ─────────────────────────────────────────────────────────────────
 // One model of a place's readings, drawn as the place page's rows (the standard's .rrow),
 // the screen display's tiles and the embed card's figures, so they never disagree.
-
-/** The pictogram for each reading, and for the Ambient read's driver. */
-export const READ_ICON: Record<string, IconName> = {
-  air: "air",
-  heat: "heat",
-  cold: "cold",
-  sun: "sun",
-  dust: "dust",
-  wind: "wind",
-  fog: "fog",
-  smoke: "smoke",
-  rain: "drop",
-  Air: "air",
-  Heat: "heat",
-  Cold: "cold",
-  UV: "sun",
-  Dust: "dust",
-  Wind: "wind",
-  Fog: "fog",
-  Smoke: "smoke",
-  Warning: "warn",
-  none: "sun",
-};
 
 /** One reading. Text fields are plain (escaped when drawn); `chip` and `more` are markup. */
 export interface ReadRow {
@@ -544,7 +419,7 @@ export function headText(risk: AmbientRisk, lang: Lang): string {
 }
 
 /** "Ambient · Everyone": the read and whose it is. */
-export const ambientKicker = (risk: AmbientRisk, lang: Lang) => `Ambient · ${t(PERSONA_LABEL[risk.persona], lang)}`;
+const ambientKicker = (risk: AmbientRisk, lang: Lang) => `Ambient · ${t(PERSONA_LABEL[risk.persona], lang)}`;
 
 /** The level hero: the Ambient read on its level's fill, shape and word, the advice under it.
  *  `more` (markup) follows the advice: the screen display's official warning. */
@@ -569,14 +444,7 @@ export function ambientPlate(risk: AmbientRisk, lang: Lang, more = ""): string {
 /** An official warning's title in IMD's own words: the category and the storm's name
  *  ("Severe Cyclonic Storm Akvan") when the message names one, else its type. */
 export function warningTitle(w: Warning): string {
-  const m = (w.headline ?? "").match(
-    /\b(super cyclonic storm|extremely severe cyclonic storm|very severe cyclonic storm|severe cyclonic storm|cyclonic storm|deep depression)\s+(?:\(\s*)?([A-Z][A-Za-z]+)\b/i,
-  );
-  if (m && !/^(with|over|near|lay|lays|moved|has|is|of|at|in)$/i.test(m[2])) {
-    const title = (s: string) => s.toLowerCase().replace(/\b\w/g, (x) => x.toUpperCase());
-    return `${title(m[1])} ${title(m[2])}`;
-  }
-  return w.event;
+  return cycloneIn(w.headline)?.title ?? w.event;
 }
 
 /** The official warnings over this point: a WarningPlate each (IMD's category and name, the

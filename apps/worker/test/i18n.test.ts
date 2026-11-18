@@ -91,7 +91,7 @@ test("renderHome(kn): Kannada hero + tagline, html lang=kn, /kn canonical, Indic
   assert.match(html, /ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ, ನಿರ್ದೇಶಾಂಕ ಒಂದೊಂದಾಗಿ\./); // tagline
   assert.match(html, /ಜನಪ್ರಿಯ ಸ್ಥಳಗಳು:/); // Popular:
   assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live\/kn">/);
-  assert.match(html, /Noto Serif Kannada/); // font override injected
+  assert.match(html, /family=Anek\+Kannada/); // the Kannada face of the signage type
   assert.match(html, /ಎಚ್ಚರಿಕೆಗಳು<\/span>/); // covers row localized (warnings)
   assert.match(html, /placeholder="ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ/); // localized, no leak
   assert.doesNotMatch(html, /\(placeholder\)/); // the disambiguation key never leaks
@@ -105,7 +105,7 @@ test("renderHome(kn): highlights hero localized; place + state names kept Englis
   } as unknown as Parameters<typeof renderHome>[1];
   const html = renderHome(undefined, hl, undefined, "kn");
   assert.match(html, /ಈಗ ಭಾರತದಾದ್ಯಂತ/); // "India now" heading
-  assert.match(html, /ಅತ್ಯಂತ ಬಿಸಿಲು: <b>Sitapur, Uttar Pradesh<\/b>/); // label localized, place English
+  assert.match(html, /ಅತ್ಯಂತ ಬಿಸಿಲು:<\/span> <b class="t-value">Sitapur, Uttar Pradesh<\/b>/); // label localized, place English
   assert.match(html, /41° ಅನಿಸುತ್ತದೆ/); // "feels" (anisuttade), after the number
   assert.match(html, /ಅಪಾಯಕಾರಿ ಆರ್ದ್ರತೆ ಮತ್ತು ಬಿಸಿಲು/); // heat phrase
   assert.match(html, /ತೀವ್ರ ಧೂಳು/); // dust phrase
@@ -121,12 +121,12 @@ test("renderHome(hi): Hindi hero, html lang=hi", () => {
 
 test("language switcher: current language bold, the others link to the same page", () => {
   const kn = renderHome(undefined, undefined, undefined, "kn");
-  assert.match(kn, /class="langsw"/);
+  assert.match(kn, /<nav class="langs" aria-label="[^"]+">/);
   assert.match(kn, /<b>ಕನ್ನಡ<\/b>/); // current is not a link
   // switcher links are relative (host-agnostic), not absolute prod URLs
-  assert.match(kn, /href="\/" hreflang="en">English<\/a>/);
-  assert.match(kn, /href="\/hi" hreflang="hi">हिंदी<\/a>/);
-  assert.doesNotMatch(kn, /langsw[\s\S]*href="https:\/\/mugilu/);
+  assert.match(kn, /href="\/" lang="en" hreflang="en">English<\/a>/);
+  assert.match(kn, /href="\/hi" lang="hi" hreflang="hi">हिंदी<\/a>/);
+  assert.doesNotMatch(kn, /class="langs"[^]*?href="https:\/\/mugilu[^]*?<\/nav>/);
 });
 
 test("footer nav: internal links carry the lang prefix; labels localized", () => {
@@ -368,7 +368,7 @@ test("every translation keeps its placeholders, its script, the Latin names and 
 
 test("footer links the MCP page in every language; build on it stays for the data formats", () => {
   const en = renderHome(undefined, undefined, undefined, "en");
-  assert.match(en, /<footer class="foot">[\s\S]*<a href="\/mcp">MCP server<\/a>/);
+  assert.match(en, /<footer class="sf">[\s\S]*<a href="\/mcp">MCP server<\/a>/);
   assert.match(en, /<a href="\/about#build">build on it<\/a>/);
   const hi = renderHome(undefined, undefined, undefined, "hi");
   assert.match(hi, /<a href="\/hi\/mcp">MCP सर्वर<\/a>/);

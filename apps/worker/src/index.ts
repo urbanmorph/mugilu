@@ -202,8 +202,13 @@ export default {
     // The place directory: every named /c/{slug} page, grouped by state. A crawlable
     // index that gives search engines a path to all ~800 place pages (and readers a
     // way to browse), so they aren't discoverable only through the sitemap.
+    // phase2a: with the map of India (the squares as a backdrop) and the places under an
+    // official cyclone warning marked, so it follows the live snapshots.
     if (url.pathname === "/places") {
-      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderPlaces(lang), "text/html; charset=utf-8"));
+      return cached(LIVE_EDGE_TTL, async () => {
+        const [map, warnings] = await Promise.all([composeMap(env), loadWarningsSnapshot(env).catch(() => null)]);
+        return cachedResponse(renderPlaces(lang, { map, warnings }), "text/html; charset=utf-8");
+      });
     }
 
     // Crawler + agent front-door files, built from the live route set. Edge-cached:
@@ -255,16 +260,22 @@ export default {
     if (url.pathname === "/") {
       const notfound = url.searchParams.get("notfound") ?? undefined;
       const home = async () => {
-        const [hl, popular, map] = await Promise.all([
+        const [hl, popular, map, warnings] = await Promise.all([
           composeHighlights(env),
           topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
           composeMap(env),
+          loadWarningsSnapshot(env).catch(() => null), // phase2a: an official cyclone is pinned
         ]);
         // Only show the "India now" hero when there's something in it.
         const highlights =
           hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
         const res = cachedResponse(
-          renderHome(notfound, highlights, { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map }, lang),
+          renderHome(
+            notfound,
+            highlights,
+            { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map, warnings },
+            lang,
+          ),
           "text/html; charset=utf-8",
         );
         // A missing grid or air snapshot leaves the hero partial: served, not stored.

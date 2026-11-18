@@ -80,27 +80,8 @@ const SNAP: WarningsSnapshot = {
   ],
 } as WarningsSnapshot;
 
-// /warnings, /display and 404 are on the signage shell (test/redesign-warnings.test.ts).
-const WIDE = [["/places", renderPlaces()]] as const;
-
-test("wide pages: a header nav to the main pages, and the wide layout from 960 px", () => {
-  for (const [name, html] of WIDE) {
-    assert.match(html, /<body class="wide">/, name);
-    const nav = html.match(/<nav class="topnav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? "";
-    for (const p of ["/places", "/warnings", "/display", "/methodology", "/about"])
-      assert.match(nav, new RegExp(`href="${p}"`), `${name} nav ${p}`);
-    assert.match(
-      html,
-      /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}body\.wide main\{max-width:1180px/,
-      name,
-    );
-  }
-  // in Hindi the nav links carry the prefix and the labels are Hindi
-  const hi = renderPlaces("hi").match(/<nav class="topnav"[^>]*>([\s\S]*?)<\/nav>/)![1];
-  assert.match(hi, /href="\/hi\/warnings">चेतावनियाँ</);
-});
-
-test("every page shares the header nav and the footer width; home and /c keep their own body layouts", () => {
+// Every page is on the signage shell: the one header (with its nav) and the one footer.
+test("every page shares the signage header nav and footer; none keeps the old wide body", () => {
   const c = {
     location: { lat: 28.61, lon: 77.21 },
     as_of: "2026-11-18T11:05:00.000Z",
@@ -115,14 +96,20 @@ test("every page shares the header nav and the footer width; home and /c keep th
     attribution: "x",
     disclaimer: "y",
   } as unknown as Conditions;
-  void c; // the place page is on the signage shell (test/page.test.ts)
-  for (const html of [renderHome()]) {
-    assert.match(html, /<nav class="topnav"[^>]*>[\s\S]*href="\/warnings"/);
-    assert.match(html, /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}/);
+  const pages = {
+    home: renderHome(),
+    places: renderPlaces(),
+    place: renderConditionsPage(c),
+    station: renderStationPage(st(), near, true),
+  };
+  for (const [name, html] of Object.entries(pages)) {
+    assert.match(html, /<nav class="nav" aria-label="Main">[\s\S]*href="\/warnings"/, name);
+    assert.match(html, /<footer class="sf">/, name);
+    assert.doesNotMatch(html, /<body class="wide">|class="topnav"/, name);
   }
-  for (const html of [renderHome()]) assert.doesNotMatch(html, /<body class="wide">/);
-  // phones: the nav is a second row under the logo, scrolling sideways if it must
-  assert.match(renderHome(), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
+  // in Hindi the nav links carry the prefix and the labels are Hindi
+  const hi = renderPlaces("hi").match(/<nav class="nav"[^>]*>([\s\S]*?)<\/nav>/)![1];
+  assert.match(hi, /href="\/hi\/warnings">चेतावनियाँ</);
 });
 
 test("warningType: the kind of hazard, from the headline", () => {
@@ -142,10 +129,10 @@ test("/warnings: filters by type and office, rows carry what the filters read", 
   assert.match(html, /<li class="wrow" data-type="storm" data-issuer="IMD Srinagar">/);
 });
 
-test("/places: a state index and a search, each state an anchor", () => {
+test("/places: a state picker and a search, each state an anchor", () => {
   const html = renderPlaces();
-  assert.match(html, /<nav class="pindex" aria-label="States">[\s\S]*href="#st-delhi">Delhi</);
-  assert.match(html, /<section class="st" id="st-delhi">/);
+  assert.match(html, /<option value="st-delhi">Delhi<\/option>/);
+  assert.match(html, /<details class="fold" open id="st-delhi">/);
   assert.match(html, /<input[^>]*id="pq"/);
 });
 
