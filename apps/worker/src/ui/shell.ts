@@ -1,3 +1,4 @@
+import { DISCLAIMER_SHORT } from "./components";
 import { esc } from "../html";
 import { type AmbientRisk } from "../score";
 import { paletteCss, tintOf } from "../palette";
@@ -52,7 +53,7 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 
 export const SITE = "https://mugilu.live";
 /** Where there is no room for the full disclaimer (kiosk, embed card). */
-export const SHORT_DISCLAIMER = "Informational only, not medical advice.";
+export const SHORT_DISCLAIMER = DISCLAIMER_SHORT;
 export const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
 export /** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
