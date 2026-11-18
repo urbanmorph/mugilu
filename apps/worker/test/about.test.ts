@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderAbout, renderMethodology } from "../src/page";
+import { renderAbout } from "../src/pages/about";
+import { renderMethodology } from "../src/pages/methodology";
 
 test("renderMethodology: glass-box thresholds page with named sources", () => {
   const html = renderMethodology();

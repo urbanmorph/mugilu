@@ -14,7 +14,7 @@
 
 import { LANGS, lp, t, type Lang } from "./i18n";
 import { esc } from "./html";
-import { tokensCss } from "./ui/tokens";
+import { TOKENS_CSS } from "./ui/tokens";
 import { STANDARD_CSS } from "./ui/standard";
 import { THEME_HEAD_JS, THEME_JS, ico, linkButton, siteFooter, siteHeader } from "./ui/components";
 
@@ -50,7 +50,7 @@ export const SW_JS = String.raw`const CACHE = 'mugilu-readings';
 const KEEP = ${KEEP};
 const HIDDEN = 'id="${OFFLINE_NOTE_ID}" hidden';
 const OFFLINE = ${JSON.stringify(OFFLINE_PAGES)};
-const CSS = ${JSON.stringify(tokensCss() + STANDARD_CSS)};
+const CSS = ${JSON.stringify(TOKENS_CSS + STANDARD_CSS)};
 // A place's page, by name or coordinate (/c/lucknow, /hi/c/26.85,80.95), not its data files.
 const isPlace = (path) => /^(\/(hi|kn))?\/c\/[^/]+$/.test(path) && !/\.(json|md|png)$/.test(path);
 const isHome = (path) => /^(\/(hi|kn))?\/?$/.test(path);

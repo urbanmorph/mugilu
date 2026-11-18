@@ -14,7 +14,7 @@ export const SOURCES_ABOUT =
   "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, JTWC for cyclone tracks, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.";
 
 /** English prose with each source name from SOURCES in bold. */
-export const boldSourceNames = (text: string) =>
+const boldSourceNames = (text: string) =>
   SOURCES.flatMap((s) => s.names).reduce((out, n) => out.split(n).join(`<b>${n}</b>`), esc(text));
 
 // Q&A that ALSO ships as FAQPage structured data: the visible list and the schema are one list.

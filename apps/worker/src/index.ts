@@ -11,20 +11,18 @@ import { findNearest, parseLatLon, STATION_META } from "./near";
 import { renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
 import { lookupConditions, recordUsage, type LookupFormat } from "./lookup";
 import { cacheKey, edgeServe } from "./edge";
-import {
-  renderConditionsPage,
-  renderKioskPage,
-  renderDisplayBuilder,
-  renderStationPage,
-  renderHome,
-  renderAbout,
-  renderTerms,
-  renderPlaces,
-  renderNotFound,
-  renderEmbed,
-  renderWarningsPage,
-  renderMethodology,
-} from "./page";
+import { renderConditionsPage } from "./pages/place";
+import { renderKioskPage } from "./pages/kiosk";
+import { renderDisplayBuilder } from "./pages/display";
+import { renderStationPage } from "./pages/station";
+import { renderHome } from "./pages/home";
+import { renderAbout } from "./pages/about";
+import { renderTerms } from "./pages/terms";
+import { renderPlaces } from "./pages/places";
+import { renderNotFound } from "./pages/notfound";
+import { renderEmbed } from "./pages/embed";
+import { renderWarningsPage } from "./pages/warnings";
+import { renderMethodology } from "./pages/methodology";
 import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec, mcpJson } from "./meta";
 import { geocodeList } from "./geocode";

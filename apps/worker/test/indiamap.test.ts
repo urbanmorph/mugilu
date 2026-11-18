@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { airDots, LAND_PATH, mapCells, STATE_PATH } from "../src/indiamap";
 import { indiaMap } from "../src/ui/map";
-import { renderHome } from "../src/page";
-import { tokensCss } from "../src/ui/tokens";
+import { renderHome } from "../src/pages/home";
+import { TOKENS_CSS } from "../src/ui/tokens";
 import type { ConditionsPoint, NormalizedStation } from "../src/types";
 import type { Cyclone } from "../src/cyclones";
 
@@ -220,7 +220,7 @@ test("indiaMap: a high square is a smaller square in the full paint, never a fad
 });
 
 test("map tokens: air, heat and cold are plum, orange-red and blue, chosen to stay apart for colour-blind readers", () => {
-  const css = tokensCss();
+  const css = TOKENS_CSS;
   assert.match(css, /--mair:#7b2872/);
   assert.match(css, /--mheat:#e75c2e/);
   assert.match(css, /--mcold:#238ce4/);

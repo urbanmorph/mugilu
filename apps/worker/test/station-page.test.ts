@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderStationPage, renderConditionsPage } from "../src/page";
+import { renderStationPage } from "../src/pages/station";
+import { renderConditionsPage } from "../src/pages/place";
 import { robotsTxt } from "../src/meta";
 import type { Conditions, NormalizedStation } from "../src/types";
 

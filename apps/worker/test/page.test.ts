@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderConditionsPage, renderEmbed, renderKioskPage, renderWarningsPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderEmbed } from "../src/pages/embed";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderWarningsPage } from "../src/pages/warnings";
 import type { WarningsSnapshot } from "../src/sachet";
 import type { Conditions } from "../src/types";
 

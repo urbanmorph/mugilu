@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import { BAND_TEXT, HAZARD_TINT, NEUTRAL, RISK_TEXT, WASH_STRENGTH } from "../src/palette";
 import type { RiskBand } from "../src/score";
 import { contrast, mix } from "./helpers/contrast";
-import { renderConditionsPage, renderEmbed, renderKioskPage, renderStationPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderEmbed } from "../src/pages/embed";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderStationPage } from "../src/pages/station";
 import type { Conditions, NormalizedStation } from "../src/types";
 
 // One canonical set of text colours for severity and AQI bands, light and dark, every

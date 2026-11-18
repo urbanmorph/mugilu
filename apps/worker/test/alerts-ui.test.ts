@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
 import { ALERTS_JS } from "../src/alerts-ui";
 import { alertsBox } from "../src/ui/components";
-import { renderConditionsPage, renderTerms } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderTerms } from "../src/pages/terms";
 import type { Conditions } from "../src/types";
 
 const KEY = "BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8";

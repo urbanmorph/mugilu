@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderPlaces } from "../src/page";
+import { renderPlaces } from "../src/pages/places";
 import type { WarningsSnapshot } from "../src/sachet";
 
 test("renderPlaces: a directory that links every named place, a fold per state", () => {

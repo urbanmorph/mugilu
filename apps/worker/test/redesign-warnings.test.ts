@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderDisplayBuilder, renderNotFound, renderWarningsPage, warningType } from "../src/page";
+import { renderDisplayBuilder } from "../src/pages/display";
+import { renderNotFound } from "../src/pages/notfound";
+import { renderWarningsPage, warningType } from "../src/pages/warnings";
 import { cycloneIn } from "../src/sachet";
 import type { WarningsSnapshot } from "../src/sachet";
 import { STANDARD_CSS } from "../src/ui/standard";

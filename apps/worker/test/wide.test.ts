@@ -1,17 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  renderAbout,
-  renderConditionsPage,
-  renderHome,
-  renderMcpPage,
-  renderMethodology,
-  renderPlaces,
-  renderStationPage,
-  renderTerms,
-  renderWarningsPage,
-  warningType,
-} from "../src/page";
+import { renderAbout } from "../src/pages/about";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderHome } from "../src/pages/home";
+import { renderMcpPage } from "../src/pages/mcp";
+import { renderMethodology } from "../src/pages/methodology";
+import { renderPlaces } from "../src/pages/places";
+import { renderStationPage } from "../src/pages/station";
+import { renderTerms } from "../src/pages/terms";
+import { renderWarningsPage, warningType } from "../src/pages/warnings";
 import type { Conditions, NormalizedStation } from "../src/types";
 import type { WarningsSnapshot } from "../src/sachet";
 

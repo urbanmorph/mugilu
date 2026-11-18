@@ -4,7 +4,10 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
 import { SW_JS, SW_PATH, SW_REGISTER, serviceWorker, OFFLINE_NOTE_ID } from "../src/sw";
-import { renderConditionsPage, renderEmbed, renderHome, renderKioskPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderEmbed } from "../src/pages/embed";
+import { renderHome } from "../src/pages/home";
+import { renderKioskPage } from "../src/pages/kiosk";
 import type { Conditions } from "../src/types";
 
 const ORIGIN = "https://mugilu.live";

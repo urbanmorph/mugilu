@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ambientRisk, dustLevelOf, heatLevelOf, THRESHOLD_ROWS } from "../src/score";
-import { renderConditionsPage, renderMethodology } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderMethodology } from "../src/pages/methodology";
 import { readResource } from "../src/mcpcontent";
 import { esc } from "../src/html";
 import type { Conditions } from "../src/types";

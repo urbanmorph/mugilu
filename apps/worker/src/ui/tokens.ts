@@ -138,19 +138,17 @@ const FORCED =
   `.mg .chip,.mg .plate,.mg .fill,.mg .track,.mg .gauge,.mg .uvs,.mg .msvg,.mg .mlg svg,.mg .levels>div{forced-color-adjust:none}` +
   `.mg .t-plate{line-height:.95;margin-top:.08em}}`;
 
-let cached: string | undefined;
-
-/** The tokens stylesheet. */
-export function tokensCss(): string {
-  if (cached) return cached;
-  const base =
-    `.mg{${decl({ ...themed("light"), ...FIXED })}` +
-    `font-family:'Anek Latin',system-ui,sans-serif;font-size:var(--t-base);line-height:1.5;color:var(--ink);` +
-    `background:color-mix(in srgb,var(--hue) var(--s),var(--bg));box-sizing:border-box}`;
-  const dark = darkRules((scope) => `${scope} .mg{${decl(themed("dark"))}}` + wash("dark", scope));
-  const tints = Object.entries(HAZARD_TINT)
+/** The tokens stylesheet (built once, at module load: every input is a constant). */
+export const TOKENS_CSS =
+  `.mg{${decl({ ...themed("light"), ...FIXED })}` +
+  `font-family:'Anek Latin',system-ui,sans-serif;font-size:var(--t-base);line-height:1.5;color:var(--ink);` +
+  `background:color-mix(in srgb,var(--hue) var(--s),var(--bg));box-sizing:border-box}` +
+  Object.entries(HAZARD_TINT)
     .map(([k, h]) => `.mg[data-tint="${k}"]{--hue:${h}}`)
-    .join("");
-  cached = base + tints + wash("light") + dark + MODIFIERS + TYPE_ROLES + KIOSK + FORCED;
-  return cached;
-}
+    .join("") +
+  wash("light") +
+  darkRules((scope) => `${scope} .mg{${decl(themed("dark"))}}` + wash("dark", scope)) +
+  MODIFIERS +
+  TYPE_ROLES +
+  KIOSK +
+  FORCED;

@@ -12,7 +12,7 @@ import {
   WASH_STRENGTH,
   MAP_HUE,
 } from "../src/palette";
-import { tokensCss } from "../src/ui/tokens";
+import { TOKENS_CSS } from "../src/ui/tokens";
 import { contrast, mix } from "./helpers/contrast";
 
 // The signage design standard's tokens (supporting-docs/redesign/design-standard.md),
@@ -70,8 +70,8 @@ test("text on a level or band fill holds 4.5:1 (white on green is not allowed)",
   assert.equal(ON_FILL.severe, "#ffffff");
 });
 
-test("tokensCss: light on .mg, dark by the system setting unless the page says light, and by data-theme", () => {
-  const css = tokensCss();
+test("TOKENS_CSS: light on .mg, dark by the system setting unless the page says light, and by data-theme", () => {
+  const css = TOKENS_CSS;
   assert.match(css, /\.mg\{[^}]*--bg:#ffffff;[^}]*--muted:#55554f;/);
   assert.match(css, /--low:#16a34a;[^}]*--on-severe:#ffffff;/);
   assert.match(css, /--b-vpoor:#dc2626;/);

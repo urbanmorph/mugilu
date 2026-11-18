@@ -16,7 +16,7 @@ import { ambientPlate, readRows, warningTitle, type ReadRow } from "./read";
 // by the screen's height (tokens.ts), and portrait stacks the plate over the readings.
 
 /** The loading verbs the display cycles through while it refreshes. */
-export const KIOSK_VERBS = [
+const KIOSK_VERBS = [
   "Reading the sky",
   "Checking the air",
   "Gauging the heat",

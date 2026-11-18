@@ -39,7 +39,7 @@ export function issuerName(issuer: string): string {
 // avalanche comes first because DGRE writes "danger level", which is also a river's. Words in
 // English, Hindi, Kannada, Bengali, Telugu and Odia: the offices write in all of them. A sea-wave
 // alert with no hazard word stays under Other, as its English equivalent does.
-export const WARNING_TYPES: [key: string, label: string, re: RegExp, icon: IconName][] = [
+const WARNING_TYPES: [key: string, label: string, re: RegExp, icon: IconName][] = [
   ["avalanche", "Avalanche", /avalanche|हिमस्खलन|ಹಿಮಕುಸಿತ|তুষারধস|హిమపాతం/i, "snow"],
   [
     "storm",

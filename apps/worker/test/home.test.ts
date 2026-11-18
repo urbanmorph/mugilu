@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderHome } from "../src/page";
+import { renderHome } from "../src/pages/home";
 import type { WarningsSnapshot } from "../src/sachet";
 
 test("renderHome: a valid HTML doc on the signage shell, with a search form to /go", () => {

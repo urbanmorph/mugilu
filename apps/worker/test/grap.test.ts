@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { grapRead } from "../src/grap";
-import { renderConditionsPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions, NormalizedStation } from "../src/types";
 
 const st = (aqi: number | null, city = "Delhi", provider: NormalizedStation["provider"] = "cpcb") =>

@@ -6,7 +6,7 @@ import type { Lang } from "../i18n";
 import type { RiskBand } from "../score";
 import { VIEWPORT, headTags, relTimeJs, type ShellOpts } from "./shell";
 import { FONT_FACES, LATIN_FONT } from "./fonts";
-import { tokensCss } from "./tokens";
+import { TOKENS_CSS } from "./tokens";
 import { STANDARD_CSS } from "./standard";
 import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 
@@ -16,7 +16,7 @@ import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 // <body class="mg" data-tint data-level> (the wash from read.ts readTint).
 
 const FONT_PRELOAD = `<link rel="preload" href="${LATIN_FONT}" as="font" type="font/woff2" crossorigin>`;
-const STYLES = `<style>${FONT_FACES}${tokensCss()}${STANDARD_CSS}</style>`;
+const STYLES = `<style>${FONT_FACES}${TOKENS_CSS}${STANDARD_CSS}</style>`;
 
 export interface PageOpts extends ShellOpts {
   /** The page's language-agnostic path: the current nav item and the language links. */

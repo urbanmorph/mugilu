@@ -2,7 +2,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ambientMeaning, ambientRisk } from "../src/score";
-import { renderConditionsPage, renderDisplayBuilder, renderEmbed, renderWarningsPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderDisplayBuilder } from "../src/pages/display";
+import { renderEmbed } from "../src/pages/embed";
+import { renderWarningsPage } from "../src/pages/warnings";
 import { buildSuggestions } from "../src/suggest";
 import { buildGazIndex, type GazRow } from "../src/gazetteer";
 import type { Conditions, NormalizedStation } from "../src/types";

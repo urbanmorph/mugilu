@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { handleMcp } from "../src/mcp";
 import { TOOLS } from "../src/mcptools";
-import { renderMcpPage } from "../src/page";
+import { renderMcpPage } from "../src/pages/mcp";
 import type { Env } from "../src/index";
 
 const env = {} as Env;

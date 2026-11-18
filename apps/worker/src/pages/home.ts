@@ -1,7 +1,7 @@
 import { PLACES_STORE_JS } from "../ui/places-store";
 import { type NationalHighlights } from "../highlights";
 import { esc } from "../html";
-import { langPrefixJs, placeHref } from "../links";
+import { coordKey, langPrefixJs, placeHref } from "../links";
 import { START_CITIES } from "../slugs";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
@@ -64,39 +64,57 @@ function highlightRows(
   // "feels 41°": in Kannada and Hindi the verb follows the number.
   const feels = (c: number) =>
     lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
-  const row = (
-    icon: IconName,
-    label: string,
-    name: string,
-    say: string,
-    level: RiskBand,
-    lat: number,
-    lon: number,
-    iso?: string,
-  ) =>
-    `<a class="hl" href="${lp(`/c/${lat},${lon}`, lang)}">${ico(icon)}<span class="stack">` +
-    `<span><span class="t-meta">${esc(t(label, lang))}:</span> <b class="t-value">${name}</b></span>` +
-    `<span class="row-c"><span>${say}</span>${levelChip(level, lang)}</span>` +
-    (iso ? `<span class="t-meta">${relTime(iso)}</span>` : "") +
+  /** One highlight: `name` and `say` are markup; `at` is the place's coordinate. */
+  const row = (r: {
+    icon: IconName;
+    label: string;
+    name: string;
+    say: string;
+    level: RiskBand;
+    at: { lat: number; lon: number };
+    iso?: string;
+  }) =>
+    `<a class="hl" href="${lp(`/c/${coordKey(r.at)}`, lang)}">${ico(r.icon)}<span class="stack">` +
+    `<span><span class="t-meta">${esc(t(r.label, lang))}:</span> <b class="t-value">${r.name}</b></span>` +
+    `<span class="row-c"><span>${r.say}</span>${levelChip(r.level, lang)}</span>` +
+    (r.iso ? `<span class="t-meta">${relTime(r.iso)}</span>` : "") +
     `</span></a>`;
   const rows: string[] = [];
   if (h?.hottest) {
     const { name, state, lat, lon, apparent_c, wet_bulb_c } = h.hottest;
     const say = `${feels(apparent_c)}, ${esc(t(heatPhrase(apparent_c, wet_bulb_c), lang))}`;
     rows.push(
-      row("heat", "Hottest", place(name, state), say, heatBand(apparent_c, wet_bulb_c), lat, lon, meta.gridAsOf),
+      row({
+        icon: "heat",
+        label: "Hottest",
+        name: place(name, state),
+        say,
+        level: heatBand(apparent_c, wet_bulb_c),
+        at: { lat, lon },
+        iso: meta.gridAsOf,
+      }),
     );
   }
   if (h?.dustiest) {
     const { name, state, lat, lon, dust_ug_m3 } = h.dustiest;
     const b = dustBand(dust_ug_m3);
-    rows.push(row("dust", "Dustiest", place(name, state), esc(t(DUST_PHRASE[b], lang)), b, lat, lon, meta.gridAsOf));
+    rows.push(
+      row({
+        icon: "dust",
+        label: "Dustiest",
+        name: place(name, state),
+        say: esc(t(DUST_PHRASE[b], lang)),
+        level: b,
+        at: { lat, lon },
+        iso: meta.gridAsOf,
+      }),
+    );
   }
   if (h?.worstAir) {
     const w = h.worstAir;
     const name = place([w.station, w.name].filter(Boolean).join(", "), w.state);
     const say = `AQI ${w.aqi} ${esc(t(AQI_BAND_LABEL[w.band] ?? "", lang))}`;
-    rows.push(row("air", "Worst air", name, say, airBand(w.band), w.lat, w.lon, meta.airAsOf));
+    rows.push(row({ icon: "air", label: "Worst air", name, say, level: airBand(w.band), at: w, iso: meta.airAsOf }));
   }
   return rows.length ? `<div>${rows.join("")}</div>` : "";
 }

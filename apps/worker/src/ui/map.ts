@@ -257,7 +257,7 @@ function summaries(m: IndiaMap, lang: Lang): string {
 }
 
 /** What a cyclone is doing, in words: IMD's category and name when IMD has named this storm. */
-export function cycloneSentence(c: Cyclone, lang: Lang, official?: string): string {
+function cycloneSentence(c: Cyclone, lang: Lang, official?: string): string {
   const sea = c.basin === "arabian" ? "Arabian Sea" : "Bay of Bengal";
   const named = official && c.name && official.toLowerCase().includes(c.name.toLowerCase());
   const where =

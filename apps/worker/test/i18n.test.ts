@@ -1,17 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { t, lp, langUrl, LANG_NAME, LANGS, TR } from "../src/i18n";
-import {
-  renderHome,
-  renderNotFound,
-  renderConditionsPage,
-  renderDisplayBuilder,
-  renderWarningsPage,
-  renderKioskPage,
-  renderAbout,
-  renderMethodology,
-  renderTerms,
-} from "../src/page";
+import { renderHome } from "../src/pages/home";
+import { renderNotFound } from "../src/pages/notfound";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderDisplayBuilder } from "../src/pages/display";
+import { renderWarningsPage } from "../src/pages/warnings";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderAbout } from "../src/pages/about";
+import { renderMethodology } from "../src/pages/methodology";
+import { renderTerms } from "../src/pages/terms";
 import type { Conditions } from "../src/types";
 
 const REAL_DISCLAIMER =

@@ -4,7 +4,11 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { INSTALL_JS, webManifest } from "../src/install";
 import { NEUTRAL } from "../src/palette";
-import { renderHome, renderKioskPage, renderEmbed, renderAbout, renderConditionsPage } from "../src/page";
+import { renderHome } from "../src/pages/home";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderEmbed } from "../src/pages/embed";
+import { renderAbout } from "../src/pages/about";
+import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions } from "../src/types";
 
 // --- the client script, run against a fake browser -------------------------------

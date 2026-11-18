@@ -4,7 +4,7 @@ import { TOOLS, callTool } from "./mcptools";
 import { RESOURCES, readResource, PROMPTS, getPrompt } from "./mcpcontent";
 import { SOURCES } from "./sources";
 import SERVER_JSON from "../../../server.json";
-import { renderMcpPage } from "./page";
+import { renderMcpPage } from "./pages/mcp";
 
 // mugilu's MCP server: a hand-rolled JSON-RPC 2.0 endpoint over Streamable HTTP
 // (MCP 2025-06-18), stateless (fits Workers): initialize, ping, client capture, the

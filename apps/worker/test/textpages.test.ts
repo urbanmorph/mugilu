@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { renderAbout, renderMcpPage, renderMethodology, renderTerms } from "../src/page";
+import { renderAbout } from "../src/pages/about";
+import { renderMcpPage } from "../src/pages/mcp";
+import { renderMethodology } from "../src/pages/methodology";
+import { renderTerms } from "../src/pages/terms";
 
 // The text pages on the signage design (supporting-docs/redesign): Sheet sections in boxes,
 // every sentence the live text, whole. test/fixtures/live-text.json holds the live English

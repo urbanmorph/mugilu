@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderKioskPage, renderDisplayBuilder, renderConditionsPage } from "../src/page";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderDisplayBuilder } from "../src/pages/display";
+import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions } from "../src/types";
 import { kioskJs } from "../src/pages/kiosk";
 

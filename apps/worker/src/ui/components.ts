@@ -178,7 +178,7 @@ export function segLinks(
 const THEME_KEY = "mugilu-theme";
 
 /** The footer theme switch: Light, Dark, System (default). */
-export function themeSwitch(lang: Lang): string {
+function themeSwitch(lang: Lang): string {
   return segmented(
     "theme",
     t("Theme", lang),

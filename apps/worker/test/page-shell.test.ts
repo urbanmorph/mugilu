@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { pageShell } from "../src/ui/page-shell";
 import { FONT_FACES } from "../src/ui/fonts";
 import { STANDARD_CSS } from "../src/ui/standard";
-import { tokensCss } from "../src/ui/tokens";
+import { TOKENS_CSS } from "../src/ui/tokens";
 import { DISCLAIMER_FULL } from "../src/ui/components";
 
 // The signage page shell: exactly two stylesheets, the standard's landmarks, the theme.
@@ -17,7 +17,7 @@ const page = pageShell("Warnings", "<p>body</p>", {
 test("pageShell: exactly the two stylesheets, nothing page-specific", () => {
   const styles = page.match(/<style>([\s\S]*?)<\/style>/g) ?? [];
   assert.equal(styles.length, 1);
-  assert.equal(styles[0], `<style>${FONT_FACES}${tokensCss()}${STANDARD_CSS}</style>`);
+  assert.equal(styles[0], `<style>${FONT_FACES}${TOKENS_CSS}${STANDARD_CSS}</style>`);
 });
 
 test("pageShell: skip link, header, one main with id, footer with the disclaimer", () => {

@@ -4,7 +4,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
 import { FRESHEN_JS } from "../src/freshen";
-import { renderConditionsPage, renderHome, renderKioskPage, renderEmbed } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderHome } from "../src/pages/home";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderEmbed } from "../src/pages/embed";
 import type { Conditions } from "../src/types";
 
 function page(o: { online?: boolean; standalone?: boolean; scrollY?: number } = {}) {

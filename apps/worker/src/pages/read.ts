@@ -44,8 +44,8 @@ import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnorma
 // these with the signage components (ui/components.ts); the look is the standard's
 // (ui/tokens.ts + ui/standard.ts), never set here.
 
-export /** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
-function isHttpUrl(u: string): boolean {
+/** Whether an upstream URL is fit for an href: http(s) only (no javascript: etc.). */
+export function isHttpUrl(u: string): boolean {
   return /^https?:\/\//i.test(u);
 }
 
@@ -66,23 +66,23 @@ export function uvWord(index: number | undefined): string {
 // The words below name the same levels the Ambient read uses (score.ts THRESHOLDS),
 // so a tile can never call dust "high" while the read says it is fine.
 
-export /** Dust's risk band (low / moderate / high / severe), the word on its tile and hero. */
-const dustBand = (ug: number): RiskBand => RISK_BANDS[dustLevelOf(ug)];
+/** Dust's risk band (low / moderate / high / severe), the word on its tile and hero. */
+export const dustBand = (ug: number): RiskBand => RISK_BANDS[dustLevelOf(ug)];
 
 /** Wind word: the hazard levels, plus "breezy" for a sub-hazard 20+ km/h. */
-export function windWord(gust: number): string {
+function windWord(gust: number): string {
   const level = windLevelOf(gust);
   if (level) return ["strong", "gale", "storm-force"][level - 1];
   return gust >= 20 ? "breezy" : "calm";
 }
 
 /** 8-point compass label for the direction wind blows FROM. */
-export function compassDir(deg: number): string {
+function compassDir(deg: number): string {
   return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(deg / 45) % 8];
 }
 
 /** Visibility word: the fog levels, then the sub-hazard haze below 5 km. */
-export function visWord(meters: number): string {
+function visWord(meters: number): string {
   const level = fogLevelOf(meters);
   if (level) return ["fog", "thick fog", "dense fog"][level - 1];
   if (meters < 2000) return "misty";
@@ -100,7 +100,7 @@ export function heatPhrase(apparent: number, wetBulb?: number): string {
 }
 
 /** Fire activity nearby per smoke level (1-3); index 0 is unused. */
-export const SMOKE_PHRASE = ["", "some burning", "notable burning", "heavy burning"];
+const SMOKE_PHRASE = ["", "some burning", "notable burning", "heavy burning"];
 
 export const DUST_PHRASE: Record<RiskBand, string> = {
   low: "light dust",
@@ -116,13 +116,13 @@ export const heatBand = (apparent?: number, wb?: number): RiskBand =>
 export const airBand = (b: NormalizedStation["band"]): RiskBand => RISK_BANDS[airLevelOf(b) ?? 0];
 
 /** Wet-bulb survivability read (~31 is the theoretical limit): the word per level. */
-export const WET_BULB = ["safe", "caution", "severe", "dangerous"];
+const WET_BULB = ["safe", "caution", "severe", "dangerous"];
 
 /** The reading inside a layer each persona should look at first: the fine
  *  particles that reach the lungs and heart (PM2.5; PM10 too for the airways),
  *  wet-bulb for bodies that cool less well, and WBGT, the measure made for work
  *  in the heat. */
-export const KEY_READING: Record<Persona, { pollutants: string[]; heat?: "wbgt" | "wetbulb" }> = {
+const KEY_READING: Record<Persona, { pollutants: string[]; heat?: "wbgt" | "wetbulb" }> = {
   everyone: { pollutants: [] },
   asthma: { pollutants: ["pm25", "pm10"] },
   elderly: { pollutants: ["pm25"], heat: "wetbulb" },
@@ -490,8 +490,8 @@ export function readTint(risk: Pick<AmbientRisk, "band" | "driver">): { hue: str
   return { hue: risk.band !== "low" && risk.driver in HAZARD_TINT ? risk.driver : "none", level: risk.band };
 }
 
-export const GRAP_RANGE = ["201-300", "201-300", "301-400", "401-450", "above 450"];
-export const ROMAN = ["I", "I", "II", "III", "IV"];
+const GRAP_RANGE = ["201-300", "201-300", "301-400", "401-450", "above 450"];
+const ROMAN = ["I", "I", "II", "III", "IV"];
 
 /** Delhi-NCR: the GRAP stage range Delhi's AQI is in now, and that CAQM sets the stage (grap.ts). */
 export function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string {
@@ -504,7 +504,7 @@ export function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string
     .replace("{aqi}", String(g.aqi))
     .replace("{n}", String(g.stations))
     .replace("{stage}", ROMAN[g.stage])
-    .replace("{range}", g.stage === 4 ? t("above 450", lang) : GRAP_RANGE[g.stage]);
+    .replace("{range}", t(GRAP_RANGE[g.stage], lang));
   return notice(
     "info",
     `<b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}`,
