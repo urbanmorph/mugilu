@@ -377,8 +377,19 @@ ${canonical ? langSwitcher(canonical, lang) : ""}
 // clear-sky blue when calm), the headline word in the severity colour (--cond), an
 // editorial serif Ambient statement, and the readings as hairline-ruled strata
 // (not cards). Inline-SVG line icons, currentColor so the driver layer glows.
+// The backdrop that says what the data says: the hazard's hue at its level's strength
+// (--tint/--tk, from palette.ts tintOf), fading down the page. One rule for every page
+// that has a read: /c, a station, /warnings.
+const TINT_BODY_CSS = `body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),var(--bg)),color-mix(in srgb,var(--tint) 8%,var(--bg)) 22%,var(--bg) 55%) var(--bg) no-repeat}`;
+
+/** The --tint/--tk variables for a read, by the canonical rule. */
+function tintVars(risk: Pick<AmbientRisk, "band" | "driver">): string {
+  const { hue, strength } = tintOf(risk);
+  return `:root{--tint:${hue};--tk:${strength}%}`;
+}
+
 const CONDITIONS_CSS = `
-body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),var(--bg)),color-mix(in srgb,var(--tint) 8%,var(--bg)) 22%,var(--bg) 55%) var(--bg) no-repeat}
+${TINT_BODY_CSS}
 .coord{font:500 .78rem/1.4 var(--mono);letter-spacing:.04em;color:var(--muted);margin:.4rem 0 0}
 .loc{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6.5vw,2.15rem);line-height:1.05;letter-spacing:-.01em;margin:.35rem 0 0}
 .when{color:var(--muted);font-size:.9rem;margin:.3rem 0 0}
@@ -1105,7 +1116,9 @@ export function renderStationPage(
     address: { "@type": "PostalAddress", addressLocality: s.city || undefined, addressCountry: "IN" },
   });
   // Station pages are thin and Google never crawled them: they stay for people, out of the index.
-  return shell(title, body + FRESHEN, STATION_CSS, {
+  // The air hue at the station's band level; calm sky when it has no recent reading.
+  const tint = tintVars({ band: RISK_BANDS[live ? (airLevelOf(s.band) ?? 0) : 0], driver: "Air" });
+  return shell(title, body + FRESHEN, STATION_CSS + TINT_BODY_CSS + tint, {
     desc,
     canonical,
     jsonLd,
@@ -2139,7 +2152,13 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>
   <script>${WARNINGS_FILTER_JS}</script>`;
-  return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS, {
+  // Any official warning active tints the page in the warning hue, at moderate strength,
+  // high at 25 or more; none active is the calm sky.
+  const n = snap?.alerts.length ?? 0;
+  const tint = tintVars(
+    n ? { band: n >= 25 ? "high" : "moderate", driver: "Warning" } : { band: "low", driver: "none" },
+  );
+  return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS + TINT_BODY_CSS + tint, {
     desc: "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
     canonical: `${SITE}/warnings`,
     ogImage: HOME_OG,

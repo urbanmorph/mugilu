@@ -176,3 +176,23 @@ test("/display: the preview and the setup sit side by side", () => {
   const html = renderDisplayBuilder();
   assert.match(html, /<div class="dleft">[\s\S]*class="dprev"[\s\S]*<div class="dright">[\s\S]*action="\/go"/);
 });
+
+// The backdrop says what the data says, by the canonical rule (palette.ts tintOf), as on /c.
+test("tinted backdrops: a station by its air band, /warnings by its warnings, calm sky when quiet", () => {
+  const body = /body\{background:linear-gradient\(180deg,color-mix\(in srgb,var\(--tint\) var\(--tk\),var\(--bg\)\)/;
+  const vpoor = renderStationPage(st({ aqi: 344, band: "vpoor" }), near, true);
+  assert.match(vpoor, /:root\{--tint:#a0785a;--tk:34%\}/); // the air hue, severe strength
+  assert.match(vpoor, body);
+  assert.match(renderStationPage(st(), near, true), /:root\{--tint:#a0785a;--tk:20%\}/); // moderate
+  assert.match(renderStationPage(st(), near, false), /:root\{--tint:#38bdf8;--tk:16%\}/); // no recent reading: calm
+  assert.match(renderWarningsPage(SNAP), /:root\{--tint:#ef4444;--tk:20%\}/); // 4 warnings
+  assert.match(renderWarningsPage(SNAP), body);
+  const many = {
+    ...SNAP,
+    alerts: Array.from({ length: 30 }, (_, i) => ({ ...SNAP.alerts[0], identifier: String(i) })),
+  };
+  assert.match(renderWarningsPage(many as WarningsSnapshot), /:root\{--tint:#ef4444;--tk:26%\}/);
+  assert.match(renderWarningsPage({ ...SNAP, alerts: [] } as WarningsSnapshot), /:root\{--tint:#38bdf8;--tk:16%\}/);
+  // the explainer pages stay neutral
+  assert.doesNotMatch(renderAbout(), /--tint:/);
+});
