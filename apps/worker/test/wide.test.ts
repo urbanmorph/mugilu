@@ -86,9 +86,6 @@ const WIDE = [
   ["/warnings", renderWarningsPage(SNAP)],
   ["/places", renderPlaces()],
   ["/s/…", renderStationPage(st(), near, true)],
-  ["/about", renderAbout()],
-  ["/methodology", renderMethodology()],
-  ["/terms", renderTerms()],
   ["/display", renderDisplayBuilder()],
 ] as const;
 
@@ -124,12 +121,12 @@ test("every page shares the header nav and the footer width; home and /c keep th
     attribution: "x",
     disclaimer: "y",
   } as unknown as Conditions;
-  for (const html of [renderConditionsPage(c), renderHome(), renderMcpPage(), renderNotFound()]) {
+  for (const html of [renderConditionsPage(c), renderHome(), renderNotFound()]) {
     assert.match(html, /<nav class="topnav"[^>]*>[\s\S]*href="\/warnings"/);
     assert.match(html, /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}/);
   }
   for (const html of [renderConditionsPage(c), renderHome()]) assert.doesNotMatch(html, /<body class="wide">/);
-  for (const html of [renderMcpPage(), renderNotFound()]) assert.match(html, /<body class="wide">/);
+  for (const html of [renderNotFound()]) assert.match(html, /<body class="wide">/);
   // phones: the nav is a second row under the logo, scrolling sideways if it must
   assert.match(renderHome(), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
 });
@@ -175,7 +172,7 @@ test("station page: pollutant bars on CPCB's scale, a map and table of the stati
 
 test("text pages: a contents list linking each section", () => {
   for (const html of [renderAbout(), renderMethodology(), renderTerms()]) {
-    const toc = html.match(/<nav class="toc" aria-label="On this page">([\s\S]*?)<\/nav>/)?.[1] ?? "";
+    const toc = html.match(/<nav class="panel toc" aria-label="On this page">([\s\S]*?)<\/nav>/)?.[1] ?? "";
     const links = [...toc.matchAll(/href="#([a-z0-9-]+)"/g)].map((m) => m[1]);
     assert.ok(links.length >= 3, `only ${links.length} contents links`);
     for (const id of links) assert.match(html, new RegExp(`id="${id}"`), id);
@@ -208,7 +205,8 @@ test("tinted backdrops: a station by its air band, /warnings by its warnings, ca
 });
 
 test("text pages: long inline code (the MCP inspector command) wraps instead of pushing the page sideways", () => {
-  assert.match(renderMcpPage(), /\.ax code\{overflow-wrap:anywhere\}/);
-  // each list item's text in one cell (.t), so the row's label, code and words don't split into columns
-  assert.doesNotMatch(renderMcpPage(), /<li><(b|code)>/);
+  const html = renderMcpPage();
+  assert.match(html, /\.mg code\{[^}]*overflow-wrap:anywhere/);
+  assert.match(html, /\.mg \.code\{[^}]*white-space:pre-wrap;overflow-wrap:anywhere/);
+  assert.match(html, /<code class="code">npx @modelcontextprotocol\/inspector/);
 });

@@ -417,4 +417,9 @@ body{margin:0}
 @media (forced-colors:active){.mg .seg label:has(input:checked){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
 @container (min-width:400px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
+` +
+  // phase2d: the page clears the notch and the home bar (every page opts into viewport-fit=cover).
+  `.mg .sh{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+body{padding-bottom:env(safe-area-inset-bottom)}
 `;
+// end phase2d
