@@ -22,7 +22,8 @@ const LEVELS = ["low", "moderate", "high", "severe"] as const;
 /** The level strip: 0-3 as their fills, shapes and words (the sentence above names them). */
 const levelStrip = (lang: Lang) =>
   `<div class="levels" aria-hidden="true">${LEVELS.map(
-    (k, i) => `<div class="fill ${k}"><span class="n">${i}</span>${shape(LEVEL_SHAPE[k])}${esc(t(LEVEL_WORD[k], lang))}</div>`,
+    (k, i) =>
+      `<div class="fill ${k}"><span class="n">${i}</span>${shape(LEVEL_SHAPE[k])}${esc(t(LEVEL_WORD[k], lang))}</div>`,
   ).join("")}</div>`;
 
 /** Glass-box methodology: how the Ambient read is computed, with the public thresholds. */

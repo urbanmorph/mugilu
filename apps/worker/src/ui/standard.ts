@@ -2,7 +2,8 @@
 // component of the design standard, tokens only (no literal colours or sizes). Ported from the
 // standard's board stylesheet: the boards' size pins became media queries (desktop from 1000px,
 // the kiosk's portrait by orientation). Edit here; a new component is added to the standard first.
-export const STANDARD_CSS = `
+export const STANDARD_CSS =
+  `
 body{margin:0}
 .mg *,.mg *::before,.mg *::after{box-sizing:border-box}
 .mg{position:relative;padding:0 0 var(--sp6)}

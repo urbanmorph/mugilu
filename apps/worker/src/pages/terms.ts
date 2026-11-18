@@ -46,10 +46,10 @@ export function renderTerms(lang: Lang = "en"): string {
     ],
     [
       "Heat compared with normal",
-      t(
-        "1991-2020 normals from {era5} reanalysis (Copernicus Climate Change Service), via Open-Meteo.",
-        lang,
-      ).replace("{era5}", a("https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels", "ERA5")),
+      t("1991-2020 normals from {era5} reanalysis (Copernicus Climate Change Service), via Open-Meteo.", lang).replace(
+        "{era5}",
+        a("https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels", "ERA5"),
+      ),
     ],
     ["Official warnings", t("NDMA / IMD via SACHET.", lang)],
     ["Fire / crop-burn smoke", "NASA FIRMS (VIIRS)."],

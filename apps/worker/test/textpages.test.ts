@@ -10,18 +10,17 @@ const LIVE: Record<string, string[]> = JSON.parse(readFileSync("test/fixtures/li
 const PAGES = { about: renderAbout, methodology: renderMethodology, terms: renderTerms, mcp: renderMcpPage };
 
 const decode = (s: string) =>
-  s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 /** The visible text with every non-letter/digit removed: a live "Label: body" line still
  *  matches when the label becomes a card title above its body. */
 const compact = (s: string) => s.replace(/[^\p{L}\p{N}]+/gu, "");
 const visible = (html: string) =>
-  compact(
-    decode(
-      html
-        .replace(/<(script|style|svg|head)\b[\s\S]*?<\/\1>/g, "")
-        .replace(/<[^>]+>/g, " "),
-    ),
-  );
+  compact(decode(html.replace(/<(script|style|svg|head)\b[\s\S]*?<\/\1>/g, "").replace(/<[^>]+>/g, " ")));
 
 for (const [page, render] of Object.entries(PAGES)) {
   test(`${page}: every live sentence is on the redesigned page, whole`, () => {
@@ -90,8 +89,14 @@ test("methodology: the thresholds as a table with level-filled headers, the 0-3 
   assert.match(html, /<th scope="col" class="fill moderate">Moderate<\/th>/);
   assert.match(html, /<th scope="row">Fog \(visibility, m\)<\/th><td>&lt;1000<\/td>/);
   assert.match(html, /<th scope="row">Smoke \(fires &lt;100 km\)<\/th>/);
-  assert.match(html, /<div class="levels" aria-hidden="true">(<div class="fill (low|moderate|high|severe)">.*?<\/div>){4}<\/div>/);
-  assert.match(html, /href="https:\/\/github\.com\/urbanmorph\/mugilu\/blob\/main\/apps\/worker\/src\/score\.ts">score\.ts<\/a>/);
+  assert.match(
+    html,
+    /<div class="levels" aria-hidden="true">(<div class="fill (low|moderate|high|severe)">.*?<\/div>){4}<\/div>/,
+  );
+  assert.match(
+    html,
+    /href="https:\/\/github\.com\/urbanmorph\/mugilu\/blob\/main\/apps\/worker\/src\/score\.ts">score\.ts<\/a>/,
+  );
   assert.match(html, /<a href="\/terms">terms &amp; attribution<\/a>/);
   assert.match(html, /class="tscroll" role="region" tabindex="0"/); // scrolls in its own region at 320
 });
@@ -99,7 +104,10 @@ test("methodology: the thresholds as a table with level-filled headers, the 0-3 
 test("terms: the warranty box, the licence boxes, a box per source, privacy as labelled rows", () => {
   const html = renderTerms("en");
   assert.match(html, /<div class="warnbox"><p class="head">.*<b>Informational and educational only/);
-  assert.match(html, /<b>code is MIT<\/b> \(see the <a href="https:\/\/github\.com\/urbanmorph\/mugilu">repository<\/a>\)\./);
+  assert.match(
+    html,
+    /<b>code is MIT<\/b> \(see the <a href="https:\/\/github\.com\/urbanmorph\/mugilu">repository<\/a>\)\./,
+  );
   assert.equal((html.match(/<div class="card">/g) ?? []).length, 2 + 8); // licence pair + 8 sources
   for (const k of ["Accounts", "Usage counts", "Analytics", "Saved places", "Alerts"])
     assert.match(html, new RegExp(`<dt>${k}</dt>`));

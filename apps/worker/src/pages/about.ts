@@ -89,15 +89,11 @@ export function renderAbout(lang: Lang = "en"): string {
 
   // For people: one paragraph over three boxes (two sentences, the line in a pull quote, the close).
   const people = splitAs(FOR_PEOPLE, FOR_PEOPLE, lang, 4);
-  const peopleBody = people
-    ? P(`${people[0]} ${people[1]}`) + pull(people[2]) + P(people[3])
-    : P(t(FOR_PEOPLE, lang));
+  const peopleBody = people ? P(`${people[0]} ${people[1]}`) + pull(people[2]) + P(people[3]) : P(t(FOR_PEOPLE, lang));
 
   // Where it comes from: the first sentence as a pull quote, the credits in a box, the licence.
   const where = splitAs(boldSourceNames(SOURCES_ABOUT), SOURCES_ABOUT, lang, 3);
-  const whereBody = where
-    ? pull(where[0]) + cardStack([P(where[1])]) + P(where[2])
-    : P(t(SOURCES_ABOUT, lang));
+  const whereBody = where ? pull(where[0]) + cardStack([P(where[1])]) + P(where[2]) : P(t(SOURCES_ABOUT, lang));
 
   const freeEn = FREE.replace("non-commercial, for good", "<b>non-commercial, for good</b>")
     .replace("bharatlas", `<a href="https://bharatlas.com">bharatlas</a>`)
@@ -112,7 +108,10 @@ export function renderAbout(lang: Lang = "en"): string {
     cardBody(
       t("For AI agents", lang),
       P(
-        t("connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.", lang)
+        t(
+          "connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.",
+          lang,
+        )
           .replace("{mcp}", `<a href="/mcp">/mcp</a>`)
           .replace("{llms}", `<a href="/llms.txt">llms.txt</a>`),
       ),
@@ -192,7 +191,9 @@ export function renderAbout(lang: Lang = "en"): string {
           P(sathya) +
           pull(t("That is mugilu.", lang)) +
           cardGrid(
-            [`<p class="t-lead"><span lang="kn">ಮುಗಿಲು</span></p>${P(t("mugilu is the Kannada word for the open sky.", lang))}`],
+            [
+              `<p class="t-lead"><span lang="kn">ಮುಗಿಲು</span></p>${P(t("mugilu is the Kannada word for the open sky.", lang))}`,
+            ],
             2,
             true,
           ),
