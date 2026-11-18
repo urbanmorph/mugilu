@@ -1,9 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { HAZARDS, HAZARDS_SHORT } from "../src/hazards";
+import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "../src/hazards";
 import { llmsTxt, mcpJson, openApiSpec } from "../src/meta";
-import { renderAbout, renderConditionsPage, renderHome } from "../src/page";
+import { renderAbout, renderConditionsPage, renderHome, renderPlaces } from "../src/page";
+import { t } from "../src/i18n";
 import { webManifest } from "../src/install";
 import type { Conditions } from "../src/types";
 
@@ -50,6 +51,30 @@ test("homepage: title (within 60 chars), description and WebSite JSON-LD carry t
   );
   assert.match(desc(renderHome(undefined, undefined, undefined, "hi")), /वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV/);
   assert.match(desc(renderHome(undefined, undefined, undefined, "kn")), /ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV/);
+});
+
+test("/hi and /kn homepages: the WebSite JSON-LD description is the localised meta description", () => {
+  for (const lang of ["hi", "kn"] as const) {
+    const html = renderHome(undefined, undefined, undefined, lang);
+    assert.equal(websiteLd(html).description, t(SITE_DESC, lang));
+    assert.notEqual(websiteLd(html).description, SITE_DESC);
+  }
+});
+
+test("/places: the title, description and lede carry the shared list, in each language", () => {
+  const en = renderPlaces("en");
+  assert.ok(title(en).includes(HAZARDS_SHORT), title(en));
+  assert.ok(desc(en).includes(HAZARDS), desc(en));
+  assert.ok(en.match(/<p class="lede">([^<]*)</)![1].includes(HAZARDS));
+  for (const [lang, list, short] of [
+    ["hi", "वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ", "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ"],
+    ["kn", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು"],
+  ] as const) {
+    const html = renderPlaces(lang);
+    assert.ok(title(html).includes(short), title(html));
+    assert.ok(desc(html).includes(list), desc(html));
+    assert.ok(html.match(/<p class="lede">([^<]*)</)![1].includes(list));
+  }
 });
 
 test("the installed app's description is the site description", () => {

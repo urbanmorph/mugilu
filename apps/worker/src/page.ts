@@ -1701,11 +1701,8 @@ export function renderPlaces(lang: Lang = "en"): string {
     )
     .join("");
   const canonical = "https://mugilu.live/places";
-  const title = t("Every place in India: air, heat and warnings by district · mugilu", lang);
-  const desc = t(
-    "Browse the sky over every district and major city in India: air quality, heat, rain, UV, dust and any official warning, one page each.",
-    lang,
-  );
+  const title = t(`Every place in India: ${HAZARDS_SHORT} by district · mugilu`, lang);
+  const desc = t(`Browse the sky over every district and major city in India: the ${HAZARDS}, one page each.`, lang);
   const crumb = ld({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -1717,7 +1714,7 @@ export function renderPlaces(lang: Lang = "en"): string {
   const body = `
   <div class="places">
     <h1>${t("Every place, by state", lang)}</h1>
-    <p class="lede">${t("The sky over every district and major city in India, one page each. Pick a place to see its air, heat, rain, UV, dust and any official warning, right now.", lang)}</p>
+    <p class="lede">${t(`The sky over every district and major city in India, one page each. Pick a place to see its ${HAZARDS} right now.`, lang)}</p>
     <p class="count">${total} ${t("places across India", lang)}</p>
     ${sections}
   </div>`;
@@ -2139,7 +2136,7 @@ export function renderHome(
     name: "mugilu",
     alternateName: "mugilu: the open sky of India",
     url: SITE,
-    description: SITE_DESC,
+    description: t(SITE_DESC, lang),
     publisher: {
       "@type": "Organization",
       name: "urbanmorph",

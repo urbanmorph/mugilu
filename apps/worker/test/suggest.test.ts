@@ -120,3 +120,12 @@ test("buildSuggestions: applies the alias to the gazetteer search", async () => 
   assert.ok(out.length >= 1 && out.every((s) => s.kind === "station"));
   assert.ok(out.some((s) => s.sublabel === "Bengaluru"));
 });
+
+test("buildSuggestions: a district searched by its common name offers its named place, no geocoding", async () => {
+  let geocoded = 0;
+  const geo = async () => (geocoded++, [] as GeoResult[]);
+  const s = await buildSuggestions([], "North 24 Parganas", geo, 6, null);
+  assert.equal(s[0].label, "24 Paraganas North");
+  assert.equal(s[0].sublabel, "West Bengal, IN");
+  assert.equal(geocoded, 0);
+});

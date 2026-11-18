@@ -107,10 +107,29 @@ export function slugLabel(p: Pick<SlugPlace, "name" | "state">): string {
   return p.state && p.state !== p.name ? `${p.name}, ${p.state}` : p.name;
 }
 
+// Districts whose LGD name (and so its slug, already in the sitemap and Search Console)
+// differs from how people write it. Keyed by the slugified query, so case, spaces
+// and hyphens ("North 24-Parganas") all match; the slugs themselves never change.
+const SLUG_ALIASES: Record<string, string> = {
+  "north-24-parganas": "24-paraganas-north",
+  "north-24-paraganas": "24-paraganas-north",
+  "24-parganas-north": "24-paraganas-north",
+  "south-24-parganas": "24-paraganas-south",
+  "south-24-paraganas": "24-paraganas-south",
+  "24-parganas-south": "24-paraganas-south",
+};
+
 /** The slug for a place name, if it maps to exactly one known district. */
 export function slugForName(name: string): string | undefined {
   const s = slugify(name);
-  return SLUGS.has(s) ? s : undefined;
+  return SLUGS.has(s) ? s : SLUG_ALIASES[s];
+}
+
+/** The named place a query reaches only through an alias ("North 24 Parganas"), else
+ *  undefined. Search offers it first, since the gazetteer knows no such spelling. */
+export function placeByAlias(name: string): SlugPlace | undefined {
+  const slug = SLUG_ALIASES[slugify(name)];
+  return slug ? SLUGS.get(slug) : undefined;
 }
 
 /** Every named place (for the sitemap). */
