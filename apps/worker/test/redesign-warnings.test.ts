@@ -106,8 +106,8 @@ test("/warnings: headlines keep their script and load its font; the CAP link is 
   const html = renderWarningsPage(SNAP);
   assert.match(html, /<p class="head" lang="te">/);
   assert.match(html, /<p class="head" lang="bn">/);
-  assert.match(html, /family=Anek\+Telugu/);
-  assert.match(html, /family=Anek\+Bangla/);
+  assert.match(html, /font-family:'Anek Telugu'/);
+  assert.match(html, /font-family:'Anek Bangla'/);
   assert.match(
     html,
     /<a href="https:\/\/sachet\.ndma\.gov\.in\/cap\/1" rel="noopener" aria-label="Original alert \(CAP\): IMD Visakhapatnam, 16:47 IST · 18 Nov">CAP<\/a>/,

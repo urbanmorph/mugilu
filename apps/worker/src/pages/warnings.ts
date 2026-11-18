@@ -3,7 +3,7 @@ import { esc } from "../html";
 import { lp, t, type Lang } from "../i18n";
 import { isHttpUrl } from "./read";
 import { HOME_OG, SITE, istTime } from "../ui/shell";
-import { pageShell, type Script } from "../ui/page-shell";
+import { pageShell } from "../ui/page-shell";
 import {
   backLink,
   checkGroup,
@@ -71,8 +71,6 @@ function scriptOf(s: string): string | undefined {
   if (/[ऀ-ॿ]/.test(s)) return "hi";
   return undefined;
 }
-/** The scripts the shell loads a font for (Odia falls back to the system's). */
-const FONTED: string[] = ["hi", "kn", "te", "bn"] satisfies Script[];
 
 // Applies the filters: a warning stays when its kind and office are ticked and it holds the
 // search text; an office's list hides when none of its warnings show. On wide screens the
@@ -105,12 +103,10 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
       : "";
     return [at && esc(at), cap].filter(Boolean).join(" · ");
   };
-  const scripts = new Set<Script>();
   const row = (a: Alert) => {
     const office = issuerName(a.issuer || "");
     const [type, label, , icon] = typeOf(a.headline || "");
     const script = scriptOf(a.headline || "");
-    if (script && FONTED.includes(script)) scripts.add(script as Script);
     return warningRow({
       icon,
       kind: t(label, lang),
@@ -203,7 +199,6 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     lang,
     // Any official warning active washes the page in the warning hue at high; none, no wash.
     tint: alerts.length ? { hue: "Warning", level: "high" } : undefined,
-    scripts: [...scripts],
     js: alerts.length ? WARNINGS_JS : "",
   });
 }

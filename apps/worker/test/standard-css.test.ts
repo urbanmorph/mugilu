@@ -45,3 +45,10 @@ test("pull-to-refresh is styled by the standard, from tokens, and moves only wit
   assert.match(STANDARD_CSS, /@media \(prefers-reduced-motion: no-preference\)\{#ptr\.spin svg\{animation/);
   assert.doesNotMatch(FRESHEN, /<style>/);
 });
+
+test("the language names use the system face: two words must not fetch a whole Indic font on every page", () => {
+  assert.match(
+    STANDARD_CSS,
+    /\.mg :is\(\.langs,\.flangs\) :lang\(hi\),\.mg :is\(\.langs,\.flangs\) :lang\(kn\)\{font-family:system-ui,sans-serif\}/,
+  );
+});

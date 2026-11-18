@@ -1,7 +1,7 @@
 import { TR, lp, t, type Lang } from "../i18n";
 import { esc, trusted, type Html } from "../html";
 import { sheet, type SheetSection } from "../ui/components";
-import { pageShell, type Script } from "../ui/page-shell";
+import { pageShell } from "../ui/page-shell";
 import { HOME_OG, SITE } from "../ui/shell";
 
 // The text pages (about, how it works, terms, MCP) share one frame: the Sheet component,
@@ -62,7 +62,6 @@ export interface TextPageOpts {
   lead: string;
   lead2?: string;
   sections: SheetSection[];
-  scripts?: Script[];
   /** The canonical URL when it is not SITE + path (the MCP page is the endpoint). */
   canonical?: string;
 }
@@ -87,7 +86,6 @@ export function textPage(o: TextPageOpts): string {
     canonical: o.canonical ?? `${SITE}${o.path}`,
     jsonLd: o.jsonLd,
     ogImage: HOME_OG,
-    scripts: o.scripts,
   });
 }
 

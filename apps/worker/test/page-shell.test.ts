@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { pageShell } from "../src/ui/page-shell";
+import { FONT_FACES } from "../src/ui/fonts";
 import { STANDARD_CSS } from "../src/ui/standard";
 import { tokensCss } from "../src/ui/tokens";
 import { DISCLAIMER_FULL } from "../src/ui/components";
@@ -16,7 +17,7 @@ const page = pageShell("Warnings", "<p>body</p>", {
 test("pageShell: exactly the two stylesheets, nothing page-specific", () => {
   const styles = page.match(/<style>([\s\S]*?)<\/style>/g) ?? [];
   assert.equal(styles.length, 1);
-  assert.equal(styles[0], `<style>${tokensCss()}${STANDARD_CSS}</style>`);
+  assert.equal(styles[0], `<style>${FONT_FACES}${tokensCss()}${STANDARD_CSS}</style>`);
 });
 
 test("pageShell: skip link, header, one main with id, footer with the disclaimer", () => {
@@ -36,17 +37,6 @@ test("pageShell: the stored theme applies before paint; scripts for theme, insta
   assert.match(page, /time\[data-rel\]/);
 });
 
-test("pageShell: fonts for the page's scripts only, with swap", () => {
-  assert.match(page, /family=Anek\+Latin:wdth,wght@75\.\.100,400\.\.800&amp;display=swap/);
-  assert.ok(!/Anek\+Kannada/.test(page));
-  const kn = pageShell("x", "", { path: "/", lang: "kn" });
-  assert.match(kn, /Anek\+Kannada/);
-  assert.match(kn, /<html lang="kn">/);
-  const te = pageShell("x", "", { path: "/warnings", scripts: ["te", "bn"] });
-  assert.match(te, /Anek\+Telugu/);
-  assert.match(te, /Anek\+Bangla/);
-});
-
 test("pageShell: no tint means no wash; a kiosk is always dark, chromeless, with data-kiosk", () => {
   assert.match(pageShell("x", "", { path: "/" }), /<body class="mg">/);
   const k = pageShell("Delhi", '<div class="kio"></div>', { path: "/c/delhi", kiosk: true });
@@ -56,11 +46,17 @@ test("pageShell: no tint means no wash; a kiosk is always dark, chromeless, with
   assert.match(k, /<main id="main" tabindex="-1"><div class="kio">/);
 });
 
-test("fonts: non-Latin scripts load the weight axis only (they are never condensed), Latin keeps its width", () => {
-  const h = pageShell("t", "<p>x</p>", { path: "/warnings", lang: "hi", scripts: ["te", "bn"] });
-  for (const fam of ["Anek+Devanagari", "Anek+Telugu", "Anek+Bangla"])
-    assert.match(h, new RegExp(`family=${fam.replace("+", "\\+")}:wght@400\\.\\.800&`));
-  assert.match(h, /family=Anek\+Latin:wdth,wght@75\.\.100,400\.\.800&amp;display=swap/);
-  // The Indic families never repaint a first view (their headline is the largest paint): optional.
-  assert.match(h, /family=Anek\+Devanagari[^"]*&amp;display=optional"/);
+test("fonts: self-hosted (no third-party requests), the Latin face preloaded, Indic faces optional", () => {
+  const h = pageShell("t", "<p>x</p>", { path: "/warnings", lang: "hi" });
+  assert.doesNotMatch(h, /fonts\.googleapis|fonts\.gstatic/);
+  assert.match(h, /<link rel="preload" href="\/fonts\/anek-latin-1\.woff2" as="font" type="font\/woff2" crossorigin>/);
+  assert.match(
+    h,
+    /@font-face\{font-family:'Anek Latin';src:url\(\/fonts\/anek-latin-1\.woff2\) format\('woff2'\);font-weight:400 800;font-stretch:75% 100%;font-display:swap;unicode-range:/,
+  );
+  assert.match(
+    h,
+    /@font-face\{font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-1\.woff2\)[^}]*font-display:optional/,
+  );
+  assert.equal((h.match(/<style>/g) ?? []).length, 1);
 });

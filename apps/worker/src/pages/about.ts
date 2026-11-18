@@ -142,7 +142,6 @@ export function renderAbout(lang: Lang = "en"): string {
     kicker: t("About", lang),
     h1: lineBreakAfterComma(t("The open sky of India, one coordinate at a time.", lang)),
     lead: t("A whole-sky view for people, and shared infrastructure for anyone building on top of it.", lang),
-    scripts: ["kn"],
     sections: [
       {
         id: "why",

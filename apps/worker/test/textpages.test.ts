@@ -133,7 +133,7 @@ test("about: Build on it as four cards with their links, the FAQ grid, the credi
   assert.match(html, /<dl class="faq">/);
   assert.match(html, /<div class="credit"><img /);
   assert.match(html, /<span lang="kn">ಮುಗಿಲು<\/span>/);
-  assert.match(html, /family=Anek\+Kannada/); // the font for the Kannada word
+  assert.match(html, /font-family:'Anek Kannada'/); // the font for the Kannada word
 });
 
 test("mcp: the address, a card per client, a card per tool from the server's own list", () => {
