@@ -52,7 +52,8 @@ for (const lang of ["", "/hi", "/kn"])
       assert.equal(count(h, /<input[^>]*name="theme"/g), 3);
       assert.ok(h.includes(esc(t(DISCLAIMER_FULL, (lang.slice(1) || "en") as Lang))), "the full disclaimer");
       assert.match(h, new RegExp(`<html lang="${lang ? lang.slice(1) : "en"}"`));
-      // nothing of the old shell is left
+      // one stylesheet (tokens + standard): no page CSS, and nothing of the old shell
+      assert.equal(count(h, /<style>/g), 1);
       assert.doesNotMatch(h, /class="topnav"|linear-gradient\(180deg,color-mix/);
     });
   }

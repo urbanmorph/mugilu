@@ -17,6 +17,12 @@ const PHASE2C_CSS = `.mg .pvframe{position:relative;aspect-ratio:16/9;overflow:h
 `;
 // /phase2c
 
+/** Pull-to-refresh (freshen.ts, the installed app only): a marker that turns as you pull. */
+const PULL_CSS = `#ptr{position:fixed;left:50%;top:env(safe-area-inset-top,0px);z-index:60;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:var(--muted);border:2px solid var(--line);transform:translate(-50%,-48px);pointer-events:none}
+#ptr.go{color:var(--ink);border-color:var(--ink)}
+@media (prefers-reduced-motion: no-preference){#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}}
+`;
+
 export const STANDARD_CSS =
   `
 body{margin:0}
@@ -433,7 +439,7 @@ body{margin:0}
 @media (forced-colors:active){.mg .seg label:has(input:checked){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
 @container (min-width:400px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
-${PHASE2C_CSS}${READ_CSS}` +
+${PHASE2C_CSS}${READ_CSS}${PULL_CSS}` +
   // phase2d: the page clears the notch and the home bar (every page opts into viewport-fit=cover);
   // the hidden attribute wins over a component's display (Install app, the alert states).
   `.mg .sh{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}

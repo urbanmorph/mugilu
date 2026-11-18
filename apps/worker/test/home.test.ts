@@ -16,7 +16,7 @@ test("renderHome: a valid HTML doc on the signage shell, with a search form to /
 
 test("renderHome: no page CSS, only the shell's two stylesheets", () => {
   const html = renderHome();
-  assert.equal((html.match(/<style>/g) ?? []).length, 1 + 1); // shell + pull-to-refresh marker
+  assert.equal((html.match(/<style>/g) ?? []).length, 1); // the shell's, nothing per page
   assert.doesNotMatch(html, /class="hm"|class="hero-now"/); // the old layout is gone
 });
 
