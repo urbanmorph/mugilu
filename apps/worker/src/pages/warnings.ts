@@ -91,8 +91,9 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
   const alerts = [...(snap?.alerts ?? [])].sort((x, y) => when(y) - when(x));
   const pinned = new Map<string, Alert>();
   for (const a of alerts) {
-    const name = cycloneIn(a.headline)?.title;
-    if (name && !pinned.has(name)) pinned.set(name, a);
+    // Pinned: a named storm only (IMD names every cyclonic storm), as on home.
+    const c = cycloneIn(a.headline);
+    if (c?.name && !pinned.has(c.title)) pinned.set(c.title, a);
   }
   const isPinned = new Set(pinned.values());
 

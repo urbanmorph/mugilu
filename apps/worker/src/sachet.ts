@@ -234,24 +234,19 @@ export function renderWarningsMarkdown(snap: WarningsSnapshot | null): string {
 
 // phase2a ─ the official cyclone: IMD's own category and the storm's name, from the newest
 // SACHET warning about it (the JTWC track gives position, never the category).
-const CYCLONE_RE = /\b((?:super |extremely severe |very severe |severe )?cyclonic storm)\s+["“']?([A-Za-z]{3,})\b/i;
-const NOT_A_NAME = new Set([
-  "over",
-  "near",
-  "with",
-  "lays",
-  "lay",
-  "moved",
-  "moving",
-  "centred",
-  "centered",
-  "likely",
-  "is",
-  "has",
-  "in",
-  "of",
-  "and",
-]);
+const CYCLONE_RE =
+  /\b((?:super |extremely severe |very severe |severe )?cyclonic storm)\b(?:\s+["“']?([A-Za-z]{3,})\b)?/i;
+/** Words that follow a category in IMD's prose but are never a storm's name. */
+const NOT_A_NAME = new Set(
+  (
+    "over near with lays lay lies lying moved moving move moves centred centered located likely is has had was " +
+    "will would may could can in of and or the a an at about to from for by on off into onto as now then which " +
+    "that this these its it further very warning warnings alert alerts bulletin message watch signal during " +
+    "after before while since until weakened weakening weakens weaken intensified intensifying intensifies " +
+    "intensify crossed crossing crosses cross made making landfall formed forms forming developed develops " +
+    "became become becoming currently today tonight approaching approached advisory update system storm"
+  ).split(" "),
+);
 const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
 export interface OfficialCyclone {
@@ -268,7 +263,7 @@ export function officialCyclone(snap: WarningsSnapshot | null | undefined): Offi
   const newest = [...(snap?.alerts ?? [])].sort((a, b) => Date.parse(b.sent) - Date.parse(a.sent));
   for (const alert of newest) {
     const c = cycloneIn(alert.headline);
-    if (!c) continue;
+    if (!c?.name) continue;
     const list = alert.headline.match(/warning for\s+([^.]+)/i)?.[1] ?? "";
     const areas = list
       .split(/,|\band\b/i)
@@ -283,6 +278,10 @@ export function officialCyclone(snap: WarningsSnapshot | null | undefined): Offi
  *  when it names one. The one reading of it: the national feed and a place's warning both use it. */
 export function cycloneIn(headline: string | undefined): { title: string; name: string } | undefined {
   const m = (headline ?? "").match(CYCLONE_RE);
-  if (!m || NOT_A_NAME.has(m[2].toLowerCase())) return undefined;
-  return { title: titleCase(`${m[1]} ${m[2]}`), name: titleCase(m[2]) };
+  if (!m) return undefined;
+  const word = m[2] ?? "";
+  // A name is capitalised as written (AKVAN, "Montha") and is not ordinary prose.
+  const isName = /^[A-Z]/.test(word) && !NOT_A_NAME.has(word.toLowerCase());
+  const category = titleCase(m[1]);
+  return isName ? { title: `${category} ${titleCase(word)}`, name: titleCase(word) } : { title: category, name: "" };
 }
