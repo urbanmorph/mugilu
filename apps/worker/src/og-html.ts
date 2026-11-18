@@ -32,7 +32,7 @@ const txt = (style: string, s: string) => box(style, ogText(s));
 
 /** A level's shape, filled. */
 const shapeSvg = (kind: ShapeName, size: number, colour: string) =>
-  `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><path d="${SHAPE[kind]}" fill="${colour}" fill-rule="evenodd"/></svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24"><path d="${SHAPE[kind]}" fill="${colour}" fill-rule="evenodd"/></svg>`;
 
 /** The frame: the black bar, the middle, the foot. */
 function frame(top: [string, string], mid: string, foot: [string, string]): string {
