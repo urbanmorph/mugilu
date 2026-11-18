@@ -137,7 +137,14 @@ export interface SegOption {
 
 /** Segmented: native radios in a fieldset, so keyboard, screen readers and forced colours
  *  work without script. Options with an href navigate on change (SEGMENTED_JS). */
-export function segmented(name: string, legend: string, options: SegOption[], legendClass = "t-kicker"): string {
+export function segmented(
+  name: string,
+  legend: string,
+  options: SegOption[],
+  legendClass = "t-kicker",
+  /** phase2b: a layout for the options, e.g. "grid2 d3" (two columns, three on wide screens). */
+  segClass = "",
+): string {
   const opts = options
     .map(
       (o) =>
@@ -145,7 +152,7 @@ export function segmented(name: string, legend: string, options: SegOption[], le
         `${o.href ? ` data-href="${esc(o.href)}"` : ""}>${esc(o.label)}</label>`,
     )
     .join("");
-  return `<fieldset class="segf"><legend class="${legendClass}">${esc(legend)}</legend><div class="seg">${opts}</div></fieldset>`;
+  return `<fieldset class="segf"><legend class="${legendClass}">${esc(legend)}</legend><div class="seg${segClass ? ` ${segClass}` : ""}">${opts}</div></fieldset>`;
 }
 
 /** Radios that carry an href open it when chosen. */

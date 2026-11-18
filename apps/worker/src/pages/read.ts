@@ -1,8 +1,8 @@
 import { type Conditions, type NormalizedStation, type Warning } from "../types";
 import { type NationalHighlights } from "../highlights";
 import { AQI_BAND_LABEL } from "../aqi";
-import { compass, drops, gauge, lifeBlocks, pollutantBars, uvSteps, worstPollutant } from "../glyphs";
-import { forPersona, isDriver, km } from "../readings";
+import { gauge, pollutantBars, uvSteps, worstPollutant } from "../glyphs";
+import { forPersona, isDriver, km, layerBase, orderByRisk } from "../readings";
 import { esc } from "../html";
 import {
   PERSONAS,
@@ -13,6 +13,7 @@ import {
   coldLevelOf,
   dustLevelOf,
   fogLevelOf,
+  ambientSummary,
   headline,
   heatLevelOf,
   smokeLevel,
@@ -21,7 +22,19 @@ import {
   type RiskBand,
   windLevelOf,
 } from "../score";
-import { RISK_COLOR, levelColor, tintOf } from "../palette";
+import { HAZARD_TINT, RISK_COLOR } from "../palette";
+import {
+  LEVEL_SHAPE,
+  band,
+  bandChip,
+  ico,
+  levelChip,
+  notice,
+  plate,
+  stack,
+  warningPlate,
+  type IconName,
+} from "../ui/components";
 import { lp, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT } from "../hazards";
 import { renderIndiaMap, type IndiaMap } from "../indiamap";
@@ -170,19 +183,6 @@ export function renderHero(
     : "";
 }
 
-export function warnColor(color: string): string {
-  switch (color.toLowerCase()) {
-    case "red":
-      return RISK_COLOR.severe;
-    case "orange":
-      return RISK_COLOR.high;
-    case "yellow":
-      return RISK_COLOR.moderate;
-    default:
-      return "#64748b";
-  }
-}
-
 // Inline Lucide-style line icons (MIT). currentColor + one stroke weight, so each
 // inherits its context colour (muted by default, the condition hue on the driver).
 export const ICON: Record<string, string> = {
@@ -214,50 +214,8 @@ export function icon(name: string): string {
   return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] ?? ""}</svg>`;
 }
 
-// Ambient driver -> icon key, and the noun for the headline ("High heat.").
-export const DRIVER_KEY: Record<string, string> = {
-  Air: "air",
-  Heat: "heat",
-  Cold: "cold",
-  UV: "sun",
-  Dust: "dust",
-  Wind: "wind",
-  Fog: "fog",
-  Smoke: "smoke",
-  Warning: "warn",
-  none: "clear",
-};
-
-/** Wet-bulb survivability read (~31 is the theoretical limit): word + colour per level. */
+/** Wet-bulb survivability read (~31 is the theoretical limit): the word per level. */
 export const WET_BULB = ["safe", "caution", "severe", "dangerous"];
-export const wetBulb = (wb: number): [string, string] => {
-  const level = heatLevelOf({ wet_bulb_c: wb });
-  return [WET_BULB[level], levelColor(level)];
-};
-
-/** One reading as a hairline-ruled stratum: icon + label, a big figure, a tail,
- *  and an optional inline scale showing where it sits on the good->severe range. */
-export interface Layer {
-  key: string;
-  html: string;
-}
-
-/** What every layer needs to know about the read: whose it is, and the words for
- *  the persona's tag in the page's language. */
-export interface LayerCtx {
-  risk: AmbientRisk;
-  forYou: string;
-}
-
-export function lyr(key: string, label: string, ctx: LayerCtx, num: string, q: string, sub: string, bar = ""): Layer {
-  const { risk } = ctx;
-  // For a persona: their own layers tagged, the rest quieter, except the headline
-  // hazard, which stays at full strength (everyone: neither).
-  const own = risk.persona === "everyone" ? "" : forPersona(key, risk) ? " mine" : isDriver(key, risk) ? "" : " quiet";
-  const tag = own === " mine" ? `<span class="fy">${ctx.forYou}</span>` : "";
-  const html = `<div class="lyr${isDriver(key, risk) ? " on" : ""}${own}" data-k="${key}"><dt>${icon(key)}<span>${label}</span>${tag}</dt><dd><span class="num">${num}</span><span class="q">${q}</span>${bar}${sub ? `<span class="sub">${sub}</span>` : ""}</dd></div>`;
-  return { key, html };
-}
 
 /** The reading inside a layer each persona should look at first: the fine
  *  particles that reach the lungs and heart (PM2.5; PM10 too for the airways),
@@ -279,44 +237,10 @@ export function personaLinks(href: (p: Persona) => string, current: Persona, lan
   ).join("");
 }
 
-/** The editorial headline, "High heat." with the band word coloured, or "All clear." */
-export function headHtml(risk: AmbientRisk, lang: Lang): string {
-  const h = headline(risk, (en) => t(en, lang));
-  return h.noun ? `<span class="b">${h.word}</span> ${h.noun}.` : `<span class="b">${h.word}.</span>`;
-}
-
 /** Whether the air reading is older than the page by half an hour or more (stations
  *  report on their own clock, often an hour or two behind), so it is named apart. */
 export function airLag(c: Conditions): boolean {
   return !!c.air_as_of && Date.parse(c.as_of) - Date.parse(c.air_as_of) >= 30 * 60_000;
-}
-
-/** CSS custom properties for a read's colours: --cond (severity, the headline word)
- *  and --tint/--tk (the backdrop: the hazard's hue at the band's strength). */
-export function readVars(risk: AmbientRisk): string {
-  const { hue, strength } = tintOf(risk);
-  return `--cond:${RISK_COLOR[risk.band]};--cond-text:var(--rt-${risk.band});--tint:${hue};--tk:${strength}%`;
-}
-
-/** A pinned official warning, the most urgent thing on the page. */
-export function renderWarning(w: Warning, lang: Lang): string {
-  const meta = [w.severity, w.until ? t("until X", lang).replace("X", w.until) : ""].filter(Boolean).join(" · ");
-  return `<div class="warn" style="--wc:${warnColor(w.color)}">${icon("warn")}<div><b>${esc(w.event)}</b>${meta ? ` · ${esc(meta)}` : ""}<span class="wsrc">${t("Official warning", lang)} · ${esc(w.issuer)}</span></div></div>`;
-}
-
-/** Warnings active nearby whose areas do not cover this spot: one quiet line, never the red box. */
-export function renderNearbyWarnings(ws: Warning[], lang: Lang): string {
-  // One entry per kind: a count when several areas nearby have it, else its end time.
-  const byEvent = new Map<string, Warning[]>();
-  for (const w of ws) byEvent.set(w.event, [...(byEvent.get(w.event) ?? []), w]);
-  const items = [...byEvent]
-    .map(([event, list]) => {
-      const one = list.length === 1 ? list[0] : undefined;
-      const detail = one ? (one.until ? t("until X", lang).replace("X", one.until) : "") : String(list.length);
-      return `${esc(event)}${detail ? ` (${esc(detail)})` : ""}`;
-    })
-    .join(" · ");
-  return `<p class="near-warn">${t("Near this point, but not at it:", lang)} ${items}</p>`;
 }
 
 // Records this /c visit into the browser's "Your places" list (first-party,
@@ -345,165 +269,208 @@ if(location.hash)try{history.replaceState(null,'',location.pathname+location.sea
 }catch(e){}})();
 </script>`;
 
-/** One layer's content, rendered as a /c stratum or a display tile. `mini` is the
- *  tile's compact graphic (default: `bar`); `normal` is the heat-vs-normal ruler,
- *  which the /c page puts in the heat layer and the display beside the read. */
-export interface LayerData {
+// ── The readings ─────────────────────────────────────────────────────────────────
+// One model of a place's readings, drawn as the place page's rows (the standard's .rrow),
+// the screen display's tiles and the embed card's figures, so they never disagree.
+
+/** The pictogram for each reading, and for the Ambient read's driver. */
+export const READ_ICON: Record<string, IconName> = {
+  air: "air",
+  heat: "heat",
+  cold: "cold",
+  sun: "sun",
+  dust: "dust",
+  wind: "wind",
+  fog: "fog",
+  smoke: "smoke",
+  rain: "drop",
+  Air: "air",
+  Heat: "heat",
+  Cold: "cold",
+  UV: "sun",
+  Dust: "dust",
+  Wind: "wind",
+  Fog: "fog",
+  Smoke: "smoke",
+  Warning: "warn",
+  none: "sun",
+};
+
+/** One reading. Text fields are plain (escaped when drawn); `chip` and `more` are markup. */
+export interface ReadRow {
   key: string;
   label: string;
+  icon: IconName;
+  /** The figure, e.g. "246", "18°". */
   num: string;
-  q: string;
-  sub: string;
-  bar: string;
-  mini?: string;
-  normal?: string;
+  /** What the figure is, e.g. "AQI", "feels like", "km/h gusts". */
+  unit: string;
+  /** The live word for it, e.g. "warm", "calm", "notable burning". */
+  qual?: string;
+  /** Its level: a band chip for air, a level chip for a scored hazard, none for rain. */
+  chip: string;
+  /** The detail under the figure (graphics and notes), markup. */
+  more: string[];
+  /** The screen display's one graphic: the worst pollutant, the heat gauges. */
+  mini: string;
+  /** The short value for the display's quiet line, e.g. "12 km/h". */
+  brief: string;
+  /** The Ambient read's headline hazard. */
+  driver: boolean;
+  /** One of the persona's own hazards. */
+  mine: boolean;
 }
 
-/** Every reading present, as layers (unordered: see orderByRisk). */
-export function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerData[] {
-  const out: LayerData[] = [];
+/** A scored hazard's own level for a reading (before the persona's bump), as a chip. */
+function hazardChip(key: string, risk: AmbientRisk, lang: Lang): string {
+  const level = layerBase(key, risk);
+  return level == null ? "" : levelChip(RISK_BANDS[level], lang);
+}
+
+/** Every reading present, in the order they matter now. */
+export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[] {
+  const out: ReadRow[] = [];
   const keyReading = KEY_READING[risk.persona];
-  const L = (key: string, label: string, num: string, q: string, sub: string, bar = ""): LayerData => ({
-    key,
-    label,
-    num,
-    q,
-    sub,
-    bar,
-  });
-  const band = c.air?.band ?? "unknown";
-  const bandLabel = AQI_BAND_LABEL[band] ?? "n/a";
-  // The readings, as strata. Each renders only when it has a value; the Ambient
-  // driver's stratum is highlighted (icon + label in the condition colour).
-  if (c.air) {
-    const marker = c.air.station
-      ? `<i class="dot meas"></i>${t("measured", lang)} · ${c.air.station.distance_km} km`
-      : `<i class="dot mod"></i>${t("modelled", lang)}`;
-    const aqli = c.air.yll != null ? `<br>${lifeBlocks(c.air.yll)}~${c.air.yll} ${t("years of life lost", lang)}` : "";
-    const bars = pollutantBars(c.air.pollutants, keyReading.pollutants);
-    const worst = worstPollutant(c.air.pollutants, keyReading.pollutants);
+  const row = (key: string, r: Omit<ReadRow, "key" | "driver" | "mine" | "chip" | "mini"> & Partial<ReadRow>) =>
     out.push({
-      ...L(
-        "air",
-        t("Air", lang),
-        c.air.aqi != null ? String(c.air.aqi) : "n/a",
-        `<span class="qa">AQI</span> <b style="color:var(--bt-${band})">${t(bandLabel, lang)}</b>`,
-        `${marker}${aqli}`,
-        bars
-          ? `<div class="prs">${bars}<span class="prk">${t("The dashed line is the CPCB limit.", lang)}</span></div>`
-          : "",
-      ),
-      mini: worst ? `<div class="prs">${pollutantBars(worst, keyReading.pollutants)}</div>` : "",
+      key,
+      chip: hazardChip(key, risk, lang),
+      mini: "",
+      driver: isDriver(key, risk),
+      mine: risk.persona !== "everyone" && forPersona(key, risk),
+      ...r,
+    });
+
+  if (c.air) {
+    const band = c.air.band ?? "unknown";
+    const bandWord = t(AQI_BAND_LABEL[band] ?? "n/a", lang);
+    const bars = pollutantBars(c.air.pollutants);
+    const worst = worstPollutant(c.air.pollutants, keyReading.pollutants);
+    const more = bars ? [bars, `<p class="t-legal">${esc(t("The dashed line is the CPCB limit.", lang))}</p>`] : [];
+    more.push(
+      `<p class="t-meta">${
+        c.air.station
+          ? `${esc(t("measured", lang))} · ${c.air.station.distance_km} km`
+          : esc(t("modelled", lang))
+      }</p>`,
+    );
+    if (c.air.yll != null) more.push(`<p class="t-meta">~${c.air.yll.toFixed(1)} ${esc(t("years of life lost", lang))}</p>`);
+    if (c.grap) more.push(grapLine(c.grap, lang));
+    row("air", {
+      label: t("Air", lang),
+      icon: "air",
+      num: c.air.aqi != null ? String(c.air.aqi) : "n/a",
+      unit: "AQI",
+      chip: bandChip(band, bandWord),
+      more,
+      mini: worst ? pollutantBars(worst) : "",
+      brief: c.air.aqi != null ? `AQI ${c.air.aqi}` : "n/a",
     });
   }
   if (c.heat) {
     const h = c.heat;
     const cold = h.apparent_c != null && coldLevelOf(h.apparent_c) > 0;
-    let bar = "";
-    // Cold: a dot for how cold it feels among the cold thresholds. Hot or mild:
-    // the two heat-stress reads against theirs.
+    const gauges: string[] = [];
     if (cold) {
       const a = h.apparent_c!;
-      bar += gauge(a, -10, 30, { from: a, ticks: THRESHOLDS.cold, level: coldLevelOf(a), marker: true });
+      gauges.push(gauge(a, -10, 30, { from: a, ticks: THRESHOLDS.cold, level: coldLevelOf(a), marker: true }));
     } else {
       if (h.wet_bulb_c != null) {
-        const [wn, wc] = wetBulb(h.wet_bulb_c);
-        bar += `<span class="gl${keyReading.heat === "wetbulb" ? " key" : ""}">${t("wet-bulb", lang)} ${round(h.wet_bulb_c)}° <b style="color:${wc}">${t(wn, lang)}</b></span>`;
-        bar += gauge(h.wet_bulb_c, 10, 35, {
-          ticks: THRESHOLDS.wetBulb,
-          level: heatLevelOf({ wet_bulb_c: h.wet_bulb_c }),
-        });
+        const level = heatLevelOf({ wet_bulb_c: h.wet_bulb_c });
+        gauges.push(
+          `<p${keyReading.heat === "wetbulb" ? ' class="key"' : ""}>${esc(t("wet-bulb", lang))} ${round(h.wet_bulb_c)}° <b class="ql">${esc(t(WET_BULB[level], lang))}</b></p>`,
+          gauge(h.wet_bulb_c, 10, 35, { ticks: THRESHOLDS.wetBulb, level }),
+        );
       }
-      if (h.wbgt_c != null) {
-        bar += `<span class="gl${keyReading.heat === "wbgt" ? " key" : ""}">WBGT ${round(h.wbgt_c)}°</span>`;
-        bar += gauge(h.wbgt_c, 15, 40, { ticks: THRESHOLDS.wbgt, level: heatLevelOf({ wbgt_c: h.wbgt_c }) });
-      }
+      if (h.wbgt_c != null)
+        gauges.push(
+          `<p${keyReading.heat === "wbgt" ? ' class="key"' : ""}>WBGT ${round(h.wbgt_c)}°</p>`,
+          gauge(h.wbgt_c, 15, 40, { ticks: THRESHOLDS.wbgt, level: heatLevelOf({ wbgt_c: h.wbgt_c }) }),
+        );
     }
-    // Today's high against the normal here: drawn only when it stands out (and is
-    // still today's, in IST), always labelled.
+    // Today's high against the normal here: drawn only when it stands out, always labelled.
     const n = c.heat_vs_normal;
-    let normal = "";
-    if (heatVsNormalShown(n)) {
-      normal += `<span class="gl">${heatVsNormalLine(n, lang)}</span>`;
-      normal += gauge(n.today_max_c, n.normal_max_c - 10, n.normal_max_c + 10, {
-        from: n.normal_max_c,
-        ticks: [n.normal_max_c],
-        marker: true,
-        colour: n.anomaly_c >= 0 ? RISK_COLOR.high : "var(--sky)",
-      });
-      normal += `<small class="prk">${t(NORMALS_LABEL, lang)}</small>`;
-    }
-    out.push({
-      ...L(
-        "heat",
-        t("Heat", lang),
-        `${round(h.apparent_c)}°`,
-        // No feels-like, no phrase (never read a missing value as 0°, "dangerous cold").
-        h.apparent_c != null
-          ? `<span class="qa">${t("feels like", lang)}</span> <b>${t(heatPhrase(h.apparent_c, h.wet_bulb_c), lang)}</b>`
-          : "",
-        "",
-        `<span class="sub">${round(h.temp_c)}° ${t("actual", lang)} · ${round(h.humidity_pct)}% ${t("humidity", lang)}</span>${bar}`,
-      ),
-      mini: bar,
-      normal,
+    const normal = heatVsNormalShown(n)
+      ? [
+          `<p>${esc(heatVsNormalLine(n, lang))}</p>`,
+          gauge(n.today_max_c, n.normal_max_c - 10, n.normal_max_c + 10, {
+            from: n.normal_max_c,
+            ticks: [n.normal_max_c],
+            marker: true,
+            cls: n.anomaly_c >= 0 ? "high" : "",
+          }),
+          `<p class="t-legal">${esc(t(NORMALS_LABEL, lang))}</p>`,
+        ]
+      : [];
+    row("heat", {
+      label: t("Heat", lang),
+      icon: cold ? "cold" : "heat",
+      num: `${round(h.apparent_c)}°`,
+      // No feels-like, no word (never read a missing value as 0°, "dangerous cold").
+      unit: h.apparent_c != null ? t("feels like", lang) : "",
+      qual: h.apparent_c != null ? t(heatPhrase(h.apparent_c, h.wet_bulb_c), lang) : undefined,
+      more: [
+        `<p class="t-meta">${round(h.temp_c)}° ${esc(t("actual", lang))} · ${round(h.humidity_pct)}% ${esc(t("humidity", lang))}</p>`,
+        ...gauges,
+        ...normal,
+      ],
+      mini: gauges.join(""),
+      brief: `${round(h.apparent_c)}°`,
     });
   }
   if (c.uv?.index != null) {
-    out.push(
-      L(
-        "sun",
-        t("Sun", lang),
-        String(Math.round(c.uv.index)),
-        `<span class="qa">${t("UV index", lang)}</span> <b>${t(uvWord(c.uv.index), lang)}</b>`,
-        "",
-        uvSteps(c.uv.index),
-      ),
-    );
+    row("sun", {
+      label: t("Sun", lang),
+      icon: "sun",
+      num: String(Math.round(c.uv.index)),
+      unit: t("UV index", lang),
+      qual: t(uvWord(c.uv.index), lang),
+      more: [uvSteps(c.uv.index)],
+      brief: `UV ${Math.round(c.uv.index)}`,
+    });
   }
   if (c.dust?.dust_ug_m3 != null) {
-    out.push(
-      L(
-        "dust",
-        t("Dust", lang),
-        String(Math.round(c.dust.dust_ug_m3)),
-        `<span class="qa nu">µg/m³</span> <b>${t(dustBand(c.dust.dust_ug_m3), lang)}</b>`,
-        "",
-        gauge(c.dust.dust_ug_m3, 0, 600, { ticks: THRESHOLDS.dust, level: dustLevelOf(c.dust.dust_ug_m3) }),
-      ),
-    );
+    const ug = c.dust.dust_ug_m3;
+    row("dust", {
+      label: t("Dust", lang),
+      icon: "dust",
+      num: String(Math.round(ug)),
+      unit: "µg/m³",
+      qual: t(dustBand(ug), lang),
+      more: [gauge(ug, 0, 600, { ticks: THRESHOLDS.dust, level: dustLevelOf(ug) })],
+      brief: `${Math.round(ug)} µg/m³`,
+    });
   }
   if (c.wind && (c.wind.gust_kmh != null || c.wind.speed_kmh != null)) {
     const gust = c.wind.gust_kmh ?? c.wind.speed_kmh!;
-    const dirParts: string[] = [];
-    if (c.wind.direction_deg != null) dirParts.push(t("from X", lang).replace("X", compassDir(c.wind.direction_deg)));
-    if (c.wind.speed_kmh != null)
-      dirParts.push(t("X km/h steady", lang).replace("X", String(Math.round(c.wind.speed_kmh))));
-    out.push(
-      L(
-        "wind",
-        t("Wind", lang),
-        String(Math.round(gust)),
-        `<span class="qa nu">km/h ${t("gusts", lang)}</span> <b>${t(windWord(gust), lang)}</b>`,
-        dirParts.join(" · "),
-        `<div class="wrow">${c.wind.direction_deg != null ? compass(c.wind.direction_deg, windLevelOf(gust)) : ""}${gauge(gust, 0, 100, { under: c.wind.speed_kmh, ticks: THRESHOLDS.wind, level: windLevelOf(gust) })}</div>`,
-      ),
-    );
+    const dir: string[] = [];
+    if (c.wind.direction_deg != null) dir.push(t("from X", lang).replace("X", compassDir(c.wind.direction_deg)));
+    if (c.wind.speed_kmh != null) dir.push(t("X km/h steady", lang).replace("X", String(Math.round(c.wind.speed_kmh))));
+    row("wind", {
+      label: t("Wind", lang),
+      icon: "wind",
+      num: String(Math.round(gust)),
+      unit: `km/h ${t("gusts", lang)}`,
+      qual: t(windWord(gust), lang),
+      more: [
+        gauge(gust, 0, 100, { ticks: THRESHOLDS.wind, level: windLevelOf(gust) }),
+        ...(dir.length ? [`<p class="t-meta">${esc(dir.join(" · "))}</p>`] : []),
+      ],
+      brief: `${Math.round(gust)} km/h`,
+    });
   }
-  // Visibility only surfaces when reduced (hazy/fog); clear skies aren't news.
+  // Visibility only surfaces when reduced (hazy, fog); clear skies are not news.
   if (c.visibility?.meters != null && c.visibility.meters < 5000) {
     const m = c.visibility.meters;
-    const val = km(m);
-    out.push(
-      L(
-        "fog",
-        t("Visibility", lang),
-        val,
-        `<b>${t(visWord(m), lang)}</b>`,
-        "",
-        gauge(m, 100, 10000, { log: true, ticks: [...THRESHOLDS.fog, 5000], level: fogLevelOf(m) }),
-      ),
-    );
+    row("fog", {
+      label: t("Visibility", lang),
+      icon: "fog",
+      num: km(m),
+      unit: "",
+      qual: t(visWord(m), lang),
+      more: [gauge(m, 100, 10000, { log: true, ticks: [...THRESHOLDS.fog, 5000], level: fogLevelOf(m) })],
+      brief: km(m),
+    });
   }
   const smokeLvl = smokeLevel(c.smoke);
   if (c.smoke && smokeLvl != null) {
@@ -511,42 +478,131 @@ export function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerDa
       c.smoke.nearest_km != null
         ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW of fire power", lang).replace("X", String(c.smoke.frp_sum))}`
         : `${c.smoke.frp_sum} MW`;
-    out.push(
-      L(
-        "smoke",
-        t("Smoke", lang),
-        String(c.smoke.count),
-        `<span class="qa nu">${t("fires within 100 km", lang)}</span> <b>${t(SMOKE_PHRASE[smokeLvl], lang)}</b>`,
-        sub,
-        c.smoke.nearest_km != null
-          ? gauge(c.smoke.nearest_km, 0, c.smoke.radius_km ?? 100, {
-              from: c.smoke.nearest_km,
-              marker: true,
-              level: smokeLvl,
-            })
-          : "",
-      ),
-    );
+    row("smoke", {
+      label: t("Smoke", lang),
+      icon: "smoke",
+      num: String(c.smoke.count),
+      unit: t("fires within 100 km", lang),
+      qual: t(SMOKE_PHRASE[smokeLvl], lang),
+      more: [
+        ...(c.smoke.nearest_km != null
+          ? [
+              gauge(c.smoke.nearest_km, 0, c.smoke.radius_km ?? 100, {
+                from: c.smoke.nearest_km,
+                marker: true,
+                level: smokeLvl,
+              }),
+            ]
+          : []),
+        `<p class="t-meta">${esc(sub)}</p>`,
+      ],
+      brief: String(c.smoke.count),
+    });
   }
   if (c.rain && (c.rain.probability_pct != null || c.rain.precipitation_mm != null)) {
     const mm = c.rain.precipitation_mm;
-    if (c.rain.probability_pct != null) {
-      out.push(
-        L(
-          "rain",
-          t("Rain", lang),
-          `${c.rain.probability_pct}%`,
-          `<span class="qa">${t("chance of rain", lang)}</span>`,
-          mm ? t("X mm of rain now", lang).replace("X", String(mm)) : "",
-          drops(c.rain.probability_pct),
-        ),
-      );
-    } else {
-      out.push(L("rain", t("Rain", lang), String(mm), `<span class="qa nu">mm</span> <b>${t("now", lang)}</b>`, ""));
-    }
+    const pct = c.rain.probability_pct;
+    row("rain", {
+      label: t("Rain", lang),
+      icon: "drop",
+      num: pct != null ? `${pct}%` : String(mm),
+      unit: pct != null ? t("chance of rain", lang) : "mm",
+      qual: pct != null ? undefined : t("now", lang),
+      more: pct != null && mm ? [`<p class="t-meta">${esc(t("X mm of rain now", lang).replace("X", String(mm)))}</p>`] : [],
+      brief: pct != null ? `${pct}%` : `${mm} mm`,
+    });
   }
+  return orderByRisk(out, risk, c);
+}
 
-  return out;
+/** A reading as the place page's row: pictogram, label, figure and word, its level, detail. */
+export function readRowHtml(r: ReadRow, lang: Lang): string {
+  const tag = r.mine ? ` <span class="fy">${esc(t("for you", lang))}</span>` : "";
+  return (
+    `<div class="rrow${r.driver ? " on" : ""}" data-k="${r.key}">${ico(r.icon)}` +
+    `<div><p class="lab">${esc(r.label)}${tag}</p><p class="val"><span class="num">${esc(r.num)}</span>` +
+    `${r.unit ? `<span class="qa">${esc(r.unit)}</span>` : ""}${r.qual ? ` <b class="ql">${esc(r.qual)}</b>` : ""}</p></div>` +
+    `${r.chip}${r.more.length ? `<div class="more stack">${r.more.join("")}</div>` : ""}</div>`
+  );
+}
+
+/** The Ambient read's headline as plain text: "High air." or "All clear." */
+export function headText(risk: AmbientRisk, lang: Lang): string {
+  const h = headline(risk, (en) => t(en, lang));
+  return h.noun ? `${h.word} ${h.noun}.` : `${h.word}.`;
+}
+
+/** "Ambient · Everyone": the read and whose it is. */
+export const ambientKicker = (risk: AmbientRisk, lang: Lang) =>
+  `Ambient · ${t(PERSONA_LABEL[risk.persona], lang)}`;
+
+/** The level hero: the Ambient read on its level's fill, shape and word, the advice under it. */
+export function ambientPlate(risk: AmbientRisk, lang: Lang): string {
+  const say = ambientSummary(risk, (en) => t(en, lang));
+  const head = headText(risk, lang);
+  const extra =
+    (say.action ? `<p class="t-lead">${esc(say.action)}</p>` : "") +
+    (say.also ? `<p class="row-c">${ico("people")}<span>${esc(say.also)}</span></p>` : "");
+  return plate({
+    fill: risk.band,
+    shape: LEVEL_SHAPE[risk.band],
+    kicker: ambientKicker(risk, lang),
+    word: esc(head),
+    say: esc(say.meaning),
+    extra,
+    label: head,
+  });
+}
+
+/** An official warning's title in IMD's own words: the category and the storm's name
+ *  ("Severe Cyclonic Storm Akvan") when the message names one, else its type. */
+export function warningTitle(w: Warning): string {
+  const m = w.headline.match(
+    /\b(super cyclonic storm|extremely severe cyclonic storm|very severe cyclonic storm|severe cyclonic storm|cyclonic storm|deep depression)\s+(?:\(\s*)?([A-Z][A-Za-z]+)\b/i,
+  );
+  if (m && !/^(with|over|near|lay|lays|moved|has|is|of|at|in)$/i.test(m[2])) {
+    const title = (s: string) => s.toLowerCase().replace(/\b\w/g, (x) => x.toUpperCase());
+    return `${title(m[1])} ${title(m[2])}`;
+  }
+  return w.event;
+}
+
+/** The official warnings over this point: a WarningPlate each (IMD's category and name, the
+ *  SACHET colour code, the end time), then one quiet line for those near but not at it. */
+export function warningBand(c: Conditions, lang: Lang): string {
+  const plates = (c.warnings ?? []).map((w) => {
+    const meta = [w.severity, w.until ? t("until X", lang).replace("X", w.until) : ""].filter(Boolean).join(" · ");
+    const title = warningTitle(w);
+    return warningPlate({
+      bar: [`<span>${esc(t("Official warning", lang))} · ${esc(w.issuer)}</span>`],
+      title,
+      icon: /cyclon/i.test(`${title} ${w.event}`) ? "cyclone" : "warn",
+      body: meta ? `<p class="t-value">${esc(meta)}</p>` : "",
+      label: t("Official warning", lang),
+    });
+  });
+  const near = c.nearby_warnings?.length ? notice("quiet", nearbyWarnings(c.nearby_warnings, lang), "warn") : "";
+  return plates.length || near ? band(stack(plates.join("") + near)) : "";
+}
+
+/** Warnings active nearby whose areas do not cover this spot: one line, never a plate. */
+function nearbyWarnings(ws: Warning[], lang: Lang): string {
+  // One entry per kind: a count when several areas nearby have it, else its end time.
+  const byEvent = new Map<string, Warning[]>();
+  for (const w of ws) byEvent.set(w.event, [...(byEvent.get(w.event) ?? []), w]);
+  const items = [...byEvent]
+    .map(([event, list]) => {
+      const one = list.length === 1 ? list[0] : undefined;
+      const detail = one ? (one.until ? t("until X", lang).replace("X", one.until) : "") : String(list.length);
+      return `${event}${detail ? ` (${detail})` : ""}`;
+    })
+    .join(" · ");
+  return `${esc(t("Near this point, but not at it:", lang))} ${esc(items)}`;
+}
+
+/** The page wash for a read: its hazard's hue (calm sky when low) at its level. */
+export function readTint(risk: Pick<AmbientRisk, "band" | "driver">): { hue: string; level: RiskBand } {
+  return { hue: risk.band !== "low" && risk.driver in HAZARD_TINT ? risk.driver : "none", level: risk.band };
 }
 
 export const GRAP_RANGE = ["201-300", "201-300", "301-400", "401-450", "above 450"];
@@ -564,7 +620,7 @@ export function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string
     .replace("{n}", String(g.stations))
     .replace("{stage}", ROMAN[g.stage])
     .replace("{range}", g.stage === 4 ? t("above 450", lang) : GRAP_RANGE[g.stage]);
-  return `<p class="grap"><b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}</p>`;
+  return notice("info", `<b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}`);
 }
 
 /** A place page's title and the description's first sentence, in the words people search:

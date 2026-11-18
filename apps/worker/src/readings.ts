@@ -49,6 +49,12 @@ export function layerLevel(k: string, risk: AmbientRisk, c: Conditions): number 
   return k === "rain" ? Number(rainLikely(c)) : Math.max(0, ...layerHazards(k, risk).map((h) => h.level));
 }
 
+/** A layer's own level (before any persona's bump), or null when the read scores none (rain). */
+export function layerBase(k: string, risk: AmbientRisk): number | null {
+  const hs = layerHazards(k, risk);
+  return hs.length ? Math.max(...hs.map((h) => h.base)) : null;
+}
+
 /** Layers in the order they matter to this person now. */
 export function orderByRisk<T extends { key: string }>(items: T[], risk: AmbientRisk, c: Conditions): T[] {
   const rank = (k: string) => [
