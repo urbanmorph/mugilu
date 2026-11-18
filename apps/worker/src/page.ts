@@ -1,7 +1,7 @@
 import type { Conditions, Warning, NormalizedStation, NearStation } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
-import { AQI_BAND_LABEL } from "./aqi";
+import { AQI_BAND_LABEL, aqiBand, subIndex } from "./aqi";
 import { compass, drops, gauge, GLYPH_CSS, lifeBlocks, pollutantBars, uvSteps, worstPollutant } from "./glyphs";
 import { briefs, forPersona, isDriver, km, orderByRisk, placeLabel } from "./readings";
 import { SOURCES, providerName } from "./sources";
@@ -26,7 +26,7 @@ import {
   THRESHOLDS,
 } from "./score";
 import type { AmbientRisk, Persona, RiskBand } from "./score";
-import { RISK_COLOR, BAND_COLOR, levelColor, tintOf } from "./palette";
+import { RISK_COLOR, BAND_COLOR, levelColor, tintOf, paletteCss } from "./palette";
 import { slugForName, slugFromPath, siblingPlaces, slugPlacesByState } from "./slugs";
 import { aroundLinks } from "./sister";
 import type { Lang } from "./i18n";
@@ -141,7 +141,7 @@ function renderHero(
     lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
   const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
     if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
-    return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
+    return `<a class="hl" style="--hue:var(--rt-${band})" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
   };
   if (h?.hottest) {
     rows.push(
@@ -206,6 +206,7 @@ function safePad(y: string, x: string): string {
 }
 
 const BASE_CSS = `
+${paletteCss()}
 :root{--sky:#0284c7;--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--warn-text:#b45309;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--hair:color-mix(in srgb,var(--ink) 12%,transparent)}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937;--warn-text:#fbbf24}}
 *{box-sizing:border-box}html,body{margin:0}
@@ -220,6 +221,8 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .langsw a:hover{border-color:var(--muted)}
 .langsw b{color:var(--ink);font-weight:600}
 .ic{width:18px;height:18px;flex:none;vertical-align:-.18em}
+.topnav{display:none}
+@media(min-width:960px){body.wide main{max-width:1180px;padding-top:28px}body.wide :is(.foot,.langsw){max-width:1180px}.topnav{display:flex;gap:1.6rem;margin:0 1.4rem 0 auto;font-size:.95rem}.topnav a{color:var(--ink);text-decoration:none}.topnav a:hover,.topnav a[aria-current]{text-decoration:underline;text-underline-offset:.3em}}
 `;
 
 const SITE = "https://mugilu.live";
@@ -265,6 +268,23 @@ function langSwitcher(canonical: string, lang: Lang): string {
   return `<nav class="langsw" aria-label="Language">${items}</nav>`;
 }
 
+// The header nav on the wide pages: the places, warnings, display and explainer pages,
+// the current one marked. Shown from 960 px; phones keep the plain header.
+const TOP_NAV: [string, string][] = [
+  ["/places", "Places"],
+  ["/warnings", "Warnings"],
+  ["/display", "Display"],
+  ["/methodology", "How it works"],
+  ["/about", "About"],
+];
+function topNav(canonical: string | undefined, lang: Lang): string {
+  const here = canonical ? new URL(canonical).pathname : "";
+  const links = TOP_NAV.map(
+    ([p, en]) => `<a href="${lp(p, lang)}"${p === here ? ' aria-current="page"' : ""}>${t(en, lang)}</a>`,
+  ).join("");
+  return `<nav class="topnav" aria-label="${esc(t("Main", lang))}">${links}</nav>`;
+}
+
 /** Optional page settings for shell(). */
 interface ShellOpts {
   desc?: string;
@@ -277,13 +297,16 @@ interface ShellOpts {
   bare?: boolean;
   /** Keep the page out of search indexes while its links are still followed (thin, endless pages). */
   noindex?: boolean;
+  /** The wide layout (960 px and up) with a header nav: the directory, warnings, display,
+   *  station and text pages. Home and the place pages keep their own layouts. */
+  wide?: boolean;
 }
 
 function shell(
   title: string,
   body: string,
   css: string,
-  { desc = SITE_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex }: ShellOpts = {},
+  { desc = SITE_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex, wide }: ShellOpts = {},
 ): string {
   const cur = canonical ? langUrl(canonical, lang) : undefined;
   // hreflang alternates for every language + x-default (English) so search
@@ -332,11 +355,11 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 ${CF_BEACON_TOKEN && !noBeacon ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${CF_BEACON_TOKEN}"}'></script>` : ""}
 <style>${BASE_CSS}${bare ? "" : INSTALL_CSS}${css}${langCss(lang)}</style>
 </head>
-<body>
+<body${wide ? ' class="wide"' : ""}>
 ${
   bare
     ? body
-    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a>${installButton(lang)}</header>
+    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a>${wide ? topNav(canonical, lang) : ""}${installButton(lang)}</header>
 <main>${body}</main>
 <footer class="foot">${footerNav(lang)}</footer>
 ${canonical ? langSwitcher(canonical, lang) : ""}
@@ -354,8 +377,19 @@ ${canonical ? langSwitcher(canonical, lang) : ""}
 // clear-sky blue when calm), the headline word in the severity colour (--cond), an
 // editorial serif Ambient statement, and the readings as hairline-ruled strata
 // (not cards). Inline-SVG line icons, currentColor so the driver layer glows.
+// The backdrop that says what the data says: the hazard's hue at its level's strength
+// (--tint/--tk, from palette.ts tintOf), fading down the page. One rule for every page
+// that has a read: /c, a station, /warnings.
+const TINT_BODY_CSS = `body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),var(--bg)),color-mix(in srgb,var(--tint) 8%,var(--bg)) 22%,var(--bg) 55%) var(--bg) no-repeat}`;
+
+/** The --tint/--tk variables for a read, by the canonical rule. */
+function tintVars(risk: Pick<AmbientRisk, "band" | "driver">): string {
+  const { hue, strength } = tintOf(risk);
+  return `:root{--tint:${hue};--tk:${strength}%}`;
+}
+
 const CONDITIONS_CSS = `
-body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),var(--bg)),color-mix(in srgb,var(--tint) 8%,var(--bg)) 22%,var(--bg) 55%) var(--bg) no-repeat}
+${TINT_BODY_CSS}
 .coord{font:500 .78rem/1.4 var(--mono);letter-spacing:.04em;color:var(--muted);margin:.4rem 0 0}
 .loc{font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,6.5vw,2.15rem);line-height:1.05;letter-spacing:-.01em;margin:.35rem 0 0}
 .when{color:var(--muted);font-size:.9rem;margin:.3rem 0 0}
@@ -367,12 +401,12 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .warn .wsrc{display:block;margin-top:2px;color:var(--muted);font-size:.76rem;font-weight:500}
 .amb{margin:1.7rem 0 .2rem}
 .amb-eye{display:flex;align-items:center;gap:.45rem;font:600 .76rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 .55rem}
-.amb-eye .ic{width:15px;height:15px;color:var(--cond)}
+.amb-eye .ic{width:15px;height:15px;color:var(--cond-text)}
 .amb-head{font-family:var(--serif);font-weight:600;font-size:clamp(2.6rem,12vw,3.7rem);line-height:.95;letter-spacing:-.025em;margin:0;color:var(--ink)}
-.amb-head .b{color:var(--cond)}
+.amb-head .b{color:var(--cond-text)}
 .amb-say{font-family:var(--serif);font-size:1.18rem;line-height:1.42;margin:.65rem 0 0;color:var(--ink);max-width:32ch}
 .amb-act{font:600 1rem/1.4 var(--sans);margin:.5rem 0 0;max-width:34ch}
-.amb-also{display:flex;align-items:flex-start;gap:.4rem;font:500 .92rem/1.4 var(--sans);color:var(--cond);margin:.7rem 0 0;max-width:34ch}
+.amb-also{display:flex;align-items:flex-start;gap:.4rem;font:500 .92rem/1.4 var(--sans);color:var(--cond-text);margin:.7rem 0 0;max-width:34ch}
 .amb-also .ic{width:16px;height:16px;flex:none;margin-top:.1rem}
 .who{display:flex;flex-wrap:wrap;gap:.35rem 1rem;margin:1.2rem 0 0;padding:0}
 .who a{font:500 .9rem var(--sans);color:var(--muted);text-decoration:none;padding-bottom:2px;border-bottom:2px solid transparent}
@@ -381,7 +415,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .lyr{display:grid;grid-template-columns:5.4rem 1fr;gap:0 1rem;padding:1.05rem .1rem;border-bottom:1px solid var(--hair)}
 .lyr dt{display:flex;flex-wrap:wrap;align-items:center;align-self:start;gap:.3rem .5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
 .lyr dt .ic{flex:none}
-.lyr.on dt{color:var(--cond)}
+.lyr.on dt{color:var(--cond-text)}
 .lyr .fy{white-space:nowrap;margin-left:.1rem;padding:.1rem .4rem;border-radius:999px;font:600 .66rem/1.3 var(--sans);letter-spacing:.03em;text-transform:none;color:var(--ink);background:color-mix(in srgb,var(--cond) 18%,transparent)}
 .lyr.quiet .num,.lyr.quiet .q{color:var(--muted)}
 .lyr dd{margin:0;display:flex;flex-direction:column;gap:.16rem;min-width:0}
@@ -398,10 +432,10 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .attr{color:var(--muted);font-size:.8rem;margin:0 0 .3rem}
 .disc{color:var(--muted);font-size:.76rem;line-height:1.5;margin:0}
 .raw{margin:.95rem 0 0;font:500 .82rem var(--mono);letter-spacing:.02em}
-.raw a{color:var(--cond);text-decoration:none}
+.raw a{color:var(--cond-text);text-decoration:none}
 .raw a:hover{text-decoration:underline}
 .grap{margin:.9rem 0 0;font-size:.92rem;line-height:1.5;color:var(--muted)}.grap a{color:var(--sky)}
-.nearby{margin:1.1rem 0 0;font-size:.9rem;line-height:1.9;color:var(--muted)}.nearby a{color:var(--cond);text-decoration:none}.nearby a:hover{text-decoration:underline}
+.nearby{margin:1.1rem 0 0;font-size:.9rem;line-height:1.9;color:var(--muted)}.nearby a{color:var(--cond-text);text-decoration:none}.nearby a:hover{text-decoration:underline}
 .cxback{margin:1.1rem 0 0;font-size:.9rem}.cxback a{color:var(--muted);text-decoration:none}.cxback a:hover{color:var(--ink)}
 @media(min-width:960px){
 main:has(>.cx){max-width:1120px;padding-top:28px}
@@ -549,7 +583,7 @@ function airLag(c: Conditions): boolean {
  *  and --tint/--tk (the backdrop: the hazard's hue at the band's strength). */
 function readVars(risk: AmbientRisk): string {
   const { hue, strength } = tintOf(risk);
-  return `--cond:${RISK_COLOR[risk.band]};--tint:${hue};--tk:${strength}%`;
+  return `--cond:${RISK_COLOR[risk.band]};--cond-text:var(--rt-${risk.band});--tint:${hue};--tk:${strength}%`;
 }
 
 /** A pinned official warning, the most urgent thing on the page. */
@@ -626,7 +660,6 @@ function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerData[] {
     bar,
   });
   const band = c.air?.band ?? "unknown";
-  const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = AQI_BAND_LABEL[band] ?? "n/a";
   // The readings, as strata. Each renders only when it has a value; the Ambient
   // driver's stratum is highlighted (icon + label in the condition colour).
@@ -642,7 +675,7 @@ function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerData[] {
         "air",
         t("Air", lang),
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
-        `<span class="qa">AQI</span> <b style="color:${bandColor}">${t(bandLabel, lang)}</b>`,
+        `<span class="qa">AQI</span> <b style="color:var(--bt-${band})">${t(bandLabel, lang)}</b>`,
         `${marker}${aqli}`,
         bars
           ? `<div class="prs">${bars}<span class="prk">${t("The dashed line is the CPCB limit.", lang)}</span></div>`
@@ -961,8 +994,8 @@ const STATION_CSS = `
 .sx h1{font-family:var(--serif);font-size:clamp(2rem,6vw,3rem);line-height:1.1;margin:.2rem 0 .3rem}
 .sx .where{color:var(--muted);margin:0 0 1.2rem}
 .sx .aqi{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:.4rem 0 .2rem}
-.sx .aqi b{font-size:clamp(2.6rem,9vw,4rem);line-height:1;color:var(--band)}
-.sx .aqi span{font-weight:600;color:var(--band)}
+.sx .aqi b{font-size:clamp(2.6rem,9vw,4rem);line-height:1;color:var(--sband)}
+.sx .aqi span{font-weight:600;color:var(--sband)}
 .sx .when{color:var(--muted);font-size:.9rem;margin:0 0 1.2rem}
 .sx dl{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1.2rem;margin:.6rem 0 1.4rem}
 .sx dt{color:var(--muted)}.sx dd{margin:0;font-variant-numeric:tabular-nums}
@@ -970,7 +1003,52 @@ const STATION_CSS = `
 .sx .nearby{font-size:.95rem;line-height:1.9;color:var(--muted);margin:1rem 0}
 .sx .stale{border-left:3px solid var(--line);padding:.2rem 0 .2rem .9rem;color:var(--muted)}
 .sx footer{margin-top:2rem;border-top:1px solid var(--line);padding-top:1rem;font-size:.85rem;color:var(--muted)}
-.sx footer a{color:var(--muted)}`;
+.sx footer a{color:var(--muted)}
+.sx .pol{display:grid;grid-template-columns:4.2rem minmax(0,1fr) 7.5rem;gap:.55rem .8rem;align-items:center;margin:.6rem 0 .4rem;font-size:.95rem}
+.sx .pol dt{color:var(--muted)}.sx .pol dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.sx .ptrack{height:9px;border-radius:5px;background:var(--line);overflow:hidden}
+.sx .pbar{display:block;height:100%;border-radius:5px}
+.sx .pnote{color:var(--muted);font-size:.8rem;margin:0 0 1.2rem}
+.sx .sxr{margin:1.4rem 0 0}
+.sx .sxr h2{font:600 .74rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 .7rem}
+.sx .smap{display:block;width:100%;height:auto;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.sx .snear{width:100%;border-collapse:collapse;font-size:.95rem;margin:.8rem 0 0}
+.sx .snear th{text-align:left;font-weight:500;color:var(--muted);font-size:.8rem;padding:.3rem 0}
+.sx .snear td{border-top:1px solid var(--line);padding:.45rem 0}.sx .snear td+td,.sx .snear th+th{text-align:right}
+.sx .snear a{color:var(--sky);text-decoration:none}.sx .snear i{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:.4rem}
+@media(min-width:960px){.sx{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 3.5rem;align-items:start}.sx .sxr{margin:3.4rem 0 0}.sx footer{grid-column:1/-1}}`;
+
+/** One pollutant as a bar on CPCB's 0-500 scale (its sub-index), in its band's colour. */
+function pollutantBar(p: { key: string; label: string; value: number; unit: string }): string {
+  const si = subIndex(p.key as Parameters<typeof subIndex>[0], p.value);
+  const bar =
+    si == null
+      ? ""
+      : `<span class="pbar" style="width:${Math.max(2, Math.min(100, (si / 500) * 100)).toFixed(1)}%;background:${BAND_COLOR[aqiBand(si)] ?? BAND_COLOR.unknown}"></span>`;
+  return `<dt>${esc(p.label)}</dt><span class="ptrack" aria-hidden="true">${bar}</span><dd>${p.value} ${esc(p.unit)}</dd>`;
+}
+
+/** The stations around one, at their true offsets (north up), each dot in its band's colour;
+ *  the station itself ringed. Scaled so the farthest fits. */
+function stationMap(s: NormalizedStation, nearby: NearStation[]): string {
+  if (s.lat == null || s.lon == null) return "";
+  const [w, h, pad] = [520, 300, 26];
+  const k = Math.cos((s.lat * Math.PI) / 180);
+  const off = (lat: number, lon: number) => [(lon - s.lon!) * k, lat - s.lat!];
+  const pts = nearby.filter((n) => n.lat != null && n.lon != null).map((n) => ({ n, xy: off(n.lat!, n.lon!) }));
+  const reach = Math.max(
+    1e-6,
+    ...pts.map((p) => Math.abs(p.xy[0]) / (w / 2 - pad)),
+    ...pts.map((p) => Math.abs(p.xy[1]) / (h / 2 - pad)),
+  );
+  const at = ([x, y]: number[]) => [w / 2 + x / reach, h / 2 - y / reach].map((v) => v.toFixed(1));
+  const dot = (cx: string, cy: string, band: string, title: string, self = false) =>
+    `<circle cx="${cx}" cy="${cy}" r="${self ? 11 : 8}" fill="${BAND_COLOR[band] ?? BAND_COLOR.unknown}"${self ? ' stroke="var(--ink)" stroke-width="3"' : ' style="stroke:color-mix(in srgb,var(--ink) 40%,transparent);stroke-width:1.5"'}><title>${esc(title)}</title></circle>`;
+  const dots = pts
+    .map(({ n, xy }) => dot(...(at(xy) as [string, string]), n.band, `${n.name}: AQI ${n.aqi ?? "n/a"}`))
+    .join("");
+  return `<svg class="smap" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(`Map of the air stations around ${s.name}, coloured by AQI`)}">${dots}${dot(String(w / 2), String(h / 2), s.band, `${s.name}: AQI ${s.aqi ?? "n/a"}`, true)}</svg>`;
+}
 
 /** /s/{provider}/{id}: one air station, titled the way people search ("Anand Vihar AQI
  *  today: 412 Severe"). `fresh` false: the station has not reported within the snapshot's
@@ -1002,24 +1080,29 @@ export function renderStationPage(
   const reading = live
     ? `<p class="aqi"><b>${s.aqi}</b><span>AQI · ${esc(band)}</span></p>
     <p class="when">${esc(fill(t("Measured by {provider}.", lang)))} ${s.ts ? relTime(new Date(s.ts).toISOString()) : ""}</p>
-    <dl>${pollutantParts(s.pollutants)
-      .map((p) => `<dt>${esc(p.label)}</dt><dd>${p.value} ${esc(p.unit)}</dd>`)
-      .join("")}</dl>`
+    <dl class="pol">${pollutantParts(s.pollutants).map(pollutantBar).join("")}</dl>
+    <p class="pnote">${t("Each bar is the pollutant on CPCB's 0-500 AQI scale, in its band's colour.", lang)}</p>`
     : `<p class="stale">${t("No recent reading from this station. Last reading: X", lang).replace("X", s.ts ? relTime(new Date(s.ts).toISOString()) : "n/a")}</p>`;
   const near = nearby.length
-    ? `<nav class="nearby" aria-label="${esc(t("Air stations near here", lang))}">${t("Air stations near here", lang)}: ${nearby
-        .map((n) => `<a href="${lp(`/s/${n.provider}/${n.raw_id}`, lang)}">${esc(n.name)}</a> ${n.aqi ?? ""}`)
-        .join(" · ")}</nav>`
+    ? `<section class="sxr" aria-label="${esc(t("Air stations near here", lang))}"><h2>${t("Air stations near here", lang)}</h2>${stationMap(s, nearby)}
+    <table class="snear"><thead><tr><th>${t("Station", lang)}</th><th>AQI</th><th>${t("Distance", lang)}</th></tr></thead><tbody>${nearby
+      .map(
+        (n) =>
+          `<tr><td><i style="background:${BAND_COLOR[n.band] ?? BAND_COLOR.unknown}"></i><a href="${lp(`/s/${n.provider}/${n.raw_id}`, lang)}">${esc(n.name)}</a></td><td>${n.aqi ?? ""}</td><td>${n.distance_km != null ? `${n.distance_km.toFixed(1)} km` : ""}</td></tr>`,
+      )
+      .join("")}</tbody></table></section>`
     : "";
   const body = `
-  <article class="sx" style="--band:${BAND_COLOR[s.band] ?? BAND_COLOR.unknown}">
+  <article class="sx" style="--band:${BAND_COLOR[s.band] ?? BAND_COLOR.unknown};--sband:var(--bt-${s.band})">
+    <div class="sxl">
     <h1>${esc(s.name)}</h1>
     <p class="where">${esc(where || "India")} · ${esc(providerName(s.provider))}</p>
     ${reading}
     ${s.lat != null && s.lon != null ? `<p class="full"><a href="${lp(`/c/${s.lat},${s.lon}`, lang)}">${t("The full sky here: heat, rain, warnings and what to do", lang)} →</a></p>` : ""}
+    </div>
     ${near}
     <footer>
-      <p>${esc(fill(t("Measured by {provider}.", lang)))} ${esc(t("Sources", lang))}: ${esc(providerName(s.provider))} via OAQ, via mugilu.</p>
+      <p>${esc(t("Sources", lang))}: ${esc(providerName(s.provider))} via OAQ, via mugilu.</p>
       <p>${esc(t(SHORT_DISCLAIMER, lang))}</p>
       <p><a href="${path}.json">JSON</a> · <a href="${path}.md">Markdown</a> · <a href="${lp("/", lang)}">← ${t("Look up another place", lang)}</a></p>
     </footer>
@@ -1033,7 +1116,17 @@ export function renderStationPage(
     address: { "@type": "PostalAddress", addressLocality: s.city || undefined, addressCountry: "IN" },
   });
   // Station pages are thin and Google never crawled them: they stay for people, out of the index.
-  return shell(title, body + FRESHEN, STATION_CSS, { desc, canonical, jsonLd, ogImage: HOME_OG, lang, noindex: true });
+  // The air hue at the station's band level; calm sky when it has no recent reading.
+  const tint = tintVars({ band: RISK_BANDS[live ? (airLevelOf(s.band) ?? 0) : 0], driver: "Air" });
+  return shell(title, body + FRESHEN, STATION_CSS + TINT_BODY_CSS + tint, {
+    desc,
+    canonical,
+    jsonLd,
+    ogImage: HOME_OG,
+    lang,
+    noindex: true,
+    wide: true,
+  });
 }
 
 const GRAP_RANGE = ["201-300", "201-300", "301-400", "401-450", "above 450"];
@@ -1107,7 +1200,7 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad
 .eplace{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
 .ebrand{color:var(--muted);font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.3rem}
 .ebrand svg{width:15px;height:15px;vertical-align:-2px}
-.eamb{display:flex;align-items:center;gap:.5rem;font-family:var(--serif);font-size:1.35rem;font-weight:600;letter-spacing:-.01em;color:var(--cond);margin:0 0 .15rem}
+.eamb{display:flex;align-items:center;gap:.5rem;font-family:var(--serif);font-size:1.35rem;font-weight:600;letter-spacing:-.01em;color:var(--cond-text);margin:0 0 .15rem}
 .eamb .dot{width:10px;height:10px;border-radius:50%;background:var(--cond);flex:none}
 .esay{color:var(--ink);font-size:.92rem;margin:0 0 .85rem}
 .eact{color:var(--ink);font-size:.85rem;font-weight:600;margin:-.45rem 0 .85rem}
@@ -1131,7 +1224,7 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad
 // full-screens it; a corner QR sends passers-by to the same place on their phone.
 const KIOSK_CSS = `
 html,body{height:100%;overflow:hidden;background:#080d18}
-.k{--ink:#e7ecf3;--muted:#8b97a8;--line:#1c2740;--bg:#080d18;position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
+.k{${paletteCss("dark")}--ink:#e7ecf3;--muted:#8b97a8;--line:#1c2740;--bg:#080d18;position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
 .k::before{content:"";position:absolute;inset:0;background:radial-gradient(130% 110% at 100% 0%,var(--tint),transparent 64%);opacity:.3;pointer-events:none}
 @supports (color:color-mix(in srgb,red,blue)){.k::before{background:radial-gradient(130% 110% at 100% 0%,color-mix(in srgb,var(--tint) calc(var(--tk) * 1.6),transparent),transparent 64%);opacity:1}}
 .k>*{position:relative;z-index:1}
@@ -1147,7 +1240,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .keye{display:flex;align-items:center;gap:1.2vmin;font-size:2.4vmin;letter-spacing:.12em;text-transform:uppercase;color:#8b97a8}
 .keye svg{width:3vmin;height:3vmin}
 .khead{font-family:var(--serif),Georgia,serif;font-weight:700;font-size:12vmin;line-height:1;letter-spacing:-.01em;margin:1.1vmin 0 .9vmin}
-.khead .b{color:var(--cond)}
+.khead .b{color:var(--cond-text)}
 .ksay{font-size:4.2vmin;line-height:1.2;color:#cfd7e2;max-width:42ch}
 .kact{font-size:2.8vmin;font-weight:600;line-height:1.25;margin-top:1.2vmin;max-width:60ch}
 .kamb:has(.kact) .ksay{font-size:3.4vmin}
@@ -1158,7 +1251,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .kquiet b{color:#cfd7e2;font-weight:600}
 .knorm{margin-top:2vmin;max-width:46vmin}
 .kt.on{border-color:var(--cond)}
-.kt.on .kt-n{color:var(--cond)}
+.kt.on .kt-n{color:var(--cond-text)}
 .kt-l{font-size:2vmin;letter-spacing:.1em;text-transform:uppercase;color:#8b97a8}
 .kt-n{font-size:6.2vmin;font-weight:700;line-height:1}
 .kt-w{font-size:2.2vmin;color:#aeb9c8}
@@ -1317,7 +1410,8 @@ const DISPLAY_CSS = `
 .dtile:hover{border-color:var(--ink)}
 .dhow{margin:.1rem 0 .5rem 1.1rem}.dhow li{margin:.35rem 0;line-height:1.5}
 .dprev{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#080d18;margin:.4rem 0 1.4rem}
-.dprev iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}`;
+.dprev iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
+@media(min-width:960px){.dcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,25rem);gap:0 3rem;align-items:start}.dright>.ah:first-child{margin-top:1.4rem}}`;
 
 // The "put it on a screen" builder: pick a place (+ who it's for), open the
 // self-refreshing kiosk view. Search routes through /go?kiosk=1 (zero JS).
@@ -1348,10 +1442,12 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       : t("For an always-on unattended screen, point a kiosk-browser app at the same link so it auto-starts.", lang);
   const body = `
   <article class="ax">
+    <div class="dcols"><div class="dleft">
     <h1 class="ahero">${heading}</h1>
     <p class="alead">${t("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.", lang)}</p>
 
     <div class="dprev" aria-hidden="true"><iframe src="${esc(lp(`/c/bengaluru?kiosk${asQ}`, lang))}" title="${esc(t("Put mugilu on a screen.", lang))}" tabindex="-1" loading="lazy"></iframe></div>
+    </div><div class="dright">
 
     <p class="ah">${icon("users")}<span>${t("Weight it for who is nearby", lang)}</span></p>
     <nav class="dpers" aria-label="Persona">${pills}</nav>
@@ -1376,6 +1472,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       <li>${step4}</li>
     </ol>
     <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
+    </div></div>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>
   <script>var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};${typeaheadJs("dq", "dac", `'?kiosk'+${JSON.stringify(asQ)}`)}
@@ -1385,6 +1482,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1399,7 +1497,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   // The card's readings, each in its own words, in the order every surface uses.
   const read: Record<string, string> = {};
   if (c.air?.aqi != null)
-    read.air = `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}</span></div>`;
+    read.air = `<div class="eread"><b style="color:var(--bt-${c.air.band})">${c.air.aqi}</b><span>AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}</span></div>`;
   if (c.heat?.apparent_c != null)
     read.heat = `<div class="eread"><b>${round(c.heat.apparent_c)}°</b><span>${t("feels like", lang)}</span></div>`;
   if (c.uv?.index != null)
@@ -1415,7 +1513,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{${readVars(risk)}}</style></head><body>
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${paletteCss()}${EMBED_CSS}\n:root{${readVars(risk)}}</style></head><body>
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>
@@ -1459,7 +1557,34 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 .builtby .star svg{width:15px;height:15px}
 .adisc{color:var(--muted);font-size:.82rem;line-height:1.5;border-top:1px solid var(--hair);padding-top:1.1rem;margin-top:2.3rem}
 .aback{margin:1.3rem 0 0}.aback a{color:var(--sky);text-decoration:none;font-weight:600;font-family:var(--mono);font-size:.85rem;letter-spacing:.02em}
+.axw{max-width:42rem;margin:0 auto}.toc{display:none}
+@media(min-width:1100px){.axw{max-width:none;display:grid;grid-template-columns:minmax(0,13rem) minmax(0,42rem);gap:3.5rem;justify-content:center;align-items:start}
+.toc{display:flex;flex-direction:column;gap:.55rem;position:sticky;top:1.6rem;margin-top:5.2rem;padding-left:.9rem;border-left:2px solid var(--line);font-size:.9rem;line-height:1.35}
+.toc b{font:600 .72rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem}
+.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--ink)}}
 `;
+
+/** A text page with a contents list beside it (wide screens): one link per section
+ *  heading (`class="ah"`), each heading given an anchor unless it has one (#build). */
+function withToc(body: string, lang: Lang): string {
+  let n = 0;
+  const links: string[] = [];
+  const marked = body.replace(
+    /<(p|h2) class="ah"(?: id="([^"]+)")?>([\s\S]*?)<\/\1>/g,
+    (_m, tag: string, id: string | undefined, inner: string) => {
+      const anchor = id ?? `s${++n}`;
+      links.push(
+        `<a href="#${anchor}">${inner
+          .replace(/<svg[\s\S]*?<\/svg>/g, "")
+          .replace(/<[^>]+>/g, "")
+          .trim()}</a>`,
+      );
+      return `<${tag} class="ah" id="${anchor}">${inner}</${tag}>`;
+    },
+  );
+  if (links.length < 3) return body;
+  return `<div class="axw"><nav class="toc" aria-label="${esc(t("On this page", lang))}"><b>${t("On this page", lang)}</b>${links.join("")}</nav><div class="axb">${marked}</div></div>`;
+}
 
 /** The About page: the origin story + the dual nature (for people, and as
  *  infrastructure). Person-first, jargon-free. The "Build on it" section is a
@@ -1580,7 +1705,7 @@ export function renderAbout(lang: Lang = "en"): string {
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(t("About mugilu: the open sky of India", lang), body, ABOUT_CSS, {
+  return shell(t("About mugilu: the open sky of India", lang), withToc(body, lang), ABOUT_CSS, {
     desc: t(
       `mugilu shows the ${HAZARDS} over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.`,
       lang,
@@ -1597,6 +1722,7 @@ export function renderAbout(lang: Lang = "en"): string {
     }),
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1661,7 +1787,7 @@ export function renderTerms(lang: Lang = "en"): string {
 
   <p class="adisc">${commonsDisc}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
-  return shell(t("mugilu: terms, sources and attribution", lang), body, ABOUT_CSS, {
+  return shell(t("mugilu: terms, sources and attribution", lang), withToc(body, lang), ABOUT_CSS, {
     desc: t(
       "mugilu's sources, licences and attribution: open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
       lang,
@@ -1669,6 +1795,7 @@ export function renderTerms(lang: Lang = "en"): string {
     canonical: `${SITE}/terms`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1684,7 +1811,26 @@ const PLACES_CSS = `
 .places .st li{padding:2px 0;break-inside:avoid}
 .places .st a{color:var(--sky);text-decoration:none;font-size:.93rem}
 .places .st a:hover{text-decoration:underline}
+.pindex,.pfind{display:none}
+@media(min-width:960px){
+.pwrap{display:grid;grid-template-columns:minmax(0,12rem) minmax(0,1fr);gap:2.6rem;align-items:start}
+.pindex{display:flex;flex-direction:column;gap:.15rem;position:sticky;top:1.2rem;max-height:calc(100vh - 2.4rem);overflow:auto;font-size:.88rem;line-height:1.55}
+.pindex a{color:var(--muted);text-decoration:none}.pindex a:hover{color:var(--ink)}
+.pfind{display:flex;flex-direction:column;gap:.35rem;margin:0 0 1.4rem;max-width:22rem;font-size:.88rem;color:var(--muted)}
+.pfind[hidden]{display:none}
+.pfind input{padding:.6rem .8rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
+.pcards{columns:3;column-gap:1rem}
+.places .pcards .st{break-inside:avoid;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:.8rem 1rem;margin:0 0 1rem}
+.places .pcards .st ul{columns:2;column-gap:1rem}
+.places .pcards .st h2{border:0;padding:0;margin:0 0 .5rem}
+}
 `;
+
+// The /places search (wide screens): shows only the places whose name holds the text,
+// and only the states that still have one. Hidden without the script.
+const PLACES_FIND_JS = `(function(){var p=document.querySelector('.pfind');if(!p)return;p.hidden=false;var q=document.getElementById('pq');
+q.addEventListener('input',function(){var s=q.value.trim().toLowerCase();document.querySelectorAll('.pcards .st').forEach(function(st){var any=false;
+st.querySelectorAll('li').forEach(function(li){var ok=!s||li.textContent.toLowerCase().indexOf(s)>-1;li.hidden=!ok;if(ok)any=true});st.hidden=!any})})})();`;
 
 /** The place directory: every named /c/{slug} page, grouped by state. This is the
  *  crawlable index that links all ~800 place pages, so search engines have a path
@@ -1692,10 +1838,16 @@ const PLACES_CSS = `
 export function renderPlaces(lang: Lang = "en"): string {
   const groups = slugPlacesByState();
   const total = groups.reduce((n, g) => n + g.places.length, 0);
+  const anchor = (state: string) =>
+    `st-${state
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`;
+  const index = groups.map((g) => `<a href="#${anchor(g.state)}">${esc(g.state)}</a>`).join("");
   const sections = groups
     .map(
       (g) =>
-        `<section class="st"><h2>${esc(g.state)}</h2><ul>${g.places
+        `<section class="st" id="${anchor(g.state)}"><h2>${esc(g.state)}</h2><ul>${g.places
           .map((p) => `<li><a href="${lp(`/c/${p.slug}`, lang)}">${esc(p.name)}</a></li>`)
           .join("")}</ul></section>`,
     )
@@ -1716,9 +1868,16 @@ export function renderPlaces(lang: Lang = "en"): string {
     <h1>${t("Every place, by state", lang)}</h1>
     <p class="lede">${t(`The sky over every district and major city in India, one page each. Pick a place to see its ${HAZARDS} right now.`, lang)}</p>
     <p class="count">${total} ${t("places across India", lang)}</p>
-    ${sections}
-  </div>`;
-  return shell(title, body, PLACES_CSS, { desc, canonical, jsonLd: crumb, ogImage: HOME_OG, lang });
+    <div class="pwrap">
+      <nav class="pindex" aria-label="States">${index}</nav>
+      <div>
+        <p class="pfind" hidden><label for="pq">${t("Find a place", lang)}</label><input type="search" id="pq" autocomplete="off"></p>
+        <div class="pcards">${sections}</div>
+      </div>
+    </div>
+  </div>
+  <script>${PLACES_FIND_JS}</script>`;
+  return shell(title, body, PLACES_CSS, { desc, canonical, jsonLd: crumb, ogImage: HOME_OG, lang, wide: true });
 }
 
 /** A real 404 page (the catch-all used to return 200 with a debug string). */
@@ -1856,7 +2015,7 @@ export function renderMethodology(lang: Lang = "en"): string {
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(t("How mugilu works: the Ambient read explained", lang), body, ABOUT_CSS + METHOD_CSS, {
+  return shell(t("How mugilu works: the Ambient read explained", lang), withToc(body, lang), ABOUT_CSS + METHOD_CSS, {
     desc: t(
       "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
       lang,
@@ -1864,6 +2023,7 @@ export function renderMethodology(lang: Lang = "en"): string {
     canonical: `${SITE}/methodology`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1872,12 +2032,25 @@ const WLIST_CSS = `
 .wlist{list-style:none;margin:0;padding:0}
 .wlist li{border-top:1px solid var(--hair);padding:1rem 0}
 .wcat{display:inline-block;font:600 .7rem var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--sky);margin:0 0 .25rem}
-.whead{font-size:1.02rem;line-height:1.4;font-weight:600;margin:0 0 .3rem}
+.whead{font-size:1.02rem;line-height:1.4;font-weight:600;margin:0 0 .3rem;overflow-wrap:anywhere}
 .wmeta{color:var(--muted);font-size:.82rem}.wmeta a{color:var(--sky)}
 .wempty{color:var(--muted);font-size:1.05rem;margin:1.2rem 0}
 .wsec{margin:0 0 1.4rem}
 .wgrp{display:flex;align-items:center;gap:.5rem;font:700 1rem/1.3 var(--sans);margin:1.6rem 0 .2rem}
 .wgrp .wn{font:600 .72rem/1 var(--sans);color:var(--muted);background:var(--line);border-radius:999px;padding:.2rem .5rem}
+.wfilter{display:none}
+@media(min-width:960px){
+.wwrap{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:2.6rem;align-items:start}
+.wfilter{display:flex;flex-direction:column;gap:1.3rem;position:sticky;top:1.2rem;font-size:.92rem}
+.wfilter[hidden]{display:none}
+.wfilter fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem}
+.wfilter legend{font:600 .72rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.wfilter label{display:flex;justify-content:space-between;gap:.5rem;cursor:pointer}
+.wfilter .wc{color:var(--muted);font-variant-numeric:tabular-nums}
+.wfilter input[type=search]{width:100%;padding:.55rem .7rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);font:inherit}
+.wlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+.wlist li{border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;background:var(--card)}
+}
 `;
 
 /** The national active-warnings list: surfaces the SACHET feed mugilu polls
@@ -1888,6 +2061,57 @@ export function issuerName(issuer: string): string {
   const named = issuer.match(/\(([^)]+)\)\s*$/)?.[1];
   return (named ?? issuer.replace(/\S+@\S+/g, "")).trim() || "NDMA";
 }
+
+// What a warning is about, read from its headline (every SACHET alert carries the same
+// category, "Met"). The first that matches wins: "thunderstorm and rain" is a storm.
+// English, Hindi and Kannada words, as offices write in all three.
+const WARNING_TYPES: [string, string, RegExp][] = [
+  ["storm", "Thunderstorm, lightning", /thunder|lightning|squall|hail|गरज|बिजली|वज्रपात|आंधी|ಗುಡುಗು|ಸಿಡಿಲು|ಮಿಂಚು/i],
+  ["flood", "Flood, river level", /flood|river|danger level|water level|बाढ़|नदी|ಪ್ರವಾಹ/i],
+  ["rain", "Rain, snow", /rain|snow|वर्षा|बारिश|ಮಳೆ/i],
+  ["wind", "Wind, cyclone", /wind|gale|cyclone|dust storm|हवा|चक्रवात|ಗಾಳಿ|ಚಂಡಮಾರುತ/i],
+  ["heat", "Heat", /heat|hot|लू|गर्मी|ಬಿಸಿ/i],
+  ["cold", "Cold, frost", /cold|frost|शीत|ठंड|ಚಳಿ/i],
+  ["fog", "Fog", /fog|कोहरा|ಮಂಜು/i],
+];
+
+/** The kind of hazard a warning is about, from its headline ("other" when none matches). */
+export function warningType(headline: string): string {
+  return WARNING_TYPES.find(([, , re]) => re.test(headline))?.[0] ?? "other";
+}
+
+/** The filters on /warnings (wide screens): kind and issuing office, each with its count,
+ *  and a text search. Hidden until the script runs, so without it every warning shows. */
+function warningFilters(alerts: WarningsSnapshot["alerts"], lang: Lang): string {
+  const count = (key: (a: WarningsSnapshot["alerts"][number]) => string) => {
+    const m = new Map<string, number>();
+    for (const a of alerts) m.set(key(a), (m.get(key(a)) ?? 0) + 1);
+    return m;
+  };
+  const types = count((a) => warningType(a.headline || ""));
+  const offices = [...count((a) => issuerName(a.issuer || ""))].sort((x, y) => y[1] - x[1]);
+  const box = (name: string, value: string, label: string, n: number) =>
+    `<label><span><input type="checkbox" name="${name}" value="${esc(value)}" checked> ${esc(label)}</span><span class="wc">${n}</span></label>`;
+  const kinds = [...WARNING_TYPES.map(([k, en]) => [k, en] as const), ["other", "Other"] as const]
+    .filter(([k]) => types.has(k))
+    .map(([k, en]) => box("type", k, t(en, lang), types.get(k)!))
+    .join("");
+  return `<aside class="wfilter" aria-label="${esc(t("Filter warnings", lang))}" hidden>
+    <label for="wq" style="display:block">${t("Find a place or district", lang)}</label>
+    <input type="search" id="wq" autocomplete="off">
+    <fieldset><legend>${t("Type", lang)}</legend>${kinds}</fieldset>
+    <fieldset><legend>${t("Issued by", lang)}</legend>${offices.map(([o, n]) => box("issuer", o, o, n)).join("")}</fieldset>
+  </aside>`;
+}
+
+// Shows the filters and applies them: a card stays when its kind and office are ticked
+// and it holds the search text; an office's heading hides when none of its cards show.
+const WARNINGS_FILTER_JS = `(function(){var f=document.querySelector('.wfilter');if(!f)return;f.hidden=false;
+var q=document.getElementById('wq');function on(n){return [].slice.call(f.querySelectorAll('input[name='+n+']:checked')).map(function(i){return i.value})}
+function go(){var ty=on('type'),of=on('issuer'),s=(q.value||'').trim().toLowerCase();
+document.querySelectorAll('.wsec').forEach(function(sec){var any=false;sec.querySelectorAll('li[data-type]').forEach(function(li){
+var ok=ty.indexOf(li.getAttribute('data-type'))>-1&&of.indexOf(li.getAttribute('data-issuer'))>-1&&(!s||li.textContent.toLowerCase().indexOf(s)>-1);li.hidden=!ok;if(ok)any=true});sec.hidden=!any})}
+f.addEventListener('change',go);q.addEventListener('input',go)})();`;
 
 export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "en"): string {
   // Grouped by issuing office (a state SDMA or an IMD centre), the office with the
@@ -1908,7 +2132,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
                 const meta = [at && esc(at), isHttpUrl(a.link) ? `<a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""]
                   .filter(Boolean)
                   .join(" · ");
-                return `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div>${meta ? `<div class="wmeta">${meta}</div>` : ""}</li>`;
+                return `<li data-type="${warningType(a.headline || "")}" data-issuer="${esc(name)}"><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div>${meta ? `<div class="wmeta">${meta}</div>` : ""}</li>`;
               })
               .join("")}</ul></section>`,
         )
@@ -1923,15 +2147,23 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     <h1 class="ahero">${t("Active warnings", lang)}</h1>
     <p class="alead">${t("The latest {n} official NDMA / IMD alerts across India.", lang).replace("{n}", String(snap?.alerts.length ?? 0))}</p>
     <p class="wgen">${snap ? `${t("as of X", lang).replace("X", esc(istTime(snap.generated_at)))} · via SACHET` : ""}</p>
-    ${items}
+    <div class="wwrap">${snap?.alerts.length ? warningFilters(snap.alerts, lang) : ""}<div>${items}</div></div>
     <p class="adisc">${disc}</p>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
-  </article>`;
-  return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS, {
+  </article>
+  <script>${WARNINGS_FILTER_JS}</script>`;
+  // Any official warning active tints the page in the warning hue, at moderate strength,
+  // high at 25 or more; none active is the calm sky.
+  const n = snap?.alerts.length ?? 0;
+  const tint = tintVars(
+    n ? { band: n >= 25 ? "high" : "moderate", driver: "Warning" } : { band: "low", driver: "none" },
+  );
+  return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS + TINT_BODY_CSS + tint, {
     desc: "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
     canonical: `${SITE}/warnings`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 

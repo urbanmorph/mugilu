@@ -96,7 +96,7 @@ test("renderKioskPage: each tile carries its graphic, drawn against the limits",
 
 test("renderKioskPage: the backdrop takes the hazard's tint", () => {
   const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi", "<svg/>");
-  assert.match(html, /<div class="k" style="--cond:#dc2626;--tint:#f97316;--tk:34%">/);
+  assert.match(html, /<div class="k" style="--cond:#dc2626;--cond-text:var\(--rt-severe\);--tint:#f97316;--tk:34%">/);
 });
 
 test("renderKioskPage: a notable high vs normal sits beside the read", (t) => {
