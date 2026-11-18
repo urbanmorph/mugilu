@@ -55,7 +55,7 @@ window.openState=function(id){var d=document.getElementById(id);if(!d)return;d.h
 if(sel)sel.addEventListener('change',function(){if(sel.value)openState(sel.value);});
 if(window.matchMedia&&matchMedia(${JSON.stringify(MOBILE)}).matches)F.forEach(function(d){if(!d.querySelector('b')&&('#'+d.id)!==location.hash)d.open=false;});
 ${LIST_FILTER_JS}
-if(q)q.addEventListener('input',function(){var s=q.value.trim().toLowerCase();mgFilter(document.querySelectorAll('.flow details.fold li'),function(li){return mgMatch(li,s)});mgEmpty(F,'li');if(s)F.forEach(function(d){if(!d.hidden)d.open=true;});});})();`;
+if(q)q.addEventListener('input',mgDebounce(function(){var s=q.value.trim().toLowerCase();mgFilter(document.querySelectorAll('.flow details.fold li'),function(li){return mgMatch(li,s)});mgEmpty(F,'li');if(s)F.forEach(function(d){if(!d.hidden)d.open=true;});},100));})();`;
 
 /** The place directory: every named /c/{slug} page, by state, with the map of India beside it
  *  (a state opens its list, a dot its place). The crawlable index of all ~800 place pages. */

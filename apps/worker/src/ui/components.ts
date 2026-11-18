@@ -730,7 +730,8 @@ export function filterInput(id: string, label: string): string {
 
 /** The client side of a list filter: mgMatch(el, s) (its text has s), mgFilter(items, keep)
  *  (hide what keep() rejects) and mgEmpty(groups, itemSel) (hide a group left empty). */
-export const LIST_FILTER_JS = `function mgMatch(el,s){return !s||el.textContent.toLowerCase().indexOf(s)>-1}
+export const LIST_FILTER_JS = `function mgMatch(el,s){if(!s)return true;var k=el.mgKey;if(k===undefined)k=el.mgKey=el.textContent.toLowerCase();return k.indexOf(s)>-1}
+function mgDebounce(fn,ms){var t;return function(){var a=this,b=arguments;clearTimeout(t);t=setTimeout(function(){fn.apply(a,b)},ms)}}
 function mgFilter(items,keep){[].forEach.call(items,function(el){el.hidden=!keep(el)})}
 function mgEmpty(groups,item){[].forEach.call(groups,function(g){g.hidden=!g.querySelector(item+':not([hidden])')})}`;
 

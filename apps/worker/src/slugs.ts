@@ -140,7 +140,11 @@ export function allSlugPlaces(): SlugPlace[] {
 /** Named places grouped by state (for the /places directory), states A→Z and
  *  places A→Z within each. The directory is the crawlable index that links every
  *  /c/{slug} page, so search engines have a path to them (not sitemap-only). */
+let byStateMemo: { state: string; places: SlugPlace[] }[] | undefined;
 export function slugPlacesByState(): { state: string; places: SlugPlace[] }[] {
+  return (byStateMemo ??= groupByState());
+}
+function groupByState(): { state: string; places: SlugPlace[] }[] {
   const byState = new Map<string, SlugPlace[]>();
   for (const p of SLUGS.values()) {
     const st = p.state ?? "Other";

@@ -104,6 +104,8 @@ function cachedResponse(body: string, contentType: string, clientMaxAge?: number
  *  weather upstream is itself cached 15 min and air/warnings move hourly. */
 const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 const LIVE_EDGE_TTL = 300;
+/** Share images: CPU-heavy renders, kept at the edge as long as their s-maxage (og.ts LIVE_IMAGE). */
+const OG_EDGE_TTL = 3600;
 /** Output fixed by the deployed code (front-door files, static pages, manifest):
  *  short enough that a deploy shows within 15 minutes. */
 const STATIC_EDGE_TTL = 900;
@@ -442,7 +444,7 @@ export default {
         req,
         ctx,
         key,
-        LIVE_EDGE_TTL,
+        ext === "png" ? OG_EDGE_TTL : LIVE_EDGE_TTL,
         async () => {
           // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
@@ -564,7 +566,7 @@ export default {
     if (ogMatch) {
       const [, provider, rawId] = ogMatch;
       // A CPU-heavy render: edge-cached, and query params cannot force a re-render.
-      return cached(LIVE_EDGE_TTL, async () => {
+      return cached(OG_EDGE_TTL, async () => {
         const snap = await loadSnapshot(env);
         if (!snap) return new Response("no snapshot yet", { status: 503 });
         const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);

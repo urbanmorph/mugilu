@@ -4,8 +4,10 @@ import { conditionsOgHtml, homeOgHtml, stationOgHtml } from "./og-html";
 
 /** A PNG of `html` (default 1200x630, the share-image size), with our own cache lifetime:
  *  workers-og marks every image immutable for a year, but these URLs are not versioned and
- *  the images change. workers-og (and its WebAssembly) loads on the first image, not with
- *  every isolate: most requests never draw one. */
+ *  the images change. workers-og's JavaScript loads on the first image, but the bundler still
+ *  imports its WebAssembly (yoga, resvg: about 1.5 MB) statically, so every isolate compiles
+ *  it at start. Keeping that out of the page isolates would take a separate image Worker
+ *  behind a service binding. */
 export async function png(
   html: string,
   cacheControl: string,
