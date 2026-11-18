@@ -94,40 +94,38 @@ export function alertParts(a: Alert, lang: Lang): { office: string; time: string
 export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "en"): string {
   const T = (s: string) => esc(t(s, lang));
   // Newest first; a storm IMD names is pinned once (its newest warning), above the lists.
-  const alerts = [...(snap?.alerts ?? [])].sort((x, y) => when(y) - when(x));
-  const pinned = new Map<string, Alert>();
-  for (const a of alerts) {
+  // Each alert read once: its office, its kind, and the line under it (time, CAP link).
+  const alerts = [...(snap?.alerts ?? [])]
+    .sort((x, y) => when(y) - when(x))
+    .map((a) => {
+      const { office, time, cap } = alertParts(a, lang);
+      const [type, label, , icon] = typeOf(a.headline || "");
+      return { a, office, type, label, icon, meta: [time && esc(time), cap].filter(Boolean).join(" · ") };
+    });
+  type Read = (typeof alerts)[number];
+  const pinned = new Map<string, Read>();
+  for (const r of alerts) {
     // Pinned: a named storm only (IMD names every cyclonic storm), as on home.
-    const c = cycloneIn(a.headline);
-    if (c?.name && !pinned.has(c.title)) pinned.set(c.title, a);
+    const c = cycloneIn(r.a.headline);
+    if (c?.name && !pinned.has(c.title)) pinned.set(c.title, r);
   }
   const isPinned = new Set(pinned.values());
 
-  const meta = (a: Alert) => {
-    const { time, cap } = alertParts(a, lang);
-    return [time && esc(time), cap].filter(Boolean).join(" · ");
-  };
-  const row = (a: Alert) => {
-    const office = issuerName(a.issuer || "");
-    const [type, label, , icon] = typeOf(a.headline || "");
-    return warningRow({
-      icon,
-      kind: t(label, lang),
-      head: a.headline || "Warning",
+  const row = (r: Read) =>
+    warningRow({
+      icon: r.icon,
+      kind: t(r.label, lang),
+      head: r.a.headline || "Warning",
       lang,
-      meta: meta(a),
-      type,
-      issuer: office,
+      meta: r.meta,
+      type: r.type,
+      issuer: r.office,
     });
-  };
 
   // Grouped by issuing office (a state SDMA or an IMD centre), the office with the newest
   // alert first; times in IST like every page.
-  const groups = new Map<string, Alert[]>();
-  for (const a of alerts.filter((a) => !isPinned.has(a))) {
-    const k = issuerName(a.issuer || "");
-    groups.set(k, [...(groups.get(k) ?? []), a]);
-  }
+  const groups = new Map<string, Read[]>();
+  for (const r of alerts.filter((r) => !isPinned.has(r))) groups.set(r.office, [...(groups.get(r.office) ?? []), r]);
   const lists = [...groups]
     .map(
       ([name, list]) =>
@@ -136,27 +134,26 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     .join("");
 
   const plates = [...pinned]
-    .map(([name, a]) => {
-      const office = issuerName(a.issuer || "");
-      const [type, label] = typeOf(a.headline || "");
-      return `<div data-type="${type}" data-issuer="${esc(office)}">${warningPlate({
-        bar: [`<span>${esc(t(label, lang))} · ${esc(office)}</span>`, `<span>${meta(a)}</span>`],
-        title: name,
-        icon: "cyclone",
-        body: `<p${langAttr(a.headline, lang)}>${esc(a.headline)}</p>`,
-        label: name,
-        lang,
-      })}</div>`;
-    })
+    .map(
+      ([name, r]) =>
+        `<div data-type="${r.type}" data-issuer="${esc(r.office)}">${warningPlate({
+          bar: [`<span>${esc(t(r.label, lang))} · ${esc(r.office)}</span>`, `<span>${r.meta}</span>`],
+          title: name,
+          icon: "cyclone",
+          body: `<p${langAttr(r.a.headline, lang)}>${esc(r.a.headline)}</p>`,
+          label: name,
+          lang,
+        })}</div>`,
+    )
     .join("");
 
-  const count = (key: (a: Alert) => string) => {
+  const count = (key: (r: Read) => string) => {
     const m = new Map<string, number>();
-    for (const a of alerts) m.set(key(a), (m.get(key(a)) ?? 0) + 1);
+    for (const r of alerts) m.set(key(r), (m.get(key(r)) ?? 0) + 1);
     return m;
   };
-  const types = count((a) => warningType(a.headline || ""));
-  const offices = [...count((a) => issuerName(a.issuer || ""))].sort((x, y) => y[1] - x[1]);
+  const types = count((r) => r.type);
+  const offices = [...count((r) => r.office)].sort((x, y) => y[1] - x[1]);
   const filters = fold(
     t("Filter warnings", lang),
     filterBar(

@@ -147,9 +147,8 @@ export function segmented(
   name: string,
   legend: string,
   options: SegOption[],
-  legendClass = "t-kicker",
-  /** A layout for the options, e.g. "grid2 d3" (two columns, three on wide screens). */
-  segClass = "",
+  /** legendClass: "vh" hides the legend; segClass lays out the options ("grid2 d3"). */
+  { legendClass = "t-kicker", segClass = "" }: { legendClass?: string; segClass?: string } = {},
 ): string {
   const opts = options
     .map(
@@ -188,7 +187,7 @@ export function themeSwitch(lang: Lang): string {
       { value: "dark", label: t("Dark", lang) },
       { value: "system", label: t("System", lang), checked: true },
     ],
-    "flabel",
+    { legendClass: "flabel" },
   );
 }
 

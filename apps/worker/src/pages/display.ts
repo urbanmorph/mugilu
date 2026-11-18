@@ -88,7 +88,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
         label: t(PERSONA_LABEL[p], lang),
         checked: p === persona,
       })),
-      "vh",
+      { legendClass: "vh" },
     ),
     { id: "dpers" },
   );

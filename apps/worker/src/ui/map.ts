@@ -316,7 +316,7 @@ export function indiaMap(m: IndiaMap | undefined, lang: Lang, o: IndiaMapOpts = 
     "layer",
     t("Map layer", lang),
     layers.map(([v, l]) => ({ value: v, label: t(l, lang), checked: v === "w" })),
-    "vh",
+    { legendClass: "vh" },
   );
   const box = stack(seg + mapSvg(m, "m", t(LABEL.w, lang), lang) + legends("m", lang, rain));
   const st = stamps([
