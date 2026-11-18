@@ -81,6 +81,10 @@ export function llmsTxt(siteUrl: string): string {
 - [Methodology](${siteUrl}/methodology): the Ambient thresholds, glass-box
 - [Terms and attribution](${siteUrl}/terms)
 
+## No key; name your app
+No key or sign-up for the API or the MCP server. Please send a \`User-Agent\` that names your app (for example \`my-app/1.0\`). We read it only to tell apps, AI tools and crawlers apart, so our counts of how each mode is used stay honest. We don't store it, and we don't track who you are.
+We count MCP calls by the app name your client sends, and keep nothing else.
+
 ## What a conditions response carries
 The JSON is a versioned, self-describing contract: a "schema" and "version", and a
 "units" map (notably CO is mg/m3 while other pollutants are ug/m3). Layers: air
@@ -139,7 +143,7 @@ export function openApiSpec(siteUrl: string): object {
     info: {
       title: "mugilu: India's open sky",
       version: "1.0.0",
-      description: `Give any point in India and get what the sky is doing right now: ${HAZARDS} (NDMA/IMD), with heat carrying wet-bulb and today's high against the 1991-2020 normal, plus a persona-weighted Ambient read with the readings in order of risk (ambient.order). Informational only, not for medical, emergency, or safety-critical use. Freshness: readings recompute on a ~15-minute cycle (air and warnings change hourly, weather at most every 15 min). Each response carries refresh_after_seconds and a matching Cache-Control max-age; poll at most once every 15 minutes per place, faster returns identical data.`,
+      description: `Give any point in India and get what the sky is doing right now: ${HAZARDS} (NDMA/IMD), with heat carrying wet-bulb and today's high against the 1991-2020 normal, plus a persona-weighted Ambient read with the readings in order of risk (ambient.order). Informational only, not for medical, emergency, or safety-critical use. Freshness: readings recompute on a ~15-minute cycle (air and warnings change hourly, weather at most every 15 min). Each response carries refresh_after_seconds and a matching Cache-Control max-age; poll at most once every 15 minutes per place, faster returns identical data. No key. Please send a \`User-Agent\` that names your app (for example \`my-app/1.0\`). We read it only to tell apps, AI tools and crawlers apart, so our counts of how each mode is used stay honest. We don't store it, and we don't track who you are.`,
       license: { name: "Sources keep their own licence; see /terms", url: `${siteUrl}/terms` },
       contact: { url: siteUrl },
     },

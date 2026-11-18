@@ -118,7 +118,7 @@ export function renderAiAgents(siteUrl: string): string {
 
 <section>
   <h2>Rate limits</h2>
-  <p>None for read endpoints. Be reasonable. Identify your bot in <code>User-Agent</code>. We log nothing personal.</p>
+  <p>None for read endpoints. Be reasonable. Please send a <code>User-Agent</code> that names your app (for example <code>my-app/1.0</code>). We read it only to tell apps, AI tools and crawlers apart, so our counts of how each mode is used stay honest. We don't store it, and we don't track who you are.</p>
 </section>
 `,
   });

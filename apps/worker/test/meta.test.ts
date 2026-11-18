@@ -19,6 +19,16 @@ test("llms.txt: advertises the MCP server + the OpenAPI spec", () => {
   assert.match(t, /openapi\.json/);
 });
 
+test("llms.txt + OpenAPI: one honest User-Agent request, and the MCP count by app", () => {
+  const ask =
+    "Please send a `User-Agent` that names your app (for example `my-app/1.0`). We read it only to tell apps, AI tools and crawlers apart, so our counts of how each mode is used stay honest. We don't store it, and we don't track who you are.";
+  const t = llmsTxt("https://mugilu.live");
+  assert.ok(t.includes(ask));
+  assert.ok(t.includes("We count MCP calls by the app name your client sends, and keep nothing else."));
+  const s = openApiSpec("https://mugilu.live") as any;
+  assert.ok(s.info.description.includes(ask));
+});
+
 test("robots.txt: opens the site to all, but declines the SEO-audit scrapers", () => {
   const t = robotsTxt("https://mugilu.live");
   // the wildcard group still welcomes people, search engines and AI agents...
