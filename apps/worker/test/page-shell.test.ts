@@ -54,13 +54,13 @@ test("pageShell: no tint means no wash; a kiosk is always dark, chromeless, with
 test("fonts: self-hosted (no third-party requests), the Latin face preloaded, Indic faces optional", () => {
   const h = withCss(pageShell("t", "<p>x</p>", { path: "/warnings", lang: "hi" }));
   assert.doesNotMatch(h, /fonts\.googleapis|fonts\.gstatic/);
-  assert.match(h, /<link rel="preload" href="\/fonts\/anek-latin-1\.woff2" as="font" type="font\/woff2" crossorigin>/);
+  assert.match(h, /<link rel="preload" href="\/fonts\/anek-latin-2\.woff2" as="font" type="font\/woff2" crossorigin>/);
   assert.match(
     h,
-    /@font-face\{font-family:'Anek Latin';src:url\(\/fonts\/anek-latin-1\.woff2\) format\('woff2'\);font-weight:400 800;font-stretch:75% 100%;font-display:swap;unicode-range:/,
+    /@font-face\{font-family:'Anek Latin';src:url\(\/fonts\/anek-latin-2\.woff2\) format\('woff2'\);font-weight:400 800;font-stretch:75% 100%;font-display:swap;unicode-range:/,
   );
   assert.match(
     h,
-    /@font-face\{font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-1\.woff2\)[^}]*font-display:optional/,
+    /@font-face\{font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-2\.woff2\)[^}]*font-display:optional/,
   );
 });

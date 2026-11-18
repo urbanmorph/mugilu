@@ -82,7 +82,7 @@ test("renderHome(kn): Kannada hero + tagline, html lang=kn, /kn canonical, Indic
   assert.match(html, /ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ, ನಿರ್ದೇಶಾಂಕ ಒಂದೊಂದಾಗಿ\./); // tagline
   assert.match(html, /ಜನಪ್ರಿಯ ಸ್ಥಳಗಳು:/); // Popular:
   assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live\/kn">/);
-  assert.match(html, /font-family:'Anek Kannada';src:url\(\/fonts\/anek-kannada-1\.woff2\)/); // the Kannada face of the signage type
+  assert.match(html, /font-family:'Anek Kannada';src:url\(\/fonts\/anek-kannada-2\.woff2\)/); // the Kannada face of the signage type
   assert.match(html, /ಎಚ್ಚರಿಕೆಗಳು<\/span>/); // covers row localized (warnings)
   assert.match(html, /placeholder="ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ/); // localized, no leak
   assert.doesNotMatch(html, /\(placeholder\)/); // the disambiguation key never leaks
@@ -293,7 +293,7 @@ test("SEO: /c conditions description localized (place verbatim); en byte-identic
 test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {
   const about = withCss(renderAbout("hi"));
   assert.match(about, /<html lang="hi">/);
-  assert.match(about, /font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-1\.woff2\)/); // the Devanagari face of the signage type
+  assert.match(about, /font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-2\.woff2\)/); // the Devanagari face of the signage type
   assert.match(about, /पूरे आकाश/); // lead localized (Sarvam + restore)
   assert.match(about, /mugilu/); // brand stays Latin, not मुगिलु
   assert.doesNotMatch(about, /मुगिल|मगुल|भारतल|सी\.पी\.सी/); // no residual transliteration
