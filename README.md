@@ -61,7 +61,7 @@ Readings are current, not a forecast. They recompute on a cycle of about 15 minu
 
 ## Use it on the web or as an API
 
-Open and keyless.
+Open and keyless. Please send a `User-Agent` that names your app (for example `my-app/1.0`). We read it only to tell apps, AI tools and crawlers apart, so our counts of how each mode is used stay honest. We don't store it, and we don't track who you are.
 
 - [mugilu.live](https://mugilu.live): type any place, in any language.
 - A point: [/c/12.97,77.59](https://mugilu.live/c/12.97,77.59). A place: [/c/bengaluru](https://mugilu.live/c/bengaluru). For someone: [/c/delhi?as=asthma](https://mugilu.live/c/delhi?as=asthma).
@@ -116,7 +116,7 @@ Air and official warnings change hourly; weather at most every 15 minutes. Each 
 
 ## Use it from an AI assistant (MCP)
 
-mugilu runs a remote MCP server (JSON-RPC 2.0 over Streamable HTTP, protocol version 2025-06-18). No key or install is needed.
+mugilu runs a remote MCP server (JSON-RPC 2.0 over Streamable HTTP, protocol version 2025-06-18). No key or install is needed. AI apps send their own name when they connect. We count calls by app (Claude, Cursor, …) and keep nothing else.
 
 ```text
 https://mugilu.live/mcp
