@@ -255,7 +255,7 @@ export default {
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return cached(IMAGE_EDGE_TTL, () => iconPng());
     // The PWA service worker (sw.ts): no-cache, so an update reaches browsers at once.
-    if (url.pathname === SW_PATH) return serviceWorker();
+    if (url.pathname === SW_PATH) return serviceWorker(req);
     // Opt-in alerts for official warnings (alerts.ts).
     if (url.pathname === "/push/subscribe" && alertsOn(env)) return handleSubscribe(req, env);
     if (url.pathname === "/push/unsubscribe" && alertsOn(env)) return handleUnsubscribe(req, env);

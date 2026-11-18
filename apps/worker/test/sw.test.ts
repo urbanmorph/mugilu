@@ -3,7 +3,7 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
-import { SW_JS, SW_PATH, SW_REGISTER, serviceWorker, OFFLINE_NOTE_ID } from "../src/sw";
+import { swJs, SW_PATH, SW_REGISTER, serviceWorker, OFFLINE_NOTE_ID } from "../src/sw";
 import { SITE_CSS_LINK, SITE_CSS_PATH } from "../src/ui/assets";
 import { renderConditionsPage } from "../src/pages/place";
 import { renderEmbed } from "../src/pages/embed";
@@ -87,7 +87,7 @@ function makeWorker() {
       showNotification: async (title: string, options: Record<string, unknown>) => void shown.push({ title, options }),
     },
   };
-  runInNewContext(SW_JS, { self, caches, fetch: net, Request: WorkerRequest, Response, URL, Promise });
+  runInNewContext(swJs(), { self, caches, fetch: net, Request: WorkerRequest, Response, URL, Promise });
 
   async function lifecycle(type: "install" | "activate") {
     let done: Promise<unknown> = Promise.resolve();
@@ -185,7 +185,7 @@ test("the offline page is the standard's: the site stylesheet, header, one main 
 });
 
 test("the worker carries no stylesheet of its own: it saves the site's at install and serves it offline", async () => {
-  assert.doesNotMatch(SW_JS, /\.mg \.kio\{display:grid/);
+  assert.doesNotMatch(swJs(), /\.mg \.kio\{display:grid/);
   const fresh = makeWorker();
   await fresh.lifecycle("install");
   assert.ok(fresh.saved().includes(SITE_CSS_PATH));
@@ -247,12 +247,17 @@ test("never touches data, images, the API, POSTs, other pages' copies or other s
   assert.ok(!w.saved().includes("/about"));
 });
 
-test("/sw.js is served as a script the browser always re-checks", async () => {
-  const res = serviceWorker();
+test("/sw.js is served as a script the browser always re-checks, cheaply (ETag, 304)", async () => {
+  const res = serviceWorker(new Request(`${ORIGIN}/sw.js`));
   assert.equal(SW_PATH, "/sw.js");
   assert.match(res.headers.get("content-type") ?? "", /javascript/);
   assert.equal(res.headers.get("cache-control"), "no-cache");
-  assert.equal(await res.text(), SW_JS);
+  assert.equal(await res.text(), swJs());
+  const etag = res.headers.get("etag")!;
+  assert.match(etag, /^"[0-9a-z]+"$/);
+  const again = serviceWorker(new Request(`${ORIGIN}/sw.js`, { headers: { "if-none-match": etag } }));
+  assert.equal(again.status, 304);
+  assert.equal(again.headers.get("etag"), etag);
 });
 
 // --- the pages ---------------------------------------------------------------------

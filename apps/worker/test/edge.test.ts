@@ -165,3 +165,58 @@ test("edgeServe: a request that is never cached (HEAD) still records its usage",
   await edgeServe(head, ctx().ctx, cacheKey(head), 300, build, (u) => seen.push(u), cache);
   assert.deepEqual(seen, [{ place: "Y" }]);
 });
+
+test("edgeServe: a stored page carries a weak ETag, and a matching If-None-Match gets a 304 on a hit and on a miss", async () => {
+  const { cache } = fakeCache();
+  const url = "https://mugilu.live/places";
+  const c = ctx();
+  const first = await edgeServe(
+    new Request(url),
+    c.ctx,
+    cacheKey(new Request(url)),
+    300,
+    async () => ({ res: page("map") }),
+    undefined,
+    cache,
+  );
+  await c.settle();
+  const etag = first.headers.get("etag")!;
+  assert.match(etag, /^W\/"[0-9a-f]{16}"$/);
+  const again = new Request(url, { headers: { "if-none-match": etag } });
+  const hit = await edgeServe(
+    again,
+    ctx().ctx,
+    cacheKey(again),
+    300,
+    async () => assert.fail("a hit"),
+    undefined,
+    cache,
+  );
+  assert.equal(hit.status, 304);
+  assert.equal(hit.headers.get("etag"), etag);
+  assert.equal(await hit.text(), "");
+  // A miss (another isolate's edge, or the entry expired) that builds the same page also answers 304.
+  const empty = fakeCache().cache;
+  const miss = await edgeServe(
+    again,
+    ctx().ctx,
+    cacheKey(again),
+    300,
+    async () => ({ res: page("map") }),
+    undefined,
+    empty,
+  );
+  assert.equal(miss.status, 304);
+  // A changed page is sent in full.
+  const changed = await edgeServe(
+    again,
+    ctx().ctx,
+    cacheKey(again),
+    300,
+    async () => ({ res: page("new map") }),
+    undefined,
+    fakeCache().cache,
+  );
+  assert.equal(changed.status, 200);
+  assert.notEqual(changed.headers.get("etag"), etag);
+});

@@ -17,6 +17,29 @@ export interface CacheLike {
 const USAGE = "x-mugilu-usage"; // the lookup's usage facts, on the stored copy only
 const CC = "x-mugilu-cc"; // the route's own Cache-Control, restored on a hit
 
+/** A weak validator for a stored body: the first 16 hex digits of its SHA-1. */
+async function weakEtag(body: ArrayBuffer): Promise<string> {
+  const d = new Uint8Array(await crypto.subtle.digest("SHA-1", body));
+  return `W/"${[...d.slice(0, 8)].map((b) => b.toString(16).padStart(2, "0")).join("")}"`;
+}
+
+/** Whether the request already holds this version (If-None-Match, weak comparison). */
+const holds = (req: Request, etag: string | null) =>
+  !!etag &&
+  (req.headers.get("if-none-match") ?? "")
+    .split(",")
+    .some((t) => t.trim().replace(/^W\//, "") === etag.replace(/^W\//, ""));
+
+/** 304 Not Modified: the validator and caching headers, no body. */
+function notModified(headers: Headers): Response {
+  const out = new Headers();
+  for (const h of ["etag", "cache-control", "vary"]) {
+    const v = headers.get(h);
+    if (v) out.set(h, v);
+  }
+  return new Response(null, { status: 304, headers: out });
+}
+
 /** The cache key: the request's origin and path as received (so /hi and /kn are their
  *  own entries) plus only the given params, in a fixed order. Every other query
  *  param (?ref=, ?utm_*, cache-busters) shares the one entry, so a decorated or
@@ -76,6 +99,7 @@ export async function edgeServe<U>(
     else headers.delete("cache-control");
     headers.delete(CC);
     headers.delete(USAGE);
+    if (holds(req, headers.get("etag"))) return notModified(headers);
     return new Response(hit.body, { status: hit.status, headers });
   }
 
@@ -84,11 +108,14 @@ export async function edgeServe<U>(
   // Buffer once so the served and stored copies are independent: a streamed image
   // render cannot be tee'd into the cache safely (it deadlocks).
   const body = await res.arrayBuffer();
-  const stored = new Headers(res.headers);
+  const served = new Headers(res.headers);
+  if (!served.has("etag")) served.set("etag", await weakEtag(body));
+  const stored = new Headers(served);
   stored.set(CC, res.headers.get("cache-control") ?? "");
   stored.set("cache-control", `public, max-age=${ttlSeconds}`);
   // Header values are bytes: percent-encode so any place name (Kāmrūp) fits.
   if (usage !== undefined) stored.set(USAGE, encodeURIComponent(JSON.stringify(usage)));
   ctx.waitUntil(cache.put(key, new Response(body, { status: 200, headers: stored })));
-  return new Response(body, { status: 200, headers: res.headers });
+  if (holds(req, served.get("etag"))) return notModified(served);
+  return new Response(body, { status: 200, headers: served });
 }

@@ -14,7 +14,7 @@
 
 import { LANGS, lp, t, type Lang } from "./i18n";
 import { esc } from "./html";
-import { SITE_CSS_LINK, SITE_CSS_PATH } from "./ui/assets";
+import { SITE_CSS_LINK, SITE_CSS_PATH, fnv1a } from "./ui/assets";
 import { THEME_HEAD_JS, THEME_JS, ico, linkButton, siteFooter, siteHeader } from "./ui/components";
 
 export const SW_PATH = "/sw.js";
@@ -40,9 +40,13 @@ function offlinePage(lang: Lang): string {
     `<script>${THEME_JS}</script></body></html>`
   );
 }
-const OFFLINE_PAGES = Object.fromEntries(LANGS.map((L) => [L, offlinePage(L)]));
 
-export const SW_JS = String.raw`const CACHE = 'mugilu-readings';
+/** The worker script, built on the first /sw.js request rather than at isolate start. */
+let built: { js: string; etag: string } | undefined;
+function build(): { js: string; etag: string } {
+  if (built) return built;
+  const OFFLINE_PAGES = Object.fromEntries(LANGS.map((L) => [L, offlinePage(L)]));
+  const js = String.raw`const CACHE = 'mugilu-readings';
 const KEEP = ${KEEP};
 const HIDDEN = 'id="${OFFLINE_NOTE_ID}" hidden';
 const OFFLINE = ${JSON.stringify(OFFLINE_PAGES)};
@@ -167,10 +171,17 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(page(event, url));
 });
 `;
+  return (built = { js, etag: `"${fnv1a(js)}"` });
+}
 
-/** /sw.js: no-cache, so browsers always see a new version. */
-export function serviceWorker(): Response {
-  return new Response(SW_JS, {
-    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-cache" },
-  });
+/** The worker script. */
+export const swJs = (): string => build().js;
+
+/** /sw.js: no-cache, so browsers always check for a new version, and an ETag, so the
+ *  check costs a 304 when it has not changed. */
+export function serviceWorker(req: Request): Response {
+  const { js, etag } = build();
+  const headers = { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-cache", etag };
+  if ((req.headers.get("if-none-match") ?? "").includes(etag)) return new Response(null, { status: 304, headers });
+  return new Response(js, { headers });
 }
