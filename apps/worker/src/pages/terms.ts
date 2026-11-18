@@ -1,5 +1,5 @@
 import { t, type Lang } from "../i18n";
-import { cardBody, cardGrid, pairs, pull, warnBox } from "../ui/components";
+import { cardBody, cards, pairs, pull, warnBox } from "../ui/components";
 import { P, plain, splitInto, textPage } from "./text";
 
 // The live paragraphs, as keys (pages/text.ts splits them at sentence ends to fill the boxes).
@@ -33,10 +33,13 @@ export function renderTerms(lang: Lang = "en"): string {
   const licenceEn = LICENCE.replace("code is MIT", "<b>code is MIT</b>")
     .replace("data is not relicensed", "<b>data is not relicensed</b>")
     .replace("non-commercial, for individuals", "<b>non-commercial, for individuals</b>");
-  const licence = splitInto(licenceEn, LICENCE, lang, 3, (l) => cardGrid([P(l[0]), P(l[1])]) + P(l[2])).replace(
-    "{repo}",
-    repo,
-  );
+  const licence = splitInto(
+    licenceEn,
+    LICENCE,
+    lang,
+    3,
+    (l) => cards([P(l[0]), P(l[1])], { cols: 2 }) + P(l[2]),
+  ).replace("{repo}", repo);
 
   const sources: [string, string][] = [
     [
@@ -123,7 +126,10 @@ export function renderTerms(lang: Lang = "en"): string {
         title: plain(t("Sources &amp; credit", lang)),
         icon: "stack",
         body:
-          cardGrid(sources.map(([k, v]) => cardBody(plain(t(k, lang)), P(v)))) +
+          cards(
+            sources.map(([k, v]) => cardBody(plain(t(k, lang)), P(v))),
+            { cols: 2 },
+          ) +
           pull(
             t(
               "Each reading carries its own attribution line inline, so credit travels with the data wherever it goes.",

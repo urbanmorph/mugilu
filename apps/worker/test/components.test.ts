@@ -7,7 +7,7 @@ import {
   band,
   bandChip,
   barRows,
-  cardGrid,
+  cards,
   checkGroup,
   dataTable,
   DISCLAIMER_FULL,
@@ -212,9 +212,9 @@ test("dataTable: scoped headers, row headers, numeric columns right-aligned, own
   assert.match(t, /<tr><th scope="row">ITO<\/th><td class="r">336<\/td><\/tr>/);
 });
 
-test("cardGrid, pairs, faq: boxes that hold whole sentences", () => {
+test("cards, pairs, faq: boxes that hold whole sentences", () => {
   assert.equal(
-    cardGrid(["a", "b"], 2),
+    cards(["a", "b"], { cols: 2 }),
     `<div class="cards c2"><div class="card">a</div><div class="card">b</div></div>`,
   );
   assert.equal(pairs([["Accounts", "None."]]), `<dl class="pairs"><div><dt>Accounts</dt><dd>None.</dd></div></dl>`);

@@ -1,7 +1,7 @@
 import { esc, trusted } from "../html";
 import { RISK_BANDS, THRESHOLD_ROWS } from "../score";
 import { lp, t, type Lang } from "../i18n";
-import { cardGrid, cardStack, dataTable, LEVEL_SHAPE, LEVEL_WORD, pull, shape } from "../ui/components";
+import { cards, dataTable, LEVEL_SHAPE, LEVEL_WORD, pull, shape } from "../ui/components";
 import { marked, P, splitAs, splitInto, textPage } from "./text";
 
 // The live paragraphs, as keys. English renders its markup version; hi/kn their reviewed
@@ -33,11 +33,17 @@ export function renderMethodology(lang: Lang = "en"): string {
     ONE_KEY,
     lang,
     4,
-    (s) => P(s[0]) + levelStrip(lang) + cardGrid([P(s[1]), P(s[2])]) + pull(s[3]),
+    (s) => P(s[0]) + levelStrip(lang) + cards([P(s[1]), P(s[2])], { cols: 2 }) + pull(s[3]),
     (whole) => P(whole) + levelStrip(lang),
   );
 
-  const whoBody = splitInto(WHO_EN, WHO_KEY, lang, 4, (s) => cardGrid([P(s[0]), P(s[1]), P(s[2])], 3) + pull(s[3]));
+  const whoBody = splitInto(
+    WHO_EN,
+    WHO_KEY,
+    lang,
+    4,
+    (s) => cards([P(s[0]), P(s[1]), P(s[2])], { cols: 3 }) + pull(s[3]),
+  );
 
   // The note carries two links; word order differs across languages, so the slots are filled
   // after lookup.
@@ -49,11 +55,17 @@ export function renderMethodology(lang: Lang = "en"): string {
     NOTE_KEY,
     lang,
     3,
-    (s) => cardGrid([P(s[0]), P(s[1])], 2, true) + cardStack([P(fill(s[2]))], { quiet: true }),
+    (s) => cards([P(s[0]), P(s[1])], { cols: 2, quiet: true }) + cards([P(fill(s[2]))], { quiet: true }),
     (whole) => P(fill(whole)),
   );
 
-  const normalBody = splitInto(NORMAL_KEY, NORMAL_KEY, lang, 3, (s) => P(s[0]) + cardGrid([P(s[1]), P(s[2])]));
+  const normalBody = splitInto(
+    NORMAL_KEY,
+    NORMAL_KEY,
+    lang,
+    3,
+    (s) => P(s[0]) + cards([P(s[1]), P(s[2])], { cols: 2 }),
+  );
 
   // The table's name differs from its section's ("The thresholds"): two landmarks never share one.
   const hazard = t("Hazard", lang);

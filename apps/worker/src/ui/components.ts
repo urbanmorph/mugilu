@@ -454,20 +454,21 @@ export function dataTable(cols: Column[], rows: string[][], caption?: string): s
 
 // ── CardGrid, Pairs, FAQ, pull quote, Sheet ──────────────────────────────────────────
 /** CardGrid: 2, 3 or 4 up on wide screens. Items are markup. */
-export function cardGrid(items: string[], cols: 2 | 3 | 4 = 2, quiet = false): string {
-  return `<div class="cards c${cols}">${items.map((x) => `<div class="card${quiet ? " quiet" : ""}">${x}</div>`).join("")}</div>`;
+export function cards(items: string[], o: { cols?: 1 | 2 | 3 | 4; quiet?: boolean } = {}): string {
+  const cls = o.cols ? ` c${o.cols}` : "";
+  return `<div class="cards${cls}">${items.map((x) => `<div class="card${o.quiet ? " quiet" : ""}">${x}</div>`).join("")}</div>`;
 }
 /** A card's title line with its pictogram, then its body (markup). */
 export const cardBody = (title: string, body: string, icon?: IconName) =>
   `<p class="t-value">${icon ? ico(icon) : ""}${esc(title)}</p>${body}`;
+/** A term / description list (text terms, markup descriptions) in one of the standard's looks. */
+function dl(cls: "pairs" | "faq", rows: [term: string, desc: string][]): string {
+  return `<dl class="${cls}">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
+}
 /** Pairs: key / value rows. Values are markup. */
-export function pairs(rows: [key: string, value: string][]): string {
-  return `<dl class="pairs">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
-}
+export const pairs = (rows: [key: string, value: string][]) => dl("pairs", rows);
 /** FAQ: question / answer grid. Answers are markup. */
-export function faq(rows: [q: string, a: string][]): string {
-  return `<dl class="faq">${rows.map(([q, a]) => `<div><dt>${esc(q)}</dt><dd>${a}</dd></div>`).join("")}</dl>`;
-}
+export const faq = (rows: [q: string, a: string][]) => dl("faq", rows);
 export const pull = (html: string) => `<p class="pull">${html}</p>`;
 
 export interface SheetSection {
@@ -676,10 +677,6 @@ export function embedCard(o: EmbedCardOpts, lang: Lang): string {
 }
 
 // Full-width cards (text pages).
-/** Cards one per row: a full-width box, or (`c1`) the label-beside-body list the MCP setup uses. */
-export function cardStack(items: string[], o: { c1?: boolean; quiet?: boolean } = {}): string {
-  return `<div class="cards${o.c1 ? " c1" : ""}">${items.map((x) => `<div class="card${o.quiet ? " quiet" : ""}">${x}</div>`).join("")}</div>`;
-}
 /** WarnBox: a bordered caution (Terms' "No warranty"): a bold first line with the warning
  *  symbol, then paragraphs. All markup. */
 export function warnBox(head: string, paras: string[]): string {

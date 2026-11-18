@@ -3,7 +3,7 @@ import { esc } from "../html";
 import { t, type Lang } from "../i18n";
 import { HAZARDS } from "../hazards";
 import { ld, UM_ICON } from "../ui/shell";
-import { cardBody, cardGrid, cardStack, faq, pull } from "../ui/components";
+import { cardBody, cards, faq, pull } from "../ui/components";
 import { P, lineBreakAfterComma, marked, splitInto, textPage } from "./text";
 
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
@@ -64,7 +64,7 @@ export function renderAbout(lang: Lang = "en"): string {
     SOURCES_ABOUT,
     lang,
     3,
-    (s) => pull(s[0]) + cardStack([P(s[1])]) + P(s[2]),
+    (s) => pull(s[0]) + cards([P(s[1])]) + P(s[2]),
   );
 
   const freeEn = FREE.replace("non-commercial, for good", "<b>non-commercial, for good</b>")
@@ -75,49 +75,52 @@ export function renderAbout(lang: Lang = "en"): string {
   const ref = marked(REF, lang, REF.replace("?ref=your-app", "<b>?ref=your-app</b>"));
   const openapi = t("OpenAPI spec", lang);
   const snapshot = t("snapshot image", lang);
-  const build = cardGrid([
-    cardBody(
-      t("For AI agents", lang),
-      P(
-        t(
-          "connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.",
-          lang,
-        )
-          .replace("{mcp}", `<a href="/mcp">/mcp</a>`)
-          .replace("{llms}", `<a href="/llms.txt">llms.txt</a>`),
-      ),
-      "ai",
-    ),
-    cardBody(
-      t("For developers", lang),
-      P(
-        t("a documented {openapi}, and every reading as {json} or {md}.", lang)
-          .replace("{openapi}", `<a href="/openapi.json">${openapi}</a>`)
-          .replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`)
-          .replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`),
-      ),
-      "code",
-    ),
-    cardBody(
-      t("Embed it", lang),
-      P(
-        t("a live card in one line of HTML ({embed}), or a {png}.", lang)
-          .replace("{embed}", `<a href="/embed/12.97,77.59"><code>/embed/{lat},{lon}</code></a>`)
-          .replace("{png}", `<a href="/c/12.97,77.59.png">${snapshot}</a>`),
-      ),
-      "embed",
-    ),
-    cardBody(
-      t("Put it on a screen", lang),
-      P(
-        t("a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.", lang).replace(
-          "{display}",
-          `<a href="/display">/display</a>`,
+  const build = cards(
+    [
+      cardBody(
+        t("For AI agents", lang),
+        P(
+          t(
+            "connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.",
+            lang,
+          )
+            .replace("{mcp}", `<a href="/mcp">/mcp</a>`)
+            .replace("{llms}", `<a href="/llms.txt">llms.txt</a>`),
         ),
+        "ai",
       ),
-      "screen",
-    ),
-  ]);
+      cardBody(
+        t("For developers", lang),
+        P(
+          t("a documented {openapi}, and every reading as {json} or {md}.", lang)
+            .replace("{openapi}", `<a href="/openapi.json">${openapi}</a>`)
+            .replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`)
+            .replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`),
+        ),
+        "code",
+      ),
+      cardBody(
+        t("Embed it", lang),
+        P(
+          t("a live card in one line of HTML ({embed}), or a {png}.", lang)
+            .replace("{embed}", `<a href="/embed/12.97,77.59"><code>/embed/{lat},{lon}</code></a>`)
+            .replace("{png}", `<a href="/c/12.97,77.59.png">${snapshot}</a>`),
+        ),
+        "embed",
+      ),
+      cardBody(
+        t("Put it on a screen", lang),
+        P(
+          t(
+            "a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.",
+            lang,
+          ).replace("{display}", `<a href="/display">/display</a>`),
+        ),
+        "screen",
+      ),
+    ],
+    { cols: 2 },
+  );
 
   const builtBy = marked(
     "Built by urbanmorph, led by Sathya Sankaran.",
@@ -162,12 +165,11 @@ export function renderAbout(lang: Lang = "en"): string {
           ) +
           P(sathya) +
           pull(t("That is mugilu.", lang)) +
-          cardGrid(
+          cards(
             [
               `<p class="t-lead"><span lang="kn">ಮುಗಿಲು</span></p>${P(t("mugilu is the Kannada word for the open sky.", lang))}`,
             ],
-            2,
-            true,
+            { cols: 2, quiet: true },
           ),
       },
       { id: "people", title: t("For people", lang), icon: "people", body: peopleBody },

@@ -3,7 +3,7 @@ import { t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { TOOLS } from "../mcptools";
 import { ld, SITE } from "../ui/shell";
-import { cardGrid, cardStack, ico, pull, type IconName } from "../ui/components";
+import { cards, ico, pull, type IconName } from "../ui/components";
 import { P, textPage } from "./text";
 
 // /mcp in a browser (the about page links it): how to connect an AI assistant, and the tools.
@@ -29,21 +29,22 @@ const lead = (d: string) => {
 export function renderMcpPage(lang: Lang = "en"): string {
   const endpoint = `${SITE}/mcp`;
   const code = (s: string) => `<code class="code">${esc(s)}</code>`;
-  const setup = cardStack(
+  const setup = cards(
     [
       `<p><b>Claude or Cursor:</b></p><p>add <code>${endpoint}</code> as a custom connector.</p>`,
       `<p><b>Claude Code:</b></p>${code(`claude mcp add --transport http mugilu ${endpoint}`)}`,
       `<p><b>MCP Inspector:</b></p>${code(`npx @modelcontextprotocol/inspector --cli ${endpoint} --transport http --method tools/list`)}`,
     ],
-    { c1: true },
+    { cols: 1 },
   );
-  const tools = cardGrid(
+  const tools = cards(
     TOOLS.map(
       (x) =>
         `<p class="t-value">${ico(TOOL_ICON[x.name] ?? "tool")}<code>${esc(x.name)}</code></p>${P(`${esc(lead(x.description))}.`)}`,
     ),
+    { cols: 2 },
   );
-  const listed = cardGrid(
+  const listed = cards(
     [
       P("Every answer carries its sources and a disclaimer; please show them."),
       P("It is listed in the official MCP Registry as <code>io.github.sathya-sankaran/mugilu</code>."),
@@ -51,8 +52,7 @@ export function renderMcpPage(lang: Lang = "en"): string {
         `Machine-readable: <a href="/.well-known/mcp.json">/.well-known/mcp.json</a> and <a href="/llms.txt">llms.txt</a>; the code is on <a href="https://github.com/urbanmorph/mugilu">GitHub</a>.`,
       ),
     ],
-    3,
-    true,
+    { cols: 3, quiet: true },
   );
   const jsonLd = ld({
     "@context": "https://schema.org",
