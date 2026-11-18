@@ -6,6 +6,7 @@ import { renderWarningsPage, warningType } from "../src/pages/warnings";
 import { cycloneIn } from "../src/sachet";
 import type { WarningsSnapshot } from "../src/sachet";
 import { STANDARD_CSS } from "../src/ui/standard";
+import { withCss } from "./helpers/css";
 
 // Phase 2C of the signage redesign: /warnings, /display and the 404 page on the new shell
 // (supporting-docs/redesign boards SignWarnings/DeskWarnings, SignDisplay/DeskDisplay,
@@ -75,7 +76,12 @@ test("/warnings: the signage shell, the warning wash at high, the time it is fro
   assert.match(html, /<h1 class="t-title">Active warnings<\/h1>/);
   assert.match(html, /The latest 5 official NDMA \/ IMD alerts across India\./);
   assert.match(html, /<span class="k">As of<\/span><span class="v">17:35 IST · 18 Nov · via SACHET<\/span>/);
-  assert.equal((html.match(/<style>/g) ?? []).length, 1, "only the shell's stylesheet");
+  assert.equal(
+    (html.match(/<link rel="stylesheet" href="\/assets\/site-/g) ?? []).length,
+    1,
+    "only the shell's stylesheet",
+  );
+  assert.doesNotMatch(html, /<style>/);
   assert.match(html, /aria-current="page"[^>]*>Warnings|href="\/warnings" aria-current="page"/);
 });
 
@@ -105,7 +111,7 @@ test("/warnings: filters for each kind and office, with counts, in a fold; rows 
 });
 
 test("/warnings: headlines keep their script and load its font; the CAP link is named in context", () => {
-  const html = renderWarningsPage(SNAP);
+  const html = withCss(renderWarningsPage(SNAP));
   assert.match(html, /<p class="head" lang="te">/);
   assert.match(html, /<p class="head" lang="bn">/);
   assert.match(html, /font-family:'Anek Telugu'/);
@@ -138,7 +144,12 @@ test("/display: title and intro beside a live preview of the chosen place and pe
     /<div class="lane l57">[\s\S]*class="pvframe"[\s\S]*<iframe[^>]+src="\/c\/bengaluru\?kiosk&amp;as=elderly"/,
   );
   assert.match(html, /<iframe[^>]+tabindex="-1"/);
-  assert.equal((html.match(/<style>/g) ?? []).length, 1, "only the shell's stylesheet");
+  assert.equal(
+    (html.match(/<link rel="stylesheet" href="\/assets\/site-/g) ?? []).length,
+    1,
+    "only the shell's stylesheet",
+  );
+  assert.doesNotMatch(html, /<style>/);
 });
 
 test("/display: step 1 searches any place (via /go, as a display) and offers 12 cities", () => {

@@ -10,6 +10,7 @@ import { buildSuggestions } from "../src/suggest";
 import { buildGazIndex, type GazRow } from "../src/gazetteer";
 import type { Conditions, NormalizedStation } from "../src/types";
 import type { WarningsSnapshot } from "../src/sachet";
+import { withCss } from "./helpers/css";
 
 const c = (o: Partial<Conditions> = {}) =>
   ({
@@ -100,7 +101,7 @@ test("3. warnings: an honest count, grouped by issuer with a readable name, newe
 });
 
 test("4. the 'for you' tag never breaks inside, and wraps under the label instead of squeezing it", () => {
-  const html = renderConditionsPage(c(), "child");
+  const html = withCss(renderConditionsPage(c(), "child"));
   assert.match(html, /\.mg \.fy\{[^}]*white-space:nowrap/);
   assert.match(html, /<p class="lab">[^<]*<span class="fy">for you<\/span><\/p>/, "inside the label line, which wraps");
 });
@@ -157,6 +158,6 @@ test("8. the display setup page previews a live display and suggests places as y
 });
 
 test("9. on laptops the layers flow in two balanced columns (no gaps under short tiles)", () => {
-  assert.match(renderConditionsPage(c()), /\.mg \.flow\{columns:2/);
-  assert.match(renderConditionsPage(c()), /\.mg \.flow>\*\{break-inside:avoid/);
+  assert.match(withCss(renderConditionsPage(c())), /\.mg \.flow\{columns:2/);
+  assert.match(withCss(renderConditionsPage(c())), /\.mg \.flow>\*\{break-inside:avoid/);
 });

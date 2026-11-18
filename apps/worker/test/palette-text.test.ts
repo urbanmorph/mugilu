@@ -8,6 +8,7 @@ import { renderEmbed } from "../src/pages/embed";
 import { renderKioskPage } from "../src/pages/kiosk";
 import { renderStationPage } from "../src/pages/station";
 import type { Conditions, NormalizedStation } from "../src/types";
+import { withCss } from "./helpers/css";
 
 // One canonical set of text colours for severity and AQI bands, light and dark, every
 // page reading it through CSS variables (--rt-<risk>, --bt-<band>). The band and risk
@@ -91,6 +92,9 @@ test("every page colours severity and band TEXT from the canonical variables, ne
   assert.match(pages.kiosk, /<html lang="en" data-theme="dark">/); // the kiosk is always dark
   for (const [name, html] of Object.entries(pages)) {
     assert.doesNotMatch(html, /style="[^"]*color:/i, `${name}: a colour in the markup`);
-    assert.match(html, /\.mg \.b-vpoor\{--lv:var\(--b-vpoor\);--on:var\(--on-b-vpoor\)\}/, `${name}: the tokens`);
+    // The embed inlines only its own rules; every other page links the site stylesheet.
+    const css = name === "embed" ? html : withCss(html);
+    const cls = name === "embed" ? "severe" : "b-vpoor";
+    assert.match(css, new RegExp(`\\.mg \\.${cls}\\{--lv:var\\(--`), `${name}: the tokens`);
   }
 });

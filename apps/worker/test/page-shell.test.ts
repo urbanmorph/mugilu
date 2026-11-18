@@ -1,12 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { pageShell } from "../src/ui/page-shell";
-import { FONT_FACES } from "../src/ui/fonts";
-import { STANDARD_CSS } from "../src/ui/standard";
-import { TOKENS_CSS } from "../src/ui/tokens";
+import { SITE_CSS_LINK } from "../src/ui/assets";
+import { withCss } from "./helpers/css";
 import { DISCLAIMER_FULL } from "../src/ui/components";
 
-// The signage page shell: exactly two stylesheets, the standard's landmarks, the theme.
+// The signage page shell: the one site stylesheet, the standard's landmarks, the theme.
 
 const page = pageShell("Warnings", "<p>body</p>", {
   path: "/warnings",
@@ -14,10 +13,16 @@ const page = pageShell("Warnings", "<p>body</p>", {
   tint: { hue: "Warning", level: "high" },
 });
 
-test("pageShell: exactly the two stylesheets, nothing page-specific", () => {
-  const styles = page.match(/<style>([\s\S]*?)<\/style>/g) ?? [];
-  assert.equal(styles.length, 1);
-  assert.equal(styles[0], `<style>${FONT_FACES}${TOKENS_CSS}${STANDARD_CSS}</style>`);
+test("pageShell: the one cached site stylesheet, nothing page-specific", () => {
+  assert.equal(page.split(SITE_CSS_LINK).length - 1, 1);
+  assert.doesNotMatch(page, /<style>/);
+});
+
+test("pageShell: the embed card inlines only the rules its markup uses, with no web font", () => {
+  const card = pageShell("c", '<a class="ecard"><p class="t-kicker">x</p></a>', { path: "/embed", variant: "embed" });
+  assert.doesNotMatch(card, /assets\/site-|rel="preload"|@font-face/);
+  assert.match(card, /<style>[^<]*\.mg[^<]*<\/style>/);
+  assert.doesNotMatch(card, /\.kio\b/, "no screen-display rules in a card");
 });
 
 test("pageShell: skip link, header, one main with id, footer with the disclaimer", () => {
@@ -47,7 +52,7 @@ test("pageShell: no tint means no wash; a kiosk is always dark, chromeless, with
 });
 
 test("fonts: self-hosted (no third-party requests), the Latin face preloaded, Indic faces optional", () => {
-  const h = pageShell("t", "<p>x</p>", { path: "/warnings", lang: "hi" });
+  const h = withCss(pageShell("t", "<p>x</p>", { path: "/warnings", lang: "hi" }));
   assert.doesNotMatch(h, /fonts\.googleapis|fonts\.gstatic/);
   assert.match(h, /<link rel="preload" href="\/fonts\/anek-latin-1\.woff2" as="font" type="font\/woff2" crossorigin>/);
   assert.match(
@@ -58,5 +63,4 @@ test("fonts: self-hosted (no third-party requests), the Latin face preloaded, In
     h,
     /@font-face\{font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-1\.woff2\)[^}]*font-display:optional/,
   );
-  assert.equal((h.match(/<style>/g) ?? []).length, 1);
 });

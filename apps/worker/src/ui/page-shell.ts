@@ -5,18 +5,28 @@ import { FRESHEN_JS, PULL_MARKER } from "../freshen";
 import type { Lang } from "../i18n";
 import type { RiskBand } from "../score";
 import { VIEWPORT, headTags, relTimeJs, type ShellOpts } from "./shell";
-import { FONT_FACES, LATIN_FONT } from "./fonts";
+import { LATIN_FONT } from "./fonts";
 import { TOKENS_CSS } from "./tokens";
 import { STANDARD_CSS } from "./standard";
+import { SITE_CSS_LINK, purgeCss } from "./assets";
 import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 
-// The signage page shell (design standard). Every page loads exactly two stylesheets,
-// tokens then components, and composes components; no page carries CSS of its own.
+// The signage page shell (design standard). Every page links the one site stylesheet
+// (fonts, tokens, components: ui/assets.ts) and composes components; no page carries CSS
+// of its own. The embed card is the exception: it inlines only the rules its markup uses.
 // Landmarks: skip link, header, one <main id="main">, footer. The body is the token root:
 // <body class="mg" data-tint data-level> (the wash from read.ts readTint).
 
 const FONT_PRELOAD = `<link rel="preload" href="${LATIN_FONT}" as="font" type="font/woff2" crossorigin>`;
-const STYLES = `<style>${FONT_FACES}${TOKENS_CSS}${STANDARD_CSS}</style>`;
+
+/** The embed card's CSS, cut to its markup's classes; memoised by that class list. */
+const embedCss = new Map<string, string>();
+function embedStyle(html: string): string {
+  const key = [...new Set(html.match(/class="[^"]*"/g) ?? [])].sort().join("|");
+  let css = embedCss.get(key);
+  if (css === undefined) embedCss.set(key, (css = purgeCss(TOKENS_CSS + STANDARD_CSS, html)));
+  return `<style>${css}</style>`;
+}
 
 export interface PageOpts extends ShellOpts {
   /** The page's language-agnostic path: the current nav item and the language links. */
@@ -49,16 +59,18 @@ export function pageShell(title: string, body: string, opts: PageOpts): string {
     (variant === "embed" ? "" : relTimeJs(lang)) +
     (live ? FRESHEN_JS : "") +
     js;
+  const embed = variant === "embed";
+  const content = `<body class="mg"${bodyAttrs}>
+${page ? siteHeader(path, lang, query) : ""}<main id="main"${embed ? "" : ' tabindex="-1"'}>${body}</main>${page ? siteFooter(path, lang, "", query) : ""}${live ? PULL_MARKER : ""}`;
   return `<!doctype html>
 <html lang="${lang}"${variant === "kiosk" ? ' data-theme="dark"' : ""}>
 <head>
 ${head}
-${FONT_PRELOAD}
+${embed ? "" : FONT_PRELOAD}
 ${page ? `<script>${THEME_HEAD_JS}</script>` : ""}
-${STYLES}
+${embed ? embedStyle(content) : SITE_CSS_LINK}
 </head>
-<body class="mg"${bodyAttrs}>
-${page ? siteHeader(path, lang, query) : ""}<main id="main"${variant === "embed" ? "" : ' tabindex="-1"'}>${body}</main>${page ? siteFooter(path, lang, "", query) : ""}${live ? PULL_MARKER : ""}
+${content}
 ${scripts ? `<script>${scripts}</script>` : ""}
 </body>
 </html>`;

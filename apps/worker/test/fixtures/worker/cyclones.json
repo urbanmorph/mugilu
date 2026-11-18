@@ -1,1 +1,22 @@
-{"generated_at":"2026-11-18T18:05:08.639Z","systems":[{"kind":"warning","id":"05B","name":"Akvan","lat":13.6,"lon":86.5,"moving":"NW","track":[{"lat":15,"lon":85.6},{"lat":16.7,"lon":85.1},{"lat":18.6,"lon":85},{"lat":20.6,"lon":84.9}],"issued":"181500Z","at":"2026-11-18T15:00:00.000Z","basin":"bay"}]}
+{
+  "generated_at": "2026-11-18T18:05:08.639Z",
+  "systems": [
+    {
+      "kind": "warning",
+      "id": "05B",
+      "name": "Akvan",
+      "lat": 13.6,
+      "lon": 86.5,
+      "moving": "NW",
+      "track": [
+        { "lat": 15, "lon": 85.6 },
+        { "lat": 16.7, "lon": 85.1 },
+        { "lat": 18.6, "lon": 85 },
+        { "lat": 20.6, "lon": 84.9 }
+      ],
+      "issued": "181500Z",
+      "at": "2026-11-18T15:00:00.000Z",
+      "basin": "bay"
+    }
+  ]
+}

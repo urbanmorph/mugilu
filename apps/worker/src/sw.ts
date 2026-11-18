@@ -14,8 +14,7 @@
 
 import { LANGS, lp, t, type Lang } from "./i18n";
 import { esc } from "./html";
-import { TOKENS_CSS } from "./ui/tokens";
-import { STANDARD_CSS } from "./ui/standard";
+import { SITE_CSS_LINK, SITE_CSS_PATH } from "./ui/assets";
 import { THEME_HEAD_JS, THEME_JS, ico, linkButton, siteFooter, siteHeader } from "./ui/components";
 
 export const SW_PATH = "/sw.js";
@@ -27,17 +26,14 @@ const KEEP = 20;
 /** Registers the worker on ordinary pages (not the kiosk display or the embed card). */
 export const SW_REGISTER = `if('serviceWorker'in navigator)navigator.serviceWorker.register('${SW_PATH}',{updateViaCache:'none'}).catch(function(){});`;
 
-/** Where the offline pages' stylesheet goes back in (it travels once, not once per language). */
-const CSS_SLOT = "/*@css*/";
-
-/** The offline page, the standard's: header, the message and a way home, footer. No network,
- *  so the two stylesheets are inline and the fonts fall back to the system's. */
+/** The offline page, the standard's: header, the message and a way home, footer. Its
+ *  stylesheet is the site's, saved when the worker installs; the fonts fall back to the system's. */
 function offlinePage(lang: Lang): string {
   const title = t("You are offline", lang);
   return (
     `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
     `<meta name="color-scheme" content="light dark"><title>${esc(title)} · mugilu</title><script>${THEME_HEAD_JS}</script>` +
-    `<style>${CSS_SLOT}</style></head><body class="mg">${siteHeader("/offline", lang)}` +
+    `${SITE_CSS_LINK}</head><body class="mg">${siteHeader("/offline", lang)}` +
     `<main id="main" tabindex="-1"><section class="wrap pad stack">${ico("offline")}<h1 class="t-title">${esc(title)}</h1>` +
     `<p class="t-lead">${esc(t("mugilu shows the sky right now, so it needs a connection. Places you have opened on this device keep their last reading.", lang))}</p>` +
     `${linkButton(lp("/", lang), t("See your places", lang), true)}</section></main>${siteFooter("/offline", lang)}` +
@@ -50,7 +46,8 @@ export const SW_JS = String.raw`const CACHE = 'mugilu-readings';
 const KEEP = ${KEEP};
 const HIDDEN = 'id="${OFFLINE_NOTE_ID}" hidden';
 const OFFLINE = ${JSON.stringify(OFFLINE_PAGES)};
-const CSS = ${JSON.stringify(TOKENS_CSS + STANDARD_CSS)};
+// The site stylesheet: saved at install, and served from the cache (its path is versioned).
+const CSS_PATH = ${JSON.stringify(SITE_CSS_PATH)};
 // A place's page, by name or coordinate (/c/lucknow, /hi/c/26.85,80.95), not its data files.
 const isPlace = (path) => /^(\/(hi|kn))?\/c\/[^/]+$/.test(path) && !/\.(json|md|png)$/.test(path);
 const isHome = (path) => /^(\/(hi|kn))?\/?$/.test(path);
@@ -59,12 +56,23 @@ const langOf = (path) => (path.match(/^\/(hi|kn)(\/|$)/) || [])[1] || 'en';
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   // The home page, so the installed app opens offline; a failure here never stops the install.
-  event.waitUntil(caches.open(CACHE).then((c) => c.add(new Request('/', { cache: 'reload' }))).catch(() => {}));
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((c) => Promise.all([c.add(new Request('/', { cache: 'reload' })), c.add(CSS_PATH)]))
+      .catch(() => {}),
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     for (const name of await caches.keys()) if (name !== CACHE) await caches.delete(name);
+    // Stylesheets from earlier deploys.
+    const cache = await caches.open(CACHE);
+    for (const r of await cache.keys()) {
+      const p = new URL(r.url).pathname;
+      if (p.startsWith('/assets/') && p !== CSS_PATH) await cache.delete(r);
+    }
     await self.registration.navigationPreload?.enable();
     await self.clients.claim();
   })());
@@ -87,7 +95,19 @@ async function saved(key) {
 }
 
 const offline = (path) =>
-  new Response(OFFLINE[langOf(path)].replace('${CSS_SLOT}', () => CSS), { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } });
+  new Response(OFFLINE[langOf(path)], { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } });
+
+/** The site stylesheet: from the cache when saved (it never changes at a path), else the network. */
+async function asset(request) {
+  const hit = await caches.match(request, { cacheName: CACHE });
+  if (hit) return hit;
+  const response = await fetch(request);
+  if (response.ok && new URL(request.url).pathname === CSS_PATH) {
+    const copy = response.clone();
+    caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+  }
+  return response;
+}
 
 async function page(event, url) {
   // The installed app's launch marker (?src=pwa) does not change the page: the
@@ -141,7 +161,9 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  if (request.method !== 'GET' || request.mode !== 'navigate' || url.origin !== self.location.origin) return;
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/assets/')) return event.respondWith(asset(request));
+  if (request.mode !== 'navigate') return;
   event.respondWith(page(event, url));
 });
 `;

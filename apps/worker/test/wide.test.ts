@@ -11,6 +11,7 @@ import { renderTerms } from "../src/pages/terms";
 import { renderWarningsPage, warningType } from "../src/pages/warnings";
 import type { Conditions, NormalizedStation } from "../src/types";
 import type { WarningsSnapshot } from "../src/sachet";
+import { withCss } from "./helpers/css";
 
 // Wide layouts (960 px and up) for the pages that sat in a 560 px column: a header nav
 // and room for filters, indexes, maps and tables. The place pages (/c) and the home page
@@ -170,7 +171,7 @@ test("tinted backdrops: a station by its air band, /warnings by its warnings, ca
 });
 
 test("text pages: long inline code (the MCP inspector command) wraps instead of pushing the page sideways", () => {
-  const html = renderMcpPage();
+  const html = withCss(renderMcpPage());
   assert.match(html, /\.mg code\{[^}]*overflow-wrap:anywhere/);
   assert.match(html, /\.mg \.code\{[^}]*white-space:pre-wrap;overflow-wrap:anywhere/);
   assert.match(html, /<code class="code">npx @modelcontextprotocol\/inspector/);

@@ -33,6 +33,7 @@ import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
 import { collectCyclones } from "./cyclones";
 import { loadMap, writeMap } from "./indiamap";
+import { assetResponse } from "./ui/assets";
 import { composeHighlights } from "./highlights";
 import {
   topPlaces,
@@ -247,6 +248,10 @@ export default {
     if (url.pathname === INDEXNOW_PATH)
       return new Response(INDEXNOW_KEY, { headers: { "content-type": "text/plain; charset=utf-8" } });
 
+    if (url.pathname.startsWith("/assets/")) {
+      const asset = assetResponse(url.pathname);
+      if (asset) return asset;
+    }
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return cached(IMAGE_EDGE_TTL, () => iconPng());
     // The PWA service worker (sw.ts): no-cache, so an update reaches browsers at once.

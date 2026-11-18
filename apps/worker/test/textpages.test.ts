@@ -5,6 +5,7 @@ import { renderAbout } from "../src/pages/about";
 import { renderMcpPage } from "../src/pages/mcp";
 import { renderMethodology } from "../src/pages/methodology";
 import { renderTerms } from "../src/pages/terms";
+import { withCss } from "./helpers/css";
 
 // The text pages on the signage design (supporting-docs/redesign): Sheet sections in boxes,
 // every sentence the live text, whole. test/fixtures/live-text.json holds the live English
@@ -39,7 +40,8 @@ for (const [page, render] of Object.entries(PAGES)) {
     assert.match(html, /<article class="sheet">/);
     assert.match(html, /<section class="tsec" id="[a-z]+" aria-labelledby="[a-z]+-h">/);
     assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
-    assert.equal((html.match(/<style>/g) ?? []).length, 1); // tokens + standard only
+    assert.equal((html.match(/<link rel="stylesheet" href="\/assets\/site-/g) ?? []).length, 1);
+    assert.doesNotMatch(html, /<style>/); // tokens + standard only
     assert.doesNotMatch(html, /class="(ahero|atext|alist|adisc|aback)"/); // the old layout is gone
     assert.match(html, /Informational only, not for medical, emergency, or safety-critical decisions\./);
     assert.match(html, /<p class="back"><a href="\/">← back to mugilu<\/a><\/p>/);
@@ -50,7 +52,7 @@ for (const [page, render] of Object.entries(PAGES)) {
 }
 
 test("signage shell: the iOS install sheet stays closed until Install app opens it (a modal)", () => {
-  const html = renderAbout("en");
+  const html = withCss(renderAbout("en"));
   assert.match(html, /<dialog class="isheet" id="install-guide"/);
   assert.match(html, /\.mg dialog\.isheet:not\(\[open\]\)\{display:none\}/);
   assert.match(html, /\.mg dialog\.isheet\[open\]\{position:fixed/);
@@ -136,7 +138,7 @@ test("about: Build on it as four cards with their links, the FAQ grid, the credi
   assert.match(html, /<dl class="faq">/);
   assert.match(html, /<div class="credit"><img /);
   assert.match(html, /<span lang="kn">ಮುಗಿಲು<\/span>/);
-  assert.match(html, /font-family:'Anek Kannada'/); // the font for the Kannada word
+  assert.match(withCss(html), /font-family:'Anek Kannada'/); // the font for the Kannada word
 });
 
 test("mcp: the address, a card per client, a card per tool from the server's own list", () => {

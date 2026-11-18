@@ -10,6 +10,7 @@ import { renderEmbed } from "../src/pages/embed";
 import { renderAbout } from "../src/pages/about";
 import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions } from "../src/types";
+import { withCss } from "./helpers/css";
 
 // --- the client script, run against a fake browser -------------------------------
 
@@ -273,9 +274,9 @@ test("pages: every page, language, kiosk and embed opt into viewport-fit=cover",
 test("pages: header clears the top/side insets, the page end clears the bottom one", () => {
   // Every page here is on the signage shell: the header is .sh.
   for (const [html, header] of [
-    [renderHome(), ".sh"],
-    [renderHome(undefined, undefined, undefined, "kn"), ".sh"],
-    [renderAbout(), ".sh"],
+    [withCss(renderHome()), ".sh"],
+    [withCss(renderHome(undefined, undefined, undefined, "kn")), ".sh"],
+    [withCss(renderAbout()), ".sh"],
   ]) {
     const bar = rules(html, header).join(";");
     for (const side of ["top", "left", "right"]) assert.match(bar, new RegExp(`env\\(safe-area-inset-${side}\\)`));
@@ -285,7 +286,7 @@ test("pages: header clears the top/side insets, the page end clears the bottom o
 });
 
 test("kiosk + embed: the full-bleed frame/card is padded on all four sides (notches, TV overscan)", () => {
-  const kiosk = rules(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi"), ".mg .kio");
+  const kiosk = rules(withCss(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi")), ".mg .kio");
   const embed = rules(renderEmbed(cond(), "everyone", "https://mugilu.live"), ".mg[data-embed]");
   for (const rule of [kiosk.find((r) => r.includes("padding")), embed.find((r) => r.includes("padding"))]) {
     assert.ok(rule);

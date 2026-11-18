@@ -11,6 +11,7 @@ import { renderAbout } from "../src/pages/about";
 import { renderMethodology } from "../src/pages/methodology";
 import { renderTerms } from "../src/pages/terms";
 import type { Conditions } from "../src/types";
+import { withCss } from "./helpers/css";
 
 const REAL_DISCLAIMER =
   "Informational only, not for medical, emergency, or safety-critical decisions. For official hazard warnings consult NDMA / IMD.";
@@ -75,7 +76,7 @@ test("renderHome(en): unchanged English, html lang=en, unprefixed canonical", ()
 });
 
 test("renderHome(kn): Kannada hero + tagline, html lang=kn, /kn canonical, Indic font", () => {
-  const html = renderHome(undefined, undefined, undefined, "kn");
+  const html = withCss(renderHome(undefined, undefined, undefined, "kn"));
   assert.match(html, /<html lang="kn">/);
   assert.match(html, /ಈಗ ಹೊರಗೆ ಹೇಗಿದೆ\?/); // hero
   assert.match(html, /ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ, ನಿರ್ದೇಶಾಂಕ ಒಂದೊಂದಾಗಿ\./); // tagline
@@ -187,7 +188,7 @@ test("warnings (kn): heading + empty state localised", () => {
 });
 
 test("kiosk (?kiosk) is chromeless: no header bar, footer nav or language switcher bleeds through", () => {
-  const html = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "kn");
+  const html = withCss(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "kn"));
   assert.match(html, /<html lang="kn" data-theme="dark">/); // still localized + Indic fonts, always dark
   assert.match(html, /font-family:'Anek Kannada'/);
   assert.doesNotMatch(html, /class="langs"|class="flangs"/); // no language switcher on a wall display
@@ -290,19 +291,19 @@ test("SEO: /c conditions description localized (place verbatim); en byte-identic
 });
 
 test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {
-  const about = renderAbout("hi");
+  const about = withCss(renderAbout("hi"));
   assert.match(about, /<html lang="hi">/);
   assert.match(about, /font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-1\.woff2\)/); // the Devanagari face of the signage type
   assert.match(about, /पूरे आकाश/); // lead localized (Sarvam + restore)
   assert.match(about, /mugilu/); // brand stays Latin, not मुगिलु
   assert.doesNotMatch(about, /मुगिल|मगुल|भारतल|सी\.पी\.सी/); // no residual transliteration
-  const meth = renderMethodology("hi");
+  const meth = withCss(renderMethodology("hi"));
   assert.match(meth, /पारदर्शी व्यवस्था/); // "glass box" (hand-constructed, no Sarvam)
   assert.match(meth, /CPCB/); // acronyms Latin
   assert.match(meth, /301\+/); // numbers stay Latin
   assert.match(meth, /href="\/hi\/terms"/); // {terms} slot filled, lang-prefixed
   assert.match(meth, /score\.ts<\/a>/); // {score} slot filled
-  const terms = renderTerms("hi");
+  const terms = withCss(renderTerms("hi"));
   assert.match(terms, /शर्तें और श्रेय/); // H1 localized
   assert.match(terms, /Cloudflare Web Analytics/); // brand Latin in privacy note
   assert.match(terms, /ब्रोकर के माध्यम से/); // source-detail line localized (hi)

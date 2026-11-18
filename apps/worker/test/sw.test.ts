@@ -4,6 +4,7 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
 import { SW_JS, SW_PATH, SW_REGISTER, serviceWorker, OFFLINE_NOTE_ID } from "../src/sw";
+import { SITE_CSS_LINK, SITE_CSS_PATH } from "../src/ui/assets";
 import { renderConditionsPage } from "../src/pages/place";
 import { renderEmbed } from "../src/pages/embed";
 import { renderHome } from "../src/pages/home";
@@ -167,10 +168,10 @@ test("offline, a place never opened here gets a plain offline page, as a 503, in
   assert.match(body, /href="\/kn"/, "See your places opens the home page in the page's language");
 });
 
-test("the offline page is the standard's: both stylesheets inline, header, one main with its h1, footer, disclaimer", async () => {
+test("the offline page is the standard's: the site stylesheet, header, one main with its h1, footer, disclaimer", async () => {
   w.state.online = false;
   const body = await (await w.page("/warnings"))!.text();
-  assert.match(body, /<style>[^<]*\.mg\{[^<]*\.mg \.sh\{/, "tokens then the components, inline (no network)");
+  assert.ok(body.includes(SITE_CSS_LINK), "the site stylesheet, saved at install");
   assert.match(
     body,
     /<body class="mg">[\s\S]*<header class="sh">[\s\S]*<main id="main"[^>]*>[\s\S]*<h1 class="t-title">You are offline<\/h1>/,
@@ -183,8 +184,23 @@ test("the offline page is the standard's: both stylesheets inline, header, one m
   assert.equal((body.match(/<main/g) ?? []).length, 1);
 });
 
-test("the worker carries the stylesheet once for all three offline pages", () => {
-  assert.equal(SW_JS.split(".mg .kio{display:grid").length - 1, 1);
+test("the worker carries no stylesheet of its own: it saves the site's at install and serves it offline", async () => {
+  assert.doesNotMatch(SW_JS, /\.mg \.kio\{display:grid/);
+  const fresh = makeWorker();
+  await fresh.lifecycle("install");
+  assert.ok(fresh.saved().includes(SITE_CSS_PATH));
+  fresh.state.online = false;
+  const css = await fresh.request(SITE_CSS_PATH);
+  assert.ok(css, "answered from the cache");
+});
+
+test("activating drops stylesheets from earlier deploys", async () => {
+  const fresh = makeWorker();
+  await fresh.lifecycle("install");
+  fresh.stores.get("mugilu-readings")!.set(`${ORIGIN}/assets/site-old.css`, new Response("x"));
+  await fresh.lifecycle("activate");
+  assert.ok(!fresh.saved().includes("/assets/site-old.css"));
+  assert.ok(fresh.saved().includes(SITE_CSS_PATH));
 });
 
 test("the home page is saved when the worker installs, so the installed app opens offline", async () => {
@@ -199,7 +215,7 @@ test("the installed app's start URL (?src=pwa) opens the saved home offline, and
   await fresh.lifecycle("install");
   await fresh.page("/hi?src=pwa"); // online: the launch is fetched as is, so it is counted
   assert.ok(fresh.state.fetched.includes("/hi?src=pwa"));
-  assert.deepEqual(fresh.saved().sort(), ["/", "/hi"]);
+  assert.deepEqual(fresh.saved().sort(), ["/", "/hi", SITE_CSS_PATH].sort());
   fresh.state.online = false;
   assert.equal(await text(fresh.page("/?src=pwa")), "home /");
   assert.equal(await text(fresh.page("/hi?src=pwa")), "home /hi");
