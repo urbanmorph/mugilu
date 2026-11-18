@@ -89,3 +89,88 @@ export function tintOf(risk: Pick<AmbientRisk, "band" | "driver">): { hue: strin
     strength: TINT_STRENGTH[risk.band],
   };
 }
+
+// ── Signage design standard (supporting-docs/redesign/design-standard.md) ───────────
+// Every colour the new pages use lives here; src/ui/tokens.ts turns them into CSS.
+
+/** The neutrals, per theme. The header bar stays near-black in both themes. */
+export const NEUTRAL = {
+  light: {
+    bg: "#ffffff",
+    ink: "#111111",
+    muted: "#55554f",
+    placeholder: "#55554f",
+    line: "#d8d6d0",
+    soft: "#f3f2ee",
+    track: "#e7e5df",
+    focus: "#0284c7",
+    bar: "#111111",
+    onBar: "#ffffff",
+    barRule: "#111111",
+  },
+  dark: {
+    bg: "#0d0d0c",
+    ink: "#f5f5f4",
+    muted: "#bdbdb7",
+    placeholder: "#bdbdb7",
+    line: "#3a3a36",
+    soft: "#1c1c1a",
+    track: "#2e2e2a",
+    focus: "#38bdf8",
+    bar: "#1c1c1a",
+    onBar: "#f5f5f4",
+    barRule: "#3a3a36",
+  },
+} as const;
+
+/** Text on a level fill: near-black on every fill except red, which takes white. */
+export const ON_FILL: Record<RiskBand, string> = {
+  low: "#111111",
+  moderate: "#111111",
+  high: "#111111",
+  severe: "#ffffff",
+};
+/** Text on an AQI band fill. */
+export const BAND_ON_FILL: Record<string, string> = {
+  good: "#111111",
+  satisfactory: "#111111",
+  moderate: "#111111",
+  poor: "#111111",
+  vpoor: "#ffffff",
+  severe: "#ffffff",
+  unknown: "#111111",
+};
+
+/** The India map's hues, per theme. Rain is stepped for 3:1 against the land. */
+export const MAP_HUE = {
+  light: {
+    air: "#7b2872",
+    heat: "#e75c2e",
+    cold: "#238ce4",
+    rain1: "#3b82f6",
+    rain2: "#1d4ed8",
+    rain3: "#1e3a8a",
+    land: "#eef2f6",
+    calm: "#e0f2fe",
+  },
+  dark: {
+    air: "#b778be",
+    heat: "#d02026",
+    cold: "#256de7",
+    rain1: "#3b82f6",
+    rain2: "#93c5fd",
+    rain3: "#dbeafe",
+    land: "#172033",
+    calm: "#16324a",
+  },
+} as const;
+
+/** The page wash: how much of the hazard's hue goes into the page, per level (percent). */
+export const WASH_STRENGTH: Record<"light" | "dark", Record<RiskBand, number>> = {
+  light: { low: 6, moderate: 8, high: 10, severe: 14 },
+  dark: { low: 10, moderate: 12, high: 14, severe: 18 },
+};
+
+/** A QR code is black on white in both themes, so phones can read it. */
+export const QR_INK = "#000000";
+export const QR_PAPER = "#ffffff";

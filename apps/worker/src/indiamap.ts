@@ -3,7 +3,7 @@ import type { FireDetection } from "./firms";
 import type { Cyclone } from "./cyclones";
 import type { Env } from "./index";
 import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf } from "./score";
-import { BAND_COLOR, RISK_COLOR } from "./palette";
+import { BAND_COLOR, MAP_HUE, RISK_COLOR } from "./palette";
 import { AQI_BAND_LABEL } from "./aqi";
 import { isPlausible } from "./plausible";
 import { inIndia, type Ring } from "./india";
@@ -377,10 +377,16 @@ ${cyText}
 export const MAP_JS = (lang: Lang) =>
   `(function(){var s=document.querySelector('.msvg');if(!s)return;s.addEventListener('click',function(e){if(!e.target.closest('.mland,.mcells,.La'))return;var p=s.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(s.getScreenCTM().inverse());location.href=${JSON.stringify(lp("/c/", lang))}+(${LAT1}-q.y/${S}).toFixed(2)+','+(${LON0}+q.x/${r1(KX * S * 1e4) / 1e4}).toFixed(2);});})();`;
 
+/** The map's colour variables for one theme, from palette.ts. */
+const mapVars = (m: "light" | "dark") => {
+  const h = MAP_HUE[m];
+  return `--m0:${h.calm};--mland:${h.land};--mair:${h.air};--mheat:${h.heat};--mcold:${h.cold};--mrain1:${h.rain1};--mrain2:${h.rain2};--mrain3:${h.rain3}`;
+};
+
 export const MAP_CSS = `
-:root{--m0:#e0f2fe;--mland:#eef2f6;--mair:#7b2872;--mheat:#e75c2e;--mcold:#238ce4;--mrain1:#93c5fd;--mrain2:#3b82f6;--mrain3:#1e3a8a}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--m0:#16324a;--mland:#172033;--mair:#b778be;--mheat:#d02026;--mcold:#256de7;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}}
-:root[data-theme="dark"]{--m0:#16324a;--mland:#172033;--mair:#b778be;--mheat:#d02026;--mcold:#256de7;--mrain1:#1d4ed8;--mrain2:#3b82f6;--mrain3:#bfdbfe}
+:root{${mapVars("light")}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){${mapVars("dark")}}}
+:root[data-theme="dark"]{${mapVars("dark")}}
 .imap{position:relative;margin:.2rem 0 .8rem}
 .imap input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .mseg{display:inline-flex;max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:0 0 .6rem}
