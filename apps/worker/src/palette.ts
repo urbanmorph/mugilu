@@ -11,6 +11,42 @@ export const RISK_COLOR: Record<RiskBand, string> = {
   severe: "#dc2626",
 };
 
+// The same severities and bands as TEXT, [light theme, dark theme]. The colours above
+// fill shapes (map squares, bars, dots); as text on a light page they are too pale
+// (moderate's yellow is 2:1). Each pair holds 4.5:1 on its theme's page and card, under
+// any hazard's tint at its level (test/palette-text.test.ts). Pages read these only
+// through paletteCss()'s variables, --rt-<risk> and --bt-<band>: change them here.
+export const RISK_TEXT: Record<RiskBand, [string, string]> = {
+  low: ["#137136", "#4ade80"],
+  moderate: ["#895306", "#facc15"],
+  high: ["#a5370a", "#fb9644"],
+  severe: ["#a41919", "#fbafaf"],
+};
+export const BAND_TEXT: Record<string, [string, string]> = {
+  good: ["#137136", "#4ade80"],
+  satisfactory: ["#446e0d", "#a3e635"],
+  moderate: ["#895306", "#facc15"],
+  poor: ["#a5370a", "#fb9644"],
+  vpoor: ["#a41919", "#fbafaf"],
+  severe: ["#7f1d1d", "#fdabb5"],
+  unknown: ["#475569", "#94a3b8"],
+};
+
+/** The text colours as CSS variables. No argument: the stylesheet rule, light on :root and
+ *  dark under prefers-color-scheme. "dark": the bare declarations, for a surface that is
+ *  always dark (the kiosk). */
+export function paletteCss(only?: "dark"): string {
+  const vars = (i: 0 | 1) =>
+    Object.entries(RISK_TEXT)
+      .map(([k, v]) => `--rt-${k}:${v[i]};`)
+      .join("") +
+    Object.entries(BAND_TEXT)
+      .map(([k, v]) => `--bt-${k}:${v[i]};`)
+      .join("");
+  if (only === "dark") return vars(1);
+  return `:root{${vars(0)}}@media(prefers-color-scheme:dark){:root{${vars(1)}}}`;
+}
+
 /** A hazard level (0-3) as a colour: the risk ramp for 1-3, and `quiet` for 0 (a
  *  muted token on the pages, a slate on the dark image). */
 export function levelColor(level: number, quiet = "var(--muted)"): string {

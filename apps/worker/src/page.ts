@@ -26,7 +26,7 @@ import {
   THRESHOLDS,
 } from "./score";
 import type { AmbientRisk, Persona, RiskBand } from "./score";
-import { RISK_COLOR, BAND_COLOR, levelColor, tintOf } from "./palette";
+import { RISK_COLOR, BAND_COLOR, levelColor, tintOf, paletteCss } from "./palette";
 import { slugForName, slugFromPath, siblingPlaces, slugPlacesByState } from "./slugs";
 import { aroundLinks } from "./sister";
 import type { Lang } from "./i18n";
@@ -141,7 +141,7 @@ function renderHero(
     lang === "en" ? `feels like ${Math.round(c)}°` : `${Math.round(c)}° ${t("feels", lang)}`;
   const row = (band: RiskBand, lat: number, lon: number, body: string, iso?: string) => {
     if (RISK_BANDS.indexOf(band) > RISK_BANDS.indexOf(worst)) worst = band;
-    return `<a class="hl" style="--hue:${RISK_COLOR[band]}" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
+    return `<a class="hl" style="--hue:var(--rt-${band})" href="${lp(`/c/${lat},${lon}`, lang)}">${body}${age(iso)}</a>`;
   };
   if (h?.hottest) {
     rows.push(
@@ -206,6 +206,7 @@ function safePad(y: string, x: string): string {
 }
 
 const BASE_CSS = `
+${paletteCss()}
 :root{--sky:#0284c7;--ink:#0f172a;--muted:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--warn-text:#b45309;--serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,Cambria,serif;--sans:ui-sans-serif,-apple-system,system-ui,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--hair:color-mix(in srgb,var(--ink) 12%,transparent)}
 @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--muted:#94a3b8;--bg:#0b1220;--card:#111827;--line:#1f2937;--warn-text:#fbbf24}}
 *{box-sizing:border-box}html,body{margin:0}
@@ -389,12 +390,12 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .warn .wsrc{display:block;margin-top:2px;color:var(--muted);font-size:.76rem;font-weight:500}
 .amb{margin:1.7rem 0 .2rem}
 .amb-eye{display:flex;align-items:center;gap:.45rem;font:600 .76rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 .55rem}
-.amb-eye .ic{width:15px;height:15px;color:var(--cond)}
+.amb-eye .ic{width:15px;height:15px;color:var(--cond-text)}
 .amb-head{font-family:var(--serif);font-weight:600;font-size:clamp(2.6rem,12vw,3.7rem);line-height:.95;letter-spacing:-.025em;margin:0;color:var(--ink)}
-.amb-head .b{color:var(--cond)}
+.amb-head .b{color:var(--cond-text)}
 .amb-say{font-family:var(--serif);font-size:1.18rem;line-height:1.42;margin:.65rem 0 0;color:var(--ink);max-width:32ch}
 .amb-act{font:600 1rem/1.4 var(--sans);margin:.5rem 0 0;max-width:34ch}
-.amb-also{display:flex;align-items:flex-start;gap:.4rem;font:500 .92rem/1.4 var(--sans);color:var(--cond);margin:.7rem 0 0;max-width:34ch}
+.amb-also{display:flex;align-items:flex-start;gap:.4rem;font:500 .92rem/1.4 var(--sans);color:var(--cond-text);margin:.7rem 0 0;max-width:34ch}
 .amb-also .ic{width:16px;height:16px;flex:none;margin-top:.1rem}
 .who{display:flex;flex-wrap:wrap;gap:.35rem 1rem;margin:1.2rem 0 0;padding:0}
 .who a{font:500 .9rem var(--sans);color:var(--muted);text-decoration:none;padding-bottom:2px;border-bottom:2px solid transparent}
@@ -403,7 +404,7 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .lyr{display:grid;grid-template-columns:5.4rem 1fr;gap:0 1rem;padding:1.05rem .1rem;border-bottom:1px solid var(--hair)}
 .lyr dt{display:flex;flex-wrap:wrap;align-items:center;align-self:start;gap:.3rem .5rem;font:600 .8rem/1.2 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:.6rem}
 .lyr dt .ic{flex:none}
-.lyr.on dt{color:var(--cond)}
+.lyr.on dt{color:var(--cond-text)}
 .lyr .fy{white-space:nowrap;margin-left:.1rem;padding:.1rem .4rem;border-radius:999px;font:600 .66rem/1.3 var(--sans);letter-spacing:.03em;text-transform:none;color:var(--ink);background:color-mix(in srgb,var(--cond) 18%,transparent)}
 .lyr.quiet .num,.lyr.quiet .q{color:var(--muted)}
 .lyr dd{margin:0;display:flex;flex-direction:column;gap:.16rem;min-width:0}
@@ -420,10 +421,10 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--tint) var(--tk),v
 .attr{color:var(--muted);font-size:.8rem;margin:0 0 .3rem}
 .disc{color:var(--muted);font-size:.76rem;line-height:1.5;margin:0}
 .raw{margin:.95rem 0 0;font:500 .82rem var(--mono);letter-spacing:.02em}
-.raw a{color:var(--cond);text-decoration:none}
+.raw a{color:var(--cond-text);text-decoration:none}
 .raw a:hover{text-decoration:underline}
 .grap{margin:.9rem 0 0;font-size:.92rem;line-height:1.5;color:var(--muted)}.grap a{color:var(--sky)}
-.nearby{margin:1.1rem 0 0;font-size:.9rem;line-height:1.9;color:var(--muted)}.nearby a{color:var(--cond);text-decoration:none}.nearby a:hover{text-decoration:underline}
+.nearby{margin:1.1rem 0 0;font-size:.9rem;line-height:1.9;color:var(--muted)}.nearby a{color:var(--cond-text);text-decoration:none}.nearby a:hover{text-decoration:underline}
 .cxback{margin:1.1rem 0 0;font-size:.9rem}.cxback a{color:var(--muted);text-decoration:none}.cxback a:hover{color:var(--ink)}
 @media(min-width:960px){
 main:has(>.cx){max-width:1120px;padding-top:28px}
@@ -571,7 +572,7 @@ function airLag(c: Conditions): boolean {
  *  and --tint/--tk (the backdrop: the hazard's hue at the band's strength). */
 function readVars(risk: AmbientRisk): string {
   const { hue, strength } = tintOf(risk);
-  return `--cond:${RISK_COLOR[risk.band]};--tint:${hue};--tk:${strength}%`;
+  return `--cond:${RISK_COLOR[risk.band]};--cond-text:var(--rt-${risk.band});--tint:${hue};--tk:${strength}%`;
 }
 
 /** A pinned official warning, the most urgent thing on the page. */
@@ -648,7 +649,6 @@ function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerData[] {
     bar,
   });
   const band = c.air?.band ?? "unknown";
-  const bandColor = BAND_COLOR[band] ?? BAND_COLOR.unknown;
   const bandLabel = AQI_BAND_LABEL[band] ?? "n/a";
   // The readings, as strata. Each renders only when it has a value; the Ambient
   // driver's stratum is highlighted (icon + label in the condition colour).
@@ -664,7 +664,7 @@ function layerData(c: Conditions, risk: AmbientRisk, lang: Lang): LayerData[] {
         "air",
         t("Air", lang),
         c.air.aqi != null ? String(c.air.aqi) : "n/a",
-        `<span class="qa">AQI</span> <b style="color:${bandColor}">${t(bandLabel, lang)}</b>`,
+        `<span class="qa">AQI</span> <b style="color:var(--bt-${band})">${t(bandLabel, lang)}</b>`,
         `${marker}${aqli}`,
         bars
           ? `<div class="prs">${bars}<span class="prk">${t("The dashed line is the CPCB limit.", lang)}</span></div>`
@@ -983,9 +983,8 @@ const STATION_CSS = `
 .sx h1{font-family:var(--serif);font-size:clamp(2rem,6vw,3rem);line-height:1.1;margin:.2rem 0 .3rem}
 .sx .where{color:var(--muted);margin:0 0 1.2rem}
 .sx .aqi{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:.4rem 0 .2rem}
-.sx .aqi b{font-size:clamp(2.6rem,9vw,4rem);line-height:1;color:var(--bt-l)}
-.sx .aqi span{font-weight:600;color:var(--bt-l)}
-@media(prefers-color-scheme:dark){.sx .aqi b,.sx .aqi span{color:var(--bt-d)}}
+.sx .aqi b{font-size:clamp(2.6rem,9vw,4rem);line-height:1;color:var(--sband)}
+.sx .aqi span{font-weight:600;color:var(--sband)}
 .sx .when{color:var(--muted);font-size:.9rem;margin:0 0 1.2rem}
 .sx dl{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1.2rem;margin:.6rem 0 1.4rem}
 .sx dt{color:var(--muted)}.sx dd{margin:0;font-variant-numeric:tabular-nums}
@@ -1007,19 +1006,6 @@ const STATION_CSS = `
 .sx .snear td{border-top:1px solid var(--line);padding:.45rem 0}.sx .snear td+td,.sx .snear th+th{text-align:right}
 .sx .snear a{color:var(--sky);text-decoration:none}.sx .snear i{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:.4rem}
 @media(min-width:960px){.sx{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 3.5rem;align-items:start}.sx .sxr{margin:3.4rem 0 0}.sx footer{grid-column:1/-1}}`;
-
-// A band's colour as TEXT, [light theme, dark theme]: the band colours themselves (BAND_COLOR)
-// are too pale for text on a light page (moderate's yellow is 2:1). Each pair holds 4.5:1
-// or more on its theme's page and card.
-const BAND_TEXT: Record<string, [string, string]> = {
-  good: ["#15803d", "#4ade80"],
-  satisfactory: ["#4d7c0f", "#a3e635"],
-  moderate: ["#a16207", "#facc15"],
-  poor: ["#c2410c", "#fb923c"],
-  vpoor: ["#b91c1c", "#f87171"],
-  severe: ["#7f1d1d", "#fda4af"],
-  unknown: ["#475569", "#94a3b8"],
-};
 
 /** One pollutant as a bar on CPCB's 0-500 scale (its sub-index), in its band's colour. */
 function pollutantBar(p: { key: string; label: string; value: number; unit: string }): string {
@@ -1096,7 +1082,7 @@ export function renderStationPage(
       .join("")}</tbody></table></section>`
     : "";
   const body = `
-  <article class="sx" style="--band:${BAND_COLOR[s.band] ?? BAND_COLOR.unknown};--bt-l:${BAND_TEXT[s.band]?.[0] ?? BAND_TEXT.unknown[0]};--bt-d:${BAND_TEXT[s.band]?.[1] ?? BAND_TEXT.unknown[1]}">
+  <article class="sx" style="--band:${BAND_COLOR[s.band] ?? BAND_COLOR.unknown};--sband:var(--bt-${s.band})">
     <div class="sxl">
     <h1>${esc(s.name)}</h1>
     <p class="where">${esc(where || "India")} · ${esc(providerName(s.provider))}</p>
@@ -1201,7 +1187,7 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad
 .eplace{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
 .ebrand{color:var(--muted);font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.3rem}
 .ebrand svg{width:15px;height:15px;vertical-align:-2px}
-.eamb{display:flex;align-items:center;gap:.5rem;font-family:var(--serif);font-size:1.35rem;font-weight:600;letter-spacing:-.01em;color:var(--cond);margin:0 0 .15rem}
+.eamb{display:flex;align-items:center;gap:.5rem;font-family:var(--serif);font-size:1.35rem;font-weight:600;letter-spacing:-.01em;color:var(--cond-text);margin:0 0 .15rem}
 .eamb .dot{width:10px;height:10px;border-radius:50%;background:var(--cond);flex:none}
 .esay{color:var(--ink);font-size:.92rem;margin:0 0 .85rem}
 .eact{color:var(--ink);font-size:.85rem;font-weight:600;margin:-.45rem 0 .85rem}
@@ -1225,7 +1211,7 @@ body{font:14px/1.5 var(--sans);color:var(--ink);background:transparent;${safePad
 // full-screens it; a corner QR sends passers-by to the same place on their phone.
 const KIOSK_CSS = `
 html,body{height:100%;overflow:hidden;background:#080d18}
-.k{--ink:#e7ecf3;--muted:#8b97a8;--line:#1c2740;--bg:#080d18;position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
+.k{${paletteCss("dark")}--ink:#e7ecf3;--muted:#8b97a8;--line:#1c2740;--bg:#080d18;position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vmin;${safePad("4.4vmin", "4.8vmin")};color:#e7ecf3;font-family:var(--sans),system-ui,sans-serif}
 .k::before{content:"";position:absolute;inset:0;background:radial-gradient(130% 110% at 100% 0%,var(--tint),transparent 64%);opacity:.3;pointer-events:none}
 @supports (color:color-mix(in srgb,red,blue)){.k::before{background:radial-gradient(130% 110% at 100% 0%,color-mix(in srgb,var(--tint) calc(var(--tk) * 1.6),transparent),transparent 64%);opacity:1}}
 .k>*{position:relative;z-index:1}
@@ -1241,7 +1227,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .keye{display:flex;align-items:center;gap:1.2vmin;font-size:2.4vmin;letter-spacing:.12em;text-transform:uppercase;color:#8b97a8}
 .keye svg{width:3vmin;height:3vmin}
 .khead{font-family:var(--serif),Georgia,serif;font-weight:700;font-size:12vmin;line-height:1;letter-spacing:-.01em;margin:1.1vmin 0 .9vmin}
-.khead .b{color:var(--cond)}
+.khead .b{color:var(--cond-text)}
 .ksay{font-size:4.2vmin;line-height:1.2;color:#cfd7e2;max-width:42ch}
 .kact{font-size:2.8vmin;font-weight:600;line-height:1.25;margin-top:1.2vmin;max-width:60ch}
 .kamb:has(.kact) .ksay{font-size:3.4vmin}
@@ -1252,7 +1238,7 @@ html,body{height:100%;overflow:hidden;background:#080d18}
 .kquiet b{color:#cfd7e2;font-weight:600}
 .knorm{margin-top:2vmin;max-width:46vmin}
 .kt.on{border-color:var(--cond)}
-.kt.on .kt-n{color:var(--cond)}
+.kt.on .kt-n{color:var(--cond-text)}
 .kt-l{font-size:2vmin;letter-spacing:.1em;text-transform:uppercase;color:#8b97a8}
 .kt-n{font-size:6.2vmin;font-weight:700;line-height:1}
 .kt-w{font-size:2.2vmin;color:#aeb9c8}
@@ -1498,7 +1484,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   // The card's readings, each in its own words, in the order every surface uses.
   const read: Record<string, string> = {};
   if (c.air?.aqi != null)
-    read.air = `<div class="eread"><b style="color:${BAND_COLOR[c.air.band] ?? BAND_COLOR.unknown}">${c.air.aqi}</b><span>AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}</span></div>`;
+    read.air = `<div class="eread"><b style="color:var(--bt-${c.air.band})">${c.air.aqi}</b><span>AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}</span></div>`;
   if (c.heat?.apparent_c != null)
     read.heat = `<div class="eread"><b>${round(c.heat.apparent_c)}°</b><span>${t("feels like", lang)}</span></div>`;
   if (c.uv?.index != null)
@@ -1514,7 +1500,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
   const iframe = `<iframe src="${siteUrl}/embed/${slug}" width="480" height="240" style="border:0;border-radius:16px" title="mugilu: conditions at ${place}" loading="lazy"></iframe>`;
   const imgtag = `<img src="${siteUrl}/c/${slug}.png" alt="mugilu: conditions at ${place}" width="600">`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${EMBED_CSS}\n:root{${readVars(risk)}}</style></head><body>
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark"><title>${place}: mugilu</title><style>${paletteCss()}${EMBED_CSS}\n:root{${readVars(risk)}}</style></head><body>
   <a class="card" href="${siteUrl}/c/${slug}" target="_blank" rel="noopener">
     <div class="etop"><span class="eplace">${place}</span><span class="ebrand">${CLOUD} mugilu</span></div>
     <div class="eamb"><i class="dot"></i>${esc(head)}</div>

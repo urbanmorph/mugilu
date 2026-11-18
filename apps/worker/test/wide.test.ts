@@ -176,10 +176,3 @@ test("/display: the preview and the setup sit side by side", () => {
   const html = renderDisplayBuilder();
   assert.match(html, /<div class="dleft">[\s\S]*class="dprev"[\s\S]*<div class="dright">[\s\S]*action="\/go"/);
 });
-
-test("station page: the AQI number reads on both themes (a darker shade on light, a lighter on dark)", () => {
-  const html = renderStationPage(st(), near, true);
-  assert.match(html, /--bt-l:#a16207;--bt-d:#facc15/); // moderate: amber on light, yellow on dark
-  assert.match(html, /\.sx \.aqi b\{[^}]*color:var\(--bt-l\)/);
-  assert.match(html, /@media\(prefers-color-scheme:dark\)\{\.sx \.aqi b,\.sx \.aqi span\{color:var\(--bt-d\)\}\}/);
-});
