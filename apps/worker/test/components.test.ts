@@ -1,18 +1,42 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  alertsBox,
+  band,
   bandChip,
+  barRows,
+  cardGrid,
+  checkGroup,
+  dataTable,
   DISCLAIMER_FULL,
+  DISCLAIMER_SHORT,
+  embedCard,
+  faq,
+  fold,
+  ico,
+  lane,
   langSwitch,
   levelChip,
+  linkRow,
+  notice,
+  pairs,
+  panel,
+  placeTile,
+  plate,
+  qrBlock,
   searchBox,
   segmented,
   shape,
   SHAPE,
+  sheet,
   siteFooter,
   siteHeader,
+  stamp,
   THEME_HEAD_JS,
   THEME_JS,
+  warningPlate,
+  warningRow,
+  yourPlacesSlot,
 } from "../src/ui/components";
 
 // The design standard's components: markup, accessibility attributes, escaping, i18n.
@@ -95,4 +119,216 @@ test("theme scripts: stored choice applied before paint; storage guarded", () =>
   assert.match(THEME_HEAD_JS, /try\{[^}]*localStorage\.getItem\('mugilu-theme'\)/);
   assert.match(THEME_JS, /removeAttribute\('data-theme'\)/);
   assert.match(THEME_JS, /try\{i\.value==='system'\?localStorage\.removeItem/);
+});
+
+test("ico: decorative, stroked by default, filled for the filled set", () => {
+  assert.match(ico("air"), /^<svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 8c3/);
+  assert.match(ico("pin"), /^<svg class="ico f"/);
+});
+
+test("band and lane: bands are full-width sections, lanes put items side by side", () => {
+  assert.equal(
+    band(lane("l2", ["<a>", "<b>"]), "Readings"),
+    `<section class="band" aria-label="Readings"><div class="lane l2"><a><b></div></section>`,
+  );
+});
+
+test("panel: a heading bar (named region) with an optional count; body padded unless flush", () => {
+  const p = panel("<p>x</p>", { title: "Air stations near here", icon: "station", id: "st", count: 8 });
+  assert.match(
+    p,
+    /^<section class="panel" aria-labelledby="st"><h2 class="bar" id="st"><svg[^>]*>.*<\/svg><span>Air stations near here<\/span><span class="n">8<\/span><\/h2><div class="in"><p>x<\/p><\/div><\/section>$/,
+  );
+  assert.equal(panel("<table>", { flush: true }), `<section class="panel"><table></section>`);
+});
+
+test("notice: kinds, icon, errors announced as alerts", () => {
+  assert.equal(notice("info", "Hi"), `<p class="notice">Hi</p>`);
+  assert.match(notice("stale", "Old", "clock"), /^<p class="notice stale"><svg[^>]*>.*<\/svg><span>Old<\/span><\/p>$/);
+  assert.match(notice("err", "No"), /role="alert"/);
+});
+
+test("stamp: label and value, with modifiers", () => {
+  assert.equal(
+    stamp("updated", "<time>21:14</time>", { stale: true }),
+    `<span class="stamp stale"><span class="k">updated</span><span class="v"><time>21:14</time></span></span>`,
+  );
+});
+
+test("plate: level fill, shape, word and advice; the inline form for a station", () => {
+  const p = plate({
+    fill: "high",
+    shape: "triangle",
+    kicker: "Ambient · Everyone",
+    word: "High air.",
+    say: "The air is poor.",
+    label: "High air",
+  });
+  assert.match(p, /^<section class="plate high stack" aria-label="High air">/);
+  assert.match(p, /<p class="t-plate">High air\.<\/p>/);
+  assert.match(p, /<p class="t-lead say">The air is poor\.<\/p>/);
+  assert.match(
+    plate({ fill: "b-poor", shape: "triangle", word: "246", label: "246 AQI", inline: true }),
+    /class="plate inline b-poor"/,
+  );
+  assert.ok(!/class="shape"/.test(plate({ fill: "nolevel", word: "–", label: "No reading" })));
+});
+
+test("barRows: widths clamped to the scale, the CPCB limit as a custom property, band fill class", () => {
+  const b = barRows(
+    [
+      { label: "PM2.5", value: "104", pct: 120, band: "poor" },
+      { label: "CO", value: "0.81", pct: 16.24 },
+    ],
+    20,
+  );
+  assert.match(b, /^<div class="bars" style="--lim:20\.0%">/);
+  assert.match(b, /class="brow b-poor"><span>PM2\.5<\/span>.*width:100\.0%/);
+  assert.match(b, /class="brow"><span>CO<\/span>.*width:16\.2%/);
+});
+
+test("dataTable: scoped headers, row headers, numeric columns right-aligned, own scroll region", () => {
+  const t = dataTable([{ label: "Station" }, { label: "AQI", num: true }], [["ITO", "336"]], "Air stations near here");
+  assert.match(
+    t,
+    /^<div class="tscroll" role="region" tabindex="0" aria-label="Air stations near here"><table class="tbl"><caption class="vh">/,
+  );
+  assert.match(t, /<th scope="col" class="r">AQI<\/th>/);
+  assert.match(t, /<tr><th scope="row">ITO<\/th><td class="r">336<\/td><\/tr>/);
+});
+
+test("cardGrid, pairs, faq: boxes that hold whole sentences", () => {
+  assert.equal(
+    cardGrid(["a", "b"], 2),
+    `<div class="cards c2"><div class="card">a</div><div class="card">b</div></div>`,
+  );
+  assert.equal(pairs([["Accounts", "None."]]), `<dl class="pairs"><div><dt>Accounts</dt><dd>None.</dd></div></dl>`);
+  assert.equal(faq([["Q & A?", "Yes."]]), `<dl class="faq"><div><dt>Q &amp; A?</dt><dd>Yes.</dd></div></dl>`);
+});
+
+test("sheet: numbered sections with ids; contents box from three sections", () => {
+  const secs = ["One", "Two", "Three"].map((title, i) => ({
+    id: `s${i}`,
+    title,
+    icon: "doc" as const,
+    body: "<p>x</p>",
+  }));
+  const s = sheet(
+    {
+      kicker: "About",
+      title: "The open sky",
+      lead: "Lead",
+      sections: secs,
+      back: { href: "/", label: "← back to mugilu" },
+    },
+    "en",
+  );
+  assert.match(
+    s,
+    /<nav class="panel toc" aria-label="On this page"><p class="bar">On this page<\/p><a href="#s0"><span class="cnum">1<\/span>One<\/a>/,
+  );
+  assert.match(s, /<section class="tsec" id="s2" aria-labelledby="s2-h"><div class="rail"><span class="sn">§3<\/span>/);
+  assert.match(s, /<h1 class="t-title">The open sky<\/h1>/);
+  assert.ok(!/class="panel toc"/.test(sheet({ kicker: "k", title: "t", lead: "l", sections: secs.slice(0, 2) }, "en")));
+});
+
+test("warningPlate and warningRow: no level colour; the headline escaped, its script marked", () => {
+  const p = warningPlate({
+    bar: ["<span>IMD Visakhapatnam</span>"],
+    title: "Severe Cyclonic Storm Akvan",
+    icon: "cyclone",
+    body: "<p>x</p>",
+    label: "Official warning",
+  });
+  assert.match(p, /^<section class="wplate" aria-label="Official warning"><div class="bar"><svg/);
+  assert.match(p, /Severe Cyclonic Storm Akvan<\/h2>/);
+  const r = warningRow({
+    icon: "cyclone",
+    kind: "Wind, cyclone",
+    head: "తుఫాను <b>",
+    headLang: "te",
+    meta: "AP SDMA",
+    type: "wind",
+    issuer: "AP SDMA",
+  });
+  assert.match(r, /^<li class="wrow" data-type="wind" data-issuer="AP SDMA">/);
+  assert.match(r, /<p class="head" lang="te">తుఫాను &lt;b&gt;<\/p>/);
+});
+
+test("checkGroup and fold: native checkboxes with counts; a disclosure with a count", () => {
+  const g = checkGroup("type", "Type", [{ value: "storm", label: "Thunderstorm, lightning", count: 64 }]);
+  assert.match(
+    g,
+    /<fieldset class="checks"><legend>Type<\/legend><label class="check"><input type="checkbox" name="type" value="storm" checked><span>Thunderstorm, lightning<\/span><span class="c">64<\/span><\/label>/,
+  );
+  assert.match(
+    fold("Filter warnings", "<p>x</p>", { count: 100 }),
+    /^<details class="fold"><summary>Filter warnings<span class="n">100<\/span><\/summary>/,
+  );
+});
+
+test("placeTile: a warned place has the warning symbol and a spoken label, never a level colour", () => {
+  assert.equal(placeTile("/c/delhi", "Delhi"), `<a class="ptile" href="/c/delhi">Delhi</a>`);
+  const w = placeTile("/c/anakapalli", "Anakapalli", true);
+  assert.match(
+    w,
+    /^<a class="ptile warn" href="\/c\/anakapalli"><svg[^>]*>.*<\/svg><span class="vh">Under an official warning now: <\/span>Anakapalli<\/a>$/,
+  );
+});
+
+test("linkRow and qrBlock", () => {
+  assert.equal(
+    linkRow([
+      ["/c/delhi.json", "JSON"],
+      ["/c/delhi.md", "Markdown"],
+    ]),
+    `<p class="links t-meta"><a href="/c/delhi.json">JSON</a> · <a href="/c/delhi.md">Markdown</a></p>`,
+  );
+  const q = qrBlock("https://mugilu.live/c/delhi", "scan to see this on your phone");
+  assert.match(q, /^<div class="qr"><svg class="qrimg" aria-hidden="true"/);
+  assert.ok(!/#0b1220/.test(q), "QR colours come from the tokens");
+});
+
+test("alertsBox: every state present and hidden, with the ids ALERTS_JS drives", () => {
+  const a = alertsBox("KEY<", "en");
+  for (const id of [
+    "alerts",
+    "alerts-on",
+    "alerts-off",
+    "alerts-state",
+    "alerts-denied",
+    "alerts-full",
+    "alerts-failed",
+    "alerts-ios",
+    "alerts-note-off",
+    "alerts-note-on",
+  ])
+    assert.ok(a.includes(`id="${id}"`), id);
+  assert.match(a, /data-key="KEY&lt;"/);
+  assert.match(a, /<p class="notice err" id="alerts-denied" hidden>/);
+});
+
+test("yourPlacesSlot: a hidden named panel with the list the script fills", () => {
+  assert.match(
+    yourPlacesSlot("en"),
+    /^<section class="panel" id="yp" hidden aria-labelledby="yp-h">.*Your places.*<ul class="yp in"><\/ul><\/section>$/,
+  );
+});
+
+test("embedCard: links to the place; both disclaimers in the markup (the width picks one)", () => {
+  const e = embedCard(
+    {
+      href: "https://mugilu.live/c/delhi",
+      place: "Delhi",
+      level: "high",
+      headline: "High air",
+      say: "The air is poor.",
+      reads: [["246", "AQI Poor"]],
+      asOf: "as of 21:14",
+    },
+    "en",
+  );
+  assert.match(e, /^<a class="ecard high" href="https:\/\/mugilu\.live\/c\/delhi" target="_blank" rel="noopener">/);
+  assert.ok(e.includes(`<div class="t-legal disc-long">${DISCLAIMER_FULL}</div>`));
+  assert.ok(e.includes(`<div class="t-legal disc-short">${DISCLAIMER_SHORT}</div>`));
 });

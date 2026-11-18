@@ -91,6 +91,7 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   Light: {},
   Dark: {},
   System: {},
+  "Under an official warning now": {},
   // /methodology prose (kn): hand-composed from the reviewed KANNADA_GLOSSARY + existing
   // UI strings (no Sarvam pass), proper nouns/acronyms kept Latin. Pending native
   // sign-off (supporting-docs/METHODOLOGY_KANNADA_REVIEW.md). Open calls flagged there:
