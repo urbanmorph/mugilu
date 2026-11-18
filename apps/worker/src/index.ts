@@ -32,7 +32,7 @@ import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
 import { collectCyclones } from "./cyclones";
-import { composeMap } from "./indiamap";
+import { loadMap, writeMap } from "./indiamap";
 import { composeHighlights } from "./highlights";
 import {
   topPlaces,
@@ -120,6 +120,14 @@ function badRequest(message: string): Response {
   return Response.json({ error: message }, { status: 400, headers: { "access-control-allow-origin": "*" } });
 }
 
+/** Write the composed map (data/map.json) and log the outcome; never throws. */
+function storeMap(env: Env): Promise<void> {
+  return writeMap(env).then(
+    (r) => console.log(`[map] ${r}`),
+    (e) => console.error(`[map] failed: ${reason(e)}`),
+  );
+}
+
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
@@ -204,10 +212,13 @@ export default {
     // official cyclone warning marked, so it follows the live snapshots.
     if (url.pathname === "/places") {
       return cached(LIVE_EDGE_TTL, async () => {
-        const [map, warnings] = await Promise.all([composeMap(env), loadWarningsSnapshot(env).catch(() => null)]);
+        const [{ map, stored }, warnings] = await Promise.all([
+          loadMap(env),
+          loadWarningsSnapshot(env).catch(() => null),
+        ]);
         const res = cachedResponse(renderPlaces(lang, { map, warnings }), "text/html; charset=utf-8");
-        // A missing grid or warnings snapshot is passing: serve it, but do not keep it for the TTL.
-        return { res, store: !!map?.cells.length && warnings !== null };
+        // A missing stored map or warnings snapshot is passing: serve it, but do not keep it for the TTL.
+        return { res, store: stored && warnings !== null };
       });
     }
 
@@ -260,10 +271,10 @@ export default {
     if (url.pathname === "/") {
       const notfound = url.searchParams.get("notfound") ?? undefined;
       const home = async () => {
-        const [hl, popular, map, warnings] = await Promise.all([
+        const [hl, popular, { map, stored }, warnings] = await Promise.all([
           composeHighlights(env),
           topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
-          composeMap(env),
+          loadMap(env),
           loadWarningsSnapshot(env).catch(() => null), // an official cyclone is pinned
         ]);
         // Only show the "India now" hero when there's something in it.
@@ -278,8 +289,9 @@ export default {
           ),
           "text/html; charset=utf-8",
         );
-        // A missing grid or air snapshot leaves the hero partial: served, not stored.
-        return { res, store: hl.complete };
+        // A missing grid or air snapshot leaves the hero partial, and a map composed here
+        // (none stored yet) is slow: served, not stored.
+        return { res, store: hl.complete && stored };
       };
       // A "not found" echo carries the visitor's own search: built fresh, never stored.
       return notfound === undefined ? cached(LIVE_EDGE_TTL, home) : (await home()).res;
@@ -700,12 +712,11 @@ export default {
     console.log("[scheduled]", event.cron, new Date(event.scheduledTime).toISOString());
     // Hourly refresh.
     if (event.cron === "5 * * * *") {
-      ctx.waitUntil(
-        refreshLatest(env).then(
-          (snap) => console.log(`[refresh] ${snap.station_count} stations`),
-          (e) => console.error(`[refresh] failed: ${reason(e)}`),
-        ),
+      const refreshed = refreshLatest(env).then(
+        (snap) => console.log(`[refresh] ${snap.station_count} stations`),
+        (e) => console.error(`[refresh] failed: ${reason(e)}`),
       );
+      ctx.waitUntil(refreshed);
       ctx.waitUntil(
         collectWarnings(env).then(
           (r) => console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
@@ -722,26 +733,26 @@ export default {
             (e) => console.error(`[alerts] failed: ${reason(e)}`),
           ),
         );
-      ctx.waitUntil(
-        collectCyclones(env).then(
-          (r) => console.log(`[cyclones] ${r.systems.length} in the North Indian Ocean`),
-          (e) => console.error(`[cyclones] failed: ${reason(e)}`),
-        ),
+      const cyclones = collectCyclones(env).then(
+        (r) => console.log(`[cyclones] ${r.systems.length} in the North Indian Ocean`),
+        (e) => console.error(`[cyclones] failed: ${reason(e)}`),
       );
-      ctx.waitUntil(
-        collectFires(env).then(
-          (r) => console.log(`[firms] ${r.count} detections (${r.source})`),
-          (e) => console.error(`[firms] failed: ${reason(e)}`),
-        ),
+      const fires = collectFires(env).then(
+        (r) => console.log(`[firms] ${r.count} detections (${r.source})`),
+        (e) => console.error(`[firms] failed: ${reason(e)}`),
       );
+      // The map is composed once from what the three just wrote (each logs its own failure).
+      ctx.waitUntil(Promise.all([refreshed, cyclones, fires]).then(() => storeMap(env)));
     }
     // National conditions grid every 4h, ~6 collects/day fits Open-Meteo's free quota.
     if (event.cron === "5 */4 * * *") {
       ctx.waitUntil(
-        collectConditions(env).then(
-          (s) => console.log(`[collect] ${s.point_count} points`),
-          (e) => console.error(`[collect] failed: ${reason(e)}`),
-        ),
+        collectConditions(env)
+          .then(
+            (s) => console.log(`[collect] ${s.point_count} points`),
+            (e) => console.error(`[collect] failed: ${reason(e)}`),
+          )
+          .then(() => storeMap(env)),
       );
     }
     // Daily hierarchy refresh.

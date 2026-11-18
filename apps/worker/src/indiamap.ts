@@ -5,7 +5,7 @@ import type { Env } from "./index";
 import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf } from "./score";
 import { isPlausible } from "./plausible";
 import { inIndia, type Ring } from "./india";
-import { loadCyclones, loadFires, loadGrid, loadSnapshot } from "./snapshot";
+import { loadCyclones, loadFires, loadGrid, loadJson, loadSnapshot, putJson } from "./snapshot";
 
 /** Append to a list in a map of lists. */
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => (m.get(k) ?? m.set(k, []).get(k)!).push(v);
@@ -322,4 +322,38 @@ export async function composeMap(env: Env): Promise<IndiaMap | undefined> {
     airAsOf: snap?.generated_at,
     airCounts: airCounts(stations),
   };
+}
+
+/** The composed map, written by the crons so a page reads ~30 KB instead of parsing the
+ *  grid, the air snapshot and the fires (~1.4 MB) on every cache miss. */
+export const MAP_KEY = "data/map.json";
+interface StoredMap extends IndiaMap {
+  generated_at: string;
+  hash: string;
+}
+
+async function sha1(s: string): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Compose the map from the snapshots and store it, unless it is unchanged (same hash):
+ *  a second run with the same inputs writes nothing. */
+export async function writeMap(env: Env, now = Date.now()): Promise<"written" | "unchanged" | "no grid"> {
+  const map = await composeMap(env);
+  if (!map) return "no grid";
+  const hash = await sha1(JSON.stringify(map));
+  const prev = await loadJson<StoredMap>(env, MAP_KEY);
+  if (prev?.hash === hash) return "unchanged";
+  const stored: StoredMap = { ...map, generated_at: new Date(now).toISOString(), hash };
+  await putJson(env, MAP_KEY, JSON.stringify(stored), "public, max-age=300");
+  return "written";
+}
+
+/** The map for a page: the stored one when there is one, else composed here (and then the
+ *  page should not be kept at the edge, `stored: false`, so it picks up the stored map soon). */
+export async function loadMap(env: Env): Promise<{ map: IndiaMap | undefined; stored: boolean }> {
+  const stored = await loadJson<StoredMap>(env, MAP_KEY).catch(() => null);
+  if (stored?.cells?.length) return { map: stored, stored: true };
+  return { map: await composeMap(env), stored: false };
 }
