@@ -371,21 +371,29 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
   if (c.heat) {
     const h = c.heat;
     const cold = h.apparent_c != null && coldLevelOf(h.apparent_c) > 0;
+    // The heat-stress reads, each a line and a gauge on the page; the display shows the lines.
     const gauges: string[] = [];
+    const lines: string[] = [];
+    const read = (key: "wetbulb" | "wbgt", text: string, g: string) => {
+      gauges.push(`<p${keyReading.heat === key ? ' class="key"' : ""}>${text}</p>`, g);
+      lines.push(`<p class="qa">${text}</p>`);
+    };
     if (cold) {
       const a = h.apparent_c!;
       gauges.push(gauge(a, -10, 30, { from: a, ticks: THRESHOLDS.cold, level: coldLevelOf(a), marker: true }));
     } else {
       if (h.wet_bulb_c != null) {
         const level = heatLevelOf({ wet_bulb_c: h.wet_bulb_c });
-        gauges.push(
-          `<p${keyReading.heat === "wetbulb" ? ' class="key"' : ""}>${esc(t("wet-bulb", lang))} ${round(h.wet_bulb_c)}° <b class="ql">${esc(t(WET_BULB[level], lang))}</b></p>`,
+        read(
+          "wetbulb",
+          `${esc(t("wet-bulb", lang))} ${round(h.wet_bulb_c)}° <b class="ql">${esc(t(WET_BULB[level], lang))}</b>`,
           gauge(h.wet_bulb_c, 10, 35, { ticks: THRESHOLDS.wetBulb, level }),
         );
       }
       if (h.wbgt_c != null)
-        gauges.push(
-          `<p${keyReading.heat === "wbgt" ? ' class="key"' : ""}>WBGT ${round(h.wbgt_c)}°</p>`,
+        read(
+          "wbgt",
+          `WBGT ${round(h.wbgt_c)}°`,
           gauge(h.wbgt_c, 15, 40, { ticks: THRESHOLDS.wbgt, level: heatLevelOf({ wbgt_c: h.wbgt_c }) }),
         );
     }
@@ -415,7 +423,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
         ...gauges,
         ...normal,
       ],
-      mini: gauges.join(""),
+      mini: lines.join(""),
       normal: normal.join(""),
       brief: `${round(h.apparent_c)}°`,
     });

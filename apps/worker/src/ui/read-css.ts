@@ -24,6 +24,7 @@ export const READ_CSS = `
 .framed .mg[data-embed] .ecode{display:none}
 .mg[data-kiosk] main{height:100vh;height:100dvh;overflow:hidden}
 .mg .kio{position:relative;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.mg .kio .kb{overflow:hidden}
 .mg .kio .kveil{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;gap:var(--sp4);background:var(--bg);opacity:0;pointer-events:none}
 .mg .kio .kveil.on{opacity:.94}
 @media (prefers-reduced-motion:no-preference){.mg .kio .kveil{transition:opacity .3s}}

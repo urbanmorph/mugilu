@@ -89,7 +89,8 @@ test("renderKioskPage: up to four tiles in order of risk, the headline first; th
 test("renderKioskPage: each tile carries its graphic, drawn against the limits", () => {
   const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi");
   const tile = (k: string) => html.match(new RegExp(`data-k="${k}">[\\s\\S]*?(?=data-k=|</section>)`))?.[0] ?? "";
-  assert.match(tile("heat"), /class="gauge[^"]*"/);
+  assert.match(tile("heat"), /<p class="qa">wet-bulb 27° <b class="ql">caution<\/b><\/p>/);
+  assert.doesNotMatch(tile("heat"), /class="gauge/, "lines only: a screen read from across a room");
   assert.match(tile("air"), /class="bars"/);
   assert.match(tile("dust"), /class="chip high"/, "each tile carries its own level (232 µg/m³: high)");
 });

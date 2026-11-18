@@ -38,7 +38,8 @@ function subIndices(s: NormalizedStation) {
 function pollutantPanel(s: NormalizedStation, lang: Lang): string {
   const items = subIndices(s).map((p) => ({
     label: p.label,
-    value: `${p.value} ${esc(p.unit)}`,
+    // Whole µg/m³ (CO keeps its decimals, as on the place page).
+    value: `${p.key === "co" ? p.value : Math.round(p.value)} ${esc(p.unit)}`,
     pct: (p.si / 500) * 100,
     band: aqiBand(p.si),
   }));
@@ -145,7 +146,8 @@ export function renderStationPage(
   const body = wrap(
     band(pair(head, reading, "l57")) +
       band(pair(live ? pollutantPanel(s, lang) : "", nearbyPanel(nearby, lang))) +
-      band(pair(full ? `<div>${full}</div>` : "", refs)),
+      // One column: a button beside a block of notes would leave a hole (balance rule).
+      band(stack(full + refs)),
   );
   const jsonLd = ld({
     "@context": "https://schema.org",
