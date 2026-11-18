@@ -1,7 +1,8 @@
 import { esc } from "../html";
 import { lp, quoted, t, type Lang } from "../i18n";
 import { AQI_BAND_LABEL } from "../aqi";
-import { allSlugPlaces, slugForName } from "../slugs";
+import { allSlugPlaces } from "../slugs";
+import { langPrefixJs, placeHref } from "../links";
 import type { Cyclone } from "../cyclones";
 import type { NormalizedStation } from "../types";
 import {
@@ -176,9 +177,7 @@ function gapLine(m: IndiaMap, lang: Lang): string {
 
 /** A place on the map as a link to its page, with the word for how bad it is. */
 function placeLink(at: MapPlace, word: string, lang: Lang): string {
-  const slug = slugForName(at.name);
-  const href = lp(slug ? `/c/${slug}` : `/c/${at.lat},${at.lon}`, lang);
-  return `<a href="${href}">${esc(at.state ? `${at.name}, ${at.state}` : at.name)}<span>${esc(t(word, lang))}</span></a>`;
+  return `<a href="${placeHref(at.name, at, lang)}">${esc(at.state ? `${at.name}, ${at.state}` : at.name)}<span>${esc(t(word, lang))}</span></a>`;
 }
 /** The worst places of a layer, up to five, one per name. */
 function worstLinks(
@@ -397,7 +396,7 @@ export function nearestDot(dots: [number, number, string][], x: number, y: numbe
  *  click: on home it opens the place under the pointer; on /places the nearest place dot, or
  *  else the state (scrolls to its list, via the page's `openState`). */
 export const MAP_JS = (lang: Lang) =>
-  `(function(){var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};var nearestDot=${nearestDot.toString()};document.querySelectorAll('.imap').forEach(function(im){var sv=im.querySelector('svg.msvg');
+  `(function(){var LP=${langPrefixJs(lang)};var nearestDot=${nearestDot.toString()};document.querySelectorAll('.imap').forEach(function(im){var sv=im.querySelector('svg.msvg');
 function set(v){im.setAttribute('data-layer',v);var l=sv&&sv.getAttribute('data-label-'+v);if(l)sv.setAttribute('aria-label',l);var ss=im.querySelectorAll('.stamps .stamp');if(ss.length>1){ss[0].classList.toggle('off',v==='a');ss[1].classList.toggle('off',v!=='a');}}
 im.addEventListener('change',function(e){if(e.target.name==='layer')set(e.target.value);});
 im.addEventListener('click',function(e){var b=e.target.closest('[data-layer-to]');if(!b)return;var r=im.querySelector('input[name=layer][value='+b.getAttribute('data-layer-to')+']');if(r){r.checked=true;set(r.value);r.focus();}});

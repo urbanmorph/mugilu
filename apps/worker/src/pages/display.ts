@@ -1,3 +1,4 @@
+import { langPrefixJs, withPersona } from "../links";
 import { esc } from "../html";
 import { PERSONAS, PERSONA_LABEL, type Persona } from "../score";
 import { lp, t, type Lang } from "../i18n";
@@ -40,7 +41,7 @@ const FIRST = CITIES[0][0];
 // persona, updates the live preview, the Open display link and the shown link, with no
 // reload. Without script the city tiles open their display and the search goes through /go.
 function displayJs(persona: Persona, lang: Lang): string {
-  const LP = JSON.stringify(lang === "en" ? "" : "/" + lang);
+  const LP = langPrefixJs(lang);
   return `(function(){var LP=${LP},place=${JSON.stringify(FIRST)},as=${JSON.stringify(persona)};
 var fr=document.querySelector('.pvframe'),f=fr&&fr.querySelector('iframe'),open=document.getElementById('dopen'),code=document.getElementById('dlink'),form=document.querySelector('form.search'),tiles=[].slice.call(document.querySelectorAll('.tiles a[data-slug]'));
 function fit(){if(f)f.style.transform='scale('+fr.clientWidth/1280+')';}fit();addEventListener('resize',fit);
@@ -64,8 +65,7 @@ const step = (n: number, title: string, body: string, grow = false) =>
 // screen display. The preview is the real display of the chosen place, scaled down.
 export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang = "en"): string {
   const T = (s: string) => esc(t(s, lang));
-  const asQ = persona !== "everyone" ? `&as=${persona}` : "";
-  const kiosk = (slug: string) => lp(`/c/${slug}?kiosk${asQ}`, lang);
+  const kiosk = (slug: string) => lp(withPersona(`/c/${slug}?kiosk`, persona), lang);
 
   const head =
     `<div class="ph"><h1 class="t-title">${T("Put mugilu on a screen.")}</h1>` +

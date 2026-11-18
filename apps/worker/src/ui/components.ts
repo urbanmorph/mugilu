@@ -1,3 +1,4 @@
+import { langPrefixJs } from "../links";
 import { esc, textOrHtml, type Html } from "../html";
 import { LANGS, LANG_NAME, langAttr, lp, quoted, t, type Lang } from "../i18n";
 import type { RiskBand } from "../score";
@@ -316,6 +317,11 @@ export function band(body: string, label?: string): string {
 export function lane(kind: LaneKind, items: string[]): string {
   return `<div class="lane ${kind}">${items.join("")}</div>`;
 }
+/** A lane of whatever items are present (empty ones dropped): one item fills the row. */
+export function autoLane(items: string[]): string {
+  const xs = items.filter(Boolean);
+  return xs.length > 1 ? lane(xs.length === 2 ? "l2" : "l3", xs) : (xs[0] ?? "");
+}
 /** The page's content column. */
 export const wrap = (body: string) => `<div class="wrap">${body}</div>`;
 /** Children spaced vertically. */
@@ -334,10 +340,12 @@ export interface PanelOpts {
   /** Body without the default padding (a table that runs to the edges). */
   flush?: boolean;
   tag?: "section" | "div" | "nav";
+  /** The panel's accessible name when it has no title bar. */
+  label?: string;
 }
 export function panel(body: string, o: PanelOpts = {}): string {
   const tag = o.tag ?? "section";
-  const lab = o.title && o.id ? ` aria-labelledby="${esc(o.id)}"` : "";
+  const lab = o.title && o.id ? ` aria-labelledby="${esc(o.id)}"` : o.label ? ` aria-label="${esc(o.label)}"` : "";
   const bar = o.title
     ? `<h2 class="bar"${o.id ? ` id="${esc(o.id)}"` : ""}>${o.icon ? ico(o.icon) : ""}<span>${esc(o.title)}</span>` +
       `${o.count != null ? `<span class="n">${esc(String(o.count))}</span>` : ""}</h2>`
@@ -347,9 +355,9 @@ export function panel(body: string, o: PanelOpts = {}): string {
 
 export type NoticeKind = "info" | "quiet" | "stale" | "err" | "empty";
 /** Notice: info, stale, offline, error, empty. `html` is already escaped markup. */
-export function notice(kind: NoticeKind, html: string, icon?: IconName, id?: string): string {
+export function notice(kind: NoticeKind, html: string, icon?: IconName, id?: string, hidden = false): string {
   const cls = kind === "info" ? "notice" : `notice ${kind}`;
-  return `<p class="${cls}"${id ? ` id="${esc(id)}"` : ""}${kind === "err" ? ' role="alert"' : ""}>${icon ? `${ico(icon)}<span>${html}</span>` : html}</p>`;
+  return `<p class="${cls}"${id ? ` id="${esc(id)}"` : ""}${hidden ? " hidden" : ""}${kind === "err" ? ' role="alert"' : ""}>${icon ? `${ico(icon)}<span>${html}</span>` : html}</p>`;
 }
 
 export interface StampOpts {
@@ -506,8 +514,8 @@ export function sheet(o: SheetOpts, lang: Lang): string {
 
 // ── Buttons and links ─────────────────────────────────────────────────────────────────
 /** A link styled as a button (primary: filled). */
-export function linkButton(href: string, label: string, primary = false, icon?: IconName): string {
-  return `<a class="btn${primary ? " primary" : ""}" href="${esc(href)}">${icon ? ico(icon) : ""}${esc(label)}</a>`;
+export function linkButton(href: string, label: string, primary = false, icon?: IconName, id?: string): string {
+  return `<a class="btn${primary ? " primary" : ""}"${id ? ` id="${esc(id)}"` : ""} href="${esc(href)}">${icon ? ico(icon) : ""}${esc(label)}</a>`;
 }
 /** A button (primary: filled). */
 export function button(
@@ -690,7 +698,7 @@ addEventListener('pageshow',function(){b.innerHTML=label;});})();`;
  *  places match. Picking opens that place's page (plus `suffix`, a JS string expression), or
  *  calls `onPick` (a JS function expression taking {label, sublabel, lat, lon}). */
 export function comboboxJs(inputId: string, lang: Lang, o: { suffix?: string; onPick?: string } = {}): string {
-  const LP = JSON.stringify(lang === "en" ? "" : "/" + lang);
+  const LP = langPrefixJs(lang);
   const N = JSON.stringify(t("{n} places", lang));
   const NONE = JSON.stringify(t("No place in India matches that. Try another spelling, or a lat,lon.", lang));
   return `(function(){var ID=${JSON.stringify(inputId)},q=document.getElementById(ID),ac=document.getElementById(ID+'-list'),st=document.getElementById(ID+'-status');if(!q||!ac)return;
@@ -705,4 +713,32 @@ q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(tm);if(v
 q.addEventListener('keydown',function(e){if(e.key==='Escape'){hide();return;}if(!items.length)return;if(e.key==='ArrowDown'){ix=(ix+1)%items.length;e.preventDefault();paint();}else if(e.key==='ArrowUp'){ix=(ix-1+items.length)%items.length;e.preventDefault();paint();}else if(e.key==='Enter'&&ix>=0){e.preventDefault();go(ix);}});
 ac.addEventListener('mousedown',function(e){var li=e.target.closest('li');if(li){e.preventDefault();go(+li.getAttribute('data-i'));}});
 q.addEventListener('blur',function(){setTimeout(hide,150);});})();`;
+}
+
+// ── Page head, filters, steps ───────────────────────────────────────────────────────
+
+/** A page's head: an optional kicker (pictogram and words), the h1, then `extra` markup
+ *  (a lead, a stamp). `title` and the kicker's text are plain. */
+export function pageHead(title: string, o: { kicker?: { icon: IconName; text: string }; extra?: string } = {}): string {
+  const k = o.kicker ? `<p class="t-kicker row-c">${ico(o.kicker.icon)}<span>${esc(o.kicker.text)}</span></p>` : "";
+  return `<div class="ph">${k}<h1 class="t-title">${esc(title)}</h1>${o.extra ?? ""}</div>`;
+}
+
+/** A filter box over a list on the page (not the place search, which is searchBox). */
+export function filterInput(id: string, label: string): string {
+  return `<div class="search"><label for="${esc(id)}">${esc(label)}</label><div class="sbox">${ico("search")}<input type="search" id="${esc(id)}" autocomplete="off"></div></div>`;
+}
+
+/** The client side of a list filter: mgMatch(el, s) (its text has s), mgFilter(items, keep)
+ *  (hide what keep() rejects) and mgEmpty(groups, itemSel) (hide a group left empty). */
+export const LIST_FILTER_JS = `function mgMatch(el,s){return !s||el.textContent.toLowerCase().indexOf(s)>-1}
+function mgFilter(items,keep){[].forEach.call(items,function(el){el.hidden=!keep(el)})}
+function mgEmpty(groups,item){[].forEach.call(groups,function(g){g.hidden=!g.querySelector(item+':not([hidden])')})}`;
+
+/** A numbered setup step (the display builder). `title` is markup. */
+export function step(n: number, title: string, body: string, o: { id?: string; grow?: boolean } = {}): string {
+  return (
+    `<section class="panel${o.grow ? " grow" : ""}"><div class="in step"${o.id ? ` id="${esc(o.id)}"` : ""}>` +
+    `<h2 class="t-h2"><span class="cnum solid">${n}</span>${title}</h2>${body}</div></section>`
+  );
 }

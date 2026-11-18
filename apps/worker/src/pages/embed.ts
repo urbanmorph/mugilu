@@ -1,3 +1,4 @@
+import { coordKey } from "../links";
 import { type Conditions } from "../types";
 import { AQI_BAND_LABEL } from "../aqi";
 import { placeLabel } from "../readings";
@@ -31,7 +32,7 @@ function cardReads(c: Conditions, risk: AmbientRisk, lang: Lang): [string, strin
 export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, lang: Lang = "en"): string {
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk, (en) => t(en, lang));
-  const slug = `${c.location.lat},${c.location.lon}`;
+  const slug = coordKey(c.location);
   const placeName = placeLabel(c);
 
   // The snippets are pasted into other sites: every attribute escaped.

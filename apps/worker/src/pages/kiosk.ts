@@ -1,3 +1,4 @@
+import { coordKey, withPersona } from "../links";
 import { type Conditions } from "../types";
 import { briefs, placeLabel } from "../readings";
 import { esc } from "../html";
@@ -61,7 +62,7 @@ function tile(r: ReadRow): string {
 
 export function renderKioskPage(c: Conditions, persona: Persona, canonical: string, lang: Lang = "en"): string {
   const risk = ambientRisk(c, persona);
-  const slug = `${c.location.lat},${c.location.lon}`;
+  const slug = coordKey(c.location);
   const placeName = placeLabel(c);
   // Up to four tiles in the order the readings matter now; every other reading in one quiet line.
   const rows = readRows(c, risk, lang);
@@ -79,7 +80,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     : "";
   // Today's high against the normal, when it stands out, sits with the read.
   const normal = rows.find((r) => r.key === "heat")?.normal;
-  const qrTarget = persona === "everyone" ? canonical : `${canonical}?as=${persona}`;
+  const qrTarget = withPersona(canonical, persona);
   const body =
     `<div class="kio">` +
     `<header class="ktop"><div class="row-c"><h1 class="kname">${esc(placeName)}</h1><span class="t-meta">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</span></div>` +

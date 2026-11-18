@@ -1,3 +1,4 @@
+import { withPersona } from "../links";
 import { type Conditions } from "../types";
 import { placeLabel } from "../readings";
 import { esc } from "../html";
@@ -47,7 +48,7 @@ function whoSwitch(base: string, current: Persona, lang: Lang): string {
     t("Who is this for", lang),
     PERSONAS.map((p) => ({
       label: t(PERSONA_LABEL[p], lang),
-      href: p === "everyone" ? base : `${base}?as=${p}`,
+      href: withPersona(base, p),
       current: p === current,
     })),
     { segClass: "grid2 d3" },
@@ -150,7 +151,7 @@ export function renderConditionsPage(
   const placeName = placeLabel(c);
   const path = canonical ? new URL(canonical).pathname : `/c/${slug}`;
   const base = lp(path, lang);
-  const screen = lp(`/c/${slug}?kiosk${risk.persona !== "everyone" ? `&as=${risk.persona}` : ""}`, lang);
+  const screen = lp(withPersona(`/c/${slug}?kiosk`, risk.persona), lang);
 
   // GRAP sits in the Air reading; with no air reading here it still shows, on its own.
   const readings =
@@ -230,7 +231,7 @@ export function renderConditionsPage(
   return pageShell(title, body, {
     live: true,
     path,
-    query: risk.persona !== "everyone" ? `?as=${risk.persona}` : "",
+    query: withPersona("", risk.persona),
     desc,
     canonical,
     jsonLd: dataset,

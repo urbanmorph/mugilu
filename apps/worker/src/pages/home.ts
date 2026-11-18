@@ -1,7 +1,7 @@
 import { PLACES_STORE_JS } from "../ui/places-store";
 import { type NationalHighlights } from "../highlights";
 import { esc } from "../html";
-import { slugForName } from "../slugs";
+import { langPrefixJs, placeHref } from "../links";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
 import { AQI_BAND_LABEL } from "../aqi";
@@ -55,8 +55,7 @@ function popularTiles(popular: { label: string; lat: number; lon: number }[], la
     const k = p.name.toLowerCase();
     if (seen.has(k) || tiles.length >= 8) continue;
     seen.add(k);
-    const s = slugForName(p.name);
-    tiles.push(placeTile(lp(s ? `/c/${s}` : `/c/${p.lat},${p.lon}`, lang), p.name));
+    tiles.push(placeTile(placeHref(p.name, p, lang), p.name));
   }
   return placeTiles(tiles);
 }
@@ -133,7 +132,7 @@ function cyclonePlate(c: ReturnType<typeof officialCyclone>, lang: Lang): string
 /** Your places: recents and favourites from this browser (first-party, no login), as .yp rows. */
 const yourPlacesJs = (lang: Lang) => {
   const S = (s: string) => JSON.stringify(t(s, lang));
-  return `(function(){${PLACES_STORE_JS}var yp=document.getElementById('yp');if(!yp)return;var ul=yp.querySelector('ul.yp'),LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)},FAV=${S("Favourite X")},REN=${S("Rename X")},DEL=${S("Remove X")},NAME=${S("Type a name for this place (for example, Home or Office)")};
+  return `(function(){${PLACES_STORE_JS}var yp=document.getElementById('yp');if(!yp)return;var ul=yp.querySelector('ul.yp'),LP=${langPrefixJs(lang)},FAV=${S("Favourite X")},REN=${S("Rename X")},DEL=${S("Remove X")},NAME=${S("Type a name for this place (for example, Home or Office)")};
 ${CLIENT_ESC}
 function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
 function nm(p){return p.name||p.label||(p.lat+', '+p.lon);}
