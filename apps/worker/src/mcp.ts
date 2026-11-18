@@ -4,6 +4,7 @@ import { TOOLS, callTool } from "./mcptools";
 import { RESOURCES, readResource, PROMPTS, getPrompt } from "./mcpcontent";
 import { SOURCES } from "./sources";
 import SERVER_JSON from "../../../server.json";
+import { renderMcpPage } from "./page";
 
 // mugilu's MCP server: a hand-rolled JSON-RPC 2.0 endpoint over Streamable HTTP
 // (MCP 2025-06-18), stateless (fits Workers): initialize, ping, client capture, the
@@ -56,6 +57,12 @@ function rpc(body: unknown): Response {
  *  Stateless: no session id, no server-initiated stream (so GET is not offered). */
 export async function handleMcp(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+  // a person following the about page's link gets a page on how to connect; MCP clients (which never ask for
+  // text/html) still get 405 for GET, since this server is stateless and offers no stream
+  if (req.method === "GET" && (req.headers.get("accept") ?? "").includes("text/html"))
+    return new Response(renderMcpPage(), {
+      headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" },
+    });
   if (req.method !== "POST")
     return new Response("Method Not Allowed", { status: 405, headers: { allow: "POST, OPTIONS" } });
 
