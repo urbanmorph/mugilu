@@ -150,7 +150,7 @@ test("renderDisplayBuilder: any place, not only cities, and a button for where t
     /<button type="button" class="btn" id="dhere" hidden>[\s\S]*Use this screen&#39;s location<\/button>/,
   );
   // where the screen stands becomes the place (the preview and the link follow, persona kept)
-  assert.match(html, /getCurrentPosition\(function\(p\)\{place=p\.coords\.latitude\.toFixed\(4\)/);
+  assert.match(html, /DSP\.here=function\(a,o\)\{place=a\+','\+o;set\(\);\}[\s\S]*getElementById\('dhere'\)/);
   assert.match(html, /function url\(\)\{return LP\+'\/c\/'\+place\+'\?kiosk'\+q\(\);\}/);
 });
 

@@ -10,12 +10,13 @@ import { type IndiaMap } from "../indiamap";
 import { officialCyclone, type WarningsSnapshot } from "../sachet";
 import { DUST_PHRASE, airBand, dustBand, heatBand, heatPhrase } from "./read";
 import { issuerName } from "./warnings";
-import { CLIENT_ESC, HOME_OG, SITE, istTime, ld, nearMeJs, relTime } from "../ui/shell";
+import { CLIENT_ESC, HOME_OG, SITE, istTime, ld, relTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import {
   band,
   button,
   comboboxJs,
+  locateJs,
   ico,
   lane,
   levelChip,
@@ -252,6 +253,11 @@ export function renderHome(
     jsonLd: site,
     ogImage: HOME_OG,
     lang,
-    js: comboboxJs("q", lang) + MAP_JS(lang) + nearMeJs("nearme", "''", lang) + yourPlacesJs(lang),
+    js:
+      comboboxJs("q", lang) +
+      MAP_JS(lang) +
+      `function goHere(a,o){location.href=${JSON.stringify(lp("/c/", lang))}+a+","+o;}` +
+      locateJs("nearme", lang, "goHere") +
+      yourPlacesJs(lang),
   });
 }

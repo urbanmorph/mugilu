@@ -1,4 +1,4 @@
-import { type WarningsSnapshot } from "../sachet";
+import { cycloneIn, type WarningsSnapshot } from "../sachet";
 import { esc } from "../html";
 import { lp, t, type Lang } from "../i18n";
 import { isHttpUrl } from "./read";
@@ -62,17 +62,6 @@ export function warningType(headline: string): string {
   return typeOf(headline)[0];
 }
 
-/** IMD's name for a storm, category and name together ("Severe Cyclonic Storm Akvan"), read
- *  from a warning's headline; undefined when it names no cyclonic storm. */
-export function stormTitle(headline: string): string | undefined {
-  const m = headline.match(
-    /\b((?:super |extremely severe |very severe |severe )?cyclonic storm)\s+["'‘“]?([A-Za-z]{3,})["'’”]?/i,
-  );
-  if (!m || /^(with|over|near|is|lay|lays|has|in|of|and|centred)$/i.test(m[2])) return undefined;
-  const title = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-  return `${title(m[1])} ${title(m[2])}`;
-}
-
 /** The language a headline is written in, when it is not Latin (its lang attribute). */
 function scriptOf(s: string): string | undefined {
   if (/[ఀ-౿]/.test(s)) return "te";
@@ -104,7 +93,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
   const alerts = [...(snap?.alerts ?? [])].sort((x, y) => when(y) - when(x));
   const pinned = new Map<string, Alert>();
   for (const a of alerts) {
-    const name = stormTitle(a.headline || "");
+    const name = cycloneIn(a.headline)?.title;
     if (name && !pinned.has(name)) pinned.set(name, a);
   }
   const isPinned = new Set(pinned.values());

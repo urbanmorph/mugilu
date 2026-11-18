@@ -113,15 +113,5 @@ export function relTime(iso: string): string {
   return `<time data-rel datetime="${iso}">${istTime(iso)}</time>`;
 }
 
-// The "use my location" button (home, and the display setup): shown only where the
-// browser can locate, it opens /c for the spot, plus `suffix` (a JS expression, e.g. the
-// kiosk flag), and tells the reader if the location is off.
-export function nearMeJs(id: string, suffix: string, lang: Lang): string {
-  const LP = JSON.stringify(lang === "en" ? "" : "/" + lang);
-  return `(function(){var b=document.getElementById('${id}');if(!b||!navigator.geolocation)return;var label=b.textContent,LOC=${JSON.stringify(t("Finding your location…", lang))},NOLOC=${JSON.stringify(t("Your location is not available.", lang))};b.hidden=false;
-b.onclick=function(){b.textContent=LOC;navigator.geolocation.getCurrentPosition(function(p){location.href=${LP}+'/c/'+p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4)+${suffix};},function(){b.textContent=NOLOC;});};
-addEventListener('pageshow',function(){b.textContent=label;});})();`;
-}
-
 /** Escapes text for innerHTML in a page script; each script scope that builds HTML defines it. */
 export const CLIENT_ESC = `function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}`;

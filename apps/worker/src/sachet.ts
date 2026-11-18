@@ -235,7 +235,23 @@ export function renderWarningsMarkdown(snap: WarningsSnapshot | null): string {
 // phase2a ─ the official cyclone: IMD's own category and the storm's name, from the newest
 // SACHET warning about it (the JTWC track gives position, never the category).
 const CYCLONE_RE = /\b((?:super |extremely severe |very severe |severe )?cyclonic storm)\s+["“']?([A-Za-z]{3,})\b/i;
-const NOT_A_NAME = new Set(["over", "near", "with", "lays", "lay", "moved", "moving", "centred", "centered", "likely"]);
+const NOT_A_NAME = new Set([
+  "over",
+  "near",
+  "with",
+  "lays",
+  "lay",
+  "moved",
+  "moving",
+  "centred",
+  "centered",
+  "likely",
+  "is",
+  "has",
+  "in",
+  "of",
+  "and",
+]);
 const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
 export interface OfficialCyclone {

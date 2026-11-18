@@ -655,6 +655,15 @@ export function warnBox(head: string, paras: string[]): string {
 // ── end phase2d ─────────────────────────────────────────────────────────────────────
 
 // ── phase2c: the Search combobox's behaviour ─────────────────────────────────────────
+/** The "use my location" button `id` (rendered hidden): shown only where the browser can
+ *  locate; a fix calls `onFix(lat, lon)` (the name of a page function, given 4-decimal
+ *  strings), a refusal says so, and the label (icon included) comes back after either. */
+export function locateJs(id: string, lang: Lang, onFix: string): string {
+  return `(function(){var b=document.getElementById('${id}');if(!b||!navigator.geolocation)return;var label=b.innerHTML;b.hidden=false;
+b.onclick=function(){b.textContent=${JSON.stringify(t("Finding your location…", lang))};navigator.geolocation.getCurrentPosition(function(p){b.innerHTML=label;${onFix}(p.coords.latitude.toFixed(4),p.coords.longitude.toFixed(4));},function(){b.textContent=${JSON.stringify(t("Your location is not available.", lang))};});};
+addEventListener('pageshow',function(){b.innerHTML=label;});})();`;
+}
+
 /** The ARIA combobox for a searchBox: suggestions from /suggest as options, arrow keys move
  *  aria-activedescendant, Enter or a click picks, Escape closes, the status line says how many
  *  places match. Picking opens that place's page (plus `suffix`, a JS string expression), or

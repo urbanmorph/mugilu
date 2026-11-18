@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderDisplayBuilder, renderNotFound, renderWarningsPage, warningType } from "../src/page";
-import { stormTitle } from "../src/pages/warnings";
+import { cycloneIn } from "../src/sachet";
 import type { WarningsSnapshot } from "../src/sachet";
 import { STANDARD_CSS } from "../src/ui/standard";
 
@@ -57,11 +57,14 @@ test("warningType: Bengali and Telugu headlines are sorted by hazard, not left u
   assert.equal(warningType("నవంబర్13సా.4.00 నుంచి సముద్రంలో 3-6.2 మీటర్ల ఎత్తులో భారీఅలలు వచ్చే అవకాశం ఉంది."), "other");
 });
 
-test("stormTitle: IMD's category and the storm's name, never the category alone", () => {
-  assert.equal(stormTitle(AKVAN), "Severe Cyclonic Storm Akvan");
-  assert.equal(stormTitle("Very Severe Cyclonic Storm 'Montha' moved north"), "Very Severe Cyclonic Storm Montha");
-  assert.equal(stormTitle("Cyclone warning for the coast"), undefined);
-  assert.equal(stormTitle(AVALANCHE), undefined);
+test("cycloneIn (the one source, as on /warnings): IMD's category and the storm's name, never the category alone", () => {
+  assert.equal(cycloneIn(AKVAN)?.title, "Severe Cyclonic Storm Akvan");
+  assert.equal(
+    cycloneIn("Very Severe Cyclonic Storm 'Montha' moved north")?.title,
+    "Very Severe Cyclonic Storm Montha",
+  );
+  assert.equal(cycloneIn("Cyclone warning for the coast")?.title, undefined);
+  assert.equal(cycloneIn(AVALANCHE)?.title, undefined);
 });
 
 test("/warnings: the signage shell, the warning wash at high, the time it is from", () => {

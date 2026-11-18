@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  locateJs,
   alertsBox,
   band,
   bandChip,
@@ -331,4 +332,38 @@ test("embedCard: links to the place; both disclaimers in the markup (the width p
   assert.match(e, /^<a class="ecard high" href="https:\/\/mugilu\.live\/c\/delhi" target="_blank" rel="noopener">/);
   assert.ok(e.includes(`<div class="t-legal disc-long">${DISCLAIMER_FULL}</div>`));
   assert.ok(e.includes(`<div class="t-legal disc-short">${DISCLAIMER_SHORT}</div>`));
+});
+
+test("locateJs: one location button for every page: shown only where the browser can locate, hands the fix over, restores its label (icon included)", async () => {
+  const { runInNewContext } = await import("node:vm");
+  const btn = {
+    hidden: true,
+    innerHTML: "<svg></svg>Use my location",
+    textContent: "",
+    onclick: null as null | (() => void),
+  };
+  let fixed = "";
+  const ctx = {
+    document: { getElementById: (id: string) => (id === "here" ? btn : null) },
+    navigator: {
+      geolocation: {
+        getCurrentPosition: (ok: (p: unknown) => void) => ok({ coords: { latitude: 28.61234, longitude: 77.20911 } }),
+      },
+    },
+    addEventListener() {},
+    onFix: (lat: string, lon: string) => (fixed = lat + "," + lon),
+  };
+  runInNewContext(locateJs("here", "en", "onFix"), ctx);
+  assert.equal(btn.hidden, false);
+  btn.onclick!();
+  assert.equal(fixed, "28.6123,77.2091");
+  assert.equal(btn.innerHTML, "<svg></svg>Use my location");
+  // no geolocation: the button stays hidden
+  const quiet = { ...btn, hidden: true };
+  runInNewContext(locateJs("here", "en", "onFix"), {
+    ...ctx,
+    document: { getElementById: () => quiet },
+    navigator: {},
+  });
+  assert.equal(quiet.hidden, true);
 });

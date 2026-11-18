@@ -8,6 +8,7 @@ import {
   band,
   button,
   comboboxJs,
+  locateJs,
   ico,
   lane,
   panel,
@@ -51,7 +52,7 @@ var h=form&&form.querySelector('input[name=as]');if(as==='everyone'){if(h)h.remo
 window.DSP={pick:function(x){place=x.lat+','+x.lon;set();}};
 tiles.forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();place=a.getAttribute('data-slug');set();});});
 var seg=document.getElementById('dpers');if(seg)seg.addEventListener('change',function(e){var i=e.target;if(!i||i.name!=='as')return;e.stopPropagation();as=i.value;set();try{history.replaceState(null,'',LP+'/display'+(as==='everyone'?'':'?as='+as));}catch(_){}},true);
-var b=document.getElementById('dhere');if(b&&navigator.geolocation){var label=b.innerHTML;b.hidden=false;b.onclick=function(){b.textContent=${JSON.stringify(t("Finding your location…", lang))};navigator.geolocation.getCurrentPosition(function(p){place=p.coords.latitude.toFixed(4)+','+p.coords.longitude.toFixed(4);set();b.innerHTML=label;},function(){b.textContent=${JSON.stringify(t("Your location is not available.", lang))};});};}
+window.DSP.here=function(a,o){place=a+','+o;set();};
 })();`;
 }
 
@@ -146,6 +147,9 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
     lang,
-    js: displayJs(persona, lang) + comboboxJs("dq", lang, { onPick: "function(x){q.value=x.label;DSP.pick(x);}" }),
+    js:
+      displayJs(persona, lang) +
+      locateJs("dhere", lang, "DSP.here") +
+      comboboxJs("dq", lang, { onPick: "function(x){q.value=x.label;DSP.pick(x);}" }),
   });
 }
