@@ -1,7 +1,7 @@
 import type { Conditions, Warning, NormalizedStation, NearStation } from "./types";
 import type { NationalHighlights } from "./highlights";
 import type { WarningsSnapshot } from "./sachet";
-import { AQI_BAND_LABEL } from "./aqi";
+import { AQI_BAND_LABEL, aqiBand, subIndex } from "./aqi";
 import { compass, drops, gauge, GLYPH_CSS, lifeBlocks, pollutantBars, uvSteps, worstPollutant } from "./glyphs";
 import { briefs, forPersona, isDriver, km, orderByRisk, placeLabel } from "./readings";
 import { SOURCES, providerName } from "./sources";
@@ -220,6 +220,8 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .langsw a:hover{border-color:var(--muted)}
 .langsw b{color:var(--ink);font-weight:600}
 .ic{width:18px;height:18px;flex:none;vertical-align:-.18em}
+.topnav{display:none}
+@media(min-width:960px){body.wide main{max-width:1180px;padding-top:28px}body.wide :is(.foot,.langsw){max-width:1180px}.topnav{display:flex;gap:1.6rem;margin:0 1.4rem 0 auto;font-size:.95rem}.topnav a{color:var(--ink);text-decoration:none}.topnav a:hover,.topnav a[aria-current]{text-decoration:underline;text-underline-offset:.3em}}
 `;
 
 const SITE = "https://mugilu.live";
@@ -265,6 +267,23 @@ function langSwitcher(canonical: string, lang: Lang): string {
   return `<nav class="langsw" aria-label="Language">${items}</nav>`;
 }
 
+// The header nav on the wide pages: the places, warnings, display and explainer pages,
+// the current one marked. Shown from 960 px; phones keep the plain header.
+const TOP_NAV: [string, string][] = [
+  ["/places", "Places"],
+  ["/warnings", "Warnings"],
+  ["/display", "Display"],
+  ["/methodology", "How it works"],
+  ["/about", "About"],
+];
+function topNav(canonical: string | undefined, lang: Lang): string {
+  const here = canonical ? new URL(canonical).pathname : "";
+  const links = TOP_NAV.map(
+    ([p, en]) => `<a href="${lp(p, lang)}"${p === here ? ' aria-current="page"' : ""}>${t(en, lang)}</a>`,
+  ).join("");
+  return `<nav class="topnav" aria-label="${esc(t("Main", lang))}">${links}</nav>`;
+}
+
 /** Optional page settings for shell(). */
 interface ShellOpts {
   desc?: string;
@@ -277,13 +296,16 @@ interface ShellOpts {
   bare?: boolean;
   /** Keep the page out of search indexes while its links are still followed (thin, endless pages). */
   noindex?: boolean;
+  /** The wide layout (960 px and up) with a header nav: the directory, warnings, display,
+   *  station and text pages. Home and the place pages keep their own layouts. */
+  wide?: boolean;
 }
 
 function shell(
   title: string,
   body: string,
   css: string,
-  { desc = SITE_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex }: ShellOpts = {},
+  { desc = SITE_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex, wide }: ShellOpts = {},
 ): string {
   const cur = canonical ? langUrl(canonical, lang) : undefined;
   // hreflang alternates for every language + x-default (English) so search
@@ -332,11 +354,11 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 ${CF_BEACON_TOKEN && !noBeacon ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${CF_BEACON_TOKEN}"}'></script>` : ""}
 <style>${BASE_CSS}${bare ? "" : INSTALL_CSS}${css}${langCss(lang)}</style>
 </head>
-<body>
+<body${wide ? ' class="wide"' : ""}>
 ${
   bare
     ? body
-    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a>${installButton(lang)}</header>
+    : `<header class="bar"><a class="brand" href="${lp("/", lang)}">${CLOUD} mugilu</a>${wide ? topNav(canonical, lang) : ""}${installButton(lang)}</header>
 <main>${body}</main>
 <footer class="foot">${footerNav(lang)}</footer>
 ${canonical ? langSwitcher(canonical, lang) : ""}
@@ -961,8 +983,9 @@ const STATION_CSS = `
 .sx h1{font-family:var(--serif);font-size:clamp(2rem,6vw,3rem);line-height:1.1;margin:.2rem 0 .3rem}
 .sx .where{color:var(--muted);margin:0 0 1.2rem}
 .sx .aqi{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:.4rem 0 .2rem}
-.sx .aqi b{font-size:clamp(2.6rem,9vw,4rem);line-height:1;color:var(--band)}
-.sx .aqi span{font-weight:600;color:var(--band)}
+.sx .aqi b{font-size:clamp(2.6rem,9vw,4rem);line-height:1;color:var(--bt-l)}
+.sx .aqi span{font-weight:600;color:var(--bt-l)}
+@media(prefers-color-scheme:dark){.sx .aqi b,.sx .aqi span{color:var(--bt-d)}}
 .sx .when{color:var(--muted);font-size:.9rem;margin:0 0 1.2rem}
 .sx dl{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1.2rem;margin:.6rem 0 1.4rem}
 .sx dt{color:var(--muted)}.sx dd{margin:0;font-variant-numeric:tabular-nums}
@@ -970,7 +993,65 @@ const STATION_CSS = `
 .sx .nearby{font-size:.95rem;line-height:1.9;color:var(--muted);margin:1rem 0}
 .sx .stale{border-left:3px solid var(--line);padding:.2rem 0 .2rem .9rem;color:var(--muted)}
 .sx footer{margin-top:2rem;border-top:1px solid var(--line);padding-top:1rem;font-size:.85rem;color:var(--muted)}
-.sx footer a{color:var(--muted)}`;
+.sx footer a{color:var(--muted)}
+.sx .pol{display:grid;grid-template-columns:4.2rem minmax(0,1fr) 7.5rem;gap:.55rem .8rem;align-items:center;margin:.6rem 0 .4rem;font-size:.95rem}
+.sx .pol dt{color:var(--muted)}.sx .pol dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.sx .ptrack{height:9px;border-radius:5px;background:var(--line);overflow:hidden}
+.sx .pbar{display:block;height:100%;border-radius:5px}
+.sx .pnote{color:var(--muted);font-size:.8rem;margin:0 0 1.2rem}
+.sx .sxr{margin:1.4rem 0 0}
+.sx .sxr h2{font:600 .74rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 .7rem}
+.sx .smap{display:block;width:100%;height:auto;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.sx .snear{width:100%;border-collapse:collapse;font-size:.95rem;margin:.8rem 0 0}
+.sx .snear th{text-align:left;font-weight:500;color:var(--muted);font-size:.8rem;padding:.3rem 0}
+.sx .snear td{border-top:1px solid var(--line);padding:.45rem 0}.sx .snear td+td,.sx .snear th+th{text-align:right}
+.sx .snear a{color:var(--sky);text-decoration:none}.sx .snear i{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:.4rem}
+@media(min-width:960px){.sx{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 3.5rem;align-items:start}.sx .sxr{margin:3.4rem 0 0}.sx footer{grid-column:1/-1}}`;
+
+// A band's colour as TEXT, [light theme, dark theme]: the band colours themselves (BAND_COLOR)
+// are too pale for text on a light page (moderate's yellow is 2:1). Each pair holds 4.5:1
+// or more on its theme's page and card.
+const BAND_TEXT: Record<string, [string, string]> = {
+  good: ["#15803d", "#4ade80"],
+  satisfactory: ["#4d7c0f", "#a3e635"],
+  moderate: ["#a16207", "#facc15"],
+  poor: ["#c2410c", "#fb923c"],
+  vpoor: ["#b91c1c", "#f87171"],
+  severe: ["#7f1d1d", "#fda4af"],
+  unknown: ["#475569", "#94a3b8"],
+};
+
+/** One pollutant as a bar on CPCB's 0-500 scale (its sub-index), in its band's colour. */
+function pollutantBar(p: { key: string; label: string; value: number; unit: string }): string {
+  const si = subIndex(p.key as Parameters<typeof subIndex>[0], p.value);
+  const bar =
+    si == null
+      ? ""
+      : `<span class="pbar" style="width:${Math.max(2, Math.min(100, (si / 500) * 100)).toFixed(1)}%;background:${BAND_COLOR[aqiBand(si)] ?? BAND_COLOR.unknown}"></span>`;
+  return `<dt>${esc(p.label)}</dt><span class="ptrack" aria-hidden="true">${bar}</span><dd>${p.value} ${esc(p.unit)}</dd>`;
+}
+
+/** The stations around one, at their true offsets (north up), each dot in its band's colour;
+ *  the station itself ringed. Scaled so the farthest fits. */
+function stationMap(s: NormalizedStation, nearby: NearStation[]): string {
+  if (s.lat == null || s.lon == null) return "";
+  const [w, h, pad] = [520, 300, 26];
+  const k = Math.cos((s.lat * Math.PI) / 180);
+  const off = (lat: number, lon: number) => [(lon - s.lon!) * k, lat - s.lat!];
+  const pts = nearby.filter((n) => n.lat != null && n.lon != null).map((n) => ({ n, xy: off(n.lat!, n.lon!) }));
+  const reach = Math.max(
+    1e-6,
+    ...pts.map((p) => Math.abs(p.xy[0]) / (w / 2 - pad)),
+    ...pts.map((p) => Math.abs(p.xy[1]) / (h / 2 - pad)),
+  );
+  const at = ([x, y]: number[]) => [w / 2 + x / reach, h / 2 - y / reach].map((v) => v.toFixed(1));
+  const dot = (cx: string, cy: string, band: string, title: string, self = false) =>
+    `<circle cx="${cx}" cy="${cy}" r="${self ? 11 : 8}" fill="${BAND_COLOR[band] ?? BAND_COLOR.unknown}"${self ? ' stroke="var(--ink)" stroke-width="3"' : ' style="stroke:color-mix(in srgb,var(--ink) 40%,transparent);stroke-width:1.5"'}><title>${esc(title)}</title></circle>`;
+  const dots = pts
+    .map(({ n, xy }) => dot(...(at(xy) as [string, string]), n.band, `${n.name}: AQI ${n.aqi ?? "n/a"}`))
+    .join("");
+  return `<svg class="smap" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(`Map of the air stations around ${s.name}, coloured by AQI`)}">${dots}${dot(String(w / 2), String(h / 2), s.band, `${s.name}: AQI ${s.aqi ?? "n/a"}`, true)}</svg>`;
+}
 
 /** /s/{provider}/{id}: one air station, titled the way people search ("Anand Vihar AQI
  *  today: 412 Severe"). `fresh` false: the station has not reported within the snapshot's
@@ -1002,24 +1083,29 @@ export function renderStationPage(
   const reading = live
     ? `<p class="aqi"><b>${s.aqi}</b><span>AQI · ${esc(band)}</span></p>
     <p class="when">${esc(fill(t("Measured by {provider}.", lang)))} ${s.ts ? relTime(new Date(s.ts).toISOString()) : ""}</p>
-    <dl>${pollutantParts(s.pollutants)
-      .map((p) => `<dt>${esc(p.label)}</dt><dd>${p.value} ${esc(p.unit)}</dd>`)
-      .join("")}</dl>`
+    <dl class="pol">${pollutantParts(s.pollutants).map(pollutantBar).join("")}</dl>
+    <p class="pnote">${t("Each bar is the pollutant on CPCB's 0-500 AQI scale, in its band's colour.", lang)}</p>`
     : `<p class="stale">${t("No recent reading from this station. Last reading: X", lang).replace("X", s.ts ? relTime(new Date(s.ts).toISOString()) : "n/a")}</p>`;
   const near = nearby.length
-    ? `<nav class="nearby" aria-label="${esc(t("Air stations near here", lang))}">${t("Air stations near here", lang)}: ${nearby
-        .map((n) => `<a href="${lp(`/s/${n.provider}/${n.raw_id}`, lang)}">${esc(n.name)}</a> ${n.aqi ?? ""}`)
-        .join(" · ")}</nav>`
+    ? `<section class="sxr" aria-label="${esc(t("Air stations near here", lang))}"><h2>${t("Air stations near here", lang)}</h2>${stationMap(s, nearby)}
+    <table class="snear"><thead><tr><th>${t("Station", lang)}</th><th>AQI</th><th>${t("Distance", lang)}</th></tr></thead><tbody>${nearby
+      .map(
+        (n) =>
+          `<tr><td><i style="background:${BAND_COLOR[n.band] ?? BAND_COLOR.unknown}"></i><a href="${lp(`/s/${n.provider}/${n.raw_id}`, lang)}">${esc(n.name)}</a></td><td>${n.aqi ?? ""}</td><td>${n.distance_km != null ? `${n.distance_km.toFixed(1)} km` : ""}</td></tr>`,
+      )
+      .join("")}</tbody></table></section>`
     : "";
   const body = `
-  <article class="sx" style="--band:${BAND_COLOR[s.band] ?? BAND_COLOR.unknown}">
+  <article class="sx" style="--band:${BAND_COLOR[s.band] ?? BAND_COLOR.unknown};--bt-l:${BAND_TEXT[s.band]?.[0] ?? BAND_TEXT.unknown[0]};--bt-d:${BAND_TEXT[s.band]?.[1] ?? BAND_TEXT.unknown[1]}">
+    <div class="sxl">
     <h1>${esc(s.name)}</h1>
     <p class="where">${esc(where || "India")} · ${esc(providerName(s.provider))}</p>
     ${reading}
     ${s.lat != null && s.lon != null ? `<p class="full"><a href="${lp(`/c/${s.lat},${s.lon}`, lang)}">${t("The full sky here: heat, rain, warnings and what to do", lang)} →</a></p>` : ""}
+    </div>
     ${near}
     <footer>
-      <p>${esc(fill(t("Measured by {provider}.", lang)))} ${esc(t("Sources", lang))}: ${esc(providerName(s.provider))} via OAQ, via mugilu.</p>
+      <p>${esc(t("Sources", lang))}: ${esc(providerName(s.provider))} via OAQ, via mugilu.</p>
       <p>${esc(t(SHORT_DISCLAIMER, lang))}</p>
       <p><a href="${path}.json">JSON</a> · <a href="${path}.md">Markdown</a> · <a href="${lp("/", lang)}">← ${t("Look up another place", lang)}</a></p>
     </footer>
@@ -1033,7 +1119,15 @@ export function renderStationPage(
     address: { "@type": "PostalAddress", addressLocality: s.city || undefined, addressCountry: "IN" },
   });
   // Station pages are thin and Google never crawled them: they stay for people, out of the index.
-  return shell(title, body + FRESHEN, STATION_CSS, { desc, canonical, jsonLd, ogImage: HOME_OG, lang, noindex: true });
+  return shell(title, body + FRESHEN, STATION_CSS, {
+    desc,
+    canonical,
+    jsonLd,
+    ogImage: HOME_OG,
+    lang,
+    noindex: true,
+    wide: true,
+  });
 }
 
 const GRAP_RANGE = ["201-300", "201-300", "301-400", "401-450", "above 450"];
@@ -1317,7 +1411,8 @@ const DISPLAY_CSS = `
 .dtile:hover{border-color:var(--ink)}
 .dhow{margin:.1rem 0 .5rem 1.1rem}.dhow li{margin:.35rem 0;line-height:1.5}
 .dprev{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#080d18;margin:.4rem 0 1.4rem}
-.dprev iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}`;
+.dprev iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
+@media(min-width:960px){.dcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,25rem);gap:0 3rem;align-items:start}.dright>.ah:first-child{margin-top:1.4rem}}`;
 
 // The "put it on a screen" builder: pick a place (+ who it's for), open the
 // self-refreshing kiosk view. Search routes through /go?kiosk=1 (zero JS).
@@ -1348,10 +1443,12 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       : t("For an always-on unattended screen, point a kiosk-browser app at the same link so it auto-starts.", lang);
   const body = `
   <article class="ax">
+    <div class="dcols"><div class="dleft">
     <h1 class="ahero">${heading}</h1>
     <p class="alead">${t("Turn any display into a live, self-updating read of the sky. Pick a place, open it on the screen, press full-screen. It refreshes itself, and a corner QR sends passers-by to the same place on their phone.", lang)}</p>
 
     <div class="dprev" aria-hidden="true"><iframe src="${esc(lp(`/c/bengaluru?kiosk${asQ}`, lang))}" title="${esc(t("Put mugilu on a screen.", lang))}" tabindex="-1" loading="lazy"></iframe></div>
+    </div><div class="dright">
 
     <p class="ah">${icon("users")}<span>${t("Weight it for who is nearby", lang)}</span></p>
     <nav class="dpers" aria-label="Persona">${pills}</nav>
@@ -1376,6 +1473,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       <li>${step4}</li>
     </ol>
     <p class="abuild">The display link is just <b>/c/{place}?kiosk</b>, so you can bookmark or script it. Add <b>?as=elderly</b> (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.</p>
+    </div></div>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>
   <script>var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};${typeaheadJs("dq", "dac", `'?kiosk'+${JSON.stringify(asQ)}`)}
@@ -1385,6 +1483,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1459,7 +1558,34 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 .builtby .star svg{width:15px;height:15px}
 .adisc{color:var(--muted);font-size:.82rem;line-height:1.5;border-top:1px solid var(--hair);padding-top:1.1rem;margin-top:2.3rem}
 .aback{margin:1.3rem 0 0}.aback a{color:var(--sky);text-decoration:none;font-weight:600;font-family:var(--mono);font-size:.85rem;letter-spacing:.02em}
+.axw{max-width:42rem;margin:0 auto}.toc{display:none}
+@media(min-width:1100px){.axw{max-width:none;display:grid;grid-template-columns:minmax(0,13rem) minmax(0,42rem);gap:3.5rem;justify-content:center;align-items:start}
+.toc{display:flex;flex-direction:column;gap:.55rem;position:sticky;top:1.6rem;margin-top:5.2rem;padding-left:.9rem;border-left:2px solid var(--line);font-size:.9rem;line-height:1.35}
+.toc b{font:600 .72rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem}
+.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--ink)}}
 `;
+
+/** A text page with a contents list beside it (wide screens): one link per section
+ *  heading (`class="ah"`), each heading given an anchor unless it has one (#build). */
+function withToc(body: string, lang: Lang): string {
+  let n = 0;
+  const links: string[] = [];
+  const marked = body.replace(
+    /<(p|h2) class="ah"(?: id="([^"]+)")?>([\s\S]*?)<\/\1>/g,
+    (_m, tag: string, id: string | undefined, inner: string) => {
+      const anchor = id ?? `s${++n}`;
+      links.push(
+        `<a href="#${anchor}">${inner
+          .replace(/<svg[\s\S]*?<\/svg>/g, "")
+          .replace(/<[^>]+>/g, "")
+          .trim()}</a>`,
+      );
+      return `<${tag} class="ah" id="${anchor}">${inner}</${tag}>`;
+    },
+  );
+  if (links.length < 3) return body;
+  return `<div class="axw"><nav class="toc" aria-label="${esc(t("On this page", lang))}"><b>${t("On this page", lang)}</b>${links.join("")}</nav><div class="axb">${marked}</div></div>`;
+}
 
 /** The About page: the origin story + the dual nature (for people, and as
  *  infrastructure). Person-first, jargon-free. The "Build on it" section is a
@@ -1580,7 +1706,7 @@ export function renderAbout(lang: Lang = "en"): string {
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(t("About mugilu: the open sky of India", lang), body, ABOUT_CSS, {
+  return shell(t("About mugilu: the open sky of India", lang), withToc(body, lang), ABOUT_CSS, {
     desc: t(
       `mugilu shows the ${HAZARDS} over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.`,
       lang,
@@ -1597,6 +1723,7 @@ export function renderAbout(lang: Lang = "en"): string {
     }),
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1661,7 +1788,7 @@ export function renderTerms(lang: Lang = "en"): string {
 
   <p class="adisc">${commonsDisc}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
-  return shell(t("mugilu: terms, sources and attribution", lang), body, ABOUT_CSS, {
+  return shell(t("mugilu: terms, sources and attribution", lang), withToc(body, lang), ABOUT_CSS, {
     desc: t(
       "mugilu's sources, licences and attribution: open data from CPCB, Open-Meteo, NDMA/IMD and NASA FIRMS, each keeping its own terms. Informational only, not for safety-critical use.",
       lang,
@@ -1669,6 +1796,7 @@ export function renderTerms(lang: Lang = "en"): string {
     canonical: `${SITE}/terms`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1684,7 +1812,26 @@ const PLACES_CSS = `
 .places .st li{padding:2px 0;break-inside:avoid}
 .places .st a{color:var(--sky);text-decoration:none;font-size:.93rem}
 .places .st a:hover{text-decoration:underline}
+.pindex,.pfind{display:none}
+@media(min-width:960px){
+.pwrap{display:grid;grid-template-columns:minmax(0,12rem) minmax(0,1fr);gap:2.6rem;align-items:start}
+.pindex{display:flex;flex-direction:column;gap:.15rem;position:sticky;top:1.2rem;max-height:calc(100vh - 2.4rem);overflow:auto;font-size:.88rem;line-height:1.55}
+.pindex a{color:var(--muted);text-decoration:none}.pindex a:hover{color:var(--ink)}
+.pfind{display:flex;flex-direction:column;gap:.35rem;margin:0 0 1.4rem;max-width:22rem;font-size:.88rem;color:var(--muted)}
+.pfind[hidden]{display:none}
+.pfind input{padding:.6rem .8rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
+.pcards{columns:3;column-gap:1rem}
+.places .pcards .st{break-inside:avoid;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:.8rem 1rem;margin:0 0 1rem}
+.places .pcards .st ul{columns:2;column-gap:1rem}
+.places .pcards .st h2{border:0;padding:0;margin:0 0 .5rem}
+}
 `;
+
+// The /places search (wide screens): shows only the places whose name holds the text,
+// and only the states that still have one. Hidden without the script.
+const PLACES_FIND_JS = `(function(){var p=document.querySelector('.pfind');if(!p)return;p.hidden=false;var q=document.getElementById('pq');
+q.addEventListener('input',function(){var s=q.value.trim().toLowerCase();document.querySelectorAll('.pcards .st').forEach(function(st){var any=false;
+st.querySelectorAll('li').forEach(function(li){var ok=!s||li.textContent.toLowerCase().indexOf(s)>-1;li.hidden=!ok;if(ok)any=true});st.hidden=!any})})})();`;
 
 /** The place directory: every named /c/{slug} page, grouped by state. This is the
  *  crawlable index that links all ~800 place pages, so search engines have a path
@@ -1692,10 +1839,16 @@ const PLACES_CSS = `
 export function renderPlaces(lang: Lang = "en"): string {
   const groups = slugPlacesByState();
   const total = groups.reduce((n, g) => n + g.places.length, 0);
+  const anchor = (state: string) =>
+    `st-${state
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`;
+  const index = groups.map((g) => `<a href="#${anchor(g.state)}">${esc(g.state)}</a>`).join("");
   const sections = groups
     .map(
       (g) =>
-        `<section class="st"><h2>${esc(g.state)}</h2><ul>${g.places
+        `<section class="st" id="${anchor(g.state)}"><h2>${esc(g.state)}</h2><ul>${g.places
           .map((p) => `<li><a href="${lp(`/c/${p.slug}`, lang)}">${esc(p.name)}</a></li>`)
           .join("")}</ul></section>`,
     )
@@ -1716,9 +1869,16 @@ export function renderPlaces(lang: Lang = "en"): string {
     <h1>${t("Every place, by state", lang)}</h1>
     <p class="lede">${t(`The sky over every district and major city in India, one page each. Pick a place to see its ${HAZARDS} right now.`, lang)}</p>
     <p class="count">${total} ${t("places across India", lang)}</p>
-    ${sections}
-  </div>`;
-  return shell(title, body, PLACES_CSS, { desc, canonical, jsonLd: crumb, ogImage: HOME_OG, lang });
+    <div class="pwrap">
+      <nav class="pindex" aria-label="States">${index}</nav>
+      <div>
+        <p class="pfind" hidden><label for="pq">${t("Find a place", lang)}</label><input type="search" id="pq" autocomplete="off"></p>
+        <div class="pcards">${sections}</div>
+      </div>
+    </div>
+  </div>
+  <script>${PLACES_FIND_JS}</script>`;
+  return shell(title, body, PLACES_CSS, { desc, canonical, jsonLd: crumb, ogImage: HOME_OG, lang, wide: true });
 }
 
 /** A real 404 page (the catch-all used to return 200 with a debug string). */
@@ -1856,7 +2016,7 @@ export function renderMethodology(lang: Lang = "en"): string {
   <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
   </article>`;
-  return shell(t("How mugilu works: the Ambient read explained", lang), body, ABOUT_CSS + METHOD_CSS, {
+  return shell(t("How mugilu works: the Ambient read explained", lang), withToc(body, lang), ABOUT_CSS + METHOD_CSS, {
     desc: t(
       "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
       lang,
@@ -1864,6 +2024,7 @@ export function renderMethodology(lang: Lang = "en"): string {
     canonical: `${SITE}/methodology`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
@@ -1872,12 +2033,25 @@ const WLIST_CSS = `
 .wlist{list-style:none;margin:0;padding:0}
 .wlist li{border-top:1px solid var(--hair);padding:1rem 0}
 .wcat{display:inline-block;font:600 .7rem var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--sky);margin:0 0 .25rem}
-.whead{font-size:1.02rem;line-height:1.4;font-weight:600;margin:0 0 .3rem}
+.whead{font-size:1.02rem;line-height:1.4;font-weight:600;margin:0 0 .3rem;overflow-wrap:anywhere}
 .wmeta{color:var(--muted);font-size:.82rem}.wmeta a{color:var(--sky)}
 .wempty{color:var(--muted);font-size:1.05rem;margin:1.2rem 0}
 .wsec{margin:0 0 1.4rem}
 .wgrp{display:flex;align-items:center;gap:.5rem;font:700 1rem/1.3 var(--sans);margin:1.6rem 0 .2rem}
 .wgrp .wn{font:600 .72rem/1 var(--sans);color:var(--muted);background:var(--line);border-radius:999px;padding:.2rem .5rem}
+.wfilter{display:none}
+@media(min-width:960px){
+.wwrap{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:2.6rem;align-items:start}
+.wfilter{display:flex;flex-direction:column;gap:1.3rem;position:sticky;top:1.2rem;font-size:.92rem}
+.wfilter[hidden]{display:none}
+.wfilter fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem}
+.wfilter legend{font:600 .72rem/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.wfilter label{display:flex;justify-content:space-between;gap:.5rem;cursor:pointer}
+.wfilter .wc{color:var(--muted);font-variant-numeric:tabular-nums}
+.wfilter input[type=search]{width:100%;padding:.55rem .7rem;border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink);font:inherit}
+.wlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+.wlist li{border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;background:var(--card)}
+}
 `;
 
 /** The national active-warnings list: surfaces the SACHET feed mugilu polls
@@ -1888,6 +2062,57 @@ export function issuerName(issuer: string): string {
   const named = issuer.match(/\(([^)]+)\)\s*$/)?.[1];
   return (named ?? issuer.replace(/\S+@\S+/g, "")).trim() || "NDMA";
 }
+
+// What a warning is about, read from its headline (every SACHET alert carries the same
+// category, "Met"). The first that matches wins: "thunderstorm and rain" is a storm.
+// English, Hindi and Kannada words, as offices write in all three.
+const WARNING_TYPES: [string, string, RegExp][] = [
+  ["storm", "Thunderstorm, lightning", /thunder|lightning|squall|hail|गरज|बिजली|वज्रपात|आंधी|ಗುಡುಗು|ಸಿಡಿಲು|ಮಿಂಚು/i],
+  ["flood", "Flood, river level", /flood|river|danger level|water level|बाढ़|नदी|ಪ್ರವಾಹ/i],
+  ["rain", "Rain, snow", /rain|snow|वर्षा|बारिश|ಮಳೆ/i],
+  ["wind", "Wind, cyclone", /wind|gale|cyclone|dust storm|हवा|चक्रवात|ಗಾಳಿ|ಚಂಡಮಾರುತ/i],
+  ["heat", "Heat", /heat|hot|लू|गर्मी|ಬಿಸಿ/i],
+  ["cold", "Cold, frost", /cold|frost|शीत|ठंड|ಚಳಿ/i],
+  ["fog", "Fog", /fog|कोहरा|ಮಂಜು/i],
+];
+
+/** The kind of hazard a warning is about, from its headline ("other" when none matches). */
+export function warningType(headline: string): string {
+  return WARNING_TYPES.find(([, , re]) => re.test(headline))?.[0] ?? "other";
+}
+
+/** The filters on /warnings (wide screens): kind and issuing office, each with its count,
+ *  and a text search. Hidden until the script runs, so without it every warning shows. */
+function warningFilters(alerts: WarningsSnapshot["alerts"], lang: Lang): string {
+  const count = (key: (a: WarningsSnapshot["alerts"][number]) => string) => {
+    const m = new Map<string, number>();
+    for (const a of alerts) m.set(key(a), (m.get(key(a)) ?? 0) + 1);
+    return m;
+  };
+  const types = count((a) => warningType(a.headline || ""));
+  const offices = [...count((a) => issuerName(a.issuer || ""))].sort((x, y) => y[1] - x[1]);
+  const box = (name: string, value: string, label: string, n: number) =>
+    `<label><span><input type="checkbox" name="${name}" value="${esc(value)}" checked> ${esc(label)}</span><span class="wc">${n}</span></label>`;
+  const kinds = [...WARNING_TYPES.map(([k, en]) => [k, en] as const), ["other", "Other"] as const]
+    .filter(([k]) => types.has(k))
+    .map(([k, en]) => box("type", k, t(en, lang), types.get(k)!))
+    .join("");
+  return `<aside class="wfilter" aria-label="${esc(t("Filter warnings", lang))}" hidden>
+    <label for="wq" style="display:block">${t("Find a place or district", lang)}</label>
+    <input type="search" id="wq" autocomplete="off">
+    <fieldset><legend>${t("Type", lang)}</legend>${kinds}</fieldset>
+    <fieldset><legend>${t("Issued by", lang)}</legend>${offices.map(([o, n]) => box("issuer", o, o, n)).join("")}</fieldset>
+  </aside>`;
+}
+
+// Shows the filters and applies them: a card stays when its kind and office are ticked
+// and it holds the search text; an office's heading hides when none of its cards show.
+const WARNINGS_FILTER_JS = `(function(){var f=document.querySelector('.wfilter');if(!f)return;f.hidden=false;
+var q=document.getElementById('wq');function on(n){return [].slice.call(f.querySelectorAll('input[name='+n+']:checked')).map(function(i){return i.value})}
+function go(){var ty=on('type'),of=on('issuer'),s=(q.value||'').trim().toLowerCase();
+document.querySelectorAll('.wsec').forEach(function(sec){var any=false;sec.querySelectorAll('li[data-type]').forEach(function(li){
+var ok=ty.indexOf(li.getAttribute('data-type'))>-1&&of.indexOf(li.getAttribute('data-issuer'))>-1&&(!s||li.textContent.toLowerCase().indexOf(s)>-1);li.hidden=!ok;if(ok)any=true});sec.hidden=!any})}
+f.addEventListener('change',go);q.addEventListener('input',go)})();`;
 
 export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "en"): string {
   // Grouped by issuing office (a state SDMA or an IMD centre), the office with the
@@ -1908,7 +2133,7 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
                 const meta = [at && esc(at), isHttpUrl(a.link) ? `<a href="${esc(a.link)}" rel="noopener">CAP</a>` : ""]
                   .filter(Boolean)
                   .join(" · ");
-                return `<li><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div>${meta ? `<div class="wmeta">${meta}</div>` : ""}</li>`;
+                return `<li data-type="${warningType(a.headline || "")}" data-issuer="${esc(name)}"><div class="wcat">${esc(a.category || "Alert")}</div><div class="whead">${esc(a.headline || "Warning")}</div>${meta ? `<div class="wmeta">${meta}</div>` : ""}</li>`;
               })
               .join("")}</ul></section>`,
         )
@@ -1923,15 +2148,17 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
     <h1 class="ahero">${t("Active warnings", lang)}</h1>
     <p class="alead">${t("The latest {n} official NDMA / IMD alerts across India.", lang).replace("{n}", String(snap?.alerts.length ?? 0))}</p>
     <p class="wgen">${snap ? `${t("as of X", lang).replace("X", esc(istTime(snap.generated_at)))} · via SACHET` : ""}</p>
-    ${items}
+    <div class="wwrap">${snap?.alerts.length ? warningFilters(snap.alerts, lang) : ""}<div>${items}</div></div>
     <p class="adisc">${disc}</p>
     <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
-  </article>`;
+  </article>
+  <script>${WARNINGS_FILTER_JS}</script>`;
   return shell("Active warnings: mugilu", body, ABOUT_CSS + WLIST_CSS, {
     desc: "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
     canonical: `${SITE}/warnings`,
     ogImage: HOME_OG,
     lang,
+    wide: true,
   });
 }
 
