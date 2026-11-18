@@ -128,19 +128,32 @@ const hasRain = (m: IndiaMap) => m.cells.some((c) => c.rain != null);
 
 /** The map's SVG: land, the squares of every layer, state lines, outline, air dots, cyclones.
  *  `extra` draws on top (the /places states and dots); `defs` adds to the definitions. */
-function mapSvg(m: IndiaMap | undefined, p: string, label: string, lang: Lang, extra = "", defs = ""): string {
+/** `worstOnly`: the /places backdrop, the "what's worst" squares alone (no layer switch there),
+ *  and no state lines, since the clickable state outlines draw them. */
+function mapSvg(
+  m: IndiaMap | undefined,
+  p: string,
+  label: string,
+  lang: Lang,
+  extra = "",
+  defs = "",
+  worstOnly = false,
+): string {
   const labels = m
     ? (Object.keys(LABEL) as Layer[]).map((l) => ` data-label-${l}="${esc(t(LABEL[l], lang))}"`).join("")
     : "";
+  const others = (mm: IndiaMap) =>
+    worstOnly
+      ? ""
+      : `<g class="L Lh">${cellPaths(mm.cells, heatPaint(p))}</g>${hasRain(mm) ? `<g class="L Lr">${cellPaths(mm.cells, rainPaint(p))}</g>` : ""}`;
   const cells = m
-    ? `<g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, worstPaint(p), worstSize)}</g>` +
-      `<g class="L Lh">${cellPaths(m.cells, heatPaint(p))}</g>${hasRain(m) ? `<g class="L Lr">${cellPaths(m.cells, rainPaint(p))}</g>` : ""}</g>`
+    ? `<g clip-path="url(#mclip)" class="mcells"><g class="L Lw">${cellPaths(m.cells, worstPaint(p), worstSize)}</g>${others(m)}</g>`
     : "";
   return (
     `<svg class="msvg" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${esc(label)}"${labels}>` +
     `<defs>${defs}${patterns(p)}<path id="mland" d="${LAND_PATH}"/><clipPath id="mclip"><use href="#mland"/></clipPath></defs>` +
-    `<use href="#mland" class="mland"/>${cells}<path class="mstates" d="${STATE_PATH}"/><use href="#mland" class="mline"/>` +
-    (m
+    `<use href="#mland" class="mland"/>${cells}${worstOnly ? "" : `<path class="mstates" d="${STATE_PATH}"/>`}<use href="#mland" class="mline"/>` +
+    (m && !worstOnly
       ? `<g class="L La">${airDotsLayer(m)}</g>${m.cyclones
           .filter((c) => c.basin)
           .map(cycloneGlyph)
@@ -347,30 +360,39 @@ const WMARK = `<symbol id="wmark" viewBox="0 0 24 24"><path class="wm-bg" d="${S
  *  outline to select (LGD via bharatlas), every place a neutral dot, warned places marked. The
  *  states and dots are aria-hidden: the state picker and the list are the same path by keyboard.
  *  `dots` ([x, y, slug]) lets a click open the place under the pointer. */
-export function placesMap(
-  m: IndiaMap | undefined,
-  warned: string[],
-  lang: Lang,
-): { svg: string; dots: [number, number, string][] } {
+export function placesMap(m: IndiaMap | undefined, warned: string[], lang: Lang): { svg: string; dots: PlaceDots } {
   const warn = new Set(warned);
-  const dots = allSlugPlaces().map((p) => [r1(px(p.lon)), r1(py(p.lat)), p.slug] as [number, number, string]);
-  const plain = dots
+  const all = allSlugPlaces().map((p) => [r1(px(p.lon)), r1(py(p.lat)), p.slug] as const);
+  const plain = all
     .filter(([, , s]) => !warn.has(s))
     .map(([x, y]) => `M${x} ${y}h0`)
     .join("");
-  const marks = dots
+  const marks = all
     .filter(([, , s]) => warn.has(s))
     .map(([x, y]) => `<use href="#wmark" x="${r1(x - 3.5)}" y="${r1(y - 3.5)}" width="7" height="7"/>`)
     .join("");
-  const states = Object.entries(outlines as Record<string, string>)
-    .map(([st, d]) => `<path class="mstate" data-st="${stateAnchor(st)}" d="${d}"/>`)
-    .join("");
   const extra =
-    `<g class="mstates-hit" aria-hidden="true">${states}</g>` +
-    `<g class="pdots" aria-hidden="true"><path class="pdot-halo" d="${plain}"/><path class="pdot" d="${plain}"/>${marks}</g>`;
+    `<g class="mstates-hit" aria-hidden="true">${STATE_OUTLINES}</g>` +
+    `<g class="pdots" aria-hidden="true"><use href="#pdp" class="pdot-halo"/><use href="#pdp" class="pdot"/>${marks}</g>`;
   const label = t("Map of India with every place on mugilu. Select a state to see its places.", lang);
-  return { svg: mapSvg(m && { ...m, cyclones: [] }, "pl", label, lang, extra, WMARK), dots };
+  const dots = { s: all.map(([, , s]) => s).join(" "), p: all.flatMap(([x, y]) => [x, y]) };
+  return {
+    svg: mapSvg(m && { ...m, cyclones: [] }, "pl", label, lang, extra, WMARK + `<path id="pdp" d="${plain}"/>`, true),
+    dots,
+  };
 }
+
+/** The /places dots for the click handler, compact: the slugs space-separated, and their
+ *  x, y pairs in the same order (the page parses them on the first click). */
+export interface PlaceDots {
+  s: string;
+  p: number[];
+}
+
+/** The 36 clickable state outlines: the same for every request, built once. */
+const STATE_OUTLINES = Object.entries(outlines as Record<string, string>)
+  .map(([st, d]) => `<path class="mstate" data-st="${stateAnchor(st)}" d="${d}"/>`)
+  .join("");
 
 /** A place dot's hit radius on /places, in map units: its drawn radius (the 2.4 stroke's
  *  round cap, 1.2) plus 1. Further out, a click belongs to the state under it. */
@@ -399,9 +421,10 @@ export const MAP_JS = (lang: Lang) =>
 function set(v){im.setAttribute('data-layer',v);var l=sv&&sv.getAttribute('data-label-'+v);if(l)sv.setAttribute('aria-label',l);var ss=im.querySelectorAll('.stamps .stamp');if(ss.length>1){ss[0].classList.toggle('off',v==='a');ss[1].classList.toggle('off',v!=='a');}}
 im.addEventListener('change',function(e){if(e.target.name==='layer')set(e.target.value);});
 im.addEventListener('click',function(e){var b=e.target.closest('[data-layer-to]');if(!b)return;var r=im.querySelector('input[name=layer][value='+b.getAttribute('data-layer-to')+']');if(r){r.checked=true;set(r.value);r.focus();}});
-if(!sv)return;var D=im.querySelector('script[type="application/json"]');D=D?JSON.parse(D.textContent):null;
+if(!sv)return;var J=im.querySelector('script[type="application/json"]'),D=null;
+function dots(){if(!D){var o=JSON.parse(J.textContent),s=o.s.split(' ');D=s.map(function(k,i){return[o.p[2*i],o.p[2*i+1],k];});}return D;}
 sv.addEventListener('click',function(e){var p=sv.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(sv.getScreenCTM().inverse());
-if(D){var best=nearestDot(D,q.x,q.y,${DOT_HIT});if(best){location.href=LP+'/c/'+best;return;}var s=e.target.closest('.mstate');if(s&&window.openState)openState(s.getAttribute('data-st'));return;}
+if(J){var D=dots();var best=nearestDot(D,q.x,q.y,${DOT_HIT});if(best){location.href=LP+'/c/'+best;return;}var s=e.target.closest('.mstate');if(s&&window.openState)openState(s.getAttribute('data-st'));return;}
 if(e.target.closest('.mland,.mcells,.La'))location.href=LP+'/c/'+(${LAT1}-q.y/${S}).toFixed(2)+','+(${LON0}+q.x/${r1(KX * S * 1e4) / 1e4}).toFixed(2);});});})();`;
 
 /** The /places map's keys: what a dot is, what a warned mark is. */

@@ -118,9 +118,13 @@ test("placesMap: states are click targets keyed to the lists, places are neutral
   assert.match(svg, /<path class="mstate" data-st="st-karnataka" d="M/);
   assert.equal((svg.match(/class="mstate"/g) ?? []).length, 36);
   assert.match(svg, /<use href="#wmark"/);
-  assert.match(svg, /class="pdot"/);
-  assert.ok(dots.length > 700);
-  assert.ok(dots.every(([x, y, slug]) => x > 0 && y > 0 && /^[a-z0-9-]+$/.test(slug)));
+  assert.match(svg, /<use href="#pdp" class="pdot-halo"\/><use href="#pdp" class="pdot"\/>/, "the dots drawn once");
+  // Only the "what's worst" squares: no hidden heat, rain or air layers, no second set of state lines.
+  assert.doesNotMatch(svg, /class="L (Lh|Lr|La)"|class="mstates"/);
+  assert.ok(dots.s.split(" ").length > 700);
+  assert.equal(dots.p.length, dots.s.split(" ").length * 2);
+  assert.ok(dots.s.split(" ").every((slug) => /^[a-z0-9-]+$/.test(slug)));
+  assert.ok(dots.p.every((v) => v > 0));
 });
 
 const snap = (alerts: { headline: string; sent: string; issuer?: string }[]): WarningsSnapshot => ({

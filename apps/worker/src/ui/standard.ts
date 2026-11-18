@@ -292,7 +292,7 @@ body{margin:0}
 .mg .msum a{display:flex;align-items:center;justify-content:space-between;gap:var(--sp3);min-height:var(--hit);border-bottom:1px solid var(--line);text-decoration:none;font-weight:700}
 .mg .msum a span{font-weight:400;color:var(--muted);font-size:var(--t-sm)}
 .mg .imap.places .mcells{opacity:.45}
-.mg .msvg .mstate{fill:transparent;stroke:none;cursor:pointer}
+.mg .msvg .mstate{fill:transparent;stroke:var(--muted);stroke-width:.5;stroke-opacity:.6;cursor:pointer}
 .mg .msvg .mstate:hover{fill:color-mix(in srgb,var(--ink) 10%,transparent);stroke:var(--ink);stroke-width:.8}
 .mg .msvg .pdots{pointer-events:none}
 .mg .msvg .pdot{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round}
