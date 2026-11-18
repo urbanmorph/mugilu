@@ -181,3 +181,23 @@ test("warnedPlaces: the areas a warning names, as place slugs (initials like ASR
   assert.ok(slugs.includes("visakhapatnam"));
   assert.equal(slugs.length, 4);
 });
+
+import { DOT_HIT, nearestDot, MAP_JS } from "../src/ui/map";
+
+test("a /places click hits a dot only within its drawn radius plus 1; further out it is the state's", () => {
+  const dots: [number, number, string][] = [
+    [10, 10, "a"],
+    [20, 10, "b"],
+  ];
+  assert.equal(nearestDot(dots, 10.5, 10.5, DOT_HIT), "a");
+  assert.equal(nearestDot(dots, 19, 10, DOT_HIT), "b");
+  // 3 units away: inside the old 6-unit radius, now a state click.
+  assert.equal(nearestDot(dots, 13, 10, DOT_HIT), null);
+  assert.ok(DOT_HIT <= 2.5);
+});
+
+test("the map script ships the same hit function", () => {
+  const js = MAP_JS("en");
+  assert.ok(js.includes("var nearestDot=") && js.includes(`,${DOT_HIT});`));
+  assert.ok(!js.includes("bd=36"));
+});

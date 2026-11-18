@@ -146,15 +146,16 @@ if(pp[1]!=='c'||!pp[2])return;
 var id=decodeURIComponent(pp[2]),el=document.querySelector('h1.loc');
 // Coordinate comes from the URL (/c/lat,lon) or the page (named /c/slug pages).
 var ll=(el&&el.getAttribute('data-ll'))||id,c=ll.split(',');
-if(c.length<2||isNaN(+c[0]))return;
-var label=el?el.textContent.trim():id;
+var la=+c[0],lo=+c[1];if(c.length!==2||!isFinite(la)||!isFinite(lo))return;
+function clean(s){return String(s).replace(/[\\u0000-\\u001f\\u007f]/g,'').trim().slice(0,80);}
+var label=clean(el?el.textContent:id);
 // If they searched in a native script, remember it in that script (passed via #q=).
 var h=location.hash.match(/[#&]q=([^&]+)/);
-if(h){var q=decodeURIComponent(h[1]);if(/[^\\x00-\\x7F]/.test(q))label=q;}
+if(h){var q=decodeURIComponent(h[1]);if(/[^\\x00-\\x7F]/.test(q))label=clean(q)||label;}
 var K='mugilu:places',L;try{L=JSON.parse(localStorage.getItem(K))||[]}catch(e){L=[]}
 var p=L.filter(function(x){return x.id===id})[0];
 if(p){p.n=(p.n||0)+1;p.t=Date.now();if(!p.name)p.label=label}
-else{L.push({id:id,lat:c[0],lon:c[1],label:label,n:1,t:Date.now(),fav:false})}
+else{L.push({id:id,lat:la,lon:lo,label:label,n:1,t:Date.now(),fav:false})}
 L.sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});
 var f=L.filter(function(x){return x.fav}),r=L.filter(function(x){return !x.fav}).slice(0,Math.max(0,12-f.length));
 localStorage.setItem(K,JSON.stringify(f.concat(r)));

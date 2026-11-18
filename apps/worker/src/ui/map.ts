@@ -374,17 +374,36 @@ export function placesMap(
   return { svg: mapSvg(m && { ...m, cyclones: [] }, "pl", label, lang, extra, WMARK), dots };
 }
 
+/** A place dot's hit radius on /places, in map units: its drawn radius (the 2.4 stroke's
+ *  round cap, 1.2) plus 1. Further out, a click belongs to the state under it. */
+export const DOT_HIT = 2.2;
+
+/** The place dot a click at (x, y) lands on, or null: the nearest within `r`. Shipped to the
+ *  browser as source (MAP_JS), so it must stay plain, self-contained JavaScript. */
+export function nearestDot(dots: [number, number, string][], x: number, y: number, r: number): string | null {
+  let best: string | null = null;
+  let bd = r * r;
+  for (const d of dots) {
+    const k = (d[0] - x) * (d[0] - x) + (d[1] - y) * (d[1] - y);
+    if (k <= bd) {
+      bd = k;
+      best = d[2];
+    }
+  }
+  return best;
+}
+
 /** The map's behaviour: the layer switch (and its stamps and description), "See the rain", and a
  *  click: on home it opens the place under the pointer; on /places the nearest place dot, or
  *  else the state (scrolls to its list, via the page's `openState`). */
 export const MAP_JS = (lang: Lang) =>
-  `(function(){var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};document.querySelectorAll('.imap').forEach(function(im){var sv=im.querySelector('svg.msvg');
+  `(function(){var LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)};var nearestDot=${nearestDot.toString()};document.querySelectorAll('.imap').forEach(function(im){var sv=im.querySelector('svg.msvg');
 function set(v){im.setAttribute('data-layer',v);var l=sv&&sv.getAttribute('data-label-'+v);if(l)sv.setAttribute('aria-label',l);var ss=im.querySelectorAll('.stamps .stamp');if(ss.length>1){ss[0].classList.toggle('off',v==='a');ss[1].classList.toggle('off',v!=='a');}}
 im.addEventListener('change',function(e){if(e.target.name==='layer')set(e.target.value);});
 im.addEventListener('click',function(e){var b=e.target.closest('[data-layer-to]');if(!b)return;var r=im.querySelector('input[name=layer][value='+b.getAttribute('data-layer-to')+']');if(r){r.checked=true;set(r.value);r.focus();}});
 if(!sv)return;var D=im.querySelector('script[type="application/json"]');D=D?JSON.parse(D.textContent):null;
 sv.addEventListener('click',function(e){var p=sv.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(sv.getScreenCTM().inverse());
-if(D){var best=null,bd=36;D.forEach(function(d){var k=(d[0]-q.x)*(d[0]-q.x)+(d[1]-q.y)*(d[1]-q.y);if(k<bd){bd=k;best=d;}});if(best){location.href=LP+'/c/'+best[2];return;}var s=e.target.closest('.mstate');if(s&&window.openState)openState(s.getAttribute('data-st'));return;}
+if(D){var best=nearestDot(D,q.x,q.y,${DOT_HIT});if(best){location.href=LP+'/c/'+best;return;}var s=e.target.closest('.mstate');if(s&&window.openState)openState(s.getAttribute('data-st'));return;}
 if(e.target.closest('.mland,.mcells,.La'))location.href=LP+'/c/'+(${LAT1}-q.y/${S}).toFixed(2)+','+(${LON0}+q.x/${r1(KX * S * 1e4) / 1e4}).toFixed(2);});});})();`;
 
 /** The /places map's keys: what a dot is, what a warned mark is. */

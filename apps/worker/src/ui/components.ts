@@ -3,6 +3,7 @@ import { LANGS, LANG_NAME, lp, t, type Lang } from "../i18n";
 import type { RiskBand } from "../score";
 import { installButton } from "../install";
 import { qrSvg } from "../qr";
+import { CLIENT_ESC } from "./shell";
 
 // The design standard's components (supporting-docs/redesign/design-standard.md §4), one
 // function each, returning markup for the classes in standard.ts. Pages compose these and
@@ -676,7 +677,7 @@ export function comboboxJs(inputId: string, lang: Lang, o: { suffix?: string; on
   const NONE = JSON.stringify(t("No place in India matches that. Try another spelling, or a lat,lon.", lang));
   return `(function(){var ID=${JSON.stringify(inputId)},q=document.getElementById(ID),ac=document.getElementById(ID+'-list'),st=document.getElementById(ID+'-status');if(!q||!ac)return;
 var items=[],ix=-1,tm,seq=0,SUF=${o.suffix ?? "''"};
-function esc(s){return String(s).replace(/[<&>"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+${CLIENT_ESC}
 var pick=${o.onPick ?? `function(x){location.href=${LP}+'/c/'+x.lat+','+x.lon+SUF;}`};
 function show(b){q.setAttribute('aria-expanded',b?'true':'false');ac.hidden=!b;}
 function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].setAttribute('aria-selected',i===ix?'true':'false');if(ix>=0)q.setAttribute('aria-activedescendant',ID+'-o'+ix);else q.removeAttribute('aria-activedescendant');}

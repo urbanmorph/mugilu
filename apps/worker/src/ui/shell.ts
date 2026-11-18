@@ -114,4 +114,5 @@ export function relTime(iso: string): string {
 }
 
 /** Escapes text for innerHTML in a page script; each script scope that builds HTML defines it. */
-export const CLIENT_ESC = `function esc(s){return String(s).replace(/[<&>]/g,function(c){return c==='<'?'&lt;':c==='>'?'&gt;':'&amp;';});}`;
+/** The one client-side escape, for text and attribute positions alike (& < > " '). */
+export const CLIENT_ESC = `function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}`;
