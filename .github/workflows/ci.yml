@@ -39,7 +39,31 @@ jobs:
       - name: Test
         run: pnpm test
       - name: Format check
-        run: pnpm dlx prettier@3 --check "src/**/*.ts" "test/**/*.ts"
+        run: pnpm exec prettier --check "src/**/*.ts" "test/**/*.ts"
+
+  # A PR from this repo gets a preview: a new worker VERSION uploaded with its own URL
+  # (pr-<number>-mugilu-worker.<subdomain>.workers.dev). It is not deployed: production
+  # traffic stays on the live version, and a preview version runs no crons. It shares
+  # the production KV, R2 and D1, so writes made on the preview (alerts, usage counts)
+  # are real. Forks get no secrets and no preview.
+  preview:
+    needs: test
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Upload a preview version
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: apps/worker
+          command: versions upload --preview-alias pr-${{ github.event.pull_request.number }}
 
   deploy:
     needs: test
