@@ -196,6 +196,10 @@ export interface SearchOpts {
   hint?: string;
   /** The form's action: the place lookup. */
   action: string;
+  /** Fields the form sends along (e.g. kiosk=1 on the display setup). */
+  hidden?: [name: string, value: string][];
+  /** Show the submit button as this pictogram, `button` becoming its accessible name. */
+  buttonIcon?: IconName;
 }
 
 /** Search with autocomplete as the ARIA combobox pattern: the input controls a listbox; arrow
@@ -206,10 +210,15 @@ export function searchBox(o: SearchOpts): string {
   return (
     `<form class="search" role="search" aria-label="${label}" action="${esc(o.action)}" method="get">` +
     (o.showLabel ? `<label for="${id}">${label}</label>` : "") +
+    (o.hidden ?? []).map(([n, v]) => `<input type="hidden" name="${esc(n)}" value="${esc(v)}">`).join("") +
     `<div class="sbox"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${SEARCH_ICON}"/></svg>` +
     `<input type="search" name="q" id="${id}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-list"` +
     `${o.showLabel ? "" : ` aria-label="${label}"`}${o.placeholder ? ` placeholder="${esc(o.placeholder)}"` : ""} autocomplete="off" required>` +
-    (o.button ? `<button class="btn primary" type="submit">${esc(o.button)}</button>` : "") +
+    (o.button
+      ? o.buttonIcon
+        ? `<button class="btn primary" type="submit" aria-label="${esc(o.button)}">${ico(o.buttonIcon)}</button>`
+        : `<button class="btn primary" type="submit">${esc(o.button)}</button>`
+      : "") +
     `</div><ul class="ac" role="listbox" id="${id}-list" aria-label="${label}" hidden></ul>` +
     `<p class="vh" aria-live="polite" id="${id}-status"></p>${o.hint ?? ""}</form>`
   );
@@ -632,3 +641,27 @@ export function embedCard(o: EmbedCardOpts, lang: Lang): string {
     `<div class="t-legal disc-long">${esc(t(DISCLAIMER_FULL, lang))}</div><div class="t-legal disc-short">${esc(t(DISCLAIMER_SHORT, lang))}</div></a>`
   );
 }
+
+// ── phase2c: the Search combobox's behaviour ─────────────────────────────────────────
+/** The ARIA combobox for a searchBox: suggestions from /suggest as options, arrow keys move
+ *  aria-activedescendant, Enter or a click picks, Escape closes, the status line says how many
+ *  places match. Picking opens that place's page (plus `suffix`, a JS string expression), or
+ *  calls `onPick` (a JS function expression taking {label, sublabel, lat, lon}). */
+export function comboboxJs(inputId: string, lang: Lang, o: { suffix?: string; onPick?: string } = {}): string {
+  const LP = JSON.stringify(lang === "en" ? "" : "/" + lang);
+  const N = JSON.stringify(t("{n} places", lang));
+  const NONE = JSON.stringify(t("No place in India matches that. Try another spelling, or a lat,lon.", lang));
+  return `(function(){var ID=${JSON.stringify(inputId)},q=document.getElementById(ID),ac=document.getElementById(ID+'-list'),st=document.getElementById(ID+'-status');if(!q||!ac)return;
+var items=[],ix=-1,tm,seq=0,SUF=${o.suffix ?? "''"};
+function esc(s){return String(s).replace(/[<&>"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+var pick=${o.onPick ?? `function(x){location.href=${LP}+'/c/'+x.lat+','+x.lon+SUF;}`};
+function show(b){q.setAttribute('aria-expanded',b?'true':'false');ac.hidden=!b;}
+function paint(){for(var i=0;i<ac.children.length;i++)ac.children[i].setAttribute('aria-selected',i===ix?'true':'false');if(ix>=0)q.setAttribute('aria-activedescendant',ID+'-o'+ix);else q.removeAttribute('aria-activedescendant');}
+function hide(){ac.innerHTML='';items=[];ix=-1;show(false);paint();}
+function go(i){var x=items[i];if(x){hide();pick(x);}}
+q.addEventListener('input',function(){var v=q.value.trim();clearTimeout(tm);if(v.length<2){hide();if(st)st.textContent='';return;}var s=++seq;tm=setTimeout(function(){fetch('/suggest?q='+encodeURIComponent(v)).then(function(r){return r.json();}).then(function(d){if(s!==seq)return;items=d.suggestions||[];ix=-1;ac.innerHTML=items.map(function(x,i){return '<li role="option" id="'+ID+'-o'+i+'" aria-selected="false" data-i="'+i+'">'+esc(x.label)+(x.sublabel?'<span>'+esc(x.sublabel)+'</span>':'')+'</li>';}).join('');show(items.length>0);if(st)st.textContent=items.length?${N}.replace('{n}',items.length):${NONE};}).catch(function(){if(s===seq)hide();});},150);});
+q.addEventListener('keydown',function(e){if(e.key==='Escape'){hide();return;}if(!items.length)return;if(e.key==='ArrowDown'){ix=(ix+1)%items.length;e.preventDefault();paint();}else if(e.key==='ArrowUp'){ix=(ix-1+items.length)%items.length;e.preventDefault();paint();}else if(e.key==='Enter'&&ix>=0){e.preventDefault();go(ix);}});
+ac.addEventListener('mousedown',function(e){var li=e.target.closest('li');if(li){e.preventDefault();go(+li.getAttribute('data-i'));}});
+q.addEventListener('blur',function(){setTimeout(hide,150);});})();`;
+}
+// ── /phase2c ─────────────────────────────────────────────────────────────────────────

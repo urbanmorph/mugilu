@@ -64,9 +64,9 @@ test("renderDisplayBuilder: pick a place, weight it, open the kiosk", () => {
 
 test("renderDisplayBuilder: a chosen persona carries into the tiles and the search", () => {
   const html = renderDisplayBuilder("elderly");
-  assert.match(html, /\/c\/bengaluru\?kiosk&as=elderly/);
-  assert.match(html, /name="as" value="elderly"/);
-  assert.match(html, /class="on"/); // the persona pill is selected
+  assert.match(html, /\/c\/bengaluru\?kiosk&amp;as=elderly/);
+  assert.match(html, /<input type="hidden" name="as" value="elderly">/);
+  assert.match(html, /value="elderly" checked/); // the persona is selected
 });
 
 test("renderKioskPage: a persona display shows that group's own step", () => {
@@ -147,10 +147,13 @@ test("renderDisplayBuilder: any place, not only cities, and a button for where t
   const html = renderDisplayBuilder("everyone");
   assert.match(html, /placeholder="A city, area or address"/);
   assert.match(html, /A display can show a city, a neighbourhood or an exact point/);
-  assert.match(html, /<button id="dhere"[^>]*hidden>[\s\S]*Use this screen&#39;s location<\/button>/);
-  assert.match(html, /getCurrentPosition[\s\S]*'\/c\/'\+p\.coords\.latitude\.toFixed\(4\)[\s\S]*\?kiosk/);
-  // a chosen persona carries into the located display too
-  assert.match(renderDisplayBuilder("elderly"), /'\?kiosk'\+"&as=elderly"/);
+  assert.match(
+    html,
+    /<button type="button" class="btn" id="dhere" hidden>[\s\S]*Use this screen&#39;s location<\/button>/,
+  );
+  // where the screen stands becomes the place (the preview and the link follow, persona kept)
+  assert.match(html, /getCurrentPosition\(function\(p\)\{place=p\.coords\.latitude\.toFixed\(4\)/);
+  assert.match(html, /function url\(\)\{return LP\+'\/c\/'\+place\+'\?kiosk'\+q\(\);\}/);
 });
 
 test("renderConditionsPage: a visible 'Put this on a screen' for this exact point and persona", () => {

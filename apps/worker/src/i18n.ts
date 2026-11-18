@@ -92,6 +92,14 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   Dark: {},
   System: {},
   "Under an official warning now": {},
+  // phase2c: /warnings, /display, 404, and the search combobox
+  "As of": {},
+  Avalanche: {},
+  Preview: {},
+  "{n} places": {},
+  "No place in India matches that. Try another spelling, or a lat,lon.": {},
+  "Original alert (CAP): {issuer}, {time}": {},
+  // /phase2c
   // /methodology prose (kn): hand-composed from the reviewed KANNADA_GLOSSARY + existing
   // UI strings (no Sarvam pass), proper nouns/acronyms kept Latin. Pending native
   // sign-off (supporting-docs/METHODOLOGY_KANNADA_REVIEW.md). Open calls flagged there:

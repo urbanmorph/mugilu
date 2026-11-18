@@ -185,7 +185,7 @@ test("conditions /c (en): unchanged — English format words, unprefixed links",
 
 test("display builder (kn): tiles + form + button carry the prefix / localise", () => {
   const html = renderDisplayBuilder("everyone", "kn");
-  assert.match(html, /class="dtile" href="\/kn\/c\/[a-z]+\?kiosk"/); // tile prefixed
+  assert.match(html, /<a href="\/kn\/c\/[a-z]+\?kiosk" data-slug=/); // tile prefixed
   assert.match(html, /action="\/kn\/go"/); // search form prefixed
   assert.match(html, /ಪ್ರದರ್ಶನವನ್ನು ತೆರೆಯಿರಿ/); // "Open display" localised
 });
