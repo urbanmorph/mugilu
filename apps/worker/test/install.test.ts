@@ -266,16 +266,16 @@ test("pages: every page, language, kiosk and embed opt into viewport-fit=cover",
 });
 
 test("pages: header clears the top/side insets, the page end clears the bottom one", () => {
-  // The signage shell (header .sh, body.mg) and the old one (.bar, body), while pages move over.
-  for (const [html, head, body] of [
-    [renderHome(), ".sh", "body.mg"],
-    [renderHome(undefined, undefined, undefined, "kn"), ".sh", "body.mg"],
-    [renderAbout(), ".bar", "body"],
+  // Every page here is on the signage shell: the header is .sh.
+  for (const [html, header] of [
+    [renderHome(), ".sh"],
+    [renderHome(undefined, undefined, undefined, "kn"), ".sh"],
+    [renderAbout(), ".sh"],
   ]) {
-    const bar = rules(html, head).join(";");
+    const bar = rules(html, header).join(";");
     for (const side of ["top", "left", "right"]) assert.match(bar, new RegExp(`env\\(safe-area-inset-${side}\\)`));
     assert.doesNotMatch(bar, /safe-area-inset-bottom/);
-    assert.match(rules(html, body).join(";"), /padding-bottom:env\(safe-area-inset-bottom\)/);
+    assert.match(rules(html, "body").join(";"), /padding-bottom:env\(safe-area-inset-bottom\)/);
   }
 });
 

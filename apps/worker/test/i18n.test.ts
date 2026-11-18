@@ -209,7 +209,7 @@ test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss presen
   const kn = renderAbout("kn");
   assert.match(kn, /<html lang="kn">/);
   assert.match(kn, /ಜನರಿಗೆ ಸಂಪೂರ್ಣ ಆಕಾಶದ ನೋಟ/); // lead
-  assert.match(kn, /<span>mugilu ಏಕೆ<\/span>/); // heading, brand Latin
+  assert.match(kn, />mugilu ಏಕೆ<\/h2>/); // heading, brand Latin
   assert.match(kn, /ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಇರುವ ಕನ್ನಡ ಪದ/); // the meaning gloss
   assert.match(kn, /ಡೆವಲಪರ್‌ಗಳಿಗೆ/); // developer label (tech, not property)
   assert.match(kn, /CPCB/); // proper nouns stay Latin
@@ -258,7 +258,7 @@ test("renderTerms(kn): prose localized, source names + brand Latin, links preser
   assert.match(kn, /← mugilu ಗೆ ಹಿಂತಿರುಗಿ/); // back-link text localized
   // English is byte-for-byte the pre-i18n page: inline markup + entity + links intact
   const en = renderTerms("en");
-  assert.match(en, /<h1 class="ahero">Terms &amp; attribution<\/h1>/);
+  assert.match(en, /<h1 class="t-title">Terms &amp; attribution<\/h1>/);
   assert.match(en, /<b>code is MIT<\/b>/);
   assert.match(en, /A digital commons by <a href="https:\/\/urbanmorph\.com">urbanmorph<\/a>, alongside/);
 });
@@ -302,7 +302,7 @@ test("SEO: /c conditions description localized (place verbatim); en byte-identic
 test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {
   const about = renderAbout("hi");
   assert.match(about, /<html lang="hi">/);
-  assert.match(about, /Noto (Serif|Sans) Devanagari/); // Indic font override
+  assert.match(about, /family=Anek\+Devanagari/); // the Devanagari face of the signage type
   assert.match(about, /पूरे आकाश/); // lead localized (Sarvam + restore)
   assert.match(about, /mugilu/); // brand stays Latin, not मुगिलु
   assert.doesNotMatch(about, /मुगिल|मगुल|भारतल|सी\.पी\.सी/); // no residual transliteration

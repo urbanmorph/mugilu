@@ -1,5 +1,4 @@
 import { type Conditions, type NormalizedStation, type Warning } from "../types";
-import { type NationalHighlights } from "../highlights";
 import { AQI_BAND_LABEL } from "../aqi";
 import { compass, drops, gauge, lifeBlocks, pollutantBars, uvSteps, worstPollutant } from "../glyphs";
 import { forPersona, isDriver, km } from "../readings";
@@ -22,10 +21,9 @@ import {
   windLevelOf,
 } from "../score";
 import { RISK_COLOR, levelColor, tintOf } from "../palette";
-import { lp, t, type Lang } from "../i18n";
+import { t, type Lang } from "../i18n";
 import { HAZARDS_SHORT } from "../hazards";
 import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnormals";
-import { relTime } from "../ui/shell";
 
 // The worker-rendered HTML pages. Layperson-first, mobile-first, self-contained
 // (inline CSS, no framework). All pages share chrome via shell().

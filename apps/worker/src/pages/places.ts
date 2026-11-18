@@ -67,14 +67,18 @@ export function renderPlaces(
 
   const warnBox = official
     ? band(
-        `<section class="panel strong" aria-labelledby="uw"><div class="bar">${ico("warn")}<span id="uw">${T("Under an official warning now")}</span></div><div class="in grid">` +
-          `<p><b>${esc(official.title)}</b> · ${esc(issuerName(official.alert.issuer))} · <span class="t-meta">${esc(istTime(new Date(official.alert.sent).toISOString()))}</span></p>` +
-          placeTiles(
-            allSlugPlaces()
-              .filter((p) => isWarned.has(p.slug))
-              .map((p) => placeTile(lp(`/c/${p.slug}`, lang), p.name, true, lang)),
-          ) +
-          `<p><a href="${lp("/warnings", lang)}" class="back">${T("Active warnings")} →</a></p></div></section>`,
+        panel(
+          stack(
+            `<p><b>${esc(official.title)}</b> · ${esc(issuerName(official.alert.issuer))} · <span class="t-meta">${esc(istTime(new Date(official.alert.sent).toISOString()))}</span></p>` +
+              placeTiles(
+                allSlugPlaces()
+                  .filter((p) => isWarned.has(p.slug))
+                  .map((p) => placeTile(lp(`/c/${p.slug}`, lang), p.name, true, lang)),
+              ) +
+              `<p><a href="${lp("/warnings", lang)}" class="back">${T("Active warnings")} →</a></p>`,
+          ),
+          { title: t("Under an official warning now", lang), icon: "warn", id: "uw", strong: true },
+        ),
       )
     : "";
 

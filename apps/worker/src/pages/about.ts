@@ -1,13 +1,13 @@
 import { SOURCES } from "../sources";
 import { esc } from "../html";
-import { lp, t, type Lang } from "../i18n";
+import { t, type Lang } from "../i18n";
 import { HAZARDS } from "../hazards";
-import { GH_MARK, HOME_OG, SITE, UM_ICON, ld, shell, withToc } from "../ui/shell";
-import { icon } from "./read";
+import { ld, UM_ICON } from "../ui/shell";
+import { cardBody, cardGrid, cardStack, faq, pull } from "../ui/components";
+import { P, splitAs, textPage } from "./text";
 
-// Shared chrome for the long-form pages (about, terms, 404): editorial serif
-// headlines + a calm sky-tinted backdrop, matching the /c language. Keeps the
-// .alead2/.amuted/.alist classes /terms still uses.
+// Old-shell styles still used by /display, /warnings and 404 until those pages move to the
+// signage shell (phase 2); the text pages below no longer use them.
 export const ABOUT_CSS = `
 body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg)),var(--bg) 42%) var(--bg) no-repeat}
 .ahero{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,8.5vw,3rem);line-height:1.05;letter-spacing:-.02em;margin:1.3rem 0 .6rem}
@@ -39,9 +39,6 @@ body{background:linear-gradient(180deg,color-mix(in srgb,var(--sky) 13%,var(--bg
 .toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--ink)}}
 `;
 
-/** The About page: the origin story + the dual nature (for people, and as
- *  infrastructure). Person-first, jargon-free. The "Build on it" section is a
- *  stub that grows as the API / MCP land. */
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
 export const SOURCES_FAQ =
@@ -53,128 +50,177 @@ export const SOURCES_ABOUT =
 export const boldSourceNames = (text: string) =>
   SOURCES.flatMap((s) => s.names).reduce((out, n) => out.split(n).join(`<b>${n}</b>`), esc(text));
 
+// Q&A that ALSO ships as FAQPage structured data: the visible list and the schema are one list.
+const FAQS = [
+  {
+    q: "Is it safe to go outside right now?",
+    a: "mugilu names the single worst hazard over your exact location and says plainly what to do, weighted for who you are: asthma, older adults, children, outdoor workers, or a heart condition. It is informational, not medical or safety advice; for official warnings, consult NDMA and IMD.",
+  },
+  {
+    q: "What is wet-bulb temperature, and why does mugilu show it?",
+    a: "Wet-bulb is the temperature a wet thermometer settles at: it folds heat and humidity into the one number that decides whether your body can still cool itself. Above about 32°C wet-bulb, even resting in shade turns dangerous. Ordinary feels-like numbers hide this, so mugilu surfaces it.",
+  },
+  { q: "Where does mugilu's data come from?", a: SOURCES_FAQ },
+  {
+    q: "Is mugilu free?",
+    a: "Yes. It is free, open source (MIT) and non-commercial, with no sign-up. Every reading is also available as JSON, Markdown, an embeddable card, an OpenAPI spec, and an MCP server for AI agents.",
+  },
+  {
+    q: "How current are the readings?",
+    a: "Air refreshes hourly, the national heat, rain, UV and dust grid every few hours, and official warnings hourly. Every reading is timestamped with how long ago it was measured.",
+  },
+];
+
+const FOR_PEOPLE =
+  "Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.";
+const FREE =
+  "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.";
+const SATHYA =
+  "Sathya Sankaran wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.";
+const REF =
+  "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.";
+
+/** The About page: the origin story and the two sides (for people, and as infrastructure). */
 export function renderAbout(lang: Lang = "en"): string {
-  // Q&A that ALSO ships as FAQPage structured data (answer-engine + SERP pickup);
-  // the visible copy below and the schema are generated from this one list.
-  const faqs = [
-    {
-      q: "Is it safe to go outside right now?",
-      a: "mugilu names the single worst hazard over your exact location and says plainly what to do, weighted for who you are: asthma, older adults, children, outdoor workers, or a heart condition. It is informational, not medical or safety advice; for official warnings, consult NDMA and IMD.",
-    },
-    {
-      q: "What is wet-bulb temperature, and why does mugilu show it?",
-      a: "Wet-bulb is the temperature a wet thermometer settles at: it folds heat and humidity into the one number that decides whether your body can still cool itself. Above about 32°C wet-bulb, even resting in shade turns dangerous. Ordinary feels-like numbers hide this, so mugilu surfaces it.",
-    },
-    {
-      q: "Where does mugilu's data come from?",
-      a: SOURCES_FAQ,
-    },
-    {
-      q: "Is mugilu free?",
-      a: "Yes. It is free, open source (MIT) and non-commercial, with no sign-up. Every reading is also available as JSON, Markdown, an embeddable card, an OpenAPI spec, and an MCP server for AI agents.",
-    },
-    {
-      q: "How current are the readings?",
-      a: "Air refreshes hourly, the national heat, rain, UV and dust grid every few hours, and official warnings hourly. Every reading is timestamped with how long ago it was measured.",
-    },
-  ];
-  // Prose: English keeps its inline markup; hi/kn render the reviewed translated text
-  // (proper nouns already Latin). Precomputed to avoid nested template literals.
-  const heroH1 =
-    lang === "en"
-      ? "The open sky of India,<br>one coordinate at a time."
-      : t("The open sky of India, one coordinate at a time.", lang);
-  const sathya =
-    lang === "en"
-      ? `<a href="https://www.sathyasankaran.com">Sathya Sankaran</a> wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.`
-      : t(
-          "Sathya Sankaran wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.",
+  const en = lang === "en";
+  const sathya = en
+    ? SATHYA.replace("Sathya Sankaran", `<a href="https://www.sathyasankaran.com">Sathya Sankaran</a>`)
+    : t(SATHYA, lang);
+
+  // For people: one paragraph over three boxes (two sentences, the line in a pull quote, the close).
+  const people = splitAs(FOR_PEOPLE, FOR_PEOPLE, lang, 4);
+  const peopleBody = people ? P(`${people[0]} ${people[1]}`) + pull(people[2]) + P(people[3]) : P(t(FOR_PEOPLE, lang));
+
+  // Where it comes from: the first sentence as a pull quote, the credits in a box, the licence.
+  const where = splitAs(boldSourceNames(SOURCES_ABOUT), SOURCES_ABOUT, lang, 3);
+  const whereBody = where ? pull(where[0]) + cardStack([P(where[1])]) + P(where[2]) : P(t(SOURCES_ABOUT, lang));
+
+  const freeEn = FREE.replace("non-commercial, for good", "<b>non-commercial, for good</b>")
+    .replace("bharatlas", `<a href="https://bharatlas.com">bharatlas</a>`)
+    .replace("mdshare", `<a href="https://mdshare.live">mdshare</a>`);
+  const free = splitAs(freeEn, FREE, lang, 3);
+  const freeBody = free ? pull(free[0]) + P(`${free[1]} ${free[2]}`) : P(t(FREE, lang));
+
+  const ref = en ? REF.replace("?ref=your-app", "<b>?ref=your-app</b>") : t(REF, lang);
+  const openapi = en ? "OpenAPI spec" : t("OpenAPI spec", lang);
+  const snapshot = en ? "snapshot image" : t("snapshot image", lang);
+  const build = cardGrid([
+    cardBody(
+      t("For AI agents", lang),
+      P(
+        t(
+          "connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.",
           lang,
-        );
-  const refPara =
-    lang === "en"
-      ? `Add <b>?ref=your-app</b> to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.`
-      : t(
-          "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.",
-          lang,
-        );
-  const wherePara = lang === "en" ? boldSourceNames(SOURCES_ABOUT) : t(SOURCES_ABOUT, lang);
-  const freePara =
-    lang === "en"
-      ? `The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is <b>non-commercial, for good</b>, the third in a small set of public tools alongside <a href="https://bharatlas.com">bharatlas</a> and <a href="https://mdshare.live">mdshare</a>.`
-      : t(
-          "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.",
-          lang,
-        );
-  const builtBy =
-    lang === "en"
-      ? `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`
-      : t("Built by urbanmorph, led by Sathya Sankaran.", lang);
-  // Descriptive link texts in the "Build on it" list (format tokens like JSON/Markdown
-  // stay Latin; these two are prose, so they localise).
-  const aboutOpenapi = lang === "en" ? "OpenAPI spec" : t("OpenAPI spec", lang);
-  const aboutSnapshot = lang === "en" ? "snapshot image" : t("snapshot image", lang);
-  const body = `
-  <article class="ax">
-  <h1 class="ahero">${heroH1}</h1>
-  <p class="alead">${t("A whole-sky view for people, and shared infrastructure for anyone building on top of it.", lang)}</p>
+        )
+          .replace("{mcp}", `<a href="/mcp">/mcp</a>`)
+          .replace("{llms}", `<a href="/llms.txt">llms.txt</a>`),
+      ),
+      "ai",
+    ),
+    cardBody(
+      t("For developers", lang),
+      P(
+        t("a documented {openapi}, and every reading as {json} or {md}.", lang)
+          .replace("{openapi}", `<a href="/openapi.json">${openapi}</a>`)
+          .replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`)
+          .replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`),
+      ),
+      "code",
+    ),
+    cardBody(
+      t("Embed it", lang),
+      P(
+        t("a live card in one line of HTML ({embed}), or a {png}.", lang)
+          .replace("{embed}", `<a href="/embed/12.97,77.59"><code>/embed/{lat},{lon}</code></a>`)
+          .replace("{png}", `<a href="/c/12.97,77.59.png">${snapshot}</a>`),
+      ),
+      "embed",
+    ),
+    cardBody(
+      t("Put it on a screen", lang),
+      P(
+        t("a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.", lang).replace(
+          "{display}",
+          `<a href="/display">/display</a>`,
+        ),
+      ),
+      "screen",
+    ),
+  ]);
 
-  <p class="ah">${icon("compass")}<span>${t("Why mugilu", lang)}</span></p>
-  <p class="atext">${t("For years, people across India have made the sky legible one piece at a time: a map of one city's air, a thread about a heatwave, a chart of last year's monsoon. Brilliant work, but scattered, and easy to lose by the next season.", lang)}</p>
-  <p class="atext">${sathya}</p>
-  <p class="atext">${t("That is mugilu.", lang)}</p>
-  <p class="atext amuted">${t("mugilu is the Kannada word for the open sky.", lang)}</p>
+  const builtBy = en
+    ? `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`
+    : t("Built by urbanmorph, led by Sathya Sankaran.", lang);
+  const credit =
+    `<div class="credit"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"><div>${P(builtBy)}` +
+    `<p class="links"><a href="https://github.com/urbanmorph/mugilu">${t("Source on GitHub, drop a star if it's useful", lang)}</a></p></div></div>`;
 
-  <p class="ah">${icon("users")}<span>${t("For people", lang)}</span></p>
-  <p class="atext">${t("Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.", lang)}</p>
-
-  <p class="ah" id="build">${icon("code")}<span>${t("Build on it", lang)}</span></p>
-  <p class="atext">${t("mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.", lang)}</p>
-  <ul class="alist">
-    <li>${icon("code")}<span class="t"><b>${t("For AI agents", lang)}</b>: ${t("connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.", lang).replace("{mcp}", `<a href="/mcp">/mcp</a>`).replace("{llms}", `<a href="/llms.txt">llms.txt</a>`)}</span></li>
-    <li>${icon("layers")}<span class="t"><b>${t("For developers", lang)}</b>: ${t("a documented {openapi}, and every reading as {json} or {md}.", lang).replace("{openapi}", `<a href="/openapi.json">${aboutOpenapi}</a>`).replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`).replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`)}</span></li>
-    <li>${icon("pin")}<span class="t"><b>${t("Embed it", lang)}</b>: ${t("a live card in one line of HTML ({embed}), or a {png}.", lang).replace("{embed}", `<a href="/embed/12.97,77.59">/embed/{lat},{lon}</a>`).replace("{png}", `<a href="/c/12.97,77.59.png">${aboutSnapshot}</a>`)}</span></li>
-    <li>${icon("sun")}<span class="t"><b>${t("Put it on a screen", lang)}</b>: ${t("a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.", lang).replace("{display}", `<a href="/display">/display</a>`)}</span></li>
-  </ul>
-  <p class="abuild">${refPara}</p>
-
-  <p class="ah">${icon("layers")}<span>${t("Where it comes from", lang)}</span></p>
-  <p class="atext">${wherePara}</p>
-
-  <p class="ah">${icon("heart")}<span>${t("Why it's free", lang)}</span></p>
-  <p class="atext">${freePara}</p>
-
-  <p class="ah">${icon("compass")}<span>${t("Common questions", lang)}</span></p>
-  ${faqs.map((f) => `<p class="atext"><b>${t(f.q, lang)}</b><br>${t(f.a, lang)}</p>`).join("\n  ")}
-
-  <div class="builtby">
-    <a href="https://urbanmorph.com" aria-label="Urban Morph"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"></a>
-    <div>
-      <p class="bb-by">${builtBy}</p>
-      <a class="star" href="https://github.com/urbanmorph/mugilu">${GH_MARK} ${t("Source on GitHub, drop a star if it's useful", lang)}</a>
-    </div>
-  </div>
-
-  <p class="adisc">${t("Informational only, not for medical, emergency, or safety-critical decisions. For official warnings, consult NDMA and IMD.", lang)}</p>
-  <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>
-  </article>`;
-  return shell(t("About mugilu: the open sky of India", lang), withToc(body, lang), ABOUT_CSS, {
+  return textPage({
+    path: "/about",
+    lang,
+    title: t("About mugilu: the open sky of India", lang),
     desc: t(
       `mugilu shows the ${HAZARDS} over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.`,
       lang,
     ),
-    canonical: `${SITE}/about`,
     jsonLd: ld({
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: faqs.map((f) => ({
+      mainEntity: FAQS.map((f) => ({
         "@type": "Question",
         name: t(f.q, lang),
         acceptedAnswer: { "@type": "Answer", text: t(f.a, lang) },
       })),
     }),
-    ogImage: HOME_OG,
-    lang,
-    wide: true,
+    kicker: t("About", lang),
+    h1: t("The open sky of India, one coordinate at a time.", lang),
+    lead: t("A whole-sky view for people, and shared infrastructure for anyone building on top of it.", lang),
+    scripts: ["kn"],
+    sections: [
+      {
+        id: "why",
+        title: t("Why mugilu", lang),
+        icon: "cloud",
+        body:
+          P(
+            t(
+              "For years, people across India have made the sky legible one piece at a time: a map of one city's air, a thread about a heatwave, a chart of last year's monsoon. Brilliant work, but scattered, and easy to lose by the next season.",
+              lang,
+            ),
+          ) +
+          P(sathya) +
+          pull(t("That is mugilu.", lang)) +
+          cardGrid(
+            [
+              `<p class="t-lead"><span lang="kn">ಮುಗಿಲು</span></p>${P(t("mugilu is the Kannada word for the open sky.", lang))}`,
+            ],
+            2,
+            true,
+          ),
+      },
+      { id: "people", title: t("For people", lang), icon: "people", body: peopleBody },
+      {
+        id: "build",
+        title: t("Build on it", lang),
+        icon: "code",
+        body:
+          P(
+            t(
+              "mugilu is meant to be built on, not just looked at. Every reading is also open, machine-readable data, so you can put the whole sky behind your own map, story, dashboard or alert, and spend your time on the part that matters: the telling, and the action.",
+              lang,
+            ),
+          ) +
+          build +
+          P(ref),
+      },
+      { id: "sources", title: t("Where it comes from", lang), icon: "stack", body: whereBody },
+      { id: "free", title: t("Why it's free", lang), icon: "commons", body: freeBody },
+      {
+        id: "faq",
+        title: t("Common questions", lang),
+        icon: "question",
+        body: faq(FAQS.map((f) => [t(f.q, lang), t(f.a, lang)])) + credit,
+      },
+    ],
   });
 }

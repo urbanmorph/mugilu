@@ -62,10 +62,11 @@ test("renderPlaces: places under an official cyclone warning are marked, never w
     ],
   };
   const html = renderPlaces("en", { warnings });
-  assert.match(html, /<span id="uw">Under an official warning now<\/span>/);
+  assert.match(html, /<section class="panel strong" aria-labelledby="uw"><h2 class="bar" id="uw">/);
+  assert.match(html, /<span>Under an official warning now<\/span><\/h2>/);
   assert.match(html, /<b>Severe Cyclonic Storm Akvan<\/b> · IMD Visakhapatnam/);
   assert.match(html, /<a class="ptile warn" href="\/c\/anakapalli">/);
   assert.match(html, /<li><a href="\/c\/visakhapatnam">[^]*?<b>Visakhapatnam<\/b><\/a><\/li>/);
   assert.match(html, /<use href="#wmark"/);
-  assert.doesNotMatch(renderPlaces(), /Under an official warning now<\/span>/);
+  assert.doesNotMatch(renderPlaces(), /Under an official warning now<\/span><\/h2>/);
 });

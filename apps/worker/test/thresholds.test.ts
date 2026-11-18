@@ -53,7 +53,7 @@ test("both methodology tables are generated from the thresholds the code uses", 
   const html = renderMethodology("en");
   const md = readResource("mugilu://methodology")!.contents[0].text as string;
   for (const r of THRESHOLD_ROWS) {
-    const tr = `<tr>${[r.hazard, ...r.cells].map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`;
+    const tr = `<tr><th scope="row">${esc(r.hazard)}</th>${r.cells.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`;
     assert.ok(html.includes(tr), r.hazard);
     assert.ok(md.includes(`- ${r.hazard}: ${r.cells.join(" / ")}`), r.hazard);
   }
@@ -71,7 +71,7 @@ test("methodology: the bands as the data names them, the persona sentence, the o
   assert.match(en, /in order of risk/);
   assert.match(en, /Today against normal/);
   assert.match(en, /3 °C or more apart/);
-  assert.match(en, /<th>Moderate<\/th>/);
+  assert.match(en, /<th scope="col" class="fill moderate">Moderate<\/th>/);
   assert.doesNotMatch(en, /none · caution/);
   for (const lang of ["hi", "kn"] as const) {
     const page = renderMethodology(lang);
