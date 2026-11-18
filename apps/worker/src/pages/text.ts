@@ -1,4 +1,5 @@
 import { TR, lp, t, type Lang } from "../i18n";
+import { esc, trusted, type Html } from "../html";
 import { sheet, type SheetSection } from "../ui/components";
 import { pageShell, type Script } from "../ui/page-shell";
 import { HOME_OG, SITE } from "../ui/shell";
@@ -57,7 +58,7 @@ export interface TextPageOpts {
   desc: string;
   jsonLd?: string;
   kicker: string;
-  h1: string;
+  h1: string | Html;
   lead: string;
   lead2?: string;
   sections: SheetSection[];
@@ -88,4 +89,11 @@ export function textPage(o: TextPageOpts): string {
     ogImage: HOME_OG,
     scripts: o.scripts,
   });
+}
+
+/** A title set on two lines after its first comma (the About title), in any language whose
+ *  translation keeps the comma; otherwise the plain title. */
+export function lineBreakAfterComma(title: string): string | Html {
+  const i = title.indexOf(",");
+  return i < 0 ? title : trusted(`${esc(title.slice(0, i + 1))}<br>${esc(title.slice(i + 1).trim())}`);
 }

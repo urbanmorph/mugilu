@@ -1,4 +1,4 @@
-import { esc } from "../html";
+import { esc, textOrHtml, type Html } from "../html";
 import { LANGS, LANG_NAME, lp, t, type Lang } from "../i18n";
 import type { RiskBand } from "../score";
 import { installButton } from "../install";
@@ -402,7 +402,8 @@ export function barRows(items: BarRowItem[], limPct: number): string {
 }
 
 export interface Column {
-  label: string;
+  /** Text, or trusted markup (a level shape beside its word). */
+  label: string | Html;
   /** Right-aligned (numbers). */
   num?: boolean;
 }
@@ -411,7 +412,7 @@ export function dataTable(cols: Column[], rows: string[][], caption?: string, he
   const th = cols
     .map(
       (c, i) =>
-        `<th scope="col"${c.num || headClass?.[i] ? ` class="${[c.num && "r", headClass?.[i]].filter(Boolean).join(" ")}"` : ""}>${esc(c.label)}</th>`,
+        `<th scope="col"${c.num || headClass?.[i] ? ` class="${[c.num && "r", headClass?.[i]].filter(Boolean).join(" ")}"` : ""}>${textOrHtml(c.label)}</th>`,
     )
     .join("");
   const body = rows
@@ -450,7 +451,8 @@ export interface SheetSection {
 }
 export interface SheetOpts {
   kicker: string;
-  title: string;
+  /** Text, or trusted markup (a deliberate line break). */
+  title: string | Html;
   /** Markup. */
   lead: string;
   lead2?: string;
@@ -478,7 +480,7 @@ export function sheet(o: SheetOpts, lang: Lang): string {
     .join("");
   return (
     `<div class="wrap"><article class="sheet"><div class="hero"><div><p class="t-kicker">${esc(o.kicker)}</p>` +
-    `<h1 class="t-title">${esc(o.title)}</h1><p class="t-lead">${o.lead}</p>${o.lead2 ? `<p class="t-meta lead2">${o.lead2}</p>` : ""}</div>${toc}</div>` +
+    `<h1 class="t-title">${textOrHtml(o.title)}</h1><p class="t-lead">${o.lead}</p>${o.lead2 ? `<p class="t-meta lead2">${o.lead2}</p>` : ""}</div>${toc}</div>` +
     secs +
     (o.back ? backLink(o.back.href, o.back.label) : "") +
     `</article></div>`

@@ -4,7 +4,7 @@ import { t, type Lang } from "../i18n";
 import { HAZARDS } from "../hazards";
 import { ld, UM_ICON } from "../ui/shell";
 import { cardBody, cardGrid, cardStack, faq, pull } from "../ui/components";
-import { P, splitAs, textPage } from "./text";
+import { P, lineBreakAfterComma, splitAs, textPage } from "./text";
 
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
@@ -140,7 +140,7 @@ export function renderAbout(lang: Lang = "en"): string {
       })),
     }),
     kicker: t("About", lang),
-    h1: t("The open sky of India, one coordinate at a time.", lang),
+    h1: lineBreakAfterComma(t("The open sky of India, one coordinate at a time.", lang)),
     lead: t("A whole-sky view for people, and shared infrastructure for anyone building on top of it.", lang),
     scripts: ["kn"],
     sections: [

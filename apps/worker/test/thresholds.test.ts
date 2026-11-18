@@ -71,7 +71,10 @@ test("methodology: the bands as the data names them, the persona sentence, the o
   assert.match(en, /in order of risk/);
   assert.match(en, /Today against normal/);
   assert.match(en, /3 °C or more apart/);
-  assert.match(en, /<th scope="col" class="fill moderate">Moderate<\/th>/);
+  assert.match(
+    en,
+    /<th scope="col" class="fill moderate"><svg class="shape"[^>]*><path d="[^"]*"\/><\/svg>Moderate<\/th>/,
+  );
   assert.doesNotMatch(en, /none · caution/);
   for (const lang of ["hi", "kn"] as const) {
     const page = renderMethodology(lang);

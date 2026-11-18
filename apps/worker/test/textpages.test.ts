@@ -96,7 +96,10 @@ test("text pages: every split paragraph fills its boxes in every language (no fa
 
 test("methodology: the thresholds as a table with level-filled headers, the 0-3 strip, links kept", () => {
   const html = renderMethodology("en");
-  assert.match(html, /<th scope="col" class="fill moderate">Moderate<\/th>/);
+  assert.match(
+    html,
+    /<th scope="col" class="fill moderate"><svg class="shape"[^>]*><path d="[^"]*"\/><\/svg>Moderate<\/th>/,
+  );
   assert.match(html, /<th scope="row">Fog \(visibility, m\)<\/th><td>&lt;1000<\/td>/);
   assert.match(html, /<th scope="row">Smoke \(fires &lt;100 km\)<\/th>/);
   assert.match(

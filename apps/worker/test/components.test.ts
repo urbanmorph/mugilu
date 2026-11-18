@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { trusted } from "../src/html";
 import {
   locateJs,
   alertsBox,
@@ -366,4 +367,13 @@ test("locateJs: one location button for every page: shown only where the browser
     navigator: {},
   });
   assert.equal(quiet.hidden, true);
+});
+
+test("dataTable and sheet: plain strings are escaped, trusted markup (the Html brand) is kept", () => {
+  const t1 = dataTable([{ label: "<b>x</b>" }, { label: trusted('<svg class="shp"></svg>High') }], [["a", "1"]]);
+  assert.match(t1, /<th scope="col">&lt;b&gt;x&lt;\/b&gt;<\/th>/);
+  assert.match(t1, /<th scope="col"><svg class="shp"><\/svg>High<\/th>/);
+  const s1 = sheet({ kicker: "k", title: trusted("One,<br>two"), lead: "l", sections: [] }, "en");
+  assert.match(s1, /One,<br>two/);
+  assert.match(sheet({ kicker: "k", title: "A <i>", lead: "l", sections: [] }, "en"), /A &lt;i&gt;/);
 });

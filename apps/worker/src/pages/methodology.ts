@@ -1,4 +1,4 @@
-import { esc } from "../html";
+import { esc, trusted } from "../html";
 import { THRESHOLD_ROWS } from "../score";
 import { lp, t, type Lang } from "../i18n";
 import { cardGrid, cardStack, dataTable, LEVEL_SHAPE, LEVEL_WORD, pull, shape } from "../ui/components";
@@ -54,8 +54,10 @@ export function renderMethodology(lang: Lang = "en"): string {
 
   // The table's name differs from its section's ("The thresholds"): two landmarks never share one.
   const [hazard, ...words] = [t("Hazard", lang), ...LEVELS.slice(1).map((k) => t(LEVEL_WORD[k], lang))];
+  // Each level column is headed by its shape and word, as on every chip.
+  const heads = LEVELS.slice(1).map((k, i) => ({ label: trusted(shape(LEVEL_SHAPE[k]) + esc(words[i])) }));
   const table = dataTable(
-    [hazard, ...words].map((label) => ({ label })),
+    [{ label: hazard }, ...heads],
     THRESHOLD_ROWS.map((r) => [esc(t(r.hazard, lang)), ...r.cells.map(esc)]),
     `${hazard}: ${words.join(", ")}`,
     ["", "fill moderate", "fill high", "fill severe"],
