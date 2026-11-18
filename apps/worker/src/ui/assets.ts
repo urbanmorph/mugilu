@@ -50,10 +50,19 @@ function blocks(src: string): { head: string; body: string }[] {
   return out;
 }
 
-/** Whether a selector list can match markup that uses only `classes`: some selector whose
- *  every class is used (element, attribute and pseudo parts are kept as they are). */
-function used(selectors: string, classes: Set<string>): boolean {
-  return selectors.split(",").some((sel) => (sel.match(/\.[\w-]+/g) ?? []).every((c) => classes.has(c.slice(1))));
+/** Whether a selector list can match `html`: some selector whose every class, attribute
+ *  ([data-x] or [data-x="v"]) and :lang() appears in it. Parts inside :not() and the theme
+ *  attribute (set on <html> by the host's system or the switch) are not required. */
+function used(selectors: string, classes: Set<string>, html: string): boolean {
+  return selectors.split(",").some((sel) => {
+    const need = sel.replace(/:not\([^)]*\)/g, "");
+    if (!(need.match(/\.[\w-]+/g) ?? []).every((c) => classes.has(c.slice(1)))) return false;
+    for (const [, attr, val] of need.matchAll(/\[([\w-]+)(?:="([^"]*)")?\]/g)) {
+      if (attr === "data-theme") continue;
+      if (!html.includes(val === undefined ? ` ${attr}` : `${attr}="${val}"`)) return false;
+    }
+    return [...need.matchAll(/:lang\(([\w-]+)\)/g)].every(([, l]) => html.includes(`lang="${l}"`));
+  });
 }
 
 /** `css` cut down to the rules `html` can use, without @font-face (the system face stands in).
@@ -69,7 +78,7 @@ export function purgeCss(css: string, html: string): string {
           return inner ? `${head}{${inner}}` : "";
         }
         if (head.startsWith("@")) return `${head}{${body}}`;
-        return used(head, classes) ? `${head}{${body}}` : "";
+        return used(head, classes, html) ? `${head}{${body}}` : "";
       })
       .join("");
   return walk(css);
