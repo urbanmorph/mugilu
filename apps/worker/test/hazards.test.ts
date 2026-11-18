@@ -49,14 +49,8 @@ test("homepage: title (within 60 chars), description and WebSite JSON-LD carry t
     title(renderHome(undefined, undefined, undefined, "kn")),
     "mugilu: ಭಾರತದಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
   );
-  assert.match(
-    desc(renderHome(undefined, undefined, undefined, "hi")),
-    /वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV/,
-  );
-  assert.match(
-    desc(renderHome(undefined, undefined, undefined, "kn")),
-    /ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV/,
-  );
+  assert.match(desc(renderHome(undefined, undefined, undefined, "hi")), /वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV/);
+  assert.match(desc(renderHome(undefined, undefined, undefined, "kn")), /ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV/);
 });
 
 test("/hi and /kn homepages: the WebSite JSON-LD description is the localised meta description", () => {
@@ -73,16 +67,8 @@ test("/places: the title, description and lede carry the shared list, in each la
   assert.ok(desc(en).includes(HAZARDS), desc(en));
   assert.ok(en.match(/<p class="lede">([^<]*)</)![1].includes(HAZARDS));
   for (const [lang, list, short] of [
-    [
-      "hi",
-      "वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ",
-      "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ",
-    ],
-    [
-      "kn",
-      "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು",
-      "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
-    ],
+    ["hi", "वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ", "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ"],
+    ["kn", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು"],
   ] as const) {
     const html = renderPlaces(lang);
     assert.ok(title(html).includes(short), title(html));

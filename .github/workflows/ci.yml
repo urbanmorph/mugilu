@@ -39,7 +39,7 @@ jobs:
       - name: Test
         run: pnpm test
       - name: Format check
-        run: pnpm dlx prettier@3 --check "src/**/*.ts" "test/**/*.ts"
+        run: pnpm exec prettier --check "src/**/*.ts" "test/**/*.ts"
 
   # A PR from this repo gets a preview: a new worker VERSION uploaded with its own URL
   # (pr-<number>-mugilu-worker.<subdomain>.workers.dev). It is not deployed: production
