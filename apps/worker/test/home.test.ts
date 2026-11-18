@@ -110,7 +110,7 @@ test("renderHome: Your places is a panel the script fills from this browser, wit
   assert.match(html, /"Favourite X"/);
   assert.match(html, /"Rename X"/);
   assert.match(html, /"Remove X"/);
-  const yp = html.slice(html.indexOf("var K='mugilu:places'"));
+  const yp = html.slice(html.indexOf("var PS={K:'mugilu:places'"));
   assert.match(yp.slice(0, yp.indexOf("})();")), /function esc\(/);
 });
 

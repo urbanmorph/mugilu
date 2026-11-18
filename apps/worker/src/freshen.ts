@@ -28,5 +28,5 @@ addEventListener('touchmove',function(e){if(y0===null)return;d=Math.max(0,e.touc
 addEventListener('touchend',function(){if(y0===null)return;if(d>${PULL}){if(el)el.className='go spin';location.reload();}else{d=0;draw();if(el)el.style.transform='';}y0=null;},{passive:true});
 })();`;
 
-/** The refresh marker, its style and the script, for a page that shows the sky now. */
-export const FRESHEN = `<div id="ptr" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div><script>${FRESHEN_JS}</script>`;
+/** The pull-to-refresh marker (the shell adds it, and FRESHEN_JS, to a live page). */
+export const PULL_MARKER = `<div id="ptr" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div>`;

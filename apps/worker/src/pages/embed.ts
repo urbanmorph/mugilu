@@ -5,7 +5,7 @@ import { esc } from "../html";
 import { ambientRisk, ambientSummary, smokeLevel, type AmbientRisk, type Persona } from "../score";
 import { lp, t, type Lang } from "../i18n";
 import { istTime } from "../ui/shell";
-import { embedShell } from "../ui/page-shell";
+import { pageShell } from "../ui/page-shell";
 import { embedCard, panel } from "../ui/components";
 import { dustBand, headText, readTint, round, uvWord } from "./read";
 
@@ -56,7 +56,9 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
       `<p>${esc(t("Or an image with the time on it:", lang))}</p><pre class="code">${esc(imgtag)}</pre>`,
     { title: t("Embed this", lang) },
   )}</div>`;
-  return embedShell(`${placeName}: mugilu`, `<h1 class="vh">${esc(placeName)}</h1>${card}${code}`, {
+  return pageShell(`${placeName}: mugilu`, `<h1 class="vh">${esc(placeName)}</h1>${card}${code}`, {
+    path: "/embed",
+    variant: "embed",
     lang,
     tint: readTint(risk),
     js: "if(window.self!==window.top)document.documentElement.classList.add('framed')",

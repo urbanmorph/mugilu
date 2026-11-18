@@ -5,7 +5,6 @@ import { pollutantParts } from "../formats";
 import { esc } from "../html";
 import { RISK_BANDS, airLevelOf } from "../score";
 import { lp, t, type Lang } from "../i18n";
-import { FRESHEN } from "../freshen";
 import { HOME_OG, SITE, ld, relTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import {
@@ -159,7 +158,8 @@ export function renderStationPage(
   });
   // Station pages are thin and Google never crawled them: they stay for people, out of the index.
   // The air hue at the station's band level; calm sky when it has no recent reading.
-  return pageShell(title, body + FRESHEN, {
+  return pageShell(title, body, {
+    live: true,
     path,
     desc,
     canonical,

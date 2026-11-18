@@ -1,6 +1,7 @@
 import { INSTALL_JS } from "../install";
 import { SW_REGISTER } from "../sw";
 import { esc } from "../html";
+import { FRESHEN_JS, PULL_MARKER } from "../freshen";
 import type { Lang } from "../i18n";
 import type { RiskBand } from "../score";
 import { VIEWPORT, headTags, relTimeJs, type ShellOpts } from "./shell";
@@ -15,54 +16,50 @@ import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 // <body class="mg" data-tint data-level> (the wash from read.ts readTint).
 
 const FONT_PRELOAD = `<link rel="preload" href="${LATIN_FONT}" as="font" type="font/woff2" crossorigin>`;
+const STYLES = `<style>${FONT_FACES}${tokensCss()}${STANDARD_CSS}</style>`;
 
-export interface PageOpts extends Omit<ShellOpts, "bare" | "wide"> {
+export interface PageOpts extends ShellOpts {
   /** The page's language-agnostic path: the current nav item and the language links. */
   path: string;
   /** A query the language links keep (the persona, ?as=asthma). */
   query?: string;
   /** The page wash: the hazard's hue and the read's level. None: no wash. */
   tint?: { hue: string; level: RiskBand };
-  /** The screen display: always dark, no header or footer (its own footer carries the disclaimer). */
-  kiosk?: boolean;
+  /** "page" (default): the site's chrome. "kiosk": the screen display, always dark, no header or
+   *  footer (its own footer carries the disclaimer). "embed": the card in other sites' iframes,
+   *  no chrome, analytics beacon or service worker; light or dark follows the host's system. */
+  variant?: "page" | "kiosk" | "embed";
+  /** A page that shows the sky now: it refreshes itself, and the installed app pulls to refresh. */
+  live?: boolean;
   /** Page behaviour (never styles), appended after the shared scripts. */
   js?: string;
 }
 
 export function pageShell(title: string, body: string, opts: PageOpts): string {
-  const { path, query = "", lang = "en", tint, kiosk, js = "" } = opts;
-  const bodyAttrs = kiosk ? " data-kiosk" : tint ? ` data-tint="${esc(tint.hue)}" data-level="${tint.level}"` : "";
+  const { path, query = "", lang = "en", tint, variant = "page", live, js = "" } = opts;
+  const page = variant === "page";
+  const wash = tint ? ` data-tint="${esc(tint.hue)}" data-level="${tint.level}"` : "";
+  const bodyAttrs = variant === "kiosk" ? " data-kiosk" : variant === "embed" ? ` data-embed${wash}` : wash;
+  const head =
+    variant === "embed"
+      ? `<meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark">\n<title>${esc(title)}</title>`
+      : headTags(title, opts);
+  const scripts =
+    (page ? INSTALL_JS + THEME_JS + SW_REGISTER : "") +
+    (variant === "embed" ? "" : relTimeJs(lang)) +
+    (live ? FRESHEN_JS : "") +
+    js;
   return `<!doctype html>
-<html lang="${lang}"${kiosk ? ' data-theme="dark"' : ""}>
+<html lang="${lang}"${variant === "kiosk" ? ' data-theme="dark"' : ""}>
 <head>
-${headTags(title, opts)}
+${head}
 ${FONT_PRELOAD}
-${kiosk ? "" : `<script>${THEME_HEAD_JS}</script>`}
-<style>${FONT_FACES}${tokensCss()}${STANDARD_CSS}</style>
+${page ? `<script>${THEME_HEAD_JS}</script>` : ""}
+${STYLES}
 </head>
 <body class="mg"${bodyAttrs}>
-${kiosk ? "" : siteHeader(path, lang, query)}<main id="main" tabindex="-1">${body}</main>${kiosk ? "" : siteFooter(path, lang, "", query)}
-<script>${kiosk ? "" : INSTALL_JS + THEME_JS + SW_REGISTER}${relTimeJs(lang)}${js}</script>
+${page ? siteHeader(path, lang, query) : ""}<main id="main"${variant === "embed" ? "" : ' tabindex="-1"'}>${body}</main>${page ? siteFooter(path, lang, "", query) : ""}${live ? PULL_MARKER : ""}
+${scripts ? `<script>${scripts}</script>` : ""}
 </body>
-</html>`;
-}
-
-// The embed card's document.
-/** The embed card's own document (it lives in other sites' iframes): the same two stylesheets
- *  and fonts, no header, footer, analytics beacon or service worker. Light or dark follows the
- *  host's system; the wash is the read's. */
-export function embedShell(
-  title: string,
-  body: string,
-  o: { lang: Lang; tint: { hue: string; level: RiskBand }; js?: string },
-): string {
-  return `<!doctype html>
-<html lang="${o.lang}">
-<head><meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark">
-<title>${esc(title)}</title>
-${FONT_PRELOAD}
-<style>${FONT_FACES}${tokensCss()}${STANDARD_CSS}</style>
-</head>
-<body class="mg" data-embed data-tint="${esc(o.tint.hue)}" data-level="${o.tint.level}"><main id="main">${body}</main>${o.js ? `<script>${o.js}</script>` : ""}</body>
 </html>`;
 }

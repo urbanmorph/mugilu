@@ -1,3 +1,4 @@
+import { PLACES_STORE_JS } from "../ui/places-store";
 import { type Conditions, type NormalizedStation, type Warning } from "../types";
 import { AQI_BAND_LABEL } from "../aqi";
 import { gauge, pollutantBars, uvSteps, worstPollutant } from "../glyphs";
@@ -139,7 +140,7 @@ export function airLag(c: Conditions): boolean {
 // Records this /c visit into the browser's "Your places" list (first-party,
 // localStorage; no login, no server). The reverse-geocoded label is read from
 // the page so "use my location" shows a name, not raw coordinates.
-export const PLACE_RECORDER = `<script>
+export const PLACE_RECORDER = `${PLACES_STORE_JS}
 (function(){try{
 var pp=location.pathname.split('/');
 if(pp[1]!=='c'||!pp[2])return;
@@ -152,16 +153,15 @@ var label=clean(el?el.textContent:id);
 // If they searched in a native script, remember it in that script (passed via #q=).
 var h=location.hash.match(/[#&]q=([^&]+)/);
 if(h){var q=decodeURIComponent(h[1]);if(/[^\\x00-\\x7F]/.test(q))label=clean(q)||label;}
-var K='mugilu:places',L;try{L=JSON.parse(localStorage.getItem(K))||[]}catch(e){L=[]}
+var L=PS.load();
 var p=L.filter(function(x){return x.id===id})[0];
 if(p){p.n=(p.n||0)+1;p.t=Date.now();if(!p.name)p.label=label}
 else{L.push({id:id,lat:la,lon:lo,label:label,n:1,t:Date.now(),fav:false})}
-L.sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});
+L=PS.ord(L);
 var f=L.filter(function(x){return x.fav}),r=L.filter(function(x){return !x.fav}).slice(0,Math.max(0,12-f.length));
-localStorage.setItem(K,JSON.stringify(f.concat(r)));
+PS.save(f.concat(r));
 if(location.hash)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
-}catch(e){}})();
-</script>`;
+}catch(e){}})();`;
 
 /** A station's page path. The provider and id come from upstream data, so each is encoded. */
 export const stationPath = (provider: string, id: string) =>

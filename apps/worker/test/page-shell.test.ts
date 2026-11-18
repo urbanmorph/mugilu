@@ -39,7 +39,7 @@ test("pageShell: the stored theme applies before paint; scripts for theme, insta
 
 test("pageShell: no tint means no wash; a kiosk is always dark, chromeless, with data-kiosk", () => {
   assert.match(pageShell("x", "", { path: "/" }), /<body class="mg">/);
-  const k = pageShell("Delhi", '<div class="kio"></div>', { path: "/c/delhi", kiosk: true });
+  const k = pageShell("Delhi", '<div class="kio"></div>', { path: "/c/delhi", variant: "kiosk" });
   assert.match(k, /<html lang="en" data-theme="dark">/);
   assert.match(k, /<body class="mg" data-kiosk>/);
   assert.ok(!/class="sh"/.test(k) && !/class="sf"/.test(k));

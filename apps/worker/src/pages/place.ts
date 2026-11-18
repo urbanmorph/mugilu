@@ -7,7 +7,6 @@ import { siblingPlaces, slugFromPath } from "../slugs";
 import { aroundLinks } from "../sister";
 import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
-import { FRESHEN } from "../freshen";
 import { HAZARDS } from "../hazards";
 import { ALERTS_JS } from "../alerts-ui";
 import { HOME_OG, SITE, istTime, ld, relTime } from "../ui/shell";
@@ -228,7 +227,8 @@ export function renderConditionsPage(
         ],
       })
     : undefined;
-  return pageShell(title, body + PLACE_RECORDER + FRESHEN, {
+  return pageShell(title, body, {
+    live: true,
     path,
     query: risk.persona !== "everyone" ? `?as=${risk.persona}` : "",
     desc,
@@ -238,6 +238,6 @@ export function renderConditionsPage(
     lang,
     noindex,
     tint: readTint(risk),
-    js: alertsKey ? ALERTS_JS : "",
+    js: PLACE_RECORDER + (alertsKey ? ALERTS_JS : ""),
   });
 }

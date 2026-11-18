@@ -99,7 +99,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     // A screen reloads every ~14 min all day: it would inflate visitor counts and skew Core Web Vitals.
     noBeacon: true,
     lang,
-    kiosk: true,
+    variant: "kiosk",
     js: kioskJs(lang),
   });
 }

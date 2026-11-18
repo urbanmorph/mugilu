@@ -1,8 +1,8 @@
+import { PLACES_STORE_JS } from "../ui/places-store";
 import { type NationalHighlights } from "../highlights";
 import { esc } from "../html";
 import { slugForName } from "../slugs";
 import { langAttr, lp, t, type Lang } from "../i18n";
-import { FRESHEN } from "../freshen";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
 import { AQI_BAND_LABEL } from "../aqi";
 import { RISK_BANDS, type RiskBand } from "../score";
@@ -133,20 +133,17 @@ function cyclonePlate(c: ReturnType<typeof officialCyclone>, lang: Lang): string
 /** Your places: recents and favourites from this browser (first-party, no login), as .yp rows. */
 const yourPlacesJs = (lang: Lang) => {
   const S = (s: string) => JSON.stringify(t(s, lang));
-  return `(function(){var K='mugilu:places',yp=document.getElementById('yp');if(!yp)return;var ul=yp.querySelector('ul.yp'),LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)},FAV=${S("Favourite X")},REN=${S("Rename X")},DEL=${S("Remove X")},NAME=${S("Type a name for this place (for example, Home or Office)")};
+  return `(function(){${PLACES_STORE_JS}var yp=document.getElementById('yp');if(!yp)return;var ul=yp.querySelector('ul.yp'),LP=${JSON.stringify(lang === "en" ? "" : "/" + lang)},FAV=${S("Favourite X")},REN=${S("Rename X")},DEL=${S("Remove X")},NAME=${S("Type a name for this place (for example, Home or Office)")};
 ${CLIENT_ESC}
 function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
-function load(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}}
-function save(L){try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}}
 function nm(p){return p.name||p.label||(p.lat+', '+p.lon);}
-function ord(L){return L.slice().sort(function(a,b){return (b.fav?1:0)-(a.fav?1:0)||b.n-a.n||b.t-a.t});}
 function lab(s,p){return esc(s.replace('X',nm(p)));}
-function render(){var L=ord(load());if(!L.length){yp.hidden=true;return;}yp.hidden=false;
+function render(){var L=PS.ord(PS.load());if(!L.length){yp.hidden=true;return;}yp.hidden=false;
 ul.innerHTML=L.map(function(p){return '<li data-id="'+esc(p.id)+'"><button type="button" data-a="fav" aria-pressed="'+(p.fav?'true':'false')+'" title="Favourite" aria-label="'+lab(FAV,p)+'">'+(p.fav?'\\u2605':'\\u2606')+'</button><a href="'+LP+'/c/'+esc(p.lat)+','+esc(p.lon)+'">'+esc(nm(p))+'</a><button type="button" data-a="ren" title="Rename" aria-label="'+lab(REN,p)+'">\\u270e</button><button type="button" data-a="del" title="Remove" aria-label="'+lab(DEL,p)+'">\\u00d7</button></li>';}).join('');
 L.slice(0,4).forEach(function(p){pf(LP+'/c/'+p.lat+','+p.lon);});
 if(L[0]&&!render.sr){render.sr=1;try{var sr=document.createElement('script');sr.type='speculationrules';sr.textContent=JSON.stringify({prerender:[{source:'list',urls:[LP+'/c/'+L[0].lat+','+L[0].lon]}]});document.head.appendChild(sr);}catch(e){}}}
-ul.addEventListener('click',function(e){var b=e.target.closest('button[data-a]');if(!b)return;var id=b.closest('li').getAttribute('data-id'),a=b.getAttribute('data-a');var L=load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
-if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt(NAME,p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});save(L);render();});
+ul.addEventListener('click',function(e){var b=e.target.closest('button[data-a]');if(!b)return;var id=b.closest('li').getAttribute('data-id'),a=b.getAttribute('data-a');var L=PS.load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
+if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt(NAME,p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});PS.save(L);render();});
 render();})();`;
 };
 
@@ -212,14 +209,13 @@ export function renderHome(
     ]),
   );
   const levels = band(`<div class="lkey">${RISK_BANDS.map((b) => levelChip(b, lang)).join("")}</div>`);
-  const body =
-    wrap(
-      hero +
-        cyclonePlate(official, lang) +
-        band(indiaMap(meta?.map, lang, { cyclone: official?.title, aside })) +
-        places +
-        levels,
-    ) + FRESHEN;
+  const body = wrap(
+    hero +
+      cyclonePlate(official, lang) +
+      band(indiaMap(meta?.map, lang, { cyclone: official?.title, aside })) +
+      places +
+      levels,
+  );
 
   // schema.org WebSite + SearchAction (a search box in results; credits the publisher).
   const site = ld({
@@ -249,6 +245,7 @@ export function renderHome(
     jsonLd: site,
     ogImage: HOME_OG,
     lang,
+    live: true,
     js:
       comboboxJs("q", lang) +
       MAP_JS(lang) +

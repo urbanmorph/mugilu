@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { STANDARD_CSS } from "../src/ui/standard";
-import { FRESHEN } from "../src/freshen";
+import { PULL_MARKER } from "../src/freshen";
 
 // The second stylesheet: one definition per component, tokens only, no board scaffolding.
 
@@ -43,7 +43,7 @@ test("standard.css: desktop rules under min-width 1000, portrait kiosk under ori
 test("pull-to-refresh is styled by the standard, from tokens, and moves only without reduced motion", () => {
   assert.match(STANDARD_CSS, /#ptr\{[^}]*background:var\(--bg\)[^}]*color:var\(--muted\)/);
   assert.match(STANDARD_CSS, /@media \(prefers-reduced-motion: no-preference\)\{#ptr\.spin svg\{animation/);
-  assert.doesNotMatch(FRESHEN, /<style>/);
+  assert.doesNotMatch(PULL_MARKER, /<style>/);
 });
 
 test("the language names use the system face: two words must not fetch a whole Indic font on every page", () => {
