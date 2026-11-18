@@ -34,6 +34,7 @@ import { LANGS, LANG_NAME, langCss, langUrl, lp, t } from "./i18n";
 import { INSTALL_CSS, INSTALL_JS, installButton, installHead } from "./install";
 import { OFFLINE_NOTE_ID, SW_REGISTER } from "./sw";
 import { FRESHEN } from "./freshen";
+import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "./hazards";
 import { MAP_CSS, MAP_JS, renderIndiaMap, type IndiaMap } from "./indiamap";
 import { ALERTS_CSS, ALERTS_JS, renderAlertsBox } from "./alerts-ui";
 import { heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
@@ -220,8 +221,6 @@ main{max-width:560px;margin:0 auto;padding:20px 18px 32px}
 .ic{width:18px;height:18px;flex:none;vertical-align:-.18em}
 `;
 
-const DEFAULT_DESC =
-  "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.";
 const SITE = "https://mugilu.live";
 /** Where there is no room for the full disclaimer (kiosk, embed card). */
 const SHORT_DISCLAIMER = "Informational only, not medical advice.";
@@ -282,7 +281,7 @@ function shell(
   title: string,
   body: string,
   css: string,
-  { desc = DEFAULT_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex }: ShellOpts = {},
+  { desc = SITE_DESC, canonical, jsonLd, ogImage, noBeacon, lang = "en", bare, noindex }: ShellOpts = {},
 ): string {
   const cur = canonical ? langUrl(canonical, lang) : undefined;
   // hreflang alternates for every language + x-default (English) so search
@@ -909,7 +908,7 @@ export function renderConditionsPage(
   const css = CONDITIONS_CSS + GLYPH_CSS + (alertsKey ? ALERTS_CSS : "") + `\n:root{${readVars(risk)}}`;
   // Title and description in the words people search ("Delhi AQI today"), with the number.
   const { title, lead } = searchTitle(c, placeName, lang);
-  const desc = `${lead ?? `${placeName}:`} ${meaning} ${t("Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.", lang)}`;
+  const desc = `${lead ?? `${placeName}:`} ${meaning} ${t(`The ${HAZARDS} over this spot, with the single worst hazard named for you.`, lang)}`;
   // schema.org Dataset: credits mugilu + the licence, points at the machine-readable
   // siblings (the "built on it" signal in structured data; aids answer-engine pickup).
   const dataset = canonical
@@ -919,7 +918,7 @@ export function renderConditionsPage(
           {
             "@type": "Dataset",
             name: `Sky conditions at ${placeName}`,
-            description: `Air, heat, rain, dust, UV and official warnings at ${placeName}, India - right now.`,
+            description: `The ${HAZARDS} at ${placeName}, India - right now.`,
             url: canonical,
             isAccessibleForFree: true,
             creator: { "@type": "Organization", name: "mugilu", url: SITE },
@@ -1057,14 +1056,13 @@ function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string {
  *  "Delhi AQI today: 344 Very Poor". With no air reading, the title names what there is. */
 function searchTitle(c: Conditions, placeName: string, lang: Lang): { title: string; lead?: string } {
   const air = c.air;
-  if (!air || air.aqi == null)
-    return { title: `${placeName}: ${t("air, heat, rain and warnings right now", lang)} · mugilu` };
+  if (!air || air.aqi == null) return { title: `${placeName}: ${t(`${HAZARDS_SHORT} now`, lang)} · mugilu` };
   const fill = (s: string) =>
     s
       .replace("{place}", placeName)
       .replace("{aqi}", String(air.aqi))
       .replace("{band}", t(AQI_BAND_LABEL[air.band] ?? "", lang));
-  const title = `${fill(t("{place} AQI today: {aqi} {band}", lang))} · ${t("air quality, heat and warnings now", lang)} · mugilu`;
+  const title = `${fill(t("{place} AQI today: {aqi} {band}", lang))} · ${t(`${HAZARDS_SHORT} now`, lang)} · mugilu`;
   const lead = air.station
     ? fill(t("{place} AQI {aqi} ({band}) right now, from the {station} station {km} km away.", lang))
         .replace("{station}", air.station.name)
@@ -1582,7 +1580,7 @@ export function renderAbout(lang: Lang = "en"): string {
   </article>`;
   return shell(t("About mugilu: the open sky of India", lang), body, ABOUT_CSS, {
     desc: t(
-      "mugilu shows the air, heat, rain, sun, dust and official warnings over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.",
+      `mugilu shows the ${HAZARDS} over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.`,
       lang,
     ),
     canonical: `${SITE}/about`,
@@ -1735,7 +1733,7 @@ export function renderNotFound(lang: Lang = "en"): string {
   <h1 class="ahero">${t("Not here.", lang)}</h1>
   <p class="alead">${lead}</p>
   <p class="aback"><a href="${lp("/", lang)}">← ${t("back to mugilu", lang)}</a></p>`;
-  return shell("Not found: mugilu", body, ABOUT_CSS, { desc: DEFAULT_DESC, ogImage: HOME_OG, lang });
+  return shell("Not found: mugilu", body, ABOUT_CSS, { desc: SITE_DESC, ogImage: HOME_OG, lang });
 }
 
 const METHOD_CSS = `
@@ -2086,7 +2084,7 @@ export function renderHome(
     name: "mugilu",
     alternateName: "mugilu: the open sky of India",
     url: SITE,
-    description: DEFAULT_DESC,
+    description: SITE_DESC,
     publisher: {
       "@type": "Organization",
       name: "urbanmorph",
@@ -2100,8 +2098,8 @@ export function renderHome(
       "query-input": "required name=search_term_string",
     },
   });
-  return shell(t("mugilu: air, heat, rain and warnings over any point in India", lang), body, HOME_CSS + MAP_CSS, {
-    desc: t(DEFAULT_DESC, lang),
+  return shell(t(`mugilu: ${HAZARDS_SHORT} anywhere in India`, lang), body, HOME_CSS + MAP_CSS, {
+    desc: t(SITE_DESC, lang),
     canonical: SITE,
     jsonLd: site,
     ogImage: HOME_OG,

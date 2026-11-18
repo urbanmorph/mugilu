@@ -1,6 +1,7 @@
 import { allSlugPlaces } from "./slugs";
 import { sourcesMarkdown } from "./sources";
 import { TOOLS } from "./mcptools";
+import { HAZARDS } from "./hazards";
 
 // Discoverability + agent front-door files: plain-text/XML siblings to the HTML
 // pages, so people, search engines, and LLM crawlers all find the same surface.
@@ -37,8 +38,7 @@ export function mcpJson(siteUrl: string): string {
     {
       name: "mugilu",
       title: "mugilu: the open sky of India",
-      description:
-        "The sky over any place in India now: air quality, heat, rain, fog, smoke, UV and official warnings, with the single worst hazard named. Free, no sign-in.",
+      description: `The sky over any place in India now: ${HAZARDS}, with the single worst hazard named. Free, no sign-in.`,
       homepage: siteUrl,
       remotes: [{ type: "streamable-http", url: `${siteUrl}/mcp` }],
       tools: TOOLS.map((t) => t.name),
@@ -54,9 +54,9 @@ export function llmsTxt(siteUrl: string): string {
   return `# mugilu - India's open sky
 
 > Give a coordinate anywhere in India and get what the sky is doing to you right
-> now: air, heat (with wet-bulb), rain, UV, dust, and the official government
-> warning over that spot, plus an Ambient read naming the single worst hazard for
-> you. Open and free; code is MIT, each data source keeps its own licence.
+> now: ${HAZARDS} over that
+> spot, plus an Ambient read naming the single worst hazard for you. Open and free;
+> code is MIT, each data source keeps its own licence.
 > Informational only, not for medical, emergency, or safety-critical decisions.
 
 ## Entry points
@@ -139,8 +139,7 @@ export function openApiSpec(siteUrl: string): object {
     info: {
       title: "mugilu: India's open sky",
       version: "1.0.0",
-      description:
-        "Give any point in India and get what the sky is doing right now: air, heat (with wet-bulb, and today's high against the 1991-2020 normal), rain, UV, dust, wind, fog, fire-smoke, and official NDMA warnings, plus a persona-weighted Ambient read with the readings in order of risk (ambient.order). Informational only, not for medical, emergency, or safety-critical use. Freshness: readings recompute on a ~15-minute cycle (air and warnings change hourly, weather at most every 15 min). Each response carries refresh_after_seconds and a matching Cache-Control max-age; poll at most once every 15 minutes per place, faster returns identical data.",
+      description: `Give any point in India and get what the sky is doing right now: ${HAZARDS} (NDMA/IMD), with heat carrying wet-bulb and today's high against the 1991-2020 normal, plus a persona-weighted Ambient read with the readings in order of risk (ambient.order). Informational only, not for medical, emergency, or safety-critical use. Freshness: readings recompute on a ~15-minute cycle (air and warnings change hourly, weather at most every 15 min). Each response carries refresh_after_seconds and a matching Cache-Control max-age; poll at most once every 15 minutes per place, faster returns identical data.`,
       license: { name: "Sources keep their own licence; see /terms", url: `${siteUrl}/terms` },
       contact: { url: siteUrl },
     },

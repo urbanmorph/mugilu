@@ -9,6 +9,7 @@
 
 import { esc } from "./html";
 import { lp, t, type Lang } from "./i18n";
+import { SITE_DESC } from "./hazards";
 
 /** Page backgrounds (BASE_CSS --bg), so the browser/app chrome blends with the page. */
 const BG_LIGHT = "#f8fafc";
@@ -44,10 +45,7 @@ export function webManifest(lang: Lang = "en") {
     start_url: `${lp("/", lang)}?src=pwa`,
     scope: "/",
     display: "standalone",
-    description: t(
-      "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.",
-      lang,
-    ),
+    description: t(SITE_DESC, lang),
     theme_color: BG_LIGHT,
     background_color: BG_LIGHT,
     lang,

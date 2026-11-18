@@ -267,14 +267,14 @@ test("SEO: titles + descriptions are value-forward and localized (en/kn)", () =>
   const en = renderAbout("en");
   assert.match(en, /<title>About mugilu: the open sky of India<\/title>/); // not the old "About: mugilu"
   // description front-loads the real value + keywords (so Google quotes it, not the disclaimer)
-  assert.match(en, /<meta name="description" content="mugilu shows the air, heat, rain[^"]*/);
+  assert.match(en, /<meta name="description" content="mugilu shows the air, heat, cold, rain[^"]*/);
   assert.doesNotMatch(en, /<title>About: mugilu<\/title>/);
   const kn = renderAbout("kn");
   assert.match(kn, /<title>mugilu ಬಗ್ಗೆ: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ<\/title>/); // localized title
   assert.match(kn, /<meta name="description" content="mugilu ಈಗ ಭಾರತದ/); // localized description
   // home + methodology titles localized too
   assert.match(renderMethodology("kn"), /<title>mugilu ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ: Ambient/);
-  assert.match(renderHome(undefined, undefined, undefined, "hi"), /<title>mugilu: भारत में किसी भी बिंदु/);
+  assert.match(renderHome(undefined, undefined, undefined, "hi"), /<title>mugilu: भारत में कहीं भी/);
 });
 
 test("SEO: og:locale per language + alternates", () => {
@@ -295,7 +295,7 @@ test("SEO: /c conditions description localized (place verbatim); en byte-identic
   const en = renderConditionsPage(cond(), "everyone", U, "en");
   assert.match(
     en,
-    /Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you\./,
+    /The air, heat, cold, rain, wind, fog, dust, smoke, UV and official warnings over this spot, with the single worst hazard named for you\./,
   );
 });
 

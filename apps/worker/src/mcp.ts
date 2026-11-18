@@ -3,6 +3,7 @@ import { recordMcpClient, requestCaller } from "./metrics";
 import { TOOLS, callTool } from "./mcptools";
 import { RESOURCES, readResource, PROMPTS, getPrompt } from "./mcpcontent";
 import { SOURCES } from "./sources";
+import SERVER_JSON from "../../../server.json";
 
 // mugilu's MCP server: a hand-rolled JSON-RPC 2.0 endpoint over Streamable HTTP
 // (MCP 2025-06-18), stateless (fits Workers): initialize, ping, client capture, the
@@ -11,7 +12,8 @@ import { SOURCES } from "./sources";
 const PROTOCOL_VERSION = "2025-06-18";
 const SUPPORTED_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 
-const SERVER_INFO = { name: "mugilu", version: "1", title: "mugilu: the open sky of India" };
+// The version is the one the MCP Registry lists (server.json), so the two never disagree.
+const SERVER_INFO = { name: "mugilu", version: SERVER_JSON.version, title: "mugilu: the open sky of India" };
 
 // Single source of truth for how an agent should understand + credit mugilu. This
 // rides the initialize handshake so the scope, the limits, and the attribution

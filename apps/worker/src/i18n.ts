@@ -6,6 +6,8 @@
 // a native review pass. To add a language L: extend Lang/LANGS/LANG_NAME/LANG_FONT
 // and fill TR[...][L]. Brand terms (mugilu, SACHET, NDMA, IMD, QR) stay in Latin.
 
+import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "./hazards";
+
 export type Lang = "en" | "hi" | "kn";
 export const LANGS: readonly Lang[] = ["en", "hi", "kn"] as const;
 export const LANG_NAME: Record<Lang, string> = {
@@ -311,23 +313,23 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   },
   // SEO/AEO: page <title> + <meta description> (and og/twitter, which reuse them).
   // Localised so regional SERP shows the hi/kn snippet, not English.
-  "mugilu: air, heat, rain and warnings over any point in India": {
-    hi: "mugilu: भारत में किसी भी बिंदु पर वायु, गर्मी, बारिश और चेतावनियाँ",
-    kn: "mugilu: ಭಾರತದಲ್ಲಿ ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲೆ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
+  // The hazard lists come from hazards.ts (HAZARDS, HAZARDS_SHORT), so these keys are built from it.
+  [`mugilu: ${HAZARDS_SHORT} anywhere in India`]: {
+    hi: "mugilu: भारत में कहीं भी वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ",
+    kn: "mugilu: ಭಾರತದಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
   },
-  "mugilu: the open sky of India. Air, heat, rain, UV, dust and the official warning over any point, the single worst hazard named for you.":
-    {
-      hi: "mugilu: भारत का खुला आकाश। किसी भी बिंदु पर वायु, गर्मी, बारिश, UV, धूल और आधिकारिक चेतावनी, और आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।",
-      kn: "mugilu: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ. ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯ.",
-    },
+  [SITE_DESC]: {
+    hi: "mugilu: भारत का खुला आकाश। किसी भी बिंदु पर वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ, और आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।",
+    kn: "mugilu: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ. ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯ.",
+  },
   "About mugilu: the open sky of India": {
     hi: "mugilu के बारे में: भारत का खुला आकाश",
     kn: "mugilu ಬಗ್ಗೆ: ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ",
   },
-  "mugilu shows the air, heat, rain, sun, dust and official warnings over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.":
+  [`mugilu shows the ${HAZARDS} over any point in India right now, and names the single worst hazard for you. About the project, its open data sources, and how to build on it.`]:
     {
-      hi: "mugilu अभी भारत में किसी भी बिंदु पर वायु, गर्मी, बारिश, धूप, धूल और आधिकारिक चेतावनियाँ दिखाता है, और आपके लिए सबसे बुरे खतरे को नाम देता है। परियोजना, इसके खुले डेटा स्रोतों, और इस पर कैसे निर्माण करें, इसके बारे में।",
-      kn: "mugilu ಈಗ ಭಾರತದ ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ, ಸೂರ್ಯನ ಬೆಳಕು, ಧೂಳು ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳನ್ನು ತೋರಿಸುತ್ತದೆ, ಮತ್ತು ನಿಮಗೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸುತ್ತದೆ. ಯೋಜನೆ, ಅದರ ಮುಕ್ತ ದತ್ತಾಂಶ ಮೂಲಗಳು ಮತ್ತು ಅದರ ಮೇಲೆ ಹೇಗೆ ನಿರ್ಮಿಸುವುದು ಎಂಬುದರ ಬಗ್ಗೆ.",
+      hi: "mugilu अभी भारत में किसी भी बिंदु पर वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ दिखाता है, और आपके लिए सबसे बुरे खतरे को नाम देता है। परियोजना, इसके खुले डेटा स्रोतों, और इस पर कैसे निर्माण करें, इसके बारे में।",
+      kn: "mugilu ಈಗ ಭಾರತದ ಯಾವುದೇ ಬಿಂದುವಿನ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳನ್ನು ತೋರಿಸುತ್ತದೆ, ಮತ್ತು ನಿಮಗೆ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸುತ್ತದೆ. ಯೋಜನೆ, ಅದರ ಮುಕ್ತ ದತ್ತಾಂಶ ಮೂಲಗಳು ಮತ್ತು ಅದರ ಮೇಲೆ ಹೇಗೆ ನಿರ್ಮಿಸುವುದು ಎಂಬುದರ ಬಗ್ಗೆ.",
     },
   "How mugilu works: the Ambient read explained": {
     hi: "mugilu कैसे काम करता है: Ambient रीडिंग की व्याख्या",
@@ -354,9 +356,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   // /c conditions <title> descriptor (place name is prepended, stays verbatim).
   // place-page title and description, in the words people search ("Delhi AQI today")
   "{place} AQI today: {aqi} {band}": { hi: "{place} AQI आज: {aqi} {band}", kn: "{place} AQI ಇಂದು: {aqi} {band}" },
-  "air quality, heat and warnings now": {
-    hi: "वायु गुणवत्ता, गर्मी और चेतावनियाँ अभी",
-    kn: "ವಾಯು ಗುಣಮಟ್ಟ, ಬಿಸಿಲು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಈಗ",
+  [`${HAZARDS_SHORT} now`]: {
+    hi: "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ अभी",
+    kn: "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಈಗ",
   },
   "{place} AQI {aqi} ({band}) right now, from the {station} station {km} km away.": {
     hi: "{place} AQI अभी {aqi} ({band}) है, {km} km दूर {station} स्टेशन से।",
@@ -393,16 +395,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "{place} AQI अभी {aqi} ({band}) है, मॉडल का अनुमान।",
     kn: "{place} AQI ಈಗ {aqi} ({band}), ಮಾದರಿಯ ಅಂದಾಜು.",
   },
-  "air, heat, rain and warnings right now": {
-    hi: "वायु, गर्मी, बारिश और चेतावनियाँ अभी",
-    kn: "ಈಗಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
-  },
   // /c conditions <meta description> framing (place name is prepended, stays verbatim).
-  "Air, heat, rain, UV, dust, smoke and any official warning over this spot, with the single worst hazard named for you.":
-    {
-      hi: "इस स्थान पर वायु, गर्मी, बारिश, UV, धूल, धुआं और कोई भी आधिकारिक चेतावनी, साथ में आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।",
-      kn: "ಈ ಸ್ಥಳದ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಮಳೆ, UV, ಧೂಳು, ಹೊಗೆ ಮತ್ತು ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯದೊಂದಿಗೆ.",
-    },
+  [`The ${HAZARDS} over this spot, with the single worst hazard named for you.`]: {
+    hi: "इस स्थान पर वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ, साथ में आपके लिए सबसे बुरा खतरा, साफ़ शब्दों में।",
+    kn: "ಈ ಸ್ಥಳದ ಮೇಲಿನ ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು, ನಿಮಗಾಗಿ ಹೆಸರಿಸಲಾದ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯದೊಂದಿಗೆ.",
+  },
   "A serious warning is active. Do what the officials tell you.": {
     hi: "एक गंभीर चेतावनी सक्रिय है। आधिकारिक मार्गदर्शन का पालन करें।",
     kn: "ಗಂಭೀರ ಎಚ್ಚರಿಕೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಅಧಿಕೃತ ಮಾರ್ಗದರ್ಶನವನ್ನು ಅನುಸರಿಸಿ.",
