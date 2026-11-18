@@ -40,10 +40,20 @@ export interface PageOpts extends Omit<ShellOpts, "bare" | "wide"> {
 function fontsLink(lang: Lang, scripts: Script[] = []): string {
   const want = new Set<Script>(scripts);
   if (lang !== "en") want.add(lang);
-  const fam = ["Anek+Latin:wdth,wght@75..100,400..800", ...[...want].map((s) => FONT[s])];
+  const css = (fams: string[], display: string) =>
+    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fams.map((f) => `family=${f}`).join("&amp;")}&amp;display=${display}">`;
+  // Latin swaps in (small, and the condensed headings need it). The Indic families are larger
+  // and their headline is the page's largest paint, so a first view keeps the system face
+  // rather than repainting late (optional); the next view has Anek from the cache.
   return (
     `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` +
-    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fam.map((f) => `family=${f}`).join("&amp;")}&amp;display=swap">`
+    css(["Anek+Latin:wdth,wght@75..100,400..800"], "swap") +
+    (want.size
+      ? css(
+          [...want].map((s) => FONT[s]),
+          "optional",
+        )
+      : "")
   );
 }
 

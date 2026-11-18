@@ -60,5 +60,7 @@ test("fonts: non-Latin scripts load the weight axis only (they are never condens
   const h = pageShell("t", "<p>x</p>", { path: "/warnings", lang: "hi", scripts: ["te", "bn"] });
   for (const fam of ["Anek+Devanagari", "Anek+Telugu", "Anek+Bangla"])
     assert.match(h, new RegExp(`family=${fam.replace("+", "\\+")}:wght@400\\.\\.800&`));
-  assert.match(h, /family=Anek\+Latin:wdth,wght@75\.\.100,400\.\.800/);
+  assert.match(h, /family=Anek\+Latin:wdth,wght@75\.\.100,400\.\.800&amp;display=swap/);
+  // The Indic families never repaint a first view (their headline is the largest paint): optional.
+  assert.match(h, /family=Anek\+Devanagari[^"]*&amp;display=optional"/);
 });
