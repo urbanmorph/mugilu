@@ -1,31 +1,31 @@
 import { type Conditions } from "../types";
 import { AQI_BAND_LABEL } from "../aqi";
-import { briefs, placeLabel } from "../readings";
+import { placeLabel } from "../readings";
 import { esc } from "../html";
-import { ambientRisk, ambientSummary, smokeLevel, type AmbientRisk, type Persona } from "../score";
+import { ambientRisk, ambientSummary, type AmbientRisk, type Persona } from "../score";
 import { lp, t, type Lang } from "../i18n";
 import { istTime } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import { embedCard, panel } from "../ui/components";
-import { dustBand, headText, readTint, round, uvWord } from "./read";
+import { headText, readRows, readTint } from "./read";
 
 // The embeddable card (a "build on it" surface): the place's read in other sites' iframes
 // (the published snippet is 480x240). The whole card links back to the place. The full
 // disclaimer shows at 400px wide and up, the short live line below (rule 6). Opened on its
 // own, the page also carries the snippet; framed, only the card.
 
-/** The card's figures, each in its own words, in the order every surface uses. */
+/** The readings the card has room for, in the order they matter now. */
+const CARD_KEYS = new Set(["air", "heat", "sun", "dust", "smoke"]);
+
+/** The card's figures, from the one readings model (read.ts readRows), so the card never
+ *  disagrees with the place page: the figure, then what it is and its word. */
 function cardReads(c: Conditions, risk: AmbientRisk, lang: Lang): [string, string][] {
-  const read: Record<string, [string, string]> = {};
-  if (c.air?.aqi != null) read.air = [String(c.air.aqi), `AQI ${t(AQI_BAND_LABEL[c.air.band] ?? "", lang)}`];
-  if (c.heat?.apparent_c != null) read.heat = [`${round(c.heat.apparent_c)}°`, t("feels like", lang)];
-  if (c.uv?.index != null) read.sun = [String(Math.round(c.uv.index)), `UV ${t(uvWord(c.uv.index), lang)}`];
-  if (c.dust?.dust_ug_m3 != null)
-    read.dust = [String(Math.round(c.dust.dust_ug_m3)), `${t("dust", lang)} ${t(dustBand(c.dust.dust_ug_m3), lang)}`];
-  if (c.smoke && smokeLevel(c.smoke) != null) read.smoke = [String(c.smoke.count), t("fires within 100 km", lang)];
-  return briefs(c, risk)
-    .map((b) => read[b.key])
-    .filter(Boolean);
+  return readRows(c, risk, lang)
+    .filter((r) => CARD_KEYS.has(r.key))
+    .map((r) => {
+      const word = r.key === "air" ? t(AQI_BAND_LABEL[c.air?.band ?? "unknown"], lang) : r.qual;
+      return [r.num, [r.unit, word].filter(Boolean).join(" ")];
+    });
 }
 
 export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, lang: Lang = "en"): string {

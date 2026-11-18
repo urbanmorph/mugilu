@@ -4,7 +4,8 @@ import { esc } from "../html";
 import { ambientRisk, type Persona } from "../score";
 import { t, type Lang } from "../i18n";
 import { pageShell } from "../ui/page-shell";
-import { DISCLAIMER_FULL, ico, qrBlock } from "../ui/components";
+import { DISCLAIMER_FULL, ico, qrBlock, stamp } from "../ui/components";
+import { relTime } from "../ui/shell";
 import { ambientPlate, readRows, warningTitle, type ReadRow } from "./read";
 
 // ── The screen display (?kiosk) ─────────────────────────────────────────────────────
@@ -29,8 +30,7 @@ export const kioskJs = (lang: Lang) => {
   return `(function(){
 var clkI,agoI,refT,vbT,n=0;
 var verbs=[${KIOSK_VERBS.map(s).join(",")}];
-var W={now:${s("just now")},min:${s("X min ago")},h:${s("X hours ago")},d:${s("X days ago")}};
-function ago(){var a=document.getElementById('ago');if(!a)return;var t=a.getAttribute('data-t');if(!t)return;var s=Math.max(0,(Date.now()-new Date(t).getTime())/1000);a.textContent=s<90?W.now:(s<3600?W.min.replace('X',Math.round(s/60)):s<86400?W.h.replace('X',Math.round(s/3600)):W.d.replace('X',Math.round(s/86400)));}
+function rel(){if(window.mgRel)mgRel();}
 function p(x){return x<10?'0'+x:''+x}
 function clock(){var c=document.getElementById('clk');if(c){var d=new Date();c.textContent=p(d.getHours())+':'+p(d.getMinutes());}}
 function fit(){var pl=document.querySelector('.kio .plate'),hd=pl&&pl.querySelector('.t-plate');if(!hd)return;hd.style.fontSize='';var drop=[].slice.call(pl.querySelectorAll('.also,.knorm'));drop.forEach(function(e){e.hidden=false;});var s0=parseFloat(getComputedStyle(hd).fontSize),s=s0,g=0;function over(){return pl.scrollHeight>pl.clientHeight+1;}function shrink(to){while(over()&&s>to&&g++<60){s-=4;hd.style.fontSize=s+'px';}}shrink(s0*.6);while(over()&&drop.length)drop.pop().hidden=true;shrink(24);}
@@ -38,7 +38,7 @@ function veil(){return document.querySelector('.kveil');}
 function showLoad(){clearTimeout(vbT);var v=veil();if(!v)return;var w=v.querySelector('.t-title'),i=0;(function nx(){if(w)w.textContent=verbs[i++%verbs.length]+'…';vbT=setTimeout(nx,1500);})();v.classList.add('on');}
 function hideLoad(){clearTimeout(vbT);var v=veil();if(v)v.classList.remove('on');}
 function refresh(){showLoad();if(++n%20===0){setTimeout(function(){location.reload();},500);return;}fetch(location.href,{cache:'no-store'}).then(function(r){return r.ok?r.text():Promise.reject();}).then(function(h){var d=new DOMParser().parseFromString(h,'text/html'),nk=d.querySelector('.kio'),ck=document.querySelector('.kio');if(!nk||!ck)throw 0;ck.parentNode.replaceChild(document.importNode(nk,true),ck);hideLoad();start();}).catch(function(){hideLoad();refT=setTimeout(refresh,60000);});}
-function start(){clearInterval(clkI);clearInterval(agoI);clearTimeout(refT);clock();ago();fit();clkI=setInterval(clock,15000);agoI=setInterval(ago,30000);refT=setTimeout(refresh,840000);}
+function start(){clearInterval(clkI);clearInterval(agoI);clearTimeout(refT);clock();rel();fit();clkI=setInterval(clock,15000);agoI=setInterval(rel,30000);refT=setTimeout(refresh,840000);}
 function lock(){try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(function(){});}catch(e){}}
 lock();document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')lock();});
 window.addEventListener('resize',fit);setTimeout(fit,300);
@@ -83,8 +83,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
   const body =
     `<div class="kio">` +
     `<header class="ktop"><div class="row-c"><h1 class="kname">${esc(placeName)}</h1><span class="t-meta">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</span></div>` +
-    `<div class="row-c"><span class="kclock" id="clk">--:--</span><span class="stamp"><span class="k">${esc(t("updated", lang))}</span>` +
-    `<span class="v" id="ago" data-t="${esc(c.as_of)}">${esc(t("just now", lang))}</span></span></div></header>` +
+    `<div class="row-c"><span class="kclock" id="clk">--:--</span>${stamp(t("updated", lang), relTime(c.as_of))}</div></header>` +
     `<div class="kb">${ambientPlate(risk, lang, warn + (normal ? `<div class="knorm stack">${normal}</div>` : ""))}` +
     `<section class="ktiles" aria-label="${esc(t("Readings", lang))}">${shown.map(tile).join("")}${quiet}</section></div>` +
     `<footer class="kf"><div class="stack"><span class="kbrand">mugilu.live</span><p class="t-legal">${esc(t(DISCLAIMER_FULL, lang))}</p></div>` +

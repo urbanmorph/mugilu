@@ -90,7 +90,8 @@ export function relTimeJs(lang: Lang): string {
     lang === "en"
       ? `function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}`
       : `function r(ms){var m=Math.round(ms/6e4);if(m<1)return ${JSON.stringify(t("just now", lang))};if(m<60)return ${JSON.stringify(t("X min ago", lang))}.replace('X',m);var h=Math.round(m/60);if(h<24)return ${JSON.stringify(t("X hours ago", lang))}.replace('X',h);var d=Math.round(h/24);return ${JSON.stringify(t("X days ago", lang))}.replace('X',d);}`;
-  return `(function(){${relFn}var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});})();`;
+  // window.mgRel re-runs it: the screen display calls it on its interval and after a data swap.
+  return `(function(){${relFn}window.mgRel=function(){var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});};mgRel();})();`;
 }
 
 /** Short IST stamp, e.g. "14:32 IST · 27 Jun". The time travels on embeds/PNGs. */
@@ -113,6 +114,5 @@ export function relTime(iso: string): string {
   return `<time data-rel datetime="${iso}">${istTime(iso)}</time>`;
 }
 
-/** Escapes text for innerHTML in a page script; each script scope that builds HTML defines it. */
 /** The one client-side escape, for text and attribute positions alike (& < > " '). */
 export const CLIENT_ESC = `function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}`;
