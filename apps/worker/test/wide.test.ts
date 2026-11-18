@@ -3,10 +3,8 @@ import assert from "node:assert/strict";
 import {
   renderAbout,
   renderConditionsPage,
-  renderDisplayBuilder,
   renderHome,
   renderMcpPage,
-  renderNotFound,
   renderMethodology,
   renderPlaces,
   renderStationPage,
@@ -82,13 +80,12 @@ const SNAP: WarningsSnapshot = {
   ],
 } as WarningsSnapshot;
 
+// /warnings, /display and 404 are on the signage shell (test/redesign-warnings.test.ts).
 const WIDE = [
-  ["/warnings", renderWarningsPage(SNAP)],
   ["/s/…", renderStationPage(st(), near, true)],
   ["/about", renderAbout()],
   ["/methodology", renderMethodology()],
   ["/terms", renderTerms()],
-  ["/display", renderDisplayBuilder()],
 ] as const;
 
 test("wide pages: a header nav to the main pages, and the wide layout from 960 px", () => {
@@ -123,12 +120,12 @@ test("every page shares the header nav and the footer width; home and /c keep th
     attribution: "x",
     disclaimer: "y",
   } as unknown as Conditions;
-  for (const html of [renderConditionsPage(c), renderMcpPage(), renderNotFound()]) {
+  for (const html of [renderConditionsPage(c), renderMcpPage()]) {
     assert.match(html, /<nav class="topnav"[^>]*>[\s\S]*href="\/warnings"/);
     assert.match(html, /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}/);
   }
   assert.doesNotMatch(renderConditionsPage(c), /<body class="wide">/);
-  for (const html of [renderMcpPage(), renderNotFound()]) assert.match(html, /<body class="wide">/);
+  assert.match(renderMcpPage(), /<body class="wide">/);
   // phones: the nav is a second row under the logo, scrolling sideways if it must
   assert.match(renderConditionsPage(c), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
   // the signage pages (home first) carry the signage header's nav instead
@@ -145,17 +142,11 @@ test("warningType: the kind of hazard, from the headline", () => {
   assert.equal(warningType("Something else entirely"), "other");
 });
 
-test("/warnings: filters by type and office, cards carry what the filters read, long headlines wrap", () => {
+test("/warnings: filters by type and office, rows carry what the filters read", () => {
   const html = renderWarningsPage(SNAP);
-  assert.match(html, /<aside class="wfilter"/);
-  assert.match(html, /<input type="checkbox" name="type" value="storm" checked>[^<]*<\/span><span class="wc">2</);
-  assert.match(
-    html,
-    /<input type="checkbox" name="issuer" value="IMD Guwahati" checked>[^<]*<\/span><span class="wc">2</,
-  );
-  assert.match(html, /<li data-type="storm" data-issuer="IMD Srinagar">/);
-  assert.match(html, /\.whead\{[^}]*overflow-wrap:anywhere/); // the sideways-scroll fix
-  assert.match(html, /\.wlist\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(html, /name="type" value="storm" checked><span>Thunderstorm, lightning<\/span><span class="c">2</);
+  assert.match(html, /name="issuer" value="IMD Guwahati" checked><span>IMD Guwahati<\/span><span class="c">2</);
+  assert.match(html, /<li class="wrow" data-type="storm" data-issuer="IMD Srinagar">/);
 });
 
 test("/places: a state picker and a search, each state an anchor", () => {
@@ -183,11 +174,6 @@ test("text pages: a contents list linking each section", () => {
   }
 });
 
-test("/display: the preview and the setup sit side by side", () => {
-  const html = renderDisplayBuilder();
-  assert.match(html, /<div class="dleft">[\s\S]*class="dprev"[\s\S]*<div class="dright">[\s\S]*action="\/go"/);
-});
-
 // The backdrop says what the data says, by the canonical rule (palette.ts tintOf), as on /c.
 test("tinted backdrops: a station by its air band, /warnings by its warnings, calm sky when quiet", () => {
   const body = /body\{background:linear-gradient\(180deg,color-mix\(in srgb,var\(--tint\) var\(--tk\),var\(--bg\)\)/;
@@ -196,14 +182,9 @@ test("tinted backdrops: a station by its air band, /warnings by its warnings, ca
   assert.match(vpoor, body);
   assert.match(renderStationPage(st(), near, true), /:root\{--tint:#a0785a;--tk:20%\}/); // moderate
   assert.match(renderStationPage(st(), near, false), /:root\{--tint:#38bdf8;--tk:16%\}/); // no recent reading: calm
-  assert.match(renderWarningsPage(SNAP), /:root\{--tint:#ef4444;--tk:20%\}/); // 4 warnings
-  assert.match(renderWarningsPage(SNAP), body);
-  const many = {
-    ...SNAP,
-    alerts: Array.from({ length: 30 }, (_, i) => ({ ...SNAP.alerts[0], identifier: String(i) })),
-  };
-  assert.match(renderWarningsPage(many as WarningsSnapshot), /:root\{--tint:#ef4444;--tk:26%\}/);
-  assert.match(renderWarningsPage({ ...SNAP, alerts: [] } as WarningsSnapshot), /:root\{--tint:#38bdf8;--tk:16%\}/);
+  // /warnings: the warning wash at high while any warning is active, none when quiet (signage shell)
+  assert.match(renderWarningsPage(SNAP), /<body class="mg" data-tint="Warning" data-level="high">/);
+  assert.match(renderWarningsPage({ ...SNAP, alerts: [] } as WarningsSnapshot), /<body class="mg">/);
   // the explainer pages stay neutral
   assert.doesNotMatch(renderAbout(), /--tint:/);
 });

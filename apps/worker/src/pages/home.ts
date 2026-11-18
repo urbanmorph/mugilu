@@ -15,6 +15,7 @@ import { pageShell } from "../ui/page-shell";
 import {
   band,
   button,
+  comboboxJs,
   ico,
   lane,
   levelChip,
@@ -30,7 +31,6 @@ import {
   type IconName,
 } from "../ui/components";
 import { indiaMap, MAP_JS } from "../ui/map";
-import { searchJs } from "../ui/search";
 
 export const CITIES = [
   { name: "Delhi", lat: 28.61, lon: 77.21 },
@@ -111,12 +111,11 @@ function highlightRows(
 /** The newest official cyclone warning, as a plate: IMD's category and the storm's name. */
 function cyclonePlate(c: ReturnType<typeof officialCyclone>, lang: Lang): string {
   if (!c) return "";
-  const who = esc(issuerName(c.alert.issuer));
-  const when = esc(istTime(new Date(c.alert.sent).toISOString()));
+  const issuer = issuerName(c.alert.issuer);
+  const time = istTime(new Date(c.alert.sent).toISOString());
+  const [who, when] = [esc(issuer), esc(time)];
   const cap = esc(
-    t("Original alert (CAP): X, Y", lang)
-      .replace("X", issuerName(c.alert.issuer))
-      .replace("Y", istTime(new Date(c.alert.sent).toISOString())),
+    t("Original alert (CAP): {issuer}, {time}", lang).replace("{issuer}", issuer).replace("{time}", time),
   );
   return band(
     warningPlate({
@@ -253,6 +252,6 @@ export function renderHome(
     jsonLd: site,
     ogImage: HOME_OG,
     lang,
-    js: searchJs(lang) + MAP_JS(lang) + nearMeJs("nearme", "''", lang) + yourPlacesJs(lang),
+    js: comboboxJs("q", lang) + MAP_JS(lang) + nearMeJs("nearme", "''", lang) + yourPlacesJs(lang),
   });
 }

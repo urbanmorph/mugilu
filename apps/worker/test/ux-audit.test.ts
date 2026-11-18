@@ -139,8 +139,8 @@ test("7. the embed card's cloud mark has its sky colour", () => {
 test("8. the display setup page previews a live display and suggests places as you type", () => {
   const html = renderDisplayBuilder("elderly");
   assert.match(html, /<iframe[^>]+src="\/c\/bengaluru\?kiosk&amp;as=elderly"[^>]+tabindex="-1"/);
-  assert.match(html, /id="dac"/);
-  assert.match(html, /'\?kiosk'/);
+  assert.match(html, /<ul class="ac" role="listbox" id="dq-list"/);
+  assert.match(html, /fetch\('\/suggest\?q='/);
 });
 
 test("9. on laptops the layers flow in two balanced columns (no gaps under short tiles)", () => {
