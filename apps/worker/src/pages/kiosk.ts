@@ -95,9 +95,12 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     `${qrBlock(qrTarget, t("scan to see this on your phone", lang))}</footer>` +
     `<div class="kveil" aria-hidden="true"><p class="t-title">${esc(t(KIOSK_VERBS[0], lang))}…</p></div></div>`;
 
-  return pageShell(`${placeName} on a screen: mugilu`, body, {
+  return pageShell(`${t("{place} on a screen", lang).replace("{place}", placeName)}: mugilu`, body, {
     path: `/c/${slug}`,
-    desc: `${c.place ?? slug}: a live wall-display of the whole sky over this spot, self-refreshing.`,
+    desc: t("{place}: a live wall-display of the whole sky over this spot, self-refreshing.", lang).replace(
+      "{place}",
+      c.place ?? slug,
+    ),
     canonical,
     ogImage: `${canonical}.png`,
     // A screen reloads every ~14 min all day: it would inflate visitor counts and skew Core Web Vitals.

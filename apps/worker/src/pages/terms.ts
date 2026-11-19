@@ -62,7 +62,13 @@ export function renderTerms(lang: Lang = "en"): string {
     ],
     ["Official warnings", t("NDMA / IMD via SACHET.", lang)],
     ["Fire / crop-burn smoke", "NASA FIRMS (VIIRS)."],
-    ["Cyclone tracks", `${a("https://www.metoc.navy.mil/jtwc/jtwc.html", "JTWC")} (US Navy and Air Force).`],
+    [
+      "Cyclone tracks",
+      t("{jtwc} (US Navy and Air Force).", lang).replace(
+        "{jtwc}",
+        a("https://www.metoc.navy.mil/jtwc/jtwc.html", "JTWC"),
+      ),
+    ],
     [
       "Geography &amp; place names",
       t(

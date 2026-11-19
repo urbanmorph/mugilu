@@ -30,7 +30,7 @@ export function renderNotFound(lang: Lang = "en"): string {
   );
   return pageShell(`${t("Not here.", lang).replace(/\.$/, "")}: mugilu`, body, {
     path: "/404",
-    desc: SITE_DESC,
+    desc: t(SITE_DESC, lang),
     ogImage: HOME_OG,
     lang,
     js: comboboxJs("nq", lang),
