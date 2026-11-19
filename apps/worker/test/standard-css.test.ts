@@ -152,3 +152,7 @@ test("stamps in a bar: the selected layer's alone, on one line in the bar's colo
   assert.match(STANDARD_CSS, /\.mg \.bar \.stamp\.off\{display:none\}/);
   assert.doesNotMatch(STANDARD_CSS, /#[0-9a-fA-F]{3,8}\b/);
 });
+
+test("the kiosk's Updated stamp is one line beside the clock: label then age", () => {
+  assert.match(STANDARD_CSS, /\.mg \.kio \.stamp\{flex-direction:row;align-items:baseline;gap:\.5em\}/);
+});

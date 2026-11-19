@@ -323,6 +323,7 @@ body{margin:0}
 .mg .kio{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100%}
 .mg .kio .ktop{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp4);padding:var(--sp3) var(--gut);border-bottom:2px solid var(--line)}
 .mg .kio h1.kname{margin:0}
+.mg .kio .stamp{flex-direction:row;align-items:baseline;gap:.5em}
 .mg .kio .kname,.mg .kio .kclock{font-size:var(--t-xl);font-weight:800;font-stretch:80%;text-transform:uppercase;font-variant-numeric:tabular-nums}
 .mg .kio .kb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);min-height:0}
 .mg .kio .plate{display:flex;flex-direction:column;justify-content:center;padding:var(--sp5) var(--gut)}
