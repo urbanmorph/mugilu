@@ -9,13 +9,13 @@
 import type { Conditions, NormalizedStation } from "./types";
 import { ambientRisk, ambientMeaning, headline, RISK_BANDS } from "./score";
 import type { Persona } from "./score";
-import { BAND_COLOR, BAND_ON_FILL, NEUTRAL, ON_FILL, RISK_COLOR } from "./palette";
+import { BAND_COLOR, BAND_ON_FILL, BRAND, NEUTRAL, ON_FILL, RISK_COLOR } from "./palette";
 import { briefs, gaugePos, type Brief } from "./readings";
 import { placeLabel } from "./readings";
 import { istStamp } from "./ist";
 import { heatVsNormalLine, heatVsNormalShown } from "./heatnormals";
 import { AQI_BAND_LABEL } from "./aqi";
-import { BAND_SHAPE, LEVEL_SHAPE, SHAPE, DISCLAIMER_FULL, type ShapeName } from "./ui/components";
+import { BAND_SHAPE, CLOUD_PATHS, LEVEL_SHAPE, SHAPE, DISCLAIMER_FULL, type ShapeName } from "./ui/components";
 
 /** Text for the image. Satori draws text as written and never decodes HTML
  *  entities, so `esc()` would show "&amp;" ("Asthma &amp; lungs"); only the angle
@@ -37,12 +37,19 @@ const shapeSvg = (kind: ShapeName, size: number, colour: string) =>
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${SHAPE[kind]}" fill="${colour}" fill-rule="evenodd"/></svg>`,
   )}">`;
 
-/** The frame: the black bar, the middle, the foot. */
+/** The cloud mark in the brand blue, as an image (Satori draws no inline <svg>). */
+const cloudSvg = (size: number) =>
+  `<img width="${size}" height="${size}" src="data:image/svg+xml;base64,${btoa(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="${BRAND}">${CLOUD_PATHS}</g></svg>`,
+  )}">`;
+
+/** The frame: the black bar, the middle, the foot. Bar and foot are regular weight: the
+ *  plate, the title or the wordmark carries the weight. */
 function frame(top: [string, string], mid: string, foot: [string, string]): string {
   return box(
     `flex-direction:column;width:1200px;height:630px;background:${N.bg};color:${N.ink};${FONT}`,
     box(
-      `justify-content:space-between;align-items:center;background:${N.bar};color:${N.onBar};padding:24px 48px;font-size:26px;font-weight:800;`,
+      `justify-content:space-between;align-items:center;background:${N.bar};color:${N.onBar};padding:24px 48px;font-size:26px;`,
       txt("", top[0]),
       txt("", top[1]),
     ),
@@ -50,7 +57,7 @@ function frame(top: [string, string], mid: string, foot: [string, string]): stri
     box(
       `justify-content:space-between;align-items:center;padding:18px 48px;border-top:2px solid ${N.ink};font-size:18px;color:${N.muted};`,
       txt("max-width:860px;", foot[0]),
-      txt(`font-weight:800;color:${N.ink};`, foot[1]),
+      txt(`color:${N.ink};`, foot[1]),
     ),
   );
 }
@@ -104,7 +111,7 @@ export function conditionsOgHtml(c: Conditions, persona: Persona): string {
       shapeSvg(LEVEL_SHAPE[risk.band], 96, on),
       txt("font-size:104px;font-weight:800;line-height:1;margin-left:24px;", head.toUpperCase()),
     ),
-    txt("font-size:32px;font-weight:600;margin-top:14px;", ambientMeaning(risk)),
+    txt("font-size:32px;margin-top:14px;", ambientMeaning(risk)),
     normal,
   );
   const stats = box(
@@ -149,15 +156,16 @@ export function stationOgHtml(s: NormalizedStation, generatedAt: string): string
 export function homeOgHtml(): string {
   const covers = ["air", "heat", "rain", "UV", "dust", "warnings"];
   return frame(
-    ["MUGILU", "mugilu.live"],
+    ["", "mugilu.live"],
     box(
       "flex-direction:column;justify-content:center;flex:1;padding:0 48px;",
-      txt("font-size:128px;font-weight:800;line-height:1;", "MUGILU"),
-      txt("font-size:42px;font-weight:600;margin-top:20px;", "The open sky of India, one coordinate at a time."),
       box(
-        `margin-top:32px;font-size:28px;font-weight:700;color:${N.muted};`,
-        ...covers.map((w, i) => txt(i ? "margin-left:28px;" : "", w)),
+        "align-items:center;",
+        cloudSvg(150),
+        txt("font-size:132px;font-weight:700;letter-spacing:-2px;line-height:1;margin-left:24px;", "mugilu"),
       ),
+      txt("font-size:42px;margin-top:24px;", "The open sky of India, one coordinate at a time."),
+      txt(`margin-top:28px;font-size:28px;color:${N.muted};`, covers.join("  ·  ")),
     ),
     ["open · free · built to be built on", "mugilu.live"],
   );

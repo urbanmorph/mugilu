@@ -25,20 +25,24 @@ export async function png(
 interface ImageFont {
   name: string;
   data: ArrayBuffer;
-  weight: 600 | 800;
+  weight: 400 | 700 | 800;
   style: "normal";
 }
 let anek: Promise<ImageFont[]> | undefined;
-/** Anek Latin at the two weights the share images use, bundled with the worker (src/fonts,
+/** Anek Latin at the three weights the share images use (400 to read, 700 the wordmark and
+ *  labels, 800 display), bundled with the worker (src/fonts,
  *  SIL OFL 1.1, Fontsource 5.3.0 static instances: Satori takes neither WOFF2 nor variable
  *  axes), loaded once per isolate on the first share image. */
 function anekLatin(): Promise<ImageFont[]> {
-  anek ??= Promise.all([import("./fonts/anek-latin-600.ttf"), import("./fonts/anek-latin-800.ttf")]).then(
-    ([semi, bold]) => [
-      { name: "Anek Latin", data: semi.default, weight: 600, style: "normal" },
-      { name: "Anek Latin", data: bold.default, weight: 800, style: "normal" },
-    ],
-  );
+  anek ??= Promise.all([
+    import("./fonts/anek-latin-400.ttf"),
+    import("./fonts/anek-latin-700.ttf"),
+    import("./fonts/anek-latin-800.ttf"),
+  ]).then(([regular, bold, display]) => [
+    { name: "Anek Latin", data: regular.default, weight: 400, style: "normal" },
+    { name: "Anek Latin", data: bold.default, weight: 700, style: "normal" },
+    { name: "Anek Latin", data: display.default, weight: 800, style: "normal" },
+  ]);
   return anek;
 }
 
