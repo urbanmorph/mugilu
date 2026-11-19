@@ -372,7 +372,7 @@ export function indiaMap(m: IndiaMap | undefined, lang: Lang, o: IndiaMapOpts = 
     "layer",
     t("Map layer", lang),
     layers.map(([v, l]) => ({ value: v, label: t(l, lang), checked: v === first })),
-    { legendClass: "vh" },
+    { legendClass: "vh", segClass: "fit" },
   );
   const svg = mapSvg(m, "m", t(LABEL[first], lang), lang, "", "", false, warned);
   const box = stack(seg + svg + legends("m", lang, rain, warned.length > 0));
