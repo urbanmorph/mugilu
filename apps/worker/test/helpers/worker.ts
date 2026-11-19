@@ -25,17 +25,20 @@ function pinClock(): void {
 }
 
 class MemR2 {
-  store = new Map<string, string>();
+  // Binary bodies (the gzipped archives) stay bytes; text stays text.
+  store = new Map<string, string | Uint8Array>();
   meta = new Map<string, Record<string, string>>();
   async get(key: string) {
     const body = this.store.get(key);
     if (body == null) return null;
+    const text = () => (typeof body === "string" ? body : new TextDecoder().decode(body));
+    const bytes = () => (typeof body === "string" ? new TextEncoder().encode(body) : body);
     return {
-      body: new Response(body).body,
+      body: new Response(bytes()).body,
       httpMetadata: { contentType: "application/json" },
-      text: async () => body,
-      json: async () => JSON.parse(body),
-      arrayBuffer: async () => new TextEncoder().encode(body).buffer,
+      text: async () => text(),
+      json: async () => JSON.parse(text()),
+      arrayBuffer: async () => bytes().slice().buffer,
       writeHttpMetadata: (h: Headers) => h.set("content-type", "application/json"),
     };
   }
@@ -47,7 +50,10 @@ class MemR2 {
     value: string | ArrayBuffer | Uint8Array,
     opts: { customMetadata?: Record<string, string> } = {},
   ) {
-    this.store.set(key, typeof value === "string" ? value : new TextDecoder().decode(value));
+    this.store.set(
+      key,
+      typeof value === "string" ? value : new Uint8Array(value instanceof ArrayBuffer ? value : value.slice()),
+    );
     this.meta.set(key, { ...opts.customMetadata });
   }
   async list(opts: { prefix?: string } = {}) {

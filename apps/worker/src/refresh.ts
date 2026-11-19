@@ -5,6 +5,7 @@ import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
 import { freshStations, LATEST_KEY, loadRawSnapshot, putJson } from "./snapshot";
 import { bump } from "./metrics";
 import { reason } from "./logs";
+import { gzip } from "./gzip";
 
 function num(x: unknown): number | undefined {
   if (typeof x === "number" && Number.isFinite(x)) return x;
@@ -260,9 +261,7 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
   // Key: archive/air/{YYYY-MM-DD}/{HH}.json.gz, off the snapshot's UTC hour.
   const gen = snapshot.generated_at;
   const airKey = `archive/air/${gen.slice(0, 10)}/${gen.slice(11, 13)}.json.gz`;
-  const airGz = await new Response(
-    new Response(JSON.stringify(snapshot)).body!.pipeThrough(new CompressionStream("gzip")),
-  ).arrayBuffer();
+  const airGz = await gzip(JSON.stringify(snapshot));
 
   // Write the full + minified snapshot (for the live site) plus the hourly archive. The
   // live leaderboard (/index), home hero and MCP national_now compute their slices from

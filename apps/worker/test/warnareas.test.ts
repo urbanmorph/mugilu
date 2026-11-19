@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  ARCHIVE_PREFIX,
   AREAS_PREFIX,
   collectWarnAreas,
   loadWarnAreas,
@@ -106,12 +107,12 @@ async function seedFeed(env: Env, ids: string[]): Promise<void> {
 }
 
 /** SACHET stubbed: CAP files by id (a missing id answers 500), the polygon file for any. */
-function stubSachet(caps: Record<string, string>): string[] {
+function stubSachet(caps: Record<string, string>, polygon = POLYGON): string[] {
   const calls: string[] = [];
   globalThis.fetch = (async (input: RequestInfo | URL) => {
     const url = String(input instanceof Request ? input.url : input);
     calls.push(url);
-    if (url.includes("FetchPolygonXMLFile")) return new Response(POLYGON);
+    if (url.includes("FetchPolygonXMLFile")) return new Response(polygon);
     const id = new URL(url).searchParams.get("identifier")!;
     return caps[id] ? new Response(caps[id]) : new Response("down", { status: 500 });
   }) as typeof fetch;
@@ -121,7 +122,7 @@ function stubSachet(caps: Record<string, string>): string[] {
 const stored = async (env: Env, id: string) =>
   JSON.parse((await (await env.OAQ_R2.get(`${AREAS_PREFIX}${id}.json`))?.text()) ?? "null");
 
-test("collectWarnAreas: each alert stored as it arrives; an expired one costs no polygon; a failure is recorded", async () => {
+test("collectWarnAreas: each alert stored as it arrives; an expired one keeps no rings for the map; a failure is recorded", async () => {
   const { env } = testWorker();
   await seedFeed(env, ["1", "2", "3"]);
   const calls = stubSachet({ "1": CAP_IMD, "2": capWith("2026-11-16T10:00:00+05:30") });
@@ -135,7 +136,8 @@ test("collectWarnAreas: each alert stored as it arrives; an expired one costs no
   assert.equal(a.rings.length, 2);
   assert.deepEqual((await stored(env, "2")).rings, []);
   assert.equal((await stored(env, "3")).failed, true);
-  assert.equal(calls.filter((u) => u.includes("FetchPolygonXMLFile")).length, 1, "only the active alert's polygon");
+  // Both polygons are fetched: the map has no use for an expired area, but the archive does.
+  assert.equal(calls.filter((u) => u.includes("FetchPolygonXMLFile")).length, 2);
 });
 
 test("collectWarnAreas: a second run with the same feed fetches nothing and writes nothing", async () => {
@@ -230,4 +232,89 @@ test("loadWarnAreas: only the alerts in force, with their areas", async () => {
     ["1"],
   );
   assert.deepEqual(await loadWarnAreas(env, Date.parse("2026-11-19T07:00:00Z")), []);
+});
+
+// ── The archive: where and when every alert applied, kept for good ──────────────────
+const archived = async (env: Env, id: string) => {
+  const o = await env.OAQ_R2.get(`${ARCHIVE_PREFIX}${id}.json.gz`);
+  if (!o) return null;
+  return new Response(o.body.pipeThrough(new DecompressionStream("gzip"))).json();
+};
+
+test("parseCap: the alert's times: sent, effective, onset and expires", () => {
+  const c = parseCap(CAP_IMD)!;
+  assert.equal(c.sent, "2026-11-19T09:21:10+05:30");
+  assert.equal(c.effective, "2026-11-19T09:14:00+05:30");
+  assert.equal(c.onset, "2026-11-19T09:21:10+05:30");
+  assert.equal(c.expires, "2026-11-19T12:14:00+05:30");
+});
+
+// A mandal-like outline: a 200-point ring about 10 km across (CAP writes lat,lon).
+const DETAILED = `<polygons><polygon>${Array.from({ length: 200 }, (_, i) => {
+  const t = (i / 200) * 2 * Math.PI;
+  return `${(23.8 + 0.05 * Math.sin(t)).toFixed(5)},${(91.8 + 0.05 * Math.cos(t)).toFixed(5)}`;
+}).join(" ")}</polygon></polygons>`;
+
+test("collectWarnAreas: every alert is archived as it arrives, with its times and a finer area than the map's", async () => {
+  const { env } = testWorker();
+  await seedFeed(env, ["1", "2"]);
+  stubSachet({ "1": CAP_IMD, "2": capWith("2026-11-16T10:00:00+05:30") }, DETAILED);
+  await collectWarnAreas(env, { now: NOW });
+  const a = await archived(env, "1");
+  assert.equal(a.effective, "2026-11-19T09:14:00+05:30");
+  assert.equal(a.onset, "2026-11-19T09:21:10+05:30");
+  assert.equal(a.expires, "2026-11-19T12:14:00+05:30");
+  assert.equal(a.sent, "2026-11-19T09:21:10+05:30");
+  assert.equal(a.severity, "Moderate");
+  const points = (rings: [number, number][][]) => rings.reduce((n, r) => n + r.length, 0);
+  assert.ok(points(a.rings) > points((await stored(env, "1")).rings), "finer than the map's copy");
+  // expired when first seen: no rings for the map, but the archive knows where it was
+  assert.deepEqual((await stored(env, "2")).rings, []);
+  assert.ok((await archived(env, "2")).rings.length > 0);
+});
+
+test("collectWarnAreas: pruning the map's copy never touches the archive", async () => {
+  const { env } = testWorker();
+  await seedFeed(env, ["1", "4"]);
+  stubSachet({ "1": CAP_IMD, "4": CAP_IMD });
+  await collectWarnAreas(env, { now: NOW });
+  await seedFeed(env, ["1"]);
+  stubSachet({});
+  await collectWarnAreas(env, { now: NOW + 2 * 86_400_000 });
+  assert.deepEqual((await stored(env, "1")).rings, []);
+  assert.equal(await stored(env, "4"), null);
+  assert.equal((await archived(env, "1")).rings.length, 2);
+  assert.equal((await archived(env, "4")).rings.length, 2);
+  // and a later run, with the map copy's rings gone, does not refetch to archive it again
+  const calls = stubSachet({ "1": CAP_IMD });
+  await collectWarnAreas(env, { now: NOW + 3 * 86_400_000 });
+  assert.deepEqual(calls, []);
+});
+
+test("collectWarnAreas: an alert stored before the archive existed is fetched once more to archive it", async () => {
+  const { env } = testWorker();
+  await seedFeed(env, ["1"]);
+  // the record as the previous version wrote it: no archive, no `archived` mark
+  await env.OAQ_R2.put(
+    `${AREAS_PREFIX}1.json`,
+    JSON.stringify({
+      identifier: "1",
+      event: "Light Rain",
+      severity: "Moderate",
+      expires: "2026-11-19T12:14:00+05:30",
+      issuer: "x",
+      headline: "h",
+      areaDesc: "a",
+      rings: [],
+    }),
+    { customMetadata: { expires: String(Date.parse("2026-11-19T12:14:00+05:30")), rings: "0" } },
+  );
+  let calls = stubSachet({ "1": CAP_IMD });
+  const r = await collectWarnAreas(env, { now: NOW });
+  assert.equal(r.fetched, 1);
+  assert.ok(calls.some((u) => u.endsWith("identifier=1")));
+  assert.equal((await archived(env, "1")).rings.length, 2);
+  calls = stubSachet({ "1": CAP_IMD });
+  assert.equal((await collectWarnAreas(env, { now: NOW + 60_000 })).fetched, 0);
+  assert.deepEqual(calls, []);
 });

@@ -5,6 +5,7 @@ import type { FeedAlert } from "./sachet";
 import { loadWarningsSnapshot } from "./snapshot";
 import { simplifyRing } from "./simplify-path";
 import { reason } from "./logs";
+import { gzip } from "./gzip";
 
 // The official warnings' areas, for the home map's Warnings layer and the /places marks. The
 // national feed (sachet.ts) names each alert but not where it is; its CAP file (~3 KB) holds the
@@ -13,15 +14,24 @@ import { reason } from "./logs";
 // map can show, as soon as it arrives: a run that is stopped keeps what it fetched and the next
 // one continues; a second run with the same feed fetches nothing. SACHET is a slow .gov.in host,
 // so every call is time-boxed, the run has its own time budget, and nothing here ever throws.
+// Each alert is also archived (archive/warn-areas/<id>.json.gz) with its times and a finer area,
+// so "was this place under a warning at that hour" can be answered after the map has moved on.
 
 export const AREAS_PREFIX = "data/warn-areas/";
+/** Every alert's area and times, kept for good (the history read), as <id>.json.gz: the map's
+ *  copy above is pruned once the alert is over, this one never is. */
+export const ARCHIVE_PREFIX = "archive/warn-areas/";
 const SACHET = "https://sachet.ndma.gov.in/cap_public_website/";
 
 /** One CAP file, read for the map: the English info when the alert has several languages. */
 export interface CapInfo {
   event: string;
   severity: string;
-  /** ISO time with offset, as issued (+05:30). */
+  /** ISO times with offset, as issued (+05:30): when it was sent, takes effect, the hazard is
+   *  expected to begin, and when it expires. Any may be empty when the alert leaves it out. */
+  sent: string;
+  effective: string;
+  onset: string;
   expires: string;
   headline: string;
   areaDesc: string;
@@ -40,6 +50,10 @@ export interface WarnArea {
   headline: string;
   areaDesc: string;
   rings: Ring[];
+  /** The other CAP times (archived records; older map records lack them). */
+  sent?: string;
+  effective?: string;
+  onset?: string;
 }
 /** A failed fetch, kept so a bad id is retried later (backing off), not every hour. */
 interface Failed {
@@ -72,6 +86,9 @@ export function parseCap(xml: string): CapInfo | null {
   return {
     event: tag(info, "event"),
     severity: tag(info, "severity"),
+    sent: tag(xml, "sent"),
+    effective: tag(info, "effective"),
+    onset: tag(info, "onset"),
     expires: tag(info, "expires"),
     headline: tag(info, "headline"),
     areaDesc: tag(info, "areaDesc"),
@@ -96,14 +113,18 @@ export function parsePolygons(xml: string): Ring[] {
 
 /** Degrees: about 0.35 px on the home map (12 px a degree), the detail it can show. */
 const TOLERANCE = 0.03;
-const round2 = (n: number) => Math.round(n * 100) / 100;
+/** The archive's detail: about 200 m, rounded to 0.001° (about 100 m), enough to say whether a
+ *  street was inside, at a fraction of the source's mandal-level size. */
+const ARCHIVE_DETAIL = { tolerance: 0.002, places: 3 };
 
-/** Rings simplified to the map's detail, rounded to 0.01° (about 1 km), every ring kept. */
-export function simplifyArea(rings: Ring[]): Ring[] {
+/** Rings simplified to the map's detail (or the archive's), rounded, every ring kept. */
+export function simplifyArea(rings: Ring[], { tolerance = TOLERANCE, places = 2 } = {}): Ring[] {
+  const k = 10 ** places;
+  const round = (n: number) => Math.round(n * k) / k;
   return rings
     .map((ring) =>
-      simplifyRing(ring, TOLERANCE)
-        .map(([lon, lat]) => [round2(lon), round2(lat)] as [number, number])
+      simplifyRing(ring, tolerance)
+        .map(([lon, lat]) => [round(lon), round(lat)] as [number, number])
         .filter(([x, y], i, a) => i === 0 || x !== a[i - 1][0] || y !== a[i - 1][1]),
     )
     .filter((r) => r.length >= 3);
@@ -129,6 +150,8 @@ interface Meta {
   /** Failed: the tries so far and when to try again (ms). */
   tries?: string;
   retry?: string;
+  /** "1" once the alert is in the archive. A record without it predates the archive. */
+  archived?: string;
 }
 
 export interface CollectOpts {
@@ -173,12 +196,19 @@ const put = (env: Env, id: string, body: WarnArea | Failed, meta: Meta) =>
     httpMetadata: { contentType: "application/json" },
     customMetadata: meta as Record<string, string>,
   });
-const doneMeta = (a: WarnArea): Meta => ({
+const doneMeta = (a: WarnArea, archived: boolean): Meta => ({
   expires: String(Date.parse(a.expires) || 0),
   rings: String(a.rings.length),
+  ...(archived ? { archived: "1" } : {}),
 });
-/** Store one alert's area (the run's cache, one object per alert). */
-export const storeWarnArea = (env: Env, a: WarnArea) => put(env, a.identifier, a, doneMeta(a));
+/** Store one alert's area for the map (the run's cache, one object per alert). */
+export const storeWarnArea = (env: Env, a: WarnArea, archived = false) =>
+  put(env, a.identifier, a, doneMeta(a, archived));
+/** Keep one alert for good, gzipped as the other archives are (12 to 124 KB of area before). */
+const archiveWarnArea = async (env: Env, a: WarnArea) =>
+  env.OAQ_R2.put(`${ARCHIVE_PREFIX}${a.identifier}.json.gz`, await gzip(JSON.stringify(a)), {
+    httpMetadata: { contentType: "application/json", contentEncoding: "gzip" },
+  });
 
 async function getText(url: string, timeoutMs: number): Promise<string> {
   const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
@@ -186,16 +216,32 @@ async function getText(url: string, timeoutMs: number): Promise<string> {
   return res.text();
 }
 
-/** One alert: its CAP, then (when it is still in force) its polygon file. */
-async function fetchArea(a: FeedAlert, now: number, timeoutMs: number): Promise<WarnArea> {
+/** One alert: its CAP, then its polygon file. The archive gets the finer area; the map's copy
+ *  gets the map's detail, and none once the alert is over. */
+async function fetchArea(a: FeedAlert, now: number, timeoutMs: number): Promise<{ map: WarnArea; archive: WarnArea }> {
   const cap = parseCap(
     await getText(`${SACHET}FetchXMLFile?identifier=${encodeURIComponent(a.identifier)}`, timeoutMs),
   );
   if (!cap) throw new Error("not a CAP alert");
+  const raw = cap.polygonUrl ? parsePolygons(await getText(cap.polygonUrl, timeoutMs)) : [];
   const live = (Date.parse(cap.expires) || 0) > now;
-  const rings = live && cap.polygonUrl ? simplifyArea(parsePolygons(await getText(cap.polygonUrl, timeoutMs))) : [];
-  const { event, severity, expires, headline, areaDesc } = cap;
-  return { identifier: a.identifier, event, severity, expires, issuer: a.issuer, headline, areaDesc, rings };
+  const { event, severity, sent, effective, onset, expires, headline, areaDesc } = cap;
+  const base = {
+    identifier: a.identifier,
+    event,
+    severity,
+    sent,
+    effective,
+    onset,
+    expires,
+    issuer: a.issuer,
+    headline,
+    areaDesc,
+  };
+  return {
+    map: { ...base, rings: live ? simplifyArea(raw) : [] },
+    archive: { ...base, rings: simplifyArea(raw, ARCHIVE_DETAIL) },
+  };
 }
 
 /**
@@ -211,7 +257,9 @@ export async function collectWarnAreas(env: Env, o: CollectOpts = {}): Promise<A
     const feed = (await loadWarningsSnapshot(env))?.alerts ?? [];
     run.feed = feed.length;
     const stored = await listStored(env);
-    const due = (m: Meta | undefined) => !m || (m.tries != null && +m.tries < MAX_TRIES && +(m.retry ?? 0) <= now);
+    // Never fetched; failed and due a retry; or stored before the archive existed.
+    const due = (m: Meta | undefined) =>
+      !m || (m.tries != null ? +m.tries < MAX_TRIES && +(m.retry ?? 0) <= now : m.archived !== "1");
     const todo = feed
       .filter((a) => due(stored.get(a.identifier)))
       .sort((x, y) => (Date.parse(y.sent) || 0) - (Date.parse(x.sent) || 0));
@@ -222,8 +270,10 @@ export async function collectWarnAreas(env: Env, o: CollectOpts = {}): Promise<A
       while (next < todo.length && next < maxNew && Date.now() - start < budgetMs) {
         const a = todo[next++];
         try {
-          const area = await fetchArea(a, now, timeoutMs);
-          await storeWarnArea(env, area);
+          const { map: area, archive } = await fetchArea(a, now, timeoutMs);
+          // The archive first: a run stopped between the two refetches it, never loses it.
+          await archiveWarnArea(env, archive);
+          await storeWarnArea(env, area, true);
           run.fetched++;
           console.log(
             `[warn-areas] ${run.fetched + run.failed}/${todo.length} ${a.identifier} ${area.severity || "?"} ${area.event}: ${area.rings.length} rings`,
@@ -255,7 +305,7 @@ export async function collectWarnAreas(env: Env, o: CollectOpts = {}): Promise<A
         run.pruned++;
       } else if (inFeed.has(id) && old && m.rings !== "0") {
         const a = await env.OAQ_R2.get(keyOf(id)).then((r) => r?.json<WarnArea>());
-        if (a) await storeWarnArea(env, { ...a, rings: [] });
+        if (a) await storeWarnArea(env, { ...a, rings: [] }, m.archived === "1");
         run.pruned++;
       }
     }
