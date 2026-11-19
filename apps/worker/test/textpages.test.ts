@@ -45,7 +45,7 @@ for (const [page, render] of Object.entries(PAGES)) {
     assert.doesNotMatch(html, /class="(ahero|atext|alist|adisc|aback)"/); // the old layout is gone
     assert.match(html, /Informational only, not for medical, emergency, or safety-critical decisions\./);
     assert.match(html, /<p class="back"><a href="\/">← back to mugilu<\/a><\/p>/);
-    const nav = html.match(/<nav class="nav" aria-label="Main">([\s\S]*?)<\/nav>/)?.[1] ?? "";
+    const nav = html.match(/<nav class="nav" id="mnav" aria-label="Main">([\s\S]*?)<\/nav>/)?.[1] ?? "";
     for (const p of ["/places", "/warnings", "/display", "/methodology", "/about"])
       assert.match(nav, new RegExp(`href="${p}"`), `${page} nav ${p}`);
   });

@@ -9,7 +9,7 @@ import { LATIN_FONT } from "./fonts";
 import { TOKENS_CSS } from "./tokens";
 import { STANDARD_CSS } from "./standard";
 import { SITE_CSS_LINK, purgeCss } from "./assets";
-import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
+import { MENU_JS, siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 
 // The signage page shell (design standard). Every page links the one site stylesheet
 // (fonts, tokens, components: ui/assets.ts) and composes components; no page carries CSS
@@ -59,7 +59,7 @@ export function pageShell(title: string, body: string, opts: PageOpts): string {
       ? `<meta charset="utf-8">${VIEWPORT}<meta name="color-scheme" content="light dark">\n<title>${esc(title)}</title>`
       : headTags(title, opts);
   const scripts =
-    (page ? INSTALL_JS + THEME_JS + SW_REGISTER : "") +
+    (page ? MENU_JS + INSTALL_JS + THEME_JS + SW_REGISTER : "") +
     (variant === "embed" ? FRAMED_JS : relTimeJs(lang)) +
     (live ? FRESHEN_JS : "") +
     js;

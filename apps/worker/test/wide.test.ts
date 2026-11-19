@@ -101,7 +101,7 @@ test("every page shares the signage header nav and footer; none keeps the old wi
     station: renderStationPage(st(), near, true),
   };
   for (const [name, html] of Object.entries(pages)) {
-    assert.match(html, /<nav class="nav" aria-label="Main">[\s\S]*href="\/warnings"/, name);
+    assert.match(html, /<nav class="nav" id="mnav" aria-label="Main">[\s\S]*href="\/warnings"/, name);
     assert.match(html, /<footer class="sf">/, name);
     assert.doesNotMatch(html, /<body class="wide">|class="topnav"/, name);
   }

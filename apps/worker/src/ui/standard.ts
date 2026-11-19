@@ -64,6 +64,7 @@ body{margin:0}
 .mg .nav a[aria-current]{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:3px}
 .mg .langs{display:flex;align-items:center;gap:var(--sp1);font-size:var(--t-sm);font-weight:600}
 .mg .sh .langs{display:none}
+.mg .sh .mtog{display:none;gap:var(--sp2)}
 .mg .sf{margin-top:var(--sp7);border-top:3px solid var(--ink)}
 .mg .sf .wrap{display:grid;gap:var(--sp4);padding-top:var(--sp5)}
 .mg .flinks{display:flex;flex-wrap:wrap;gap:0 var(--sp3);font-size:var(--t-sm);font-weight:600}
@@ -404,6 +405,13 @@ body{margin:0}
 @media (max-width:999.98px){
 .mg .tbl{font-size:var(--t-sm)}
 .mg .tbl th,.mg .tbl td{padding:var(--sp2)}
+.mg .sh.mjs .nav{display:none}
+.mg .sh.mjs .mtog{display:inline-flex;margin-left:auto}
+.mg .sh.mjs .btn:not([hidden]):not(.mtog)~.mtog{margin-left:var(--sp2)}
+.mg .sh.mjs.open :is(.nav,.langs){display:flex;flex-basis:100%;overflow:visible;mask-image:none;font-size:var(--t-base)}
+.mg .sh.mjs.open .nav{flex-direction:column;align-items:stretch;margin-top:var(--sp2)}
+.mg .sh.mjs.open .nav a{justify-content:flex-start;border-top:1px solid color-mix(in srgb,var(--on-bar) 25%,var(--bar))}
+.mg .sh.mjs.open .langs{gap:var(--sp3);padding-block:var(--sp2) var(--sp3);border-top:1px solid color-mix(in srgb,var(--on-bar) 25%,var(--bar))}
 .mg .tbl.rows thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .mg .tbl.rows tr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--sp3);align-items:center;border-bottom:1px solid var(--line)}
 .mg .tbl.rows :is(th,td){border:0}
