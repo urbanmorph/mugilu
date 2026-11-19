@@ -452,6 +452,11 @@ export function warningTitle(w: Warning, lang: Lang = "en"): string {
   return c ? cycloneTitle(c.title, lang) : w.event;
 }
 
+/** A warning's pictogram: the cyclone for a cyclone, else the warning sign. */
+export function warningIcon(w: Warning, lang: Lang = "en"): IconName {
+  return /cyclon/i.test(`${warningTitle(w, lang)} ${w.event}`) ? "cyclone" : "warn";
+}
+
 /** The official warnings over this point: a WarningPlate each (IMD's category and name, the
  *  SACHET colour code, the end time), then one quiet line for those near but not at it. */
 export function warningBand(c: Conditions, lang: Lang): string {
@@ -461,7 +466,7 @@ export function warningBand(c: Conditions, lang: Lang): string {
     return warningPlate({
       bar: [`<span>${esc(t("Official warning", lang))} · ${esc(w.issuer)}</span>`],
       title,
-      icon: /cyclon/i.test(`${title} ${w.event}`) ? "cyclone" : "warn",
+      icon: warningIcon(w, lang),
       body: meta ? `<p class="t-value"${langAttr(meta, lang)}>${esc(meta)}</p>` : "",
       label: t("Official warning", lang),
       lang,
@@ -472,7 +477,7 @@ export function warningBand(c: Conditions, lang: Lang): string {
 }
 
 /** Warnings active nearby whose areas do not cover this spot: one line, never a plate. */
-function nearbyWarnings(ws: Warning[], lang: Lang): string {
+export function nearbyWarnings(ws: Warning[], lang: Lang): string {
   // One entry per kind: a count when several areas nearby have it, else its end time.
   const byEvent = new Map<string, Warning[]>();
   for (const w of ws) byEvent.set(w.event, [...(byEvent.get(w.event) ?? []), w]);

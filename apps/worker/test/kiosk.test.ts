@@ -196,3 +196,39 @@ test("display: every reading tile carries its hazard icon, as the place page's r
     assert.ok(place.includes(icon), `${key}: the same icon as the place page`);
   }
 });
+
+test("display: the quiet line's readings carry their icons too", () => {
+  const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi");
+  const quiet = html.match(/<p class="kquiet">([\s\S]*?)<\/p>/)?.[1] ?? "";
+  const items = [...quiet.matchAll(/<span class="qi">([\s\S]*?)<\/span><\/span>|<span class="qi">([\s\S]*?)<\/span>/g)];
+  assert.ok(items.length >= 1, "the quiet line has readings");
+  for (const m of quiet.split('<span class="qi">').slice(1)) assert.match(m, /^<svg class="ico/);
+});
+
+test("display: every official warning over the place, each with its icon, and the ones nearby", () => {
+  const c = conditions({
+    warnings: [
+      { event: "Heat Wave", severity: "Severe", color: "red", until: "27 Jun 18:00", area: "Delhi", issuer: "IMD" },
+      {
+        event: "Cyclone",
+        headline: "Severe Cyclonic Storm Akvan over the Bay of Bengal",
+        severity: "Severe",
+        color: "red",
+        area: "Delhi",
+        issuer: "IMD",
+      },
+    ],
+    nearby_warnings: [
+      { event: "Thunderstorm", severity: "Moderate", color: "yellow", until: "27 Jun 20:00", area: "X", issuer: "IMD" },
+    ],
+  } as Partial<Conditions>);
+  const html = renderKioskPage(c, "everyone", "https://mugilu.live/c/delhi");
+  assert.match(html, /Heat Wave/);
+  assert.match(html, /Severe Cyclonic Storm Akvan/);
+  assert.doesNotMatch(html, /\+1 more/);
+  const kw = html.match(/<ul class="kwarn">([\s\S]*?)<\/ul>/)?.[1] ?? "";
+  assert.equal((kw.match(/<li class="t-lead"/g) ?? []).length, 2);
+  assert.match(kw, /<li class="near"><svg class="ico[\s\S]*Thunderstorm/);
+  assert.match(kw, /<li[^>]*><svg class="ico[^>]*><path d="[^"]+"\/><\/svg>[\s\S]*Severe Cyclonic Storm Akvan/);
+  assert.match(html, /Thunderstorm/);
+});

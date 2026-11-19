@@ -323,6 +323,11 @@ body{margin:0}
 .mg .kio .ktile .num{font-size:var(--t-2xl);font-weight:800;font-stretch:80%;line-height:1;font-variant-numeric:tabular-nums}
 .mg .kio .ktile .qa{font-size:var(--t-sm);color:var(--muted)}
 .mg .kio .kquiet{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:var(--sp1) var(--sp5);padding:var(--sp2) var(--sp2);font-size:var(--t-sm)}
+.mg .kio .kquiet .qi{display:inline-flex;align-items:center;gap:var(--sp2)}
+.mg .kio .kwarn{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp2)}
+.mg .kio .kwarn li{display:flex;align-items:flex-start;gap:var(--sp3)}
+.mg .kio .kwarn .ico{width:1.3em;height:1.3em;margin-top:.1em}
+.mg .kio .kwarn .near{font-size:var(--t-sm)}
 .mg .kio .kf{display:flex;justify-content:space-between;align-items:center;gap:var(--sp5);padding:var(--sp2) var(--gut);border-top:2px solid var(--line)}
 .mg .kio .kbrand{font-size:var(--t-lg)}
 .mg .kio .chip svg{width:.9em;height:.9em}

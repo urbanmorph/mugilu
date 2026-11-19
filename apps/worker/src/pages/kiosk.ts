@@ -7,7 +7,7 @@ import { t, type Lang } from "../i18n";
 import { pageShell } from "../ui/page-shell";
 import { DISCLAIMER_FULL, ico, qrBlock, stamp } from "../ui/components";
 import { relTime } from "../ui/shell";
-import { ambientPlate, readRows, warningTitle, type ReadRow } from "./read";
+import { ambientPlate, nearbyWarnings, readRows, warningIcon, warningTitle, type ReadRow } from "./read";
 
 // ── The screen display (?kiosk) ─────────────────────────────────────────────────────
 // Full screen, read from across a room, self-refreshing: the place and the clock, the
@@ -73,16 +73,29 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
   const rows = readRows(c, risk, lang);
   const shown = rows.slice(0, 4);
   const rest = briefs(c, risk).filter((b) => !shown.some((r) => r.key === b.key));
+  const iconOf = (key: string) => rows.find((r) => r.key === key)?.icon ?? "info";
   const quiet = rest.length
-    ? `<p class="kquiet">${rest.map((b) => `<span>${esc(t(b.label, lang))} <b>${esc(b.value)}</b></span>`).join("")}</p>`
+    ? `<p class="kquiet">${rest
+        .map(
+          (b) =>
+            `<span class="qi">${ico(iconOf(b.key))}<span>${esc(t(b.label, lang))} <b>${esc(b.value)}</b></span></span>`,
+        )
+        .join("")}</p>`
     : "";
-  // An official warning over the point leads the plate: IMD's words, the end time, the issuer.
-  const w0 = c.warnings?.[0];
-  const warn = w0
-    ? `<p class="t-lead row-c">${ico("warn")}<span><b>${esc(warningTitle(w0, lang))}</b>${w0.until ? ` · ${esc(t("until X", lang).replace("X", w0.until))}` : ""} · ${esc(w0.issuer)}${
-        c.warnings!.length > 1 ? ` · ${esc(t("+X more", lang).replace("X", String(c.warnings!.length - 1)))}` : ""
-      }</span></p>`
+  // Every official warning over the point leads the plate, as on the place page: its icon,
+  // IMD's words, the end time, the issuer; then one line for those near but not at it.
+  const over = (c.warnings ?? [])
+    .map(
+      (w) =>
+        `<li class="t-lead">${ico(warningIcon(w, lang))}<span><b>${esc(warningTitle(w, lang))}</b>${
+          w.until ? ` · ${esc(t("until X", lang).replace("X", w.until))}` : ""
+        } · ${esc(w.issuer)}</span></li>`,
+    )
+    .join("");
+  const near = c.nearby_warnings?.length
+    ? `<li class="near">${ico("warn")}<span>${nearbyWarnings(c.nearby_warnings, lang)}</span></li>`
     : "";
+  const warn = over || near ? `<ul class="kwarn">${over}${near}</ul>` : "";
   // Today's high against the normal, when it stands out, sits with the read.
   const normal = rows.find((r) => r.key === "heat")?.normal;
   const qrTarget = withPersona(canonical, persona);
