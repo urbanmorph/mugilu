@@ -19,12 +19,16 @@ import { siteFooter, siteHeader, THEME_HEAD_JS, THEME_JS } from "./components";
 
 const FONT_PRELOAD = `<link rel="preload" href="${LATIN_FONT}" as="font" type="font/woff2" crossorigin>`;
 
-/** The embed card's CSS, cut to its markup's classes; memoised by that class list. */
+/** In another site's iframe the card marks <html class="framed"> and fills the frame. */
+const FRAMED_JS = "if(window.self!==window.top)document.documentElement.classList.add('framed');";
+
+/** The embed card's CSS, cut to its markup's classes (and the class FRAMED_JS sets);
+ *  memoised by that class list. */
 const embedCss = new Map<string, string>();
 function embedStyle(html: string): string {
   const key = [...new Set(html.match(/class="[^"]*"/g) ?? [])].sort().join("|");
   let css = embedCss.get(key);
-  if (css === undefined) embedCss.set(key, (css = purgeCss(TOKENS_CSS + STANDARD_CSS, html)));
+  if (css === undefined) embedCss.set(key, (css = purgeCss(TOKENS_CSS + STANDARD_CSS, html, ["framed"])));
   return `<style>${css}</style>`;
 }
 
@@ -56,7 +60,7 @@ export function pageShell(title: string, body: string, opts: PageOpts): string {
       : headTags(title, opts);
   const scripts =
     (page ? INSTALL_JS + THEME_JS + SW_REGISTER : "") +
-    (variant === "embed" ? "" : relTimeJs(lang)) +
+    (variant === "embed" ? FRAMED_JS : relTimeJs(lang)) +
     (live ? FRESHEN_JS : "") +
     js;
   const embed = variant === "embed";

@@ -46,6 +46,23 @@ test("pull-to-refresh is styled by the standard, from tokens, and moves only wit
   assert.doesNotMatch(PULL_MARKER, /<style>/);
 });
 
+test("every interactive element inside the page gets the 3px focus ring, every field the placeholder colour", () => {
+  // `.mg:focus-visible` would match only <body class="mg">: the descendant combinator is required.
+  assert.match(STANDARD_CSS, /\.mg :focus-visible\{outline:3px solid var\(--focus\);outline-offset:2px\}/);
+  assert.match(STANDARD_CSS, /\.mg ::placeholder\{color:var\(--muted\);opacity:1\}/);
+  assert.doesNotMatch(STANDARD_CSS, /\.mg:focus-visible|\.mg::placeholder/);
+});
+
+test("the embed card fits its 240px frame: one row of readings, the full disclaimer from a 400px frame", () => {
+  // The card has no web font; in the system face five readings wrap to a second row, which
+  // pushed the full disclaimer out of the published 480x240 frame. Readings that do not fit
+  // the first row are cut whole (they come in the order they matter).
+  assert.match(STANDARD_CSS, /\.mg \.ecard \.ereads\{[^}]*max-height:calc\(var\(--t-lg\) \+ var\(--t-xs\) \* 1\.3\);overflow:hidden/);
+  assert.match(STANDARD_CSS, /\.mg \.ecard \.eread span\{display:block;[^}]*white-space:nowrap;line-height:1\.3/);
+  // The query measures the card's content box: a 400px frame less 2x2px border and 2x12px padding.
+  assert.match(STANDARD_CSS, /@container \(min-width:372px\)\{\.mg \.ecard \.disc-long\{display:block\}/);
+});
+
 test("the language names use the system face: two words must not fetch a whole Indic font on every page", () => {
   assert.match(
     STANDARD_CSS,

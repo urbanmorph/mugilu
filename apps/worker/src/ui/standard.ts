@@ -21,9 +21,9 @@ body{margin:0}
 .mg ul,.mg ol{padding:0;list-style:none}
 .mg fieldset{border:0;padding:0;min-width:0}
 .mg a{color:inherit;text-underline-offset:3px}
-.mg:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.mg :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .mg input{font:inherit;color:var(--ink);background:transparent}
-.mg::placeholder{color:var(--muted);opacity:1}
+.mg ::placeholder{color:var(--muted);opacity:1}
 .mg .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .mg .skip{position:absolute;left:var(--sp2);top:var(--sp2);z-index:5;transform:translateY(-200%);background:var(--bg);color:var(--ink);padding:var(--sp2) var(--sp3);border:2px solid var(--ink);border-radius:var(--r);font-weight:600}
 .mg .skip:focus{transform:none}
@@ -335,9 +335,9 @@ body{margin:0}
 .mg .ecard .eamb{display:flex;align-items:center;gap:var(--sp2);font-size:var(--t-base);font-weight:800}
 .mg .ecard .eamb svg{width:20px;height:20px;color:var(--lv)}
 .mg .ecard .esay{font-size:var(--t-sm)}
-.mg .ecard .ereads{display:none;flex-wrap:wrap;gap:var(--sp1) var(--sp4)}
+.mg .ecard .ereads{display:none;flex-wrap:wrap;gap:var(--sp1) var(--sp4);max-height:calc(var(--t-lg) + var(--t-xs) * 1.3);overflow:hidden}
 .mg .ecard .eread b{display:block;font-size:var(--t-lg);font-stretch:85%;line-height:1}
-.mg .ecard .eread span{font-size:var(--t-xs);color:var(--muted)}
+.mg .ecard .eread span{display:block;font-size:var(--t-xs);white-space:nowrap;line-height:1.3;color:var(--muted)}
 .mg .ecard .efoot{display:flex;justify-content:space-between;font-size:var(--t-xs);font-weight:400;margin-top:auto}
 .mg .ecard .t-legal{line-height:1.25}
 .mg .ecard .disc-long{display:none}
@@ -410,7 +410,7 @@ body{margin:0}
 }
 @media (forced-colors:active){.mg .seg :is(label:has(input:checked),a[aria-current]){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
-@container (min-width:400px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
+@container (min-width:372px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
 `;
 
 /** Display preview: a live screen display scaled into a 16:9 frame; the chosen place tile. The install sheet shows only when opened, as a centred dialog. */

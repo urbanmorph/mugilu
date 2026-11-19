@@ -66,9 +66,13 @@ function used(selectors: string, classes: Set<string>, html: string): boolean {
 }
 
 /** `css` cut down to the rules `html` can use, without @font-face (the system face stands in).
+ *  `scripted`: classes the page's own script adds, kept as if the markup carried them.
  *  For the embed card, which goes into other sites' pages and should stay small. */
-export function purgeCss(css: string, html: string): string {
-  const classes = new Set((html.match(/class="([^"]*)"/g) ?? []).flatMap((m) => m.slice(7, -1).split(/\s+/)));
+export function purgeCss(css: string, html: string, scripted: string[] = []): string {
+  const classes = new Set([
+    ...scripted,
+    ...(html.match(/class="([^"]*)"/g) ?? []).flatMap((m) => m.slice(7, -1).split(/\s+/)),
+  ]);
   const walk = (src: string): string =>
     blocks(src)
       .map(({ head, body }) => {
