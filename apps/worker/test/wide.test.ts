@@ -176,3 +176,28 @@ test("text pages: long inline code (the MCP inspector command) wraps instead of 
   assert.match(html, /\.mg \.code\{[^}]*white-space:pre-wrap;overflow-wrap:anywhere/);
   assert.match(html, /<code class="code">npx @modelcontextprotocol\/inspector/);
 });
+
+test("/warnings: a schema.org Dataset of the official feed, credited to NDMA/IMD, in the page's language", () => {
+  const graph = (lang: "en" | "hi" | "kn") => {
+    const m = renderWarningsPage(SNAP, lang).match(/<script type="application\/ld\+json">(.*?)<\/script>/s)!;
+    return JSON.parse(m[1])["@graph"] as Record<string, any>[];
+  };
+  const [ds, crumb] = graph("en");
+  assert.equal(ds["@type"], "Dataset");
+  assert.equal(ds.name, "Active official warnings in India");
+  assert.equal(ds.inLanguage, "en");
+  assert.equal(ds.temporalCoverage, SNAP.generated_at);
+  assert.equal(ds.creditText, "NDMA / IMD (SACHET)");
+  assert.equal(ds.isBasedOn, "https://sachet.ndma.gov.in");
+  assert.deepEqual(
+    ds.distribution.map((d: { contentUrl: string }) => d.contentUrl),
+    ["https://mugilu.live/warnings.json", "https://mugilu.live/warnings.md"],
+  );
+  assert.equal(crumb["@type"], "BreadcrumbList");
+  for (const lang of ["hi", "kn"] as const) {
+    const [d] = graph(lang);
+    assert.equal(d.inLanguage, lang);
+    assert.notEqual(d.name, ds.name, lang);
+    assert.match(d.url, new RegExp(`/${lang}/warnings$`));
+  }
+});

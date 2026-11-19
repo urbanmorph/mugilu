@@ -119,8 +119,9 @@ Code: MIT.
 }
 
 /** OpenAPI 3.1 spec for the read API. Doubles as ChatGPT Custom-GPT Actions and
- *  developer docs. Covers the conditions + search + nearest + leaderboard + warnings
- *  endpoints; the conditions body is the self-describing mugilu/conditions v1. */
+ *  developer docs. Covers the conditions (JSON, Markdown, image), search, nearest,
+ *  station, leaderboard and warnings endpoints; the conditions body is the
+ *  self-describing mugilu/conditions v1. A test keeps it level with llms.txt. */
 export function openApiSpec(siteUrl: string): object {
   const persona = {
     name: "as",
@@ -136,9 +137,48 @@ export function openApiSpec(siteUrl: string): object {
     description: "Identify your app/site (aggregate attribution).",
     schema: { type: "string" },
   };
-  const ok = (description: string) => ({
-    "200": { description, content: { "application/json": { schema: { type: "object" } } } },
+  const ok = (description: string, schema: object = { type: "object" }) => ({
+    "200": { description, content: { "application/json": { schema } } },
   });
+  const md = (description: string) => ({
+    "200": { description, content: { "text/markdown": { schema: { type: "string" } } } },
+  });
+  const coord = {
+    name: "coord",
+    in: "path",
+    required: true,
+    description: 'lat,lon (e.g. "12.97,77.59").',
+    schema: { type: "string" },
+    example: "12.97,77.59",
+  };
+  const station = [
+    { name: "provider", in: "path", required: true, schema: { type: "string" }, example: "cpcb" },
+    { name: "id", in: "path", required: true, schema: { type: "string" }, example: "301" },
+  ];
+  const str = { type: "string" };
+  // As stored in data/warnings.json (sachet.ts WarningsSnapshot, FeedAlert).
+  const warnings = {
+    type: "object",
+    required: ["generated_at", "count", "alerts"],
+    properties: {
+      generated_at: { type: "string", format: "date-time" },
+      count: { type: "integer" },
+      alerts: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            identifier: { ...str, description: "SACHET's CAP identifier." },
+            headline: { ...str, description: "IMD's or NDMA's own words, in the language they issued it." },
+            category: { ...str, description: 'CAP category, e.g. "Met".' },
+            issuer: { ...str, description: "The issuing office." },
+            link: { ...str, description: "The full CAP record on SACHET." },
+            sent: { ...str, description: "When it was issued (RFC 822, as the feed gives it)." },
+          },
+        },
+      },
+    },
+  };
   return {
     openapi: "3.1.0",
     info: {
@@ -154,21 +194,31 @@ export function openApiSpec(siteUrl: string): object {
         get: {
           operationId: "conditionsAt",
           summary: "Sky conditions at a coordinate, right now (mugilu/conditions v1).",
-          parameters: [
-            {
-              name: "coord",
-              in: "path",
-              required: true,
-              description: 'lat,lon (e.g. "12.97,77.59").',
-              schema: { type: "string" },
-              example: "12.97,77.59",
-            },
-            persona,
-            ref,
-          ],
+          parameters: [coord, persona, ref],
           responses: ok(
             "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), and an ambient read (summary, persona_action, persona_also, order, persona_layers).",
           ),
+        },
+      },
+      "/c/{coord}.md": {
+        get: {
+          operationId: "conditionsAtMarkdown",
+          summary: "The same conditions as Markdown, for LLMs and plain-text readers.",
+          parameters: [coord, persona, ref],
+          responses: md("The conditions read in Markdown, with its attribution and disclaimer."),
+        },
+      },
+      "/c/{coord}.png": {
+        get: {
+          operationId: "conditionsAtImage",
+          summary: "A timestamped snapshot image of the conditions read.",
+          parameters: [coord, persona],
+          responses: {
+            "200": {
+              description: "A PNG card.",
+              content: { "image/png": { schema: { type: "string", format: "binary" } } },
+            },
+          },
         },
       },
       "/near": {
@@ -208,11 +258,43 @@ export function openApiSpec(siteUrl: string): object {
           ),
         },
       },
+      "/index.md": {
+        get: {
+          operationId: "airLeaderboardMarkdown",
+          summary: "The national air leaderboard as Markdown.",
+          responses: md("The leaderboard in Markdown."),
+        },
+      },
       "/warnings.json": {
         get: {
           operationId: "activeWarnings",
           summary: "Active official NDMA/IMD warnings across India.",
-          responses: ok("The current warnings snapshot."),
+          responses: ok("The current warnings snapshot.", warnings),
+        },
+      },
+      "/warnings.md": {
+        get: {
+          operationId: "activeWarningsMarkdown",
+          summary: "Active official warnings as Markdown.",
+          responses: md("The warnings in Markdown."),
+        },
+      },
+      "/s/{provider}/{id}.json": {
+        get: {
+          operationId: "station",
+          summary: "One air-quality station's latest reading.",
+          parameters: station,
+          responses: ok(
+            "`station` (id, name, city, state, lat, lon, pollutants, CPCB aqi and band, ts, yll), with `units` and `fresh_within_hours` as for /near.",
+          ),
+        },
+      },
+      "/s/{provider}/{id}.md": {
+        get: {
+          operationId: "stationMarkdown",
+          summary: "One station's latest reading as Markdown.",
+          parameters: station,
+          responses: md("The station's reading in Markdown."),
         },
       },
     },

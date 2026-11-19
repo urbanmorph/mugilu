@@ -84,6 +84,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Extremely Severe Cyclonic Storm": { hi: "अत्यंत गंभीर चक्रवाती तूफान", kn: "ಅತ್ಯಂತ ತೀವ್ರ ಚಂಡಮಾರುತ" },
   "Super Cyclonic Storm": { hi: "सुपर चक्रवाती तूफान", kn: "ಸೂಪರ್ ಚಂಡಮಾರುತ" },
   // the kiosk's title and description, the JTWC credit on /terms
+  // /warnings: its schema.org Dataset.
+  "Active official warnings in India": {
+    hi: "भारत में लागू आधिकारिक चेतावनियाँ",
+    kn: "ಭಾರತದಲ್ಲಿ ಜಾರಿಯಲ್ಲಿರುವ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು",
+  },
   // /methodology: the map section.
   "The map": { hi: "मानचित्र", kn: "ನಕ್ಷೆ" },
   "The map of India on the home page uses the same four levels. When official warnings are in force, it opens on them: each warned area takes its level from the severity IMD or NDMA gives in the alert. Where warnings overlap, the higher level is on top. Otherwise it opens on what is worst.":
