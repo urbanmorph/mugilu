@@ -1,14 +1,13 @@
 import { png } from "./og";
+import { BRAND } from "./palette";
+import { CLOUD_PATHS } from "./ui/components";
 
-// The mugilu cloud mark, shared by the header logo, the SVG favicon, and the
-// rasterised apple-touch icon. White cloud on the sky-blue brand colour.
-const CLOUD_PATHS =
-  '<rect x="13" y="34" width="38" height="14" rx="7"/>' +
-  '<circle cx="24" cy="32" r="10"/><circle cx="38" cy="29" r="12"/><circle cx="47" cy="37" r="7"/>';
+// The favicon and the rasterised apple-touch icon: the cloud mark (CLOUD_PATHS, shared
+// with the header wordmark) in white on the brand blue.
 
 const FAVICON_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
-  '<rect width="64" height="64" rx="14" fill="#0284c7"/>' +
+  `<rect width="64" height="64" rx="14" fill="${BRAND}"/>` +
   `<g fill="#fff">${CLOUD_PATHS}</g></svg>`;
 
 /** Crisp scalable favicon: the cloud on a rounded sky tile. */
@@ -31,7 +30,7 @@ export function iconPng(size = 180, maskable = false): Promise<Response> {
   const circle = (d: number, mr = 0) =>
     `<div style="display:flex;width:${px(d)}px;height:${px(d)}px;border-radius:50%;background:#fff;margin-right:${px(mr)}px;"></div>`;
   const html =
-    `<div style="display:flex;width:${size}px;height:${size}px;background:#0284c7;align-items:flex-end;justify-content:center;padding-bottom:${Math.round((size - px(72)) / 2 - px(4))}px;">` +
+    `<div style="display:flex;width:${size}px;height:${size}px;background:${BRAND};align-items:flex-end;justify-content:center;padding-bottom:${Math.round((size - px(72)) / 2 - px(4))}px;">` +
     `<div style="display:flex;align-items:flex-end;">${circle(52, -20)}${circle(72, -20)}${circle(44)}</div>` +
     `</div>`;
   return png(html, "public, max-age=86400, s-maxage=604800", size, size);

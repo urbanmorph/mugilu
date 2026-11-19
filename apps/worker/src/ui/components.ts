@@ -99,9 +99,23 @@ export function siteHeader(path: string, lang: Lang, query = ""): string {
   const nav = NAV.map(([p, en]) => `<a href="${lp(p, lang)}"${current(p === path)}>${esc(t(en, lang))}</a>`).join("");
   return (
     `<header class="sh"><a class="skip" href="#main">${esc(t("Skip to content", lang))}</a><div class="wrap">` +
-    `<a class="brand" href="${lp("/", lang)}">${ico("cloud")}mugilu</a>` +
+    `<a class="brand" href="${lp("/", lang)}">${wordmark()}</a>` +
     installButton(lang, { button: "btn", dialog: "isheet" }) +
     `<nav class="nav" aria-label="${esc(t("Main", lang))}">${nav}</nav>${langSwitch(path, lang, "header", query)}</div></header>`
+  );
+}
+
+/** The cloud mark (64-unit grid), shared with the favicon and app icons. */
+export const CLOUD_PATHS =
+  '<rect x="13" y="34" width="38" height="14" rx="7"/>' +
+  '<circle cx="24" cy="32" r="10"/><circle cx="38" cy="29" r="12"/><circle cx="47" cy="37" r="7"/>';
+
+/** The wordmark: the blue cloud and "mugilu" in its fixed font. Never translated or
+ *  restyled by the type roles (lang="en" keeps the Indic font swap off it). */
+export function wordmark(): string {
+  return (
+    `<svg class="bm" aria-hidden="true" viewBox="0 0 64 64"><g fill="var(--brand)">${CLOUD_PATHS}</g></svg>` +
+    `<span class="wm" lang="en" translate="no">mugilu</span>`
   );
 }
 
@@ -667,7 +681,7 @@ export interface EmbedCardOpts {
 export function embedCard(o: EmbedCardOpts, lang: Lang): string {
   return (
     `<a class="ecard ${o.level}" href="${esc(o.href)}" target="_blank" rel="noopener">` +
-    `<div class="etop"><p class="eplace">${esc(o.place)}</p><span class="ebrand">${ico("cloud")}mugilu</span></div>` +
+    `<div class="etop"><p class="eplace">${esc(o.place)}</p><span class="ebrand">${wordmark()}</span></div>` +
     `<div class="eamb">${shape(LEVEL_SHAPE[o.level])}${esc(o.headline)}</div><div class="esay">${esc(o.say)}</div>` +
     `<div class="ereads">${o.reads.map(([b, s]) => `<div class="eread"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>` +
     `<div class="efoot"><span>${o.asOf}</span><span>mugilu.live →</span></div>` +

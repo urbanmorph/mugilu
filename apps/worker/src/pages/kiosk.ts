@@ -91,7 +91,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     `<div class="row-c"><span class="kclock" id="clk">--:--</span>${stamp(t("updated", lang), relTime(c.as_of))}</div></header>` +
     `<div class="kb">${ambientPlate(risk, lang, warn + (normal ? `<div class="knorm stack">${normal}</div>` : ""))}` +
     `<section class="ktiles" aria-label="${esc(t("Readings", lang))}">${shown.map(tile).join("")}${quiet}</section></div>` +
-    `<footer class="kf"><div class="stack"><span class="kbrand">mugilu.live</span><p class="t-legal">${esc(t(DISCLAIMER_FULL, lang))}</p></div>` +
+    `<footer class="kf"><div class="stack"><span class="kbrand wm" lang="en" translate="no">mugilu.live</span><p class="t-legal">${esc(t(DISCLAIMER_FULL, lang))}</p></div>` +
     `${qrBlock(qrTarget, t("scan to see this on your phone", lang))}</footer>` +
     `<div class="kveil" aria-hidden="true"><p class="t-title">${esc(t(KIOSK_VERBS[0], lang))}…</p></div></div>`;
 
