@@ -189,3 +189,11 @@ test("home: with no saved places, Popular takes the whole row, the tiles left an
     /\.mg \.lane\.l2:has\(>#yp\[hidden\]\)>\.col\{flex-direction:row;flex-wrap:wrap;align-items:flex-end;justify-content:space-between\}/,
   );
 });
+
+test("desktop header: Install app appears in the free space before the languages, so the nav never moves", () => {
+  // Between the logo and the nav it pushed every nav link 120px right when the browser offered the install.
+  const desk = STANDARD_CSS.match(/@media \(min-width:1000px\)\{([^@]*)\}/)![1];
+  assert.match(desk, /\.mg \.sh #install-app\{order:1;margin-left:auto\}/);
+  assert.match(desk, /\.mg \.sh \.langs\{order:2\}/);
+  assert.match(desk, /\.mg \.sh #install-app:not\(\[hidden\]\)~\.langs\{margin-left:var\(--sp4\)\}/);
+});
