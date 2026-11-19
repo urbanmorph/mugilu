@@ -127,14 +127,14 @@ const PAGES = [
 ];
 const LATIN_OK = new Set(
   (
-    "mugilu bharatlas mdshare yellide urbanmorph via km kmph mm min h ref your-app iframe " +
+    "mugilu bharatlas mdshare yellide urbanmorph via km kmph mm mg min h ref your-app iframe " +
     // the persona values typed into a display link (?as=asthma)
     "asthma child outdoor heart elderly"
   ).split(" "),
 );
 // Data the fixtures carry, as written: names with a lowercase word, and source credits.
 const DATA =
-  /Jammu and Kashmir|Itanagar capital complex|Central Pollution Control Board, Government of India|ERA5 \(Copernicus C3S\) normals|mugilu\.live|(?:^|\s)\/[a-z/{},.?=]+/g;
+  /Jammu and Kashmir|Itanagar capital complex|Central Pollution Control Board, Government of India|Govt\. of India|ERA5 \(Copernicus C3S\) normals|mugilu\.live|(?:^|\s)\/[a-z/{},.?=]+/g;
 
 /** What a hi/kn reader is shown, as text runs: text nodes, the attributes read aloud or shown,
  *  the title and description. Quoted text marked with its own language, code samples and
