@@ -182,7 +182,7 @@ export function renderHome(
   )
     .map(([i, l]) => `<span>${ico(i)}${T(l)}</span>`)
     .join("");
-  const examples = `(<span lang="kn">ಬೆಂಗಳೂರು</span> · <span lang="hi">दिल्ली</span> · <span lang="ta">சென்னை</span>)`;
+  const examples = `(<span class="sys" lang="kn">ಬೆಂಗಳೂರು</span> · <span class="sys" lang="hi">दिल्ली</span> · <span class="sys" lang="ta">சென்னை</span>)`;
   const hint =
     lang === "en"
       ? `Type the name of a place in India, in any language ${examples}. You then see <b>its sky</b>: air, heat, rain and dust.`

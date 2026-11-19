@@ -62,6 +62,5 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
     variant: "embed",
     lang,
     tint: readTint(risk),
-    js: "if(window.self!==window.top)document.documentElement.classList.add('framed')",
   });
 }

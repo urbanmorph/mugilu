@@ -137,7 +137,7 @@ test("about: Build on it as four cards with their links, the FAQ grid, the credi
     assert.ok(html.includes(`href="${href}"`), href);
   assert.match(html, /<dl class="faq">/);
   assert.match(html, /<div class="credit"><img /);
-  assert.match(html, /<span lang="kn">ಮುಗಿಲು<\/span>/);
+  assert.match(html, /<span class="sys" lang="kn">ಮುಗಿಲು<\/span>/);
   assert.match(withCss(html), /font-family:'Anek Kannada'/); // the font for the Kannada word
 });
 

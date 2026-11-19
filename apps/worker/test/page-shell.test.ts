@@ -25,6 +25,15 @@ test("pageShell: the embed card inlines only the rules its markup uses, with no 
   assert.doesNotMatch(card, /\.kio\b/, "no screen-display rules in a card");
 });
 
+test("pageShell: in another site's iframe the card fills the frame (the framed rules survive the cut)", () => {
+  const card = pageShell("c", '<a class="ecard">x</a><div class="ecode">y</div>', { path: "/embed", variant: "embed" });
+  // The script marks <html class="framed">, a class the markup never carries.
+  assert.match(card, /documentElement\.classList\.add\('framed'\)/);
+  assert.match(card, /\.framed \.mg\[data-embed\]\{padding:0\}/);
+  assert.match(card, /\.framed \.mg\[data-embed\] \.ecard\{[^}]*height:100vh/);
+  assert.match(card, /\.framed \.mg\[data-embed\] \.ecode\{display:none\}/);
+});
+
 test("pageShell: skip link, header, one main with id, footer with the disclaimer", () => {
   assert.match(page, /<body class="mg" data-tint="Warning" data-level="high">/);
   assert.ok(page.indexOf('class="skip" href="#main"') < page.indexOf('<main id="main"'));

@@ -21,9 +21,9 @@ body{margin:0}
 .mg ul,.mg ol{padding:0;list-style:none}
 .mg fieldset{border:0;padding:0;min-width:0}
 .mg a{color:inherit;text-underline-offset:3px}
-.mg:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.mg :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .mg input{font:inherit;color:var(--ink);background:transparent}
-.mg::placeholder{color:var(--muted);opacity:1}
+.mg ::placeholder{color:var(--muted);opacity:1}
 .mg .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .mg .skip{position:absolute;left:var(--sp2);top:var(--sp2);z-index:5;transform:translateY(-200%);background:var(--bg);color:var(--ink);padding:var(--sp2) var(--sp3);border:2px solid var(--ink);border-radius:var(--r);font-weight:600}
 .mg .skip:focus{transform:none}
@@ -193,7 +193,7 @@ body{margin:0}
 .mg .tbl thead th{font-size:var(--t-sm);font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid var(--ink)}
 .mg .tbl tbody th{font-weight:400}
 .mg .tbl .r{text-align:right}
-.mg .tbl td>a:first-child{display:flex;align-items:center;min-height:var(--hit)}
+.mg .tbl :is(td,th)>a:first-child{display:flex;align-items:center;min-height:var(--hit)}
 .mg .tscroll{overflow-x:auto;max-width:100%}
 .mg .tscroll:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .mg .tbl th svg{width:14px;height:14px;vertical-align:-2px;margin-right:4px}
@@ -306,7 +306,7 @@ body{margin:0}
 .mg .mempty{min-height:220px;display:grid;place-items:center;background:var(--mland);border:2px dashed var(--muted);border-radius:var(--r);padding:var(--sp5);text-align:center}
 .mg .qr{display:flex;align-items:center;gap:var(--sp3);font-size:var(--t-xs);font-weight:400}
 .mg .qr .qrimg{width:120px;height:120px;flex:none;background:var(--qr-paper);color:var(--qr-ink);padding:6px}
-.mg .qr>span{flex:none;white-space:nowrap}
+.mg .qr>span{flex:0 1 auto;min-width:8em;max-width:16em}
 .mg .kio{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100%}
 .mg .kio .ktop{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp4);padding:var(--sp3) var(--gut);border-bottom:2px solid var(--line)}
 .mg .kio h1.kname{margin:0}
@@ -315,8 +315,8 @@ body{margin:0}
 .mg .kio .plate{display:flex;flex-direction:column;justify-content:center;padding:var(--sp5) var(--gut)}
 .mg .kio .plate .shape{width:1.2em;height:1.2em;font-size:var(--t-3xl)}
 .mg .kio .ktiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;padding:0 var(--sp5)}
-.mg .kio .ktile{position:relative;padding:var(--sp3) var(--sp2);border-bottom:2px solid var(--line)}
-.mg .kio .ktile>.ico{position:absolute;top:var(--sp3);left:var(--sp2);width:var(--k2);height:var(--k2)}
+.mg .kio .ktile{position:relative;padding:var(--sp2);border-bottom:2px solid var(--line)}
+.mg .kio .ktile>.ico{position:absolute;top:var(--sp2);left:var(--sp2);width:var(--k2);height:var(--k2)}
 .mg .kio .ktile .lab{padding-left:calc(var(--k2) + var(--sp2))}
 .mg .kio .ktile .row-c{gap:var(--sp1) var(--sp3)}
 .mg .kio .ktile .lab{font-size:var(--t-sm);font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -340,9 +340,9 @@ body{margin:0}
 .mg .ecard .eamb{display:flex;align-items:center;gap:var(--sp2);font-size:var(--t-base);font-weight:800}
 .mg .ecard .eamb svg{width:20px;height:20px;color:var(--lv)}
 .mg .ecard .esay{font-size:var(--t-sm)}
-.mg .ecard .ereads{display:none;flex-wrap:wrap;gap:var(--sp1) var(--sp4)}
+.mg .ecard .ereads{display:none;flex-wrap:wrap;gap:var(--sp1) var(--sp4);max-height:calc(var(--t-lg) + var(--t-xs) * 1.3);overflow:hidden}
 .mg .ecard .eread b{display:block;font-size:var(--t-lg);font-stretch:85%;line-height:1}
-.mg .ecard .eread span{font-size:var(--t-xs);color:var(--muted)}
+.mg .ecard .eread span{display:block;font-size:var(--t-xs);white-space:nowrap;line-height:1.3;color:var(--muted)}
 .mg .ecard .efoot{display:flex;justify-content:space-between;font-size:var(--t-xs);font-weight:400;margin-top:auto}
 .mg .ecard .t-legal{line-height:1.25}
 .mg .ecard .disc-long{display:none}
@@ -404,18 +404,18 @@ body{margin:0}
 .mg .kio .ktile{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:var(--sp4);align-items:start}
 .mg .kio .ktile>.ico{position:static;width:var(--k3);height:var(--k3)}
 .mg .kio .ktile .lab{padding-left:0}
-.mg[data-kiosk] .qr .qrimg{width:220px;height:220px}
+.mg[data-kiosk] .qr .qrimg{width:calc(var(--k4) * 1.31);height:calc(var(--k4) * 1.31)}
 .mg .kio .kb{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
-.mg .kio .plate{justify-content:flex-start;gap:var(--sp4);padding:var(--sp7) var(--gut)}
+.mg .kio .plate{justify-content:flex-start;gap:var(--sp4);padding:var(--k2) var(--gut)}
 .mg .kio .ktiles{grid-template-columns:1fr;gap:0}
-.mg .kio .ktile{padding:var(--sp5) 0}
+.mg .kio .ktile{padding:calc(var(--k1) * .8) 0}
 .mg .kio .ktile .lab,.mg .kio .ktile .qa,.mg .kio .kquiet{font-size:var(--k2)}
 .mg .kio .ktile .num{font-size:var(--k3)}
-.mg .kio .ktiles{padding:var(--sp4) var(--sp5)}
+.mg .kio .ktiles{padding:calc(var(--k1) * .5) var(--k1)}
 }
 @media (forced-colors:active){.mg .seg :is(label:has(input:checked),a[aria-current]){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
-@container (min-width:400px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
+@container (min-width:372px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
 `;
 
 /** Display preview: a live screen display scaled into a 16:9 frame; the chosen place tile. The install sheet shows only when opened, as a centred dialog. */
@@ -465,9 +465,11 @@ const PULL_CSS = `
 @media (prefers-reduced-motion: no-preference){#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}}
 `;
 
-/** Language names in their own scripts use the system face, so two words never download an Indic font. */
+/** Language names in their own scripts, and a few sample words in another script (.sys), use
+ *  the system face, so two words never download an Indic font. */
 const LANG_NAMES_CSS = `
 .mg :is(.langs,.flangs) :lang(hi),.mg :is(.langs,.flangs) :lang(kn){font-family:system-ui,sans-serif}
+.mg .sys{font-family:system-ui,sans-serif}
 `;
 
 /** Safe areas (every page opts into viewport-fit=cover); the hidden attribute wins over a component's display. */
