@@ -275,18 +275,20 @@ body{margin:0}
 .mg .msvg .mline{fill:none;stroke:var(--ink);stroke-width:1.2}
 .mg .lvf{fill:var(--lv)}
 .mg .msvg .lvs{stroke:var(--lv)}
-.mg .imap[data-layer="w"] .L:not(.Lw),.mg .imap[data-layer="a"] .L:not(.La),.mg .imap[data-layer="h"] .L:not(.Lh),.mg .imap[data-layer="r"] .L:not(.Lr){display:none}
+.mg .imap[data-layer="o"] .L:not(.Lo),.mg .imap[data-layer="w"] .L:not(.Lw),.mg .imap[data-layer="a"] .L:not(.La),.mg .imap[data-layer="h"] .L:not(.Lh),.mg .imap[data-layer="r"] .L:not(.Lr){display:none}
 .mg .mlg{display:flex;flex-wrap:wrap;gap:var(--sp2) var(--sp4);font-size:var(--t-sm)}
 .mg .mlg span{display:inline-flex;align-items:center;gap:6px}
 .mg .mlg svg{width:18px;height:18px;flex:none}
 .mg .mlg .sq{stroke:var(--ink);stroke-width:1.2}
 .mg .msvg .mcells path{stroke:var(--ink);stroke-width:.7;stroke-linejoin:round}
+.mg .msvg .mwarn path{stroke:var(--ink);stroke-width:.6;stroke-linejoin:round;cursor:pointer}
 .mg .f-air{fill:var(--mair)}
 .mg .f-heat{fill:var(--mheat)}
 .mg .f-cold{fill:var(--mcold)}
 .mg .f-r1{fill:var(--mrain1)}
 .mg .f-r2{fill:var(--mrain2)}
 .mg .f-r3{fill:var(--mrain3)}
+.mg .f-low{fill:var(--low)}
 .mg .f-moderate{fill:var(--moderate)}
 .mg .f-high{fill:var(--high)}
 .mg .f-severe{fill:var(--severe)}

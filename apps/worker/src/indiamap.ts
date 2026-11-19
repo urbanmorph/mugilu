@@ -2,10 +2,13 @@ import type { Conditions, ConditionsPoint, NormalizedStation } from "./types";
 import type { FireDetection } from "./firms";
 import type { Cyclone } from "./cyclones";
 import type { Env } from "./index";
-import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf } from "./score";
+import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf, RISK_BANDS } from "./score";
 import { isPlausible } from "./plausible";
 import { inIndia, type Ring } from "./india";
-import { loadCyclones, loadFires, loadGrid, loadJson, loadSnapshot, putJson } from "./snapshot";
+import { loadCyclones, loadFires, loadGrid, loadJson, loadSnapshot, loadWarningsSnapshot, putJson } from "./snapshot";
+import { loadWarnAreas, severityBand, type WarnArea } from "./warnareas";
+import { simplifyPath } from "./simplify-path";
+import { reason } from "./logs";
 
 /** Append to a list in a map of lists. */
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => (m.get(k) ?? m.set(k, []).get(k)!).push(v);
@@ -17,8 +20,8 @@ import states from "../data/state-lines.json";
 // ambientRisk as a place's page so the two can never disagree. A Rain layer shows
 // the next 24 hours' forecast, for a cyclone. Built from what the crons already collect
 // (the district grid, the air stations, the fires), so it costs no extra upstream
-// call. Official warnings are not on it: the national feed carries no areas, so a
-// place's page is where they show. Inline SVG, no map library, no tiles. This module is
+// call. The official warnings in force are a layer of their own, their areas fetched once
+// per alert from SACHET (warnareas.ts). Inline SVG, no map library, no tiles. This module is
 // the data and the projection; ui/map.ts draws it (home and /places).
 
 /** What a square's worst read is, in three groups a map can tell apart: smoke and
@@ -67,6 +70,19 @@ export interface IndiaMap {
   airAsOf?: string;
   /** Measured stations by AQI band, for the Air layer's summary. */
   airCounts?: Partial<Record<NormalizedStation["band"], number>>;
+  /** The official warnings with an area, in force when composed, lowest level first (so the
+   *  highest draws on top). Absent when the areas could not be read. */
+  warnings?: MapWarning[];
+  /** The national warnings feed's time. */
+  warningsAsOf?: string;
+}
+/** An official warning on the map: its level (0-3, the risk bands), until when, and its area as
+ *  a relative SVG path in the map's pixels. */
+export interface MapWarning {
+  id: string;
+  level: number;
+  expires: string;
+  d: string;
 }
 
 const key = (lon: number, lat: number) => `${Math.floor(lon)},${Math.floor(lat)}`;
@@ -304,13 +320,57 @@ export function cycloneGlyph(c: Cyclone): string {
   return `<g class="mcy">${line}${head}<circle cx="${r1(x)}" cy="${r1(y)}" r="7.5" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/><path d="${spiral}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/></g>`;
 }
 
-/** The map's data, from the snapshots the crons write (each read is memoised). */
-export async function composeMap(env: Env): Promise<IndiaMap | undefined> {
-  const [grid, snap, fires, cy] = await Promise.all([
+/** Map pixels: the detail the map can show (as for the /places state outlines). */
+const AREA_TOLERANCE = 0.4;
+
+/** An area's rings as one path: projected, each ring turned the same way round (so overlapping
+ *  rings of one level fill as one under the nonzero rule), simplified to the map's detail. */
+function areaPath(rings: WarnArea["rings"]): string {
+  return simplifyPath(
+    rings
+      .map((ring) => {
+        const pts = ring.map(([lon, lat]) => [px(lon), py(lat)] as [number, number]);
+        const twice = pts.reduce((a, [x, y], i) => {
+          const [nx, ny] = pts[(i + 1) % pts.length];
+          return a + x * ny - nx * y;
+        }, 0);
+        if (twice < 0) pts.reverse();
+        return "M" + pts.map(([x, y]) => `${x} ${y}`).join("L") + "Z";
+      })
+      .join(""),
+    AREA_TOLERANCE,
+  );
+}
+
+/** The areas as the map stores them, lowest level first. */
+export function mapWarnings(areas: WarnArea[]): MapWarning[] {
+  return areas
+    .map((a) => ({
+      id: a.identifier,
+      level: RISK_BANDS.indexOf(severityBand(a.severity)),
+      expires: a.expires,
+      d: areaPath(a.rings),
+    }))
+    .sort((a, b) => a.level - b.level || a.id.localeCompare(b.id));
+}
+
+/** The warnings still in force at `now` (the stored map is up to an hour old). */
+export const activeWarnings = (m: IndiaMap | undefined, now = Date.now()): MapWarning[] =>
+  (m?.warnings ?? []).filter((w) => Date.parse(w.expires) > now);
+
+/** The map's data, from the snapshots the crons write (each read is memoised). A failure to
+ *  read the warning areas leaves them off; it never stops the map. */
+export async function composeMap(env: Env, now = Date.now()): Promise<IndiaMap | undefined> {
+  const [grid, snap, fires, cy, warned, areas] = await Promise.all([
     loadGrid(env),
     loadSnapshot(env),
     loadFires(env),
     loadCyclones(env),
+    loadWarningsSnapshot(env).catch(() => null),
+    loadWarnAreas(env, now).catch((e) => {
+      console.error(`[map] warning areas unread: ${reason(e)}`);
+      return undefined;
+    }),
   ]);
   if (!grid) return undefined;
   const stations = snap?.stations ?? [];
@@ -321,6 +381,7 @@ export async function composeMap(env: Env): Promise<IndiaMap | undefined> {
     gridAsOf: grid.generated_at,
     airAsOf: snap?.generated_at,
     airCounts: airCounts(stations),
+    ...(areas && { warnings: mapWarnings(areas), warningsAsOf: warned?.generated_at }),
   };
 }
 
@@ -340,7 +401,7 @@ async function sha1(s: string): Promise<string> {
 /** Compose the map from the snapshots and store it, unless it is unchanged (same hash):
  *  a second run with the same inputs writes nothing. */
 export async function writeMap(env: Env, now = Date.now()): Promise<"written" | "unchanged" | "no grid"> {
-  const map = await composeMap(env);
+  const map = await composeMap(env, now);
   if (!map) return "no grid";
   const hash = await sha1(JSON.stringify(map));
   const prev = await loadJson<StoredMap>(env, MAP_KEY);

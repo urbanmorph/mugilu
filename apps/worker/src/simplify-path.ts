@@ -1,8 +1,9 @@
 // Douglas-Peucker for SVG ring paths (M…L…Z), written back with relative commands.
-// Used by build_state_shapes.ts: the /places outlines only need the detail the map can
-// show (about 0.4 px at its size), and relative steps are shorter than absolute points.
+// Used by scripts/build_state_shapes.ts (the /places outlines) and the official warning areas
+// (warnareas.ts, indiamap.ts): they only need the detail the map can show (about 0.4 px at
+// its size), and relative steps are shorter than absolute points.
 
-type Pt = [number, number];
+export type Pt = [number, number];
 
 /** The rings of an absolute M/L/Z path. */
 export function parseRings(d: string): Pt[][] {
@@ -61,8 +62,9 @@ function dp(pts: Pt[], tol: number): Pt[] {
   return [...dp(pts.slice(0, at + 1), tol).slice(0, -1), ...dp(pts.slice(at), tol)];
 }
 
-/** A closed ring keeps at least a triangle, so a tiny island never disappears. */
-function simplifyRing(ring: Pt[], tol: number): Pt[] {
+/** A closed ring keeps at least a triangle, so a tiny island never disappears. The ring comes
+ *  back open (no repeat of the first point). */
+export function simplifyRing(ring: Pt[], tol: number): Pt[] {
   const open =
     ring.length > 1 && ring[0][0] === ring.at(-1)![0] && ring[0][1] === ring.at(-1)![1] ? ring.slice(0, -1) : ring;
   if (open.length <= 3) return open;

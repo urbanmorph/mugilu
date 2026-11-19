@@ -7,7 +7,8 @@ import { personaAlso } from "../src/score";
 import { ambientRisk } from "../src/score";
 import type { Conditions } from "../src/types";
 import { TR, type Lang } from "../src/i18n";
-import { testWorker } from "./helpers/worker";
+import { FIXTURE_NOW, testWorker } from "./helpers/worker";
+import { storeWarnArea } from "../src/warnareas";
 
 // Every layer present, an official warning over the spot, more nearby, and an
 // asthma persona whose own trigger (air) is elevated but is not the headline (heat).
@@ -161,6 +162,24 @@ function shown(html: string): string[] {
 for (const lang of ["hi", "kn"] as const) {
   test(`${lang}: no English fallback on any page (text, labels, title, description)`, async () => {
     const w = testWorker();
+    // An official warning in force, so home opens on the Warnings layer and /places marks places.
+    await storeWarnArea(w.env, {
+      identifier: "1",
+      event: "Heat Wave",
+      severity: "Severe",
+      expires: new Date(FIXTURE_NOW + 6 * 3_600_000).toISOString(),
+      issuer: "controlroom@ndma.gov.in (IMD Delhi)",
+      headline: "Heat wave",
+      areaDesc: "Delhi",
+      rings: [
+        [
+          [76.8, 28.4],
+          [77.4, 28.4],
+          [77.4, 28.9],
+          [76.8, 28.9],
+        ],
+      ],
+    });
     const leaks = new Set<string>();
     for (const p of PAGES) {
       const res = await w.get(`/${lang}${p === "/" ? "" : p}`, { headers: { accept: "text/html" } });

@@ -31,6 +31,7 @@ import { INDEXNOW_KEY, INDEXNOW_PATH, runIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
+import { collectWarnAreas } from "./warnareas";
 import { collectFires } from "./firms";
 import { collectCyclones } from "./cyclones";
 import { loadMap, writeMap } from "./indiamap";
@@ -677,10 +678,13 @@ export default {
       }
     }
 
-    // Manual trigger: poll + archive SACHET warnings. /warnings/collect (Authorization: Bearer ADMIN_KEY)
+    // Manual trigger: poll + archive SACHET warnings, fetch the new alerts' areas and recompose
+    // the map. /warnings/collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/warnings/collect") {
       try {
-        return Response.json({ ok: true, ...(await collectWarnings(env)) });
+        const feed = await collectWarnings(env);
+        const areas = await collectWarnAreas(env);
+        return Response.json({ ok: true, ...feed, areas, map: await writeMap(env) });
       } catch (e) {
         return Response.json({ ok: false, error: String(e) }, { status: 500 });
       }
@@ -725,12 +729,14 @@ export default {
         (e) => console.error(`[refresh] failed: ${reason(e)}`),
       );
       ctx.waitUntil(refreshed);
-      ctx.waitUntil(
-        collectWarnings(env).then(
+      // The feed, then the areas of its new alerts (time-boxed, never throws), for the map.
+      const warned = collectWarnings(env)
+        .then(
           (r) => console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
           (e) => console.error(`[warnings] failed: ${reason(e)}`),
-        ),
-      );
+        )
+        .then(() => collectWarnAreas(env));
+      ctx.waitUntil(warned);
       if (alertsOn(env))
         ctx.waitUntil(
           runAlerts(env).then(
@@ -749,8 +755,8 @@ export default {
         (r) => console.log(`[firms] ${r.count} detections (${r.source})`),
         (e) => console.error(`[firms] failed: ${reason(e)}`),
       );
-      // The map is composed once from what the three just wrote (each logs its own failure).
-      ctx.waitUntil(Promise.all([refreshed, cyclones, fires]).then(() => storeMap(env)));
+      // The map is composed once from what the four just wrote (each logs its own failure).
+      ctx.waitUntil(Promise.all([refreshed, cyclones, fires, warned]).then(() => storeMap(env)));
     }
     // National conditions grid every 4h, ~6 collects/day fits Open-Meteo's free quota.
     if (event.cron === "5 */4 * * *") {

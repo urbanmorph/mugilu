@@ -3,7 +3,9 @@ import { esc } from "../html";
 import { allSlugPlaces, slugPlacesByState } from "../slugs";
 import { lp, quoted, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
-import { type IndiaMap } from "../indiamap";
+import { activeWarnings, px, py, type IndiaMap, type MapWarning } from "../indiamap";
+import { inRing } from "../india";
+import { ringsOf } from "../simplify-path";
 import { cycloneTitle, officialCyclone, type WarningsSnapshot } from "../sachet";
 import { alertParts } from "./warnings";
 import { breadcrumb, SITE, ld } from "../ui/shell";
@@ -11,7 +13,6 @@ import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {
-  backLink,
   band,
   filterInput,
   fold,
@@ -25,7 +26,7 @@ import {
   stack,
   wrap,
 } from "../ui/components";
-import { MAP_JS, placesKey, placesMap, placesMapNote, stateAnchor } from "../ui/map";
+import { allWarningsLink, inForce, MAP_JS, placesKey, placesMap, placesMapNote, stateAnchor } from "../ui/map";
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
 const initials = (s: string) =>
@@ -48,6 +49,24 @@ export function warnedPlaces(areas: string[]): string[] {
   return [...new Set([...named, ...short].map((p) => p.slug))];
 }
 
+/** The places whose point is inside any of the warning areas (their rings in map pixels). */
+export function placesUnder(ws: MapWarning[]): string[] {
+  const rings = ws
+    .flatMap((w) => ringsOf(w.d))
+    .map((ring) => {
+      const xs = ring.map((p) => p[0]);
+      const ys = ring.map((p) => p[1]);
+      return { ring, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+    });
+  if (!rings.length) return [];
+  return allSlugPlaces()
+    .filter((p) => {
+      const [x, y] = [px(p.lon), py(p.lat)];
+      return rings.some((r) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1 && inRing(r.ring, x, y));
+    })
+    .map((p) => p.slug);
+}
+
 // The page's behaviour: find a place (filters the lists), the state picker and the map's state
 // click (open that state's list and go to it), and on phones the lists start folded except a
 // state with a warned place.
@@ -59,17 +78,21 @@ ${LIST_FILTER_JS}
 if(q)q.addEventListener('input',mgDebounce(function(){var s=q.value.trim().toLowerCase();mgFilter(document.querySelectorAll('.flow details.fold li'),function(li){return mgMatch(li,s)});mgEmpty(F,'li');if(s)F.forEach(function(d){if(!d.hidden)d.open=true;});},100));})();`;
 
 /** The place directory: every named /c/{slug} page, by state, with the map of India beside it
- *  (a state opens its list, a dot its place). The crawlable index of all ~800 place pages. */
+ *  (a state opens its list, a dot its place). The crawlable index of all ~800 place pages.
+ *  A place is marked when its point is inside an official warning's area in force; a named
+ *  cyclone whose alert has no area falls back to the places its warning names. */
 export function renderPlaces(
   lang: Lang = "en",
-  data: { map?: IndiaMap; warnings?: WarningsSnapshot | null } = {},
+  data: { map?: IndiaMap; warnings?: WarningsSnapshot | null; now?: number } = {},
 ): string {
   const T = (s: string) => esc(t(s, lang));
   const groups = slugPlacesByState();
   const total = groups.reduce((n, g) => n + g.places.length, 0);
   const official = officialCyclone(data.warnings);
-  const warned = official ? warnedPlaces(official.areas) : [];
-  const isWarned = new Set(warned);
+  const areas = activeWarnings(data.map, data.now);
+  const unmapped = official && !areas.some((w) => w.id === official.alert.identifier);
+  const isWarned = new Set([...placesUnder(areas), ...(unmapped ? warnedPlaces(official.areas) : [])]);
+  const warned = [...isWarned];
 
   const head = band(
     pageHead(t("Every place, by state", lang), {
@@ -86,17 +109,20 @@ export function renderPlaces(
   );
 
   const issued = official && alertParts(official.alert, lang);
-  const warnBox = official
+  const warnBox = warned.length
     ? band(
         panel(
           stack(
-            `<p><b>${quoted(cycloneTitle(official.title, lang), lang)}</b> · ${esc(issued!.office)} · <span class="t-meta">${esc(issued!.time)}</span></p>` +
+            (official
+              ? `<p><b>${quoted(cycloneTitle(official.title, lang), lang)}</b> · ${esc(issued!.office)} · <span class="t-meta">${esc(issued!.time)}</span></p>`
+              : "") +
+              (areas.length ? `<p><b>${inForce(areas.length, lang)}</b></p>` : "") +
               placeTiles(
                 allSlugPlaces()
                   .filter((p) => isWarned.has(p.slug))
                   .map((p) => placeTile(lp(`/c/${p.slug}`, lang), p.name, true, lang)),
               ) +
-              backLink(lp("/warnings", lang), `${t("Active warnings", lang)} →`),
+              allWarningsLink(lang),
           ),
           { title: t("Under an official warning now", lang), icon: "warn", id: "uw", strong: true },
         ),
