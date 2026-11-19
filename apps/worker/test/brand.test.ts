@@ -49,3 +49,40 @@ test("the favicon uses the same blue and the same cloud", async () => {
   assert.match(svg, new RegExp(`fill="${BRAND}"`));
   assert.ok(svg.includes(wordmark().match(/<g fill="var\(--brand\)">(.*?)<\/g>/)![1]));
 });
+
+// Three weights: 800 for display (titles, section heads, the level plate, the big numbers),
+// 600 for controls and labels, 400 for anything read. 700 is the wordmark's alone.
+const DISPLAY_800 =
+  /^(\.t-title|\.t-h2|\.t-plate|\.rrow \.num|\.kio \.ktile \.num|\.kio \.kname|\.kio \.kclock|\.cnum|\.ecard \.eamb)$/;
+test("the stylesheet uses three weights, with 800 only on display and 700 only on the wordmark", () => {
+  const rules = [...(TOKENS_CSS + STANDARD_CSS).matchAll(/([^{}]+)\{[^{}]*font-weight:(\d+)/g)];
+  assert.ok(rules.length > 40);
+  for (const [, sel, w] of rules) {
+    const sels = sel.split(",").map((s) => s.replace(/\.mg /g, "").trim());
+    if (w === "700") assert.deepEqual(sels, [".wm"], sel);
+    else if (w === "800")
+      assert.ok(
+        sels.every((s) => DISPLAY_800.test(s)),
+        `800 on ${sel}`,
+      );
+    else assert.ok(w === "400" || w === "600", `${w} on ${sel}`);
+  }
+});
+
+test("the brand card: the wordmark is the one bold line, lowercase with the blue cloud", async () => {
+  const { homeOgHtml } = await import("../src/og-html");
+  const html = homeOgHtml();
+  assert.doesNotMatch(html, /MUGILU/);
+  assert.match(html, /data:image\/svg\+xml;base64,/);
+  assert.ok(atob(html.match(/base64,([^"]+)"/)![1]).includes(`fill="${BRAND}"`));
+  assert.match(html, /font-weight:700;[^"]*">mugilu</);
+  const heavy = [...html.matchAll(/font-weight:(\d+)/g)].map((m) => +m[1]).filter((w) => w > 400);
+  assert.deepEqual(heavy, [700]);
+});
+
+test("share images: the bar and the foot are regular weight", async () => {
+  const { homeOgHtml } = await import("../src/og-html");
+  const html = homeOgHtml();
+  assert.doesNotMatch(html, /font-size:26px;font-weight:800/);
+  assert.doesNotMatch(html, /font-weight:800;color:#111111/);
+});

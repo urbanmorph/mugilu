@@ -119,10 +119,10 @@ const MODIFIERS =
   `.mg .nolevel{--lv:var(--soft);--on:var(--ink)}`;
 
 const TYPE_ROLES =
-  `.mg .t-kicker{font-size:var(--t-sm);font-weight:700;letter-spacing:.12em;text-transform:uppercase}` +
+  `.mg .t-kicker{font-size:var(--t-sm);font-weight:600;letter-spacing:.12em;text-transform:uppercase}` +
   `.mg .t-title{font-size:var(--t-3xl);font-weight:800;font-stretch:75%;line-height:.95;text-transform:uppercase;margin:0}` +
   `.mg .t-h2{font-size:var(--t-2xl);font-weight:800;font-stretch:78%;line-height:1;text-transform:uppercase;margin:0}` +
-  `.mg .t-value{font-size:var(--t-xl);font-weight:700;font-stretch:85%;line-height:1.15}` +
+  `.mg .t-value{font-size:var(--t-xl);font-weight:600;font-stretch:85%;line-height:1.15}` +
   `.mg .t-lead{font-size:var(--t-lg);font-weight:600;line-height:1.35}` +
   `.mg .t-meta{font-size:var(--t-sm);color:var(--muted);line-height:1.4}` +
   `.mg .t-legal{font-size:var(--t-xs);color:var(--muted);line-height:1.35}` +
