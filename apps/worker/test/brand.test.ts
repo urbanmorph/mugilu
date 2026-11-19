@@ -96,3 +96,10 @@ test("the brand card's URL carries a hash of its content, so a changed card is a
   const html = await (await testWorker().get("/about", { headers: { accept: "text/html" } })).text();
   assert.ok(html.includes(`<meta property="og:image" content="${HOME_OG}">`));
 });
+
+test("the light theme's focus ring is the brand blue itself, not a copy of its value", async () => {
+  const { NEUTRAL } = await import("../src/palette");
+  assert.equal(NEUTRAL.light.focus, BRAND);
+  const src = (await import("node:fs")).readFileSync(new URL("../src/palette.ts", import.meta.url), "utf8");
+  assert.equal(src.match(/#0284c7/g)?.length, 1, "the brand hex is written once");
+});

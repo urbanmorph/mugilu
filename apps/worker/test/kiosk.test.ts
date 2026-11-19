@@ -262,3 +262,10 @@ test("display: every official warning over the place, each with its icon, and th
   assert.match(kw, /<li[^>]*><svg class="ico[^>]*><path d="[^"]+"\/><\/svg>[\s\S]*Severe Cyclonic Storm Akvan/);
   assert.match(html, /Thunderstorm/);
 });
+
+test("display links keep the chosen group: the place page's Display link, and the /display copy", () => {
+  const html = renderConditionsPage(conditions(), "elderly", "https://mugilu.live/c/delhi");
+  const display = html.match(/<a href="([^"]*)">Display<\/a>/)?.[1];
+  assert.ok(display?.includes("kiosk") && display.includes("as=elderly"), display);
+  assert.match(renderDisplayBuilder("everyone"), /<code>&amp;as=elderly<\/code>/);
+});
