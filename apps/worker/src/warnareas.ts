@@ -110,7 +110,7 @@ export function simplifyArea(rings: Ring[]): Ring[] {
 }
 
 /** CAP severity onto the risk bands. An unknown level still shows, at moderate. */
-const SEVERITY_BAND: Record<string, RiskBand> = {
+export const SEVERITY_BAND: Record<string, RiskBand> = {
   extreme: "severe",
   severe: "high",
   moderate: "moderate",

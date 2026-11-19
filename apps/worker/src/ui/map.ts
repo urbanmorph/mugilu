@@ -499,11 +499,15 @@ export function placesKey(lang: Lang, warned: boolean): string {
   );
 }
 
+/** What a "What's worst" square shows: under the /places map and on /methodology. */
+export const SQUARES_NOTE =
+  "Each square, about 100 km across, has the colour of what is worst in it, where that is high or severe. Air includes smoke and dust.";
+
 /** The grid's stamp and the squares' note under the /places map. */
 export function placesMapNote(m: IndiaMap | undefined, lang: Lang): string {
   if (!m?.gridAsOf) return "";
   return (
     stamp(t("Squares, heat and rain", lang), asOf(m.gridAsOf, lang)) +
-    `<p class="t-meta">${esc(t("Each square, about 100 km across, has the colour of what is worst in it, where that is high or severe. Air includes smoke and dust.", lang))}</p>`
+    `<p class="t-meta">${esc(t(SQUARES_NOTE, lang))}</p>`
   );
 }

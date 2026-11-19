@@ -114,6 +114,24 @@ test("renderConditionsPage: schema.org Dataset JSON-LD (credits + machine-readab
   assert.match(html, /"position":2/);
 });
 
+test("renderConditionsPage: the Dataset JSON-LD speaks the page's language, with no dash in its words", () => {
+  const ds = (lang: "en" | "hi" | "kn") => {
+    const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru", lang);
+    const m = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)!;
+    return JSON.parse(m[1])["@graph"].find((x: { "@type": string }) => x["@type"] === "Dataset");
+  };
+  const en = ds("en");
+  assert.equal(en.inLanguage, "en");
+  assert.match(en.description, /, India, right now\.$/);
+  for (const lang of ["hi", "kn"] as const) {
+    const d = ds(lang);
+    assert.equal(d.inLanguage, lang);
+    assert.notEqual(d.name, en.name, `${lang} name`);
+    assert.notEqual(d.description, en.description, `${lang} description`);
+    assert.doesNotMatch(d.name + d.description, /\{place\}|Sky conditions|right now/, lang);
+  }
+});
+
 test("renderConditionsPage: og:image is the page's own share snapshot", () => {
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru");
   assert.match(html, /property="og:image" content="https:\/\/mugilu\.live\/c\/bengaluru\.png"/);

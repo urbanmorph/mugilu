@@ -116,3 +116,10 @@ test("/.well-known/mcp.json: points agents at the hosted server and names every 
   );
   assert.ok(m.description.length >= 40);
 });
+
+test("llms.txt: lists /places, the directory of every district and city, and what marks a warned one", () => {
+  assert.match(
+    llmsTxt("https://mugilu.live"),
+    /- \[Every place\]\(https:\/\/mugilu\.live\/places\): [^\n]*official warning/,
+  );
+});

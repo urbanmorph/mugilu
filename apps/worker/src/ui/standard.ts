@@ -28,8 +28,8 @@ body{margin:0}
 .mg .skip{position:absolute;left:var(--sp2);top:var(--sp2);z-index:5;transform:translateY(-200%);background:var(--bg);color:var(--ink);padding:var(--sp2) var(--sp3);border:2px solid var(--ink);border-radius:var(--r);font-weight:600}
 .mg .skip:focus{transform:none}
 .mg .sh a.skip{color:var(--ink)}
-.mg .links a,.mg .back a,.mg a.back,.mg .flinks a,.mg .langs a,.mg .flangs a{display:inline-flex;align-items:center;justify-content:center;min-height:var(--hit);padding-inline:var(--sp1)}
-.mg .links a,.mg .flinks a,.mg .langs a,.mg .flangs a{min-width:var(--hit)}
+.mg .links a,.mg .back a,.mg a.back,.mg .flinks a,.mg .langs a,.mg .flangs a,.mg .langs>b,.mg .flangs>b{display:inline-flex;align-items:center;justify-content:center;min-height:var(--hit);padding-inline:var(--sp1)}
+.mg .links a,.mg .flinks a{min-width:var(--hit)}
 .mg .links{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp1)}
 .mg code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;overflow-wrap:anywhere}
 .mg b,.mg strong{font-weight:600}
