@@ -4,12 +4,25 @@
 // test/fixtures/worker/net.json. RECORD=1 fetches and saves any request not yet recorded;
 // without it an unrecorded upstream call answers 503, so a test never touches the network.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { mock } from "node:test";
 import worker, { type Env } from "../../src/index";
 import { testD1 } from "../d1";
 
 const FIX = new URL("../fixtures/worker/", import.meta.url);
 const NET = new URL("net.json", FIX);
 const SEEDED = ["latest", "conditions", "fires", "warnings", "cyclones", "gazetteer"];
+
+// The fixtures are a snapshot of one moment, and the worker drops readings that are
+// too old, so the clock is pinned to that moment (shortly after the snapshot was taken):
+// otherwise the tests pass on the day the fixtures were recorded and fail hours later.
+const SNAPSHOT_AT = JSON.parse(readFileSync(new URL("latest.json", FIX), "utf8")).generated_at as string;
+export const FIXTURE_NOW = Date.parse(SNAPSHOT_AT) + 10 * 60_000;
+let pinned = false;
+function pinClock(): void {
+  if (pinned) return;
+  mock.timers.enable({ apis: ["Date"], now: FIXTURE_NOW });
+  pinned = true;
+}
 
 class MemR2 {
   store = new Map<string, string>();
@@ -93,6 +106,7 @@ export interface TestWorker {
 
 /** A fresh worker environment seeded from the fixtures. */
 export function testWorker(extra: Partial<Env> = {}): TestWorker {
+  pinClock();
   const r2 = new MemR2();
   for (const k of SEEDED) r2.store.set(`data/${k}.json`, readFileSync(new URL(`${k}.json`, FIX), "utf8"));
   const env = {
