@@ -4,6 +4,7 @@ import type { Centroid, ConditionsPoint, ConditionsSnapshot } from "./types";
 import { getOpenMeteoBulk } from "./openmeteo";
 import { counted } from "./metrics";
 import centroids from "../data/centroids.json";
+import { gzip } from "./gzip";
 
 // Districts only for the national weather grid (785 points), the right grain
 // for a national ranking, and it respects Open-Meteo's free quota (collecting
@@ -55,7 +56,7 @@ export async function collectConditions(env: Env, delayMs = 12_000): Promise<Con
   };
 
   const body = JSON.stringify(snapshot);
-  const gz = await new Response(new Response(body).body!.pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
+  const gz = await gzip(body);
   await Promise.all([
     putJson(env, GRID_KEY, body, "public, max-age=300"),
     env.OAQ_R2.put(conditionsArchiveKey(snapshot.generated_at), gz, {
