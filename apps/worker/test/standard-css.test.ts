@@ -53,11 +53,27 @@ test("every interactive element inside the page gets the 3px focus ring, every f
   assert.doesNotMatch(STANDARD_CSS, /\.mg:focus-visible|\.mg::placeholder/);
 });
 
+test("a table's cell link is a full-height target, in a row header (the station's neighbours) too", () => {
+  assert.match(
+    STANDARD_CSS,
+    /\.mg \.tbl :is\(td,th\)>a:first-child\{display:flex;align-items:center;min-height:var\(--hit\)\}/,
+  );
+});
+
+test("a few sample words in another script (.sys) use the system face, after the per-script faces", () => {
+  const sys = STANDARD_CSS.indexOf(".mg .sys{font-family:system-ui,sans-serif}");
+  assert.ok(sys > 0, "the .sys rule");
+  assert.ok(sys > STANDARD_CSS.lastIndexOf(".mg :lang(kn){font-family"), "it wins over the Kannada face");
+});
+
 test("the embed card fits its 240px frame: one row of readings, the full disclaimer from a 400px frame", () => {
   // The card has no web font; in the system face five readings wrap to a second row, which
   // pushed the full disclaimer out of the published 480x240 frame. Readings that do not fit
   // the first row are cut whole (they come in the order they matter).
-  assert.match(STANDARD_CSS, /\.mg \.ecard \.ereads\{[^}]*max-height:calc\(var\(--t-lg\) \+ var\(--t-xs\) \* 1\.3\);overflow:hidden/);
+  assert.match(
+    STANDARD_CSS,
+    /\.mg \.ecard \.ereads\{[^}]*max-height:calc\(var\(--t-lg\) \+ var\(--t-xs\) \* 1\.3\);overflow:hidden/,
+  );
   assert.match(STANDARD_CSS, /\.mg \.ecard \.eread span\{display:block;[^}]*white-space:nowrap;line-height:1\.3/);
   // The query measures the card's content box: a 400px frame less 2x2px border and 2x12px padding.
   assert.match(STANDARD_CSS, /@container \(min-width:372px\)\{\.mg \.ecard \.disc-long\{display:block\}/);

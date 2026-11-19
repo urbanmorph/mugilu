@@ -167,7 +167,7 @@ export function renderAbout(lang: Lang = "en"): string {
           pull(t("That is mugilu.", lang)) +
           cards(
             [
-              `<p class="t-lead"><span lang="kn">ಮುಗಿಲು</span></p>${P(t("mugilu is the Kannada word for the open sky.", lang))}`,
+              `<p class="t-lead"><span class="sys" lang="kn">ಮುಗಿಲು</span></p>${P(t("mugilu is the Kannada word for the open sky.", lang))}`,
             ],
             { cols: 2, quiet: true },
           ),

@@ -193,7 +193,7 @@ body{margin:0}
 .mg .tbl thead th{font-size:var(--t-sm);font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid var(--ink)}
 .mg .tbl tbody th{font-weight:400}
 .mg .tbl .r{text-align:right}
-.mg .tbl td>a:first-child{display:flex;align-items:center;min-height:var(--hit)}
+.mg .tbl :is(td,th)>a:first-child{display:flex;align-items:center;min-height:var(--hit)}
 .mg .tscroll{overflow-x:auto;max-width:100%}
 .mg .tscroll:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .mg .tbl th svg{width:14px;height:14px;vertical-align:-2px;margin-right:4px}
@@ -460,9 +460,11 @@ const PULL_CSS = `
 @media (prefers-reduced-motion: no-preference){#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}}
 `;
 
-/** Language names in their own scripts use the system face, so two words never download an Indic font. */
+/** Language names in their own scripts, and a few sample words in another script (.sys), use
+ *  the system face, so two words never download an Indic font. */
 const LANG_NAMES_CSS = `
 .mg :is(.langs,.flangs) :lang(hi),.mg :is(.langs,.flangs) :lang(kn){font-family:system-ui,sans-serif}
+.mg .sys{font-family:system-ui,sans-serif}
 `;
 
 /** Safe areas (every page opts into viewport-fit=cover); the hidden attribute wins over a component's display. */
