@@ -115,7 +115,7 @@ export function parsePolygons(xml: string): Ring[] {
 const TOLERANCE = 0.03;
 /** The archive's detail: about 200 m, rounded to 0.001° (about 100 m), enough to say whether a
  *  street was inside, at a fraction of the source's mandal-level size. */
-const ARCHIVE_DETAIL = { tolerance: 0.002, places: 3 };
+export const ARCHIVE_DETAIL = { tolerance: 0.002, places: 3 };
 
 /** Rings simplified to the map's detail (or the archive's), rounded, every ring kept. */
 export function simplifyArea(rings: Ring[], { tolerance = TOLERANCE, places = 2 } = {}): Ring[] {
