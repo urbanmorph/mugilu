@@ -52,8 +52,9 @@ body{margin:0}
 .mg .sh{background:var(--bar);color:var(--on-bar);border-bottom:1px solid var(--bar-rule)}
 .mg .sh .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp4);padding-top:var(--sp2);padding-bottom:0}
 .mg .sh a{color:var(--on-bar);text-decoration:none}
-.mg .brand{display:inline-flex;align-items:center;gap:var(--sp2);min-height:var(--hit);font-size:var(--t-xl);font-weight:800;font-stretch:80%;letter-spacing:.02em;text-transform:uppercase;text-decoration:none}
-.mg .brand .ico{width:24px;height:24px}
+.mg .brand{display:inline-flex;align-items:center;gap:var(--sp2);min-height:var(--hit);font-size:var(--t-xl);text-decoration:none}
+.mg .wm{font-family:'Anek Latin',system-ui,sans-serif;font-weight:700;font-stretch:100%;letter-spacing:-.02em;text-transform:none;line-height:1}
+.mg .bm{width:1.25em;height:1.25em;flex:none}
 .mg .sh .btn{border-color:var(--on-bar);color:var(--on-bar);padding:0 var(--sp3);font-size:var(--t-sm);margin-left:auto}
 .mg .nav{display:flex;flex-wrap:nowrap;gap:0 var(--sp2);flex-basis:100%;overflow-x:auto;scrollbar-width:none;font-size:var(--t-sm);font-weight:600;font-stretch:85%;mask-image:linear-gradient(90deg,var(--ink) 88%,transparent)}
 .mg .nav a{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:var(--hit);min-width:var(--hit);padding:0 var(--sp1);white-space:nowrap}
@@ -321,14 +322,14 @@ body{margin:0}
 .mg .kio .ktile .qa{font-size:var(--t-sm);color:var(--muted)}
 .mg .kio .kquiet{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:var(--sp1) var(--sp5);padding:var(--sp2) var(--sp2);font-size:var(--t-sm)}
 .mg .kio .kf{display:flex;justify-content:space-between;align-items:center;gap:var(--sp5);padding:var(--sp2) var(--gut);border-top:2px solid var(--line)}
-.mg .kio .kbrand{font-size:var(--t-lg);font-weight:800;font-stretch:80%;text-transform:uppercase}
+.mg .kio .kbrand{font-size:var(--t-lg)}
 .mg .kio .chip svg{width:.9em;height:.9em}
 .mg .kio .bars{grid-template-columns:4em minmax(0,1fr) auto}
 .mg .kio .brow{font-size:var(--t-xs)}
 .mg .ecard{container-type:inline-size;display:flex;flex-direction:column;gap:4px;border:2px solid var(--ink);border-radius:var(--r);padding:10px 12px;line-height:1.3;overflow:hidden;text-decoration:none;color:var(--ink)}
 .mg .ecard .etop{display:flex;justify-content:space-between;align-items:center;font-weight:800}
 .mg .ecard .eplace{font-size:var(--t-lg);font-stretch:80%;text-transform:uppercase}
-.mg .ecard .ebrand{display:inline-flex;align-items:center;gap:4px;font-size:var(--t-sm);text-transform:uppercase;font-stretch:80%}
+.mg .ecard .ebrand{display:inline-flex;align-items:center;gap:4px;font-size:var(--t-sm)}
 .mg .ecard .eamb{display:flex;align-items:center;gap:var(--sp2);font-size:var(--t-base);font-weight:800}
 .mg .ecard .eamb svg{width:20px;height:20px;color:var(--lv)}
 .mg .ecard .esay{font-size:var(--t-sm)}

@@ -140,5 +140,7 @@ export const WASH_STRENGTH: Record<"light" | "dark", Record<RiskBand, number>> =
 };
 
 /** A QR code is black on white in both themes, so phones can read it. */
+/** The brand blue: the cloud mark and the favicon, the same in both themes (the live sky). */
+export const BRAND = "#0284c7";
 export const QR_INK = "#000000";
 export const QR_PAPER = "#ffffff";

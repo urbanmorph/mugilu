@@ -146,7 +146,7 @@ test("6. search: a place whose name starts with the query ranks above stations t
 test("7. the embed card carries the brand mark beside the place", () => {
   assert.match(
     renderEmbed(c(), "everyone", "https://mugilu.live"),
-    /<span class="ebrand"><svg class="ico f"[^>]*>[\s\S]*?<\/svg>mugilu<\/span>/,
+    /<span class="ebrand"><svg class="bm"[^>]*>[\s\S]*?<\/svg><span class="wm"[^>]*>mugilu<\/span><\/span>/,
   );
 });
 
