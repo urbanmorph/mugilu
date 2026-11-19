@@ -5,7 +5,8 @@ import { pollutantParts } from "../formats";
 import { esc } from "../html";
 import { RISK_BANDS, airLevelOf } from "../score";
 import { lp, t, type Lang } from "../i18n";
-import { HOME_OG, SITE, ld, relTime } from "../ui/shell";
+import { SITE, ld, relTime } from "../ui/shell";
+import { HOME_OG } from "../og-html";
 import { pageShell } from "../ui/page-shell";
 import {
   autoLane,

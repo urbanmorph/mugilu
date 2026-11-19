@@ -3,6 +3,7 @@ import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
 import { renderSnapshotMarkdown, renderStationMarkdown } from "./formats";
 import { renderStationOg, renderConditionsOg, renderHomeOg } from "./og";
+import { HOME_OG_VERSION } from "./og-html";
 import { faviconSvg, iconPng } from "./icon";
 import { ICONS, MANIFEST_PATH, webManifest } from "./install";
 import { SW_PATH, serviceWorker } from "./sw";
@@ -270,7 +271,7 @@ export default {
     const icon = ICONS[url.pathname as keyof typeof ICONS];
     if (icon) return cached(IMAGE_EDGE_TTL, () => iconPng(icon.size, icon.maskable));
     // Branded social-share card for the home + content pages (workers-og render).
-    if (url.pathname === "/og.png") return cached(IMAGE_EDGE_TTL, () => renderHomeOg());
+    if (url.pathname === "/og.png") return cached(IMAGE_EDGE_TTL, () => renderHomeOg(), { v: HOME_OG_VERSION });
 
     // Lookup-first home page. Heat/dust highlights come from the 4-hourly grid;
     // the worst-air row from the hourly snapshot (fresher), each stamped with

@@ -14,7 +14,6 @@ export const UM_ICON =
 export const VIEWPORT = `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`;
 
 export const SITE = "https://mugilu.live";
-export const HOME_OG = `${SITE}/og.png`; // the branded social-share card
 
 /** schema.org JSON-LD, safe to embed in a <script> (escapes the `<` that could
  *  otherwise break out of the tag). */

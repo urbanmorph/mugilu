@@ -2,7 +2,8 @@ import { TR, lp, t, type Lang } from "../i18n";
 import { esc, trusted, type Html } from "../html";
 import { sheet, type SheetSection } from "../ui/components";
 import { pageShell } from "../ui/page-shell";
-import { HOME_OG, SITE } from "../ui/shell";
+import { SITE } from "../ui/shell";
+import { HOME_OG } from "../og-html";
 
 // The text pages (about, how it works, terms, MCP) share one frame: the Sheet component,
 // numbered sections in boxes. Their prose is the live text, whole sentences only. Where a
