@@ -392,6 +392,9 @@ body{margin:0}
 .mg .sh .btn{margin-left:0}
 .mg .sh .nav{flex-basis:auto;overflow:visible;mask-image:none;font-size:var(--t-base);gap:0 var(--sp3)}
 .mg .sh .langs{display:flex;margin-left:auto}
+.mg .sh #install-app{order:1;margin-left:auto}
+.mg .sh .langs{order:2}
+.mg .sh #install-app:not([hidden])~.langs{margin-left:var(--sp4)}
 .mg .fgrid{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.3fr)}
 .mg .fset{grid-column:auto}
 .mg .seg.grid2.d3{grid-template-columns:repeat(3,minmax(0,1fr))}
