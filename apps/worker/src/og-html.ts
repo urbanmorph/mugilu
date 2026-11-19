@@ -13,6 +13,8 @@ import { BAND_COLOR, BAND_ON_FILL, BRAND, NEUTRAL, ON_FILL, RISK_COLOR } from ".
 import { briefs, gaugePos, type Brief } from "./readings";
 import { placeLabel } from "./readings";
 import { istStamp } from "./ist";
+import { fnv1a } from "./ui/assets";
+import { SITE } from "./ui/shell";
 import { heatVsNormalLine, heatVsNormalShown } from "./heatnormals";
 import { AQI_BAND_LABEL } from "./aqi";
 import { BAND_SHAPE, CLOUD_PATHS, LEVEL_SHAPE, SHAPE, DISCLAIMER_FULL, type ShapeName } from "./ui/components";
@@ -170,3 +172,10 @@ export function homeOgHtml(): string {
     ["open · free · built to be built on", "mugilu.live"],
   );
 }
+
+/** The brand card's version: a hash of its markup. Pages link /og.png?v=<it> and the edge
+ *  stores the card under it, so a changed card is a new URL for social sites and a new
+ *  edge entry, never an old copy kept by an earlier deploy's cache lifetime. */
+export const HOME_OG_VERSION = fnv1a(homeOgHtml());
+/** The branded social-share card. */
+export const HOME_OG = `${SITE}/og.png?v=${HOME_OG_VERSION}`;

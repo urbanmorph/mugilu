@@ -4,7 +4,8 @@ import { langPrefixJs, withPersona } from "../links";
 import { esc } from "../html";
 import { PERSONAS, PERSONA_LABEL, type Persona } from "../score";
 import { lp, t, type Lang } from "../i18n";
-import { HOME_OG, SITE } from "../ui/shell";
+import { SITE } from "../ui/shell";
+import { HOME_OG } from "../og-html";
 import { pageShell } from "../ui/page-shell";
 import {
   backLink,

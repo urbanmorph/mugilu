@@ -3,7 +3,8 @@ import { cycloneIn, cycloneTitle, type WarningsSnapshot } from "../sachet";
 import { esc } from "../html";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { isHttpUrl } from "./read";
-import { HOME_OG, SITE } from "../ui/shell";
+import { SITE } from "../ui/shell";
+import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {

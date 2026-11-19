@@ -86,3 +86,13 @@ test("share images: the bar and the foot are regular weight", async () => {
   assert.doesNotMatch(html, /font-size:26px;font-weight:800/);
   assert.doesNotMatch(html, /font-weight:800;color:#111111/);
 });
+
+test("the brand card's URL carries a hash of its content, so a changed card is a new URL", async () => {
+  const { homeOgHtml, HOME_OG, HOME_OG_VERSION } = await import("../src/og-html");
+  const { fnv1a } = await import("../src/ui/assets");
+  assert.equal(HOME_OG_VERSION, fnv1a(homeOgHtml()));
+  assert.equal(HOME_OG, `https://mugilu.live/og.png?v=${HOME_OG_VERSION}`);
+  const { testWorker } = await import("./helpers/worker");
+  const html = await (await testWorker().get("/about", { headers: { accept: "text/html" } })).text();
+  assert.ok(html.includes(`<meta property="og:image" content="${HOME_OG}">`));
+});

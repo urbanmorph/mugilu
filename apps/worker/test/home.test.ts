@@ -99,7 +99,7 @@ test("renderHome: schema.org WebSite + SearchAction JSON-LD, and the share card"
   assert.match(html, /"SearchAction"/);
   assert.match(html, /go\?q=\{search_term_string\}/);
   assert.match(html, /"sameAs":\["https:\/\/github\.com\/urbanmorph"\]/);
-  assert.match(html, /property="og:image" content="https:\/\/mugilu\.live\/og\.png"/);
+  assert.match(html, /property="og:image" content="https:\/\/mugilu\.live\/og\.png\?v=[0-9a-z]+"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
 });
 

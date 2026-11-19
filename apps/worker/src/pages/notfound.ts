@@ -1,7 +1,7 @@
 import { esc } from "../html";
 import { lp, t, type Lang } from "../i18n";
 import { SITE_DESC } from "../hazards";
-import { HOME_OG } from "../ui/shell";
+import { HOME_OG } from "../og-html";
 import { pageShell } from "../ui/page-shell";
 import { backLink, comboboxJs, ico, searchBox, wrap } from "../ui/components";
 
