@@ -1,3 +1,4 @@
+import { collectAirDaily } from "./airdaily";
 import { refreshLatest } from "./refresh";
 import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
@@ -690,6 +691,13 @@ export default {
       }
     }
 
+    // Manual trigger: summarise the next ended India days of the air archive (up to ?days=, 10 by
+    // default, within 25 s). /air-daily/collect (Authorization: Bearer ADMIN_KEY)
+    if (url.pathname === "/air-daily/collect") {
+      const maxDays = Math.min(30, Math.max(1, Number(url.searchParams.get("days")) || 10));
+      return Response.json({ ok: true, ...(await collectAirDaily(env, { maxDays, budgetMs: 25_000 })) });
+    }
+
     // Manual trigger: poll + archive FIRMS fire detections. /fires/collect (Authorization: Bearer ADMIN_KEY)
     if (url.pathname === "/fires/collect") {
       try {
@@ -755,6 +763,9 @@ export default {
         (r) => console.log(`[firms] ${r.count} detections (${r.source})`),
         (e) => console.error(`[firms] failed: ${reason(e)}`),
       );
+      // The daily air summaries: a few ended days a run until the archive is caught up, then
+      // yesterday once (time-boxed, never throws).
+      ctx.waitUntil(refreshed.then(() => collectAirDaily(env)));
       // The map is composed once from what the four just wrote (each logs its own failure).
       ctx.waitUntil(Promise.all([refreshed, cyclones, fires, warned]).then(() => storeMap(env)));
     }

@@ -19,7 +19,15 @@ export function isAdmin(req: Request, env: { ADMIN_KEY?: string }): boolean {
   return !!m && safeEqual(m[1], key);
 }
 
-const ADMIN_PATHS = new Set(["/api/counts", "/refresh", "/collect", "/warnings/collect", "/fires/collect", "/sig"]);
+const ADMIN_PATHS = new Set([
+  "/api/counts",
+  "/refresh",
+  "/collect",
+  "/warnings/collect",
+  "/fires/collect",
+  "/air-daily/collect",
+  "/sig",
+]);
 
 /** The one gate for every admin route: a 401 for an admin path without the key,
  *  else null (carry on). Call it on the language-stripped path. */
