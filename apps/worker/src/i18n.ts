@@ -174,6 +174,28 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "भारत का मानचित्र। हर बिंदु एक वायु केंद्र है, जिसका रंग उसके आँकड़ों के अनुसार है।",
     kn: "ಭಾರತದ ನಕ್ಷೆ. ಪ್ರತಿ ಚುಕ್ಕೆ ಒಂದು ವಾಯು ಕೇಂದ್ರ; ಅದರ ಬಣ್ಣ ಅದರ ಮಾಪನವನ್ನು ತೋರಿಸುತ್ತದೆ.",
   },
+  // The map's official warnings layer (IMD/NDMA usage: लागू, ಜಾರಿಯಲ್ಲಿ for "in force").
+  "Map of India. Each coloured area is under an official warning now.": {
+    hi: "भारत का मानचित्र। हर रंगीन क्षेत्र पर अभी आधिकारिक चेतावनी लागू है।",
+    kn: "ಭಾರತದ ನಕ್ಷೆ. ಪ್ರತಿ ಬಣ್ಣದ ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಜಾರಿಯಲ್ಲಿದೆ.",
+  },
+  "Areas under an official warning from NDMA or IMD, by the level it gives. Where warnings overlap, the higher level is on top. Select an area to see all warnings.":
+    {
+      hi: "NDMA या IMD की आधिकारिक चेतावनी वाले क्षेत्र, चेतावनी में दिए स्तर के अनुसार। जहाँ चेतावनियाँ एक-दूसरे पर पड़ती हैं, वहाँ ऊँचा स्तर ऊपर दिखता है। सभी चेतावनियाँ देखने के लिए कोई क्षेत्र चुनें।",
+      kn: "NDMA ಅಥವಾ IMD ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ನೀಡಿರುವ ಪ್ರದೇಶಗಳು, ಎಚ್ಚರಿಕೆಯಲ್ಲಿ ನೀಡಿದ ಮಟ್ಟದ ಪ್ರಕಾರ. ಎಚ್ಚರಿಕೆಗಳು ಒಂದರ ಮೇಲೊಂದು ಬಂದಲ್ಲಿ, ಹೆಚ್ಚಿನ ಮಟ್ಟ ಮೇಲೆ ಕಾಣುತ್ತದೆ. ಎಲ್ಲಾ ಎಚ್ಚರಿಕೆಗಳನ್ನು ನೋಡಲು ಒಂದು ಪ್ರದೇಶವನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+    },
+  "1 official warning is in force.": {
+    hi: "1 आधिकारिक चेतावनी लागू है।",
+    kn: "1 ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಜಾರಿಯಲ್ಲಿದೆ.",
+  },
+  "X official warnings are in force.": {
+    hi: "X आधिकारिक चेतावनियाँ लागू हैं।",
+    kn: "X ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಜಾರಿಯಲ್ಲಿವೆ.",
+  },
+  "No official warnings are on the map now.": {
+    hi: "अभी मानचित्र पर कोई आधिकारिक चेतावनी नहीं है।",
+    kn: "ಈಗ ನಕ್ಷೆಯಲ್ಲಿ ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಇಲ್ಲ.",
+  },
   "Map of India. Each square is coloured by its heat level.": {
     hi: "भारत का मानचित्र। हर वर्ग का रंग वहाँ की गर्मी के स्तर को दिखाता है।",
     kn: "ಭಾರತದ ನಕ್ಷೆ. ಪ್ರತಿ ಚೌಕದ ಬಣ್ಣ ಅಲ್ಲಿನ ಬಿಸಿಲಿನ ಮಟ್ಟವನ್ನು ತೋರಿಸುತ್ತದೆ.",

@@ -1,0 +1,46 @@
+<cap:alert xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+<cap:identifier>IN-1795060199066015_15</cap:identifier>
+<cap:sender>Tripura-SDMA</cap:sender>
+<cap:sent>2026-11-19T09:21:10+05:30</cap:sent>
+<cap:status>Actual</cap:status>
+<cap:msgType>Update</cap:msgType>
+<cap:scope>Public</cap:scope>
+<cap:restriction/>
+<cap:addresses/>
+<cap:note/>
+<cap:references>IMD-Agartala,IN-1795060199066015_69,2026-11-19T09:19:12+05:30</cap:references>
+<cap:incidents/>
+<cap:info>
+<cap:language>en-IN</cap:language>
+<cap:category>Met</cap:category>
+<cap:event>Light Rain</cap:event>
+<cap:urgency>Expected</cap:urgency>
+<cap:severity>Moderate</cap:severity>
+<cap:certainty>Likely</cap:certainty>
+<cap:audience>1</cap:audience>
+<cap:effective>2026-11-19T09:14:00+05:30</cap:effective>
+<cap:onset>2026-11-19T09:21:10+05:30</cap:onset>
+<cap:expires>2026-11-19T12:14:00+05:30</cap:expires>
+<cap:headline>Light To Moderate Rain is very likely to occur/ continue at a few places over Dhalai, South Tripura in next 30 mts to 3 hours.</cap:headline>
+<cap:description/>
+<cap:instruction>Please follow SDMA guidelines.</cap:instruction>
+<cap:contact/>
+<cap:parameter>
+<cap:valueName>Polygon URL</cap:valueName>
+<cap:value>https://sachet.ndma.gov.in/cap_public_website/FetchPolygonXMLFile?identifier=1795060199066015</cap:value>
+</cap:parameter>
+<cap:area>
+<cap:areaDesc>Dhalai,South Tripura districts of Tripura</cap:areaDesc>
+<cap:geocode>
+<cap:valueName>LGD District Code</cap:valueName>
+<cap:value>271</cap:value>
+</cap:geocode>
+<cap:geocode>
+<cap:valueName>LGD District Code</cap:valueName>
+<cap:value>269</cap:value>
+</cap:geocode>
+<cap:altitude>0</cap:altitude>
+<cap:ceiling>0</cap:ceiling>
+</cap:area>
+</cap:info>
+</cap:alert>

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { simplifyPath, parseRings, ringsOf } from "../scripts/simplify-path.ts";
+import { simplifyPath, parseRings, ringsOf } from "../src/simplify-path.ts";
 
 test("drops points closer than the tolerance and keeps the corners", () => {
   const d = "M0 0L5 0.1L10 0L10 10L0 10Z";

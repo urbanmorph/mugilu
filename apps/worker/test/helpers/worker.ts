@@ -26,6 +26,7 @@ function pinClock(): void {
 
 class MemR2 {
   store = new Map<string, string>();
+  meta = new Map<string, Record<string, string>>();
   async get(key: string) {
     const body = this.store.get(key);
     if (body == null) return null;
@@ -41,17 +42,28 @@ class MemR2 {
   async head(key: string) {
     return this.store.has(key) ? { key, size: this.store.get(key)!.length, uploaded: new Date() } : null;
   }
-  async put(key: string, value: string | ArrayBuffer | Uint8Array) {
+  async put(
+    key: string,
+    value: string | ArrayBuffer | Uint8Array,
+    opts: { customMetadata?: Record<string, string> } = {},
+  ) {
     this.store.set(key, typeof value === "string" ? value : new TextDecoder().decode(value));
+    this.meta.set(key, { ...opts.customMetadata });
   }
   async list(opts: { prefix?: string } = {}) {
     const objects = [...this.store.keys()]
       .filter((k) => k.startsWith(opts.prefix ?? ""))
-      .map((key) => ({ key, size: this.store.get(key)!.length, uploaded: new Date() }));
+      .map((key) => ({
+        key,
+        size: this.store.get(key)!.length,
+        uploaded: new Date(),
+        customMetadata: this.meta.get(key) ?? {},
+      }));
     return { objects, truncated: false, delimitedPrefixes: [] };
   }
   async delete(key: string) {
     this.store.delete(key);
+    this.meta.delete(key);
   }
 }
 

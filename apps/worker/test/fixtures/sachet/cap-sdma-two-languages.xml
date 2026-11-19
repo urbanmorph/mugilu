@@ -1,0 +1,62 @@
+<cap:alert xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+<cap:identifier>IN-1795051101919008_8</cap:identifier>
+<cap:sender>Andhra-Pradesh-SDMA</cap:sender>
+<cap:sent>2026-11-19T06:48:21+05:30</cap:sent>
+<cap:status>Actual</cap:status>
+<cap:msgType>Alert</cap:msgType>
+<cap:scope>Public</cap:scope>
+<cap:restriction/>
+<cap:addresses/>
+<cap:note/>
+<cap:incidents/>
+<cap:info>
+<cap:language>TL</cap:language>
+<cap:category>Met</cap:category>
+<cap:event>SDMA Alert</cap:event>
+<cap:urgency>Expected</cap:urgency>
+<cap:severity>Severe</cap:severity>
+<cap:certainty>Possible</cap:certainty>
+<cap:audience>1</cap:audience>
+<cap:effective>2026-11-19T06:45:00+05:30</cap:effective>
+<cap:onset>2026-11-19T06:49:25+05:30</cap:onset>
+<cap:expires>2026-11-20T06:45:00+05:30</cap:expires>
+<cap:headline>నవంబర్ 18 సా.4 గంటల నుండి 20 సా.4 గంటల వరకు సముద్రంలో 1.1-1.3 మీటర్ల ఎత్తులో అలలు ఎగిసిపడే అవకాశం ఉన్నందున ప్రజలు, మత్స్యకారులు అప్రమత్తంగా ఉండాలి. బీచ్ లకు వెళ్లవద్దు. -ఆంధ్రప్రదేశ్ ప్రభుత్వం</cap:headline>
+<cap:description/>
+<cap:instruction>Please follow SDMA guidelines.</cap:instruction>
+<cap:contact/>
+<cap:parameter>
+<cap:valueName>Polygon URL</cap:valueName>
+<cap:value>https://sachet.ndma.gov.in/cap_public_website/FetchPolygonXMLFile?identifier=1795051101919008</cap:value>
+</cap:parameter>
+<cap:area>
+<cap:areaDesc>Ramachandrapuram to Kaviti</cap:areaDesc>
+<cap:altitude>0</cap:altitude>
+<cap:ceiling>0</cap:ceiling>
+</cap:area>
+</cap:info>
+<cap:info>
+<cap:language>en-IN</cap:language>
+<cap:category>Met</cap:category>
+<cap:event>SDMA Alert</cap:event>
+<cap:urgency>Expected</cap:urgency>
+<cap:severity>Severe</cap:severity>
+<cap:certainty>Possible</cap:certainty>
+<cap:audience>1</cap:audience>
+<cap:effective>2026-11-19T06:45:00+05:30</cap:effective>
+<cap:onset>2026-11-19T06:49:25+05:30</cap:onset>
+<cap:expires>2026-11-20T06:45:00+05:30</cap:expires>
+<cap:headline>SDMA Alert is Likely to occur over Ramachandrapuram to Kaviti. Please follow SDMA guidelines.</cap:headline>
+<cap:description/>
+<cap:instruction>Please follow SDMA guidelines.</cap:instruction>
+<cap:contact/>
+<cap:parameter>
+<cap:valueName>Polygon URL</cap:valueName>
+<cap:value>https://sachet.ndma.gov.in/cap_public_website/FetchPolygonXMLFile?identifier=1795051101919008</cap:value>
+</cap:parameter>
+<cap:area>
+<cap:areaDesc>Ramachandrapuram to Kaviti</cap:areaDesc>
+<cap:altitude>0</cap:altitude>
+<cap:ceiling>0</cap:ceiling>
+</cap:area>
+</cap:info>
+</cap:alert>

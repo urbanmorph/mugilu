@@ -386,11 +386,14 @@ export interface StampOpts {
   plain?: boolean;
   off?: boolean;
   stale?: boolean;
+  /** The map layers (their letters) this stamp dates; the others dim it (MAP_JS). */
+  layers?: string;
 }
 /** Stamp: when the data is from, one per data layer, never hidden in a note. `value` is markup. */
 export function stamp(label: string, value: string, o: StampOpts = {}): string {
   const mods = [o.plain && "plain", o.off && "off", o.stale && "stale"].filter(Boolean).join(" ");
-  return `<span class="stamp${mods ? ` ${mods}` : ""}"><span class="k">${esc(label)}</span><span class="v">${value}</span></span>`;
+  const layers = o.layers ? ` data-layers="${esc(o.layers)}"` : "";
+  return `<span class="stamp${mods ? ` ${mods}` : ""}"${layers}><span class="k">${esc(label)}</span><span class="v">${value}</span></span>`;
 }
 export const stamps = (items: string[]) => `<div class="stamps">${items.join("")}</div>`;
 

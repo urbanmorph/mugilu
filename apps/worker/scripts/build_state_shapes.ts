@@ -9,7 +9,7 @@
 // Usage: npx tsx scripts/build_state_shapes.ts <lgd-projected.json>
 import { readFileSync, writeFileSync } from "node:fs";
 import { slugPlacesByState } from "../src/slugs";
-import { simplifyPath } from "./simplify-path";
+import { simplifyPath } from "../src/simplify-path";
 
 /** Map pixels: below this a bend is not visible at the /places map's size. */
 const TOLERANCE = 0.4;
