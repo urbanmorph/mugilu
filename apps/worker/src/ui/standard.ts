@@ -93,7 +93,6 @@ body{margin:0}
 .mg .seg.fit>label{flex:1 1 auto;border:0;padding:0 var(--sp1)}
 .mg .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--r);border:2px solid var(--lv,var(--ink));background:var(--lv,transparent);color:var(--on,var(--ink));font-size:var(--t-xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .mg .chip svg{width:16px;height:16px}
-.mg .lkey{display:flex;flex-wrap:wrap;gap:var(--sp2)}
 .mg .plate{background:var(--lv);color:var(--on);padding:var(--sp5) var(--gut)}
 .mg .plate .row{display:flex;align-items:center;gap:var(--sp4)}
 .mg .plate .shape{width:64px;height:64px}
@@ -115,6 +114,12 @@ body{margin:0}
 .mg .panel>.bar{display:flex;align-items:center;gap:var(--sp2);margin:0;padding:var(--sp2) var(--sp3);background:var(--bar);color:var(--on-bar);font-size:var(--t-sm);font-weight:600;letter-spacing:.1em;text-transform:uppercase}
 .mg .panel>.bar .n{margin-left:auto;font-variant-numeric:tabular-nums}
 .mg .panel>.bar a{color:inherit}
+.mg .panel>div.bar{flex-wrap:wrap}
+.mg .panel>.bar>h2{margin:0;font:inherit;flex:none;white-space:nowrap}
+.mg .bar .stamps{margin-left:auto;gap:var(--sp1) var(--sp3);text-transform:none;letter-spacing:0}
+.mg .bar .stamp{flex-direction:row;align-items:baseline;gap:.5em;padding:0;border:0;background:none;color:var(--on-bar)}
+.mg .bar .stamp .k{color:inherit}
+.mg .bar .stamp.off{display:none}
 .mg .panel>.in{padding:var(--sp3) var(--sp4)}
 .mg .panel>.in.grid{display:grid;gap:var(--sp3)}
 .mg .notice{display:block;border:2px solid var(--ink);border-left-width:8px;border-radius:var(--r);padding:var(--sp3) var(--sp4);background:var(--bg);font-weight:600}

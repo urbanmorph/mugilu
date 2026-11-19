@@ -151,9 +151,9 @@ test("renderHome: an official cyclone warning is a plate under the search, IMD's
   assert.doesNotMatch(renderHome(), /class="wplate"/);
 });
 
-test("renderHome: the shape key, the put-on-a-screen link and the shell's footer", () => {
+test("renderHome: no separate level key (the map box carries its own legend), the put-on-a-screen link and the footer", () => {
   const html = renderHome();
-  assert.match(html, /<div class="lkey">/);
+  assert.doesNotMatch(html, /class="lkey"/);
   assert.match(html, /href="\/display">[\s\S]{0,400}Put this on a screen<\/a>/);
   assert.match(html, /PDGI\.md/);
   assert.match(html, /\/terms/);

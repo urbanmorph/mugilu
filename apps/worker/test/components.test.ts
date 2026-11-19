@@ -429,3 +429,11 @@ test("siteFooter: every header page is reachable from the footer too", () => {
   for (const p of ["/places", "/warnings", "/display", "/methodology", "/about"])
     assert.ok(f.includes(`href="${p}"`), p);
 });
+
+test("panel: an end slot shares the black bar with the heading, outside the heading's name", async () => {
+  const { panel } = await import("../src/ui/components");
+  assert.equal(
+    panel("<p>x</p>", { title: "India now", tag: "div", end: "<span>8 min ago</span>" }),
+    '<div class="panel"><div class="bar"><h2>India now</h2><span>8 min ago</span></div><div class="in"><p>x</p></div></div>',
+  );
+});

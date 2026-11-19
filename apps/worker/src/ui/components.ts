@@ -364,14 +364,18 @@ export interface PanelOpts {
   tag?: "section" | "div" | "nav";
   /** The panel's accessible name when it has no title bar. */
   label?: string;
+  /** Markup at the bar's right end, beside the heading but not in its name (the map's stamps). */
+  end?: string;
 }
 export function panel(body: string, o: PanelOpts = {}): string {
   const tag = o.tag ?? "section";
   const lab = o.title && o.id ? ` aria-labelledby="${esc(o.id)}"` : o.label ? ` aria-label="${esc(o.label)}"` : "";
-  const bar = o.title
-    ? `<h2 class="bar"${o.id ? ` id="${esc(o.id)}"` : ""}>${o.icon ? ico(o.icon) : ""}<span>${esc(o.title)}</span>` +
-      `${o.count != null ? `<span class="n">${esc(String(o.count))}</span>` : ""}</h2>`
-    : "";
+  const bar = o.end
+    ? `<div class="bar"><h2${o.id ? ` id="${esc(o.id)}"` : ""}>${o.icon ? ico(o.icon) : ""}${esc(o.title ?? "")}</h2>${o.end}</div>`
+    : o.title
+      ? `<h2 class="bar"${o.id ? ` id="${esc(o.id)}"` : ""}>${o.icon ? ico(o.icon) : ""}<span>${esc(o.title)}</span>` +
+        `${o.count != null ? `<span class="n">${esc(String(o.count))}</span>` : ""}</h2>`
+      : "";
   return `<${tag} class="panel${o.strong ? " strong" : ""}"${lab}>${bar}${o.flush ? body : `<div class="in">${body}</div>`}</${tag}>`;
 }
 

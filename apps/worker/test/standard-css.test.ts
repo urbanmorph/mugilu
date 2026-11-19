@@ -143,3 +143,12 @@ test("the language names sit evenly: the current one is padded like the links, a
   );
   assert.doesNotMatch(STANDARD_CSS, /\.mg \.(f?langs) a[^{]*\{min-width/);
 });
+
+test("stamps in a bar: the selected layer's alone, on one line in the bar's colours, under the title when tight", () => {
+  assert.match(STANDARD_CSS, /\.mg \.panel>div\.bar\{flex-wrap:wrap\}/);
+  assert.match(STANDARD_CSS, /\.mg \.panel>\.bar>h2\{margin:0;font:inherit;flex:none;white-space:nowrap\}/);
+  assert.match(STANDARD_CSS, /\.mg \.bar \.stamps\{margin-left:auto;/);
+  assert.match(STANDARD_CSS, /\.mg \.bar \.stamp\{flex-direction:row;[^}]*background:none;[^}]*color:var\(--on-bar\)/);
+  assert.match(STANDARD_CSS, /\.mg \.bar \.stamp\.off\{display:none\}/);
+  assert.doesNotMatch(STANDARD_CSS, /#[0-9a-fA-F]{3,8}\b/);
+});
