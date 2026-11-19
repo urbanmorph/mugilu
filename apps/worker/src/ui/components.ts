@@ -101,9 +101,17 @@ export function siteHeader(path: string, lang: Lang, query = ""): string {
     `<header class="sh"><a class="skip" href="#main">${esc(t("Skip to content", lang))}</a><div class="wrap">` +
     `<a class="brand" href="${lp("/", lang)}">${wordmark()}</a>` +
     installButton(lang, { button: "btn", dialog: "isheet" }) +
-    `<nav class="nav" aria-label="${esc(t("Main", lang))}">${nav}</nav>${langSwitch(path, lang, "header", query)}</div></header>`
+    `<button type="button" class="btn mtog" aria-expanded="false" aria-controls="mnav" hidden>${ico("list")}${esc(t("Menu", lang))}</button>` +
+    `<nav class="nav" id="mnav" aria-label="${esc(t("Main", lang))}">${nav}</nav>${langSwitch(path, lang, "header", query)}</div></header>`
   );
 }
+
+/** Phones: the script shows the Menu button and folds the nav (and the languages) behind
+ *  it; without the script the nav stays the scrolling row. Escape closes it, back to the button. */
+export const MENU_JS = `(function(){var h=document.querySelector('.sh'),b=h&&h.querySelector('.mtog');if(!b)return;h.classList.add('mjs');b.hidden=false;
+function set(o){h.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
+b.addEventListener('click',function(){set(b.getAttribute('aria-expanded')!=='true');});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&h.classList.contains('open')){set(false);b.focus();}});})();`;
 
 /** The cloud mark (64-unit grid), shared with the favicon and app icons. */
 export const CLOUD_PATHS =
@@ -129,6 +137,8 @@ const FOOT_LINKS: [href: string, label: string, external?: boolean][] = [
   ["/about", "about"],
   ["/methodology", "how it works"],
   ["/places", "all places"],
+  ["/warnings", "warnings"],
+  ["/display", "put this on a screen"],
   ["/about#build", "build on it"],
   ["/mcp", "MCP server"],
   ["/terms", "terms"],
@@ -449,7 +459,15 @@ export interface Column {
   cls?: string;
 }
 /** DataTable: a real table with scoped headers, scrolling inside its own region when wide. */
-export function dataTable(cols: Column[], rows: string[][], caption?: string): string {
+/** `stackOnPhone`: a name, a value and a detail (three columns). On phones each row becomes
+ *  the name with the detail under it and the value on the right, instead of a table that
+ *  scrolls sideways. */
+export function dataTable(
+  cols: Column[],
+  rows: string[][],
+  caption?: string,
+  o: { stackOnPhone?: boolean } = {},
+): string {
   const th = cols
     .map((c) => {
       const cls = [c.num && "r", c.cls].filter(Boolean).join(" ");
@@ -462,7 +480,7 @@ export function dataTable(cols: Column[], rows: string[][], caption?: string): s
         `<tr>${r.map((cell, i) => (i === 0 ? `<th scope="row">${cell}</th>` : `<td${cols[i]?.num ? ' class="r"' : ""}>${cell}</td>`)).join("")}</tr>`,
     )
     .join("");
-  return `<div class="tscroll" role="region" tabindex="0"${caption ? ` aria-label="${esc(caption)}"` : ""}><table class="tbl">${caption ? `<caption class="vh">${esc(caption)}</caption>` : ""}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table></div>`;
+  return `<div class="tscroll" role="region" tabindex="0"${caption ? ` aria-label="${esc(caption)}"` : ""}><table class="tbl${o.stackOnPhone ? " rows" : ""}">${caption ? `<caption class="vh">${esc(caption)}</caption>` : ""}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 // ── CardGrid, Pairs, FAQ, pull quote, Sheet ──────────────────────────────────────────

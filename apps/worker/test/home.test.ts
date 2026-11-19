@@ -84,7 +84,7 @@ test("renderHome: the search is a combobox wired to /suggest, with the live help
   assert.match(html, /any language/i);
   assert.match(html, /You then see <b>its sky<\/b>/);
   // Sample words in the system face: three words must not download two Indic fonts (345 KB).
-  assert.match(html, /<span class="sys" lang="kn">ಬೆಂಗಳೂರು<\/span> · <span class="sys" lang="hi">दिल्ली<\/span>/);
+  assert.match(html, /<span lang="kn">ಬೆಂಗಳೂರು<\/span> · <span lang="hi">दिल्ली<\/span>/);
 });
 
 test("renderHome: near-me is progressive enhancement and resets on bfcache restore", () => {

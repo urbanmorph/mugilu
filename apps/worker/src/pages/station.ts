@@ -67,6 +67,7 @@ function nearbyPanel(nearby: NearStation[], lang: Lang): string {
       [{ label: t("Station", lang) }, { label: "AQI" }, { label: t("Distance", lang), num: true }],
       rows,
       t("Air stations near here", lang),
+      { stackOnPhone: true },
     ),
     { title: t("Air stations near here", lang), icon: "station", flush: true },
   );

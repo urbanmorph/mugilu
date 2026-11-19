@@ -404,3 +404,28 @@ test("dataTable and sheet: plain strings are escaped, trusted markup (the Html b
   assert.match(s1, /One,<br>two/);
   assert.match(sheet({ kicker: "k", title: "A <i>", lead: "l", sections: [] }, "en"), /A &lt;i&gt;/);
 });
+
+test("siteHeader on phones: a Menu button (script-shown) opens the nav and the languages; without script the nav row stays", async () => {
+  const { MENU_JS } = await import("../src/ui/components");
+  const { STANDARD_CSS } = await import("../src/ui/standard");
+  const h = siteHeader("/warnings", "en");
+  assert.match(
+    h,
+    /<button type="button" class="btn mtog" aria-expanded="false" aria-controls="mnav" hidden><svg class="ico"[^>]*>[\s\S]*?<\/svg>Menu<\/button>/,
+  );
+  assert.match(h, /<nav class="nav" id="mnav" aria-label="Main">/);
+  assert.match(siteHeader("/", "hi"), />मेनू<\/button>/);
+  assert.match(siteHeader("/", "kn"), />ಮೆನು<\/button>/);
+  // The script marks the header, shows the button, toggles aria-expanded, closes on Escape.
+  for (const s of ["classList.add('mjs')", "aria-expanded", "Escape", ".focus()"]) assert.ok(MENU_JS.includes(s), s);
+  const mobile = STANDARD_CSS.slice(STANDARD_CSS.indexOf("@media (max-width:999.98px){"));
+  assert.match(mobile, /\.mg \.sh\.mjs \.nav\{display:none\}/);
+  assert.match(mobile, /\.mg \.sh\.mjs\.open :is\(\.nav,\.langs\)\{display:flex/);
+  assert.match(STANDARD_CSS, /\.mg \.sh \.mtog\{/);
+});
+
+test("siteFooter: every header page is reachable from the footer too", () => {
+  const f = siteFooter("/", "en");
+  for (const p of ["/places", "/warnings", "/display", "/methodology", "/about"])
+    assert.ok(f.includes(`href="${p}"`), p);
+});

@@ -512,3 +512,18 @@ test("renderConditionsPage: no sister-site links on a bare-coordinate page", () 
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/12.97,77.59");
   assert.doesNotMatch(html, /yellide\.com|bharatlas\.com\/view/);
 });
+
+test("place: phones read Put this on a screen, then alerts, then the stations (the board); desktop puts the stations first", async () => {
+  const { STANDARD_CSS } = await import("../src/ui/standard");
+  const c = conditions({
+    nearby_stations: [{ provider: "cpcb", raw_id: "1", name: "ITO", aqi: 200, band: "poor", distance_km: 2 }],
+  } as Partial<Conditions>);
+  const html = renderConditionsPage(c, "everyone", "https://mugilu.live/c/delhi", "en", "KEY");
+  const act = html.indexOf('class="stack act"');
+  const screen = html.indexOf("Put this on a screen", act);
+  const alerts = html.indexOf('id="alerts-on"', act);
+  const stations = html.indexOf("Air stations near here", act);
+  assert.ok(act > 0 && act < screen && screen < alerts && alerts < stations, `${act} ${screen} ${alerts} ${stations}`);
+  assert.match(STANDARD_CSS, /@media \(min-width:1000px\)\{[^@]*\.mg \.lane>div:has\(>\.act\)\+div\{order:-1\}/);
+  assert.match(STANDARD_CSS, /@media \(min-width:1000px\)\{[^@]*\.mg \.act>\.btn\{order:1\}/);
+});

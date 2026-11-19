@@ -101,7 +101,7 @@ test("every page shares the signage header nav and footer; none keeps the old wi
     station: renderStationPage(st(), near, true),
   };
   for (const [name, html] of Object.entries(pages)) {
-    assert.match(html, /<nav class="nav" aria-label="Main">[\s\S]*href="\/warnings"/, name);
+    assert.match(html, /<nav class="nav" id="mnav" aria-label="Main">[\s\S]*href="\/warnings"/, name);
     assert.match(html, /<footer class="sf">/, name);
     assert.doesNotMatch(html, /<body class="wide">|class="topnav"/, name);
   }
@@ -137,7 +137,7 @@ test("/places: a state picker and a search, each state an anchor", () => {
 test("station page: pollutant bars on CPCB's scale with the limit, a table of the stations around it, the source once", () => {
   const html = renderStationPage(st(), near, true);
   assert.match(html, /<div class="bars" style="--lim:20\.0%">[\s\S]*?<span>PM2\.5<\/span>/);
-  assert.match(html, /<table class="tbl">[\s\S]*Vivek Vihar[\s\S]*2\.1 km/);
+  assert.match(html, /<table class="tbl rows">[\s\S]*Vivek Vihar[\s\S]*2\.1 km/);
   assert.equal((html.match(/Measured by Central Pollution Control Board/g) ?? []).length, 1);
   assert.match(html, /<header class="sh">[\s\S]*<main id="main"[\s\S]*<footer class="sf">/, "the standard's shell");
 });

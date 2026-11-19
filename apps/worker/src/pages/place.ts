@@ -160,10 +160,11 @@ export function renderConditionsPage(
         .map((r) => readRowHtml(r, lang))
         .join("")}</div>`,
     ) + (c.grap && !c.air ? band(grapLine(c.grap, lang)) : "");
-  const alertsCol = stack(
-    (alertsKey ? alertsBox(alertsKey, lang) : "") +
-      linkButton(screen, t("Put this on a screen", lang), false, "screen"),
-  );
+  // Phones read the button, then alerts, then the stations (the board); desktop moves the
+  // stations first and the button under the alerts (standard.ts), so the source keeps phone order.
+  const alertsCol =
+    `<div class="stack act">${linkButton(screen, t("Put this on a screen", lang), false, "screen")}` +
+    `${alertsKey ? alertsBox(alertsKey, lang) : ""}</div>`;
   const reference = band(
     stack(
       `<p class="t-legal">${esc(lang === "en" ? c.attribution : c.attribution.replace(/^Sources:/, `${t("Sources", lang)}:`))}</p>` +
@@ -187,7 +188,7 @@ export function renderConditionsPage(
     hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), lang) +
       warningBand(c, lang) +
       readings +
-      secondary([stationsPanel(c, lang), alertsCol, nearbyPanel(canonical, lang)]) +
+      secondary([alertsCol, stationsPanel(c, lang), nearbyPanel(canonical, lang)]) +
       reference,
   );
 

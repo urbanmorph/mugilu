@@ -102,3 +102,15 @@ test("renderConditionsPage: lists the air stations near the place, linking to ea
     /<a class="srow" href="\/s\/cpcb\/1558"><span class="n">Anand Vihar<\/span><span class="a">412<\/span>/,
   );
 });
+
+test("station: on phones the nearby-stations table stacks the distance under the name (no sideways scroll)", async () => {
+  const { STANDARD_CSS } = await import("../src/ui/standard");
+  const { dataTable } = await import("../src/ui/components");
+  assert.match(
+    dataTable([{ label: "A" }, { label: "B" }, { label: "C" }], [["x", "1", "2"]], "t", { stackOnPhone: true }),
+    /<table class="tbl rows">/,
+  );
+  const mobile = STANDARD_CSS.slice(STANDARD_CSS.indexOf("@media (max-width:999.98px){"));
+  assert.match(mobile, /\.mg \.tbl\.rows tr\{display:grid/);
+  assert.match(mobile, /\.mg \.tbl\.rows td:nth-child\(3\)\{grid-column:1;grid-row:2/);
+});

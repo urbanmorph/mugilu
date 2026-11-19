@@ -40,6 +40,9 @@ body{margin:0}
 .mg .wrap{width:min(100%,calc(var(--col) + 2 * var(--gut)));margin:0 auto;padding:0 var(--gut)}
 .mg .pad{padding-top:var(--sp5)}
 .mg .stack>*+*{margin-top:var(--sp4)}
+.mg .act{display:flex;flex-direction:column;gap:var(--sp4)}
+.mg .act>.btn{align-self:flex-start}
+.mg .act>*{margin-top:0}
 .mg .row-c{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2) var(--sp3)}
 .mg .band{padding-top:var(--sp5)}
 .mg .lane{display:grid;gap:var(--sp4);align-items:stretch}
@@ -61,6 +64,7 @@ body{margin:0}
 .mg .nav a[aria-current]{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:3px}
 .mg .langs{display:flex;align-items:center;gap:var(--sp1);font-size:var(--t-sm);font-weight:600}
 .mg .sh .langs{display:none}
+.mg .sh .mtog{display:none;gap:var(--sp2)}
 .mg .sf{margin-top:var(--sp7);border-top:3px solid var(--ink)}
 .mg .sf .wrap{display:grid;gap:var(--sp4);padding-top:var(--sp5)}
 .mg .flinks{display:flex;flex-wrap:wrap;gap:0 var(--sp3);font-size:var(--t-sm);font-weight:600}
@@ -348,6 +352,8 @@ body{margin:0}
 .mg .ecard .disc-long{display:none}
 @media (min-width:1000px){
 .mg .band{padding-top:var(--sp6)}
+.mg .lane>div:has(>.act)+div{order:-1}
+.mg .act>.btn{order:1}
 .mg .lane{gap:var(--sp5)}
 .mg .lane.l2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mg .lane.l3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -399,6 +405,19 @@ body{margin:0}
 @media (max-width:999.98px){
 .mg .tbl{font-size:var(--t-sm)}
 .mg .tbl th,.mg .tbl td{padding:var(--sp2)}
+.mg .sh.mjs .nav{display:none}
+.mg .sh.mjs .mtog{display:inline-flex;margin-left:auto}
+.mg .sh.mjs .btn:not([hidden]):not(.mtog)~.mtog{margin-left:var(--sp2)}
+.mg .sh.mjs.open :is(.nav,.langs){display:flex;flex-basis:100%;overflow:visible;mask-image:none;font-size:var(--t-base)}
+.mg .sh.mjs.open .nav{flex-direction:column;align-items:stretch;margin-top:var(--sp2)}
+.mg .sh.mjs.open .nav a{justify-content:flex-start;border-top:1px solid color-mix(in srgb,var(--on-bar) 25%,var(--bar))}
+.mg .sh.mjs.open .langs{gap:var(--sp3);padding-block:var(--sp2) var(--sp3);border-top:1px solid color-mix(in srgb,var(--on-bar) 25%,var(--bar))}
+.mg .tbl.rows thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.mg .tbl.rows tr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--sp3);align-items:center;border-bottom:1px solid var(--line)}
+.mg .tbl.rows :is(th,td){border:0}
+.mg .tbl.rows tbody th{grid-column:1;grid-row:1;padding-bottom:0}
+.mg .tbl.rows td:nth-child(2){grid-column:2;grid-row:1/span 2}
+.mg .tbl.rows td:nth-child(3){grid-column:1;grid-row:2;padding-top:0;text-align:left;color:var(--muted)}
 }
 @media (orientation:portrait){
 .mg .kio .ktile{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:var(--sp4);align-items:start}
@@ -465,11 +484,11 @@ const PULL_CSS = `
 @media (prefers-reduced-motion: no-preference){#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}}
 `;
 
-/** Language names in their own scripts, and a few sample words in another script (.sys), use
- *  the system face, so two words never download an Indic font. */
+/** Text marked as another language than the page's (a quoted alert headline, a sample word,
+ *  the language names) uses the system face, so an English page never downloads an Indic
+ *  font. Text in the page's own language has no lang attribute of its own and takes Anek. */
 const LANG_NAMES_CSS = `
-.mg :is(.langs,.flangs) :lang(hi),.mg :is(.langs,.flangs) :lang(kn){font-family:system-ui,sans-serif}
-.mg .sys{font-family:system-ui,sans-serif}
+.mg [lang]:not([lang="en"]){font-family:system-ui,sans-serif}
 `;
 
 /** Safe areas (every page opts into viewport-fit=cover); the hidden attribute wins over a component's display. */
