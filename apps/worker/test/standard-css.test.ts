@@ -77,10 +77,37 @@ test("the QR's caption wraps (a long translation must not squeeze the disclaimer
   assert.doesNotMatch(STANDARD_CSS, /\.mg \.qr>span\{[^}]*nowrap/);
 });
 
-test("a few sample words in another script (.sys) use the system face, after the per-script faces", () => {
-  const sys = STANDARD_CSS.indexOf(".mg .sys{font-family:system-ui,sans-serif}");
-  assert.ok(sys > 0, "the .sys rule");
-  assert.ok(sys > STANDARD_CSS.lastIndexOf(".mg :lang(kn){font-family"), "it wins over the Kannada face");
+test("text marked in another language than the page's uses the system face, after the per-script faces", async () => {
+  // An English page never downloads an Indic font for a quoted headline or a sample word:
+  // only text in the page's own language (no lang attribute of its own) takes Anek.
+  const rule = '.mg [lang]:not([lang="en"]){font-family:system-ui,sans-serif}';
+  const at = STANDARD_CSS.indexOf(rule);
+  assert.ok(at > 0, "the rule");
+  const { TOKENS_CSS } = await import("../src/ui/tokens");
+  assert.ok(TOKENS_CSS.includes(".mg :lang(kn){font-family"), "the per-script faces load first, in the tokens");
+  assert.doesNotMatch(STANDARD_CSS, /\.mg \.sys\{/, "no per-element class");
+});
+
+test("an English /warnings page marks Indic headlines with their language, so they take the system face", async () => {
+  const { renderWarningsPage } = await import("../src/pages/warnings");
+  const html = renderWarningsPage(
+    {
+      generated_at: "2026-11-19T00:00:00Z",
+      count: 1,
+      alerts: [
+        {
+          identifier: "1",
+          headline: "दिल्ली में शीत लहर की चेतावनी",
+          category: "Met",
+          issuer: "IMD",
+          link: "",
+          sent: "2026-11-19T00:00:00Z",
+        },
+      ],
+    } as never,
+    "en",
+  );
+  assert.match(html, /<p class="head" lang="hi">दिल्ली में शीत लहर की चेतावनी<\/p>/);
 });
 
 test("the embed card fits its 240px frame: one row of readings, the full disclaimer from a 400px frame", () => {
@@ -97,8 +124,6 @@ test("the embed card fits its 240px frame: one row of readings, the full disclai
 });
 
 test("the language names use the system face: two words must not fetch a whole Indic font on every page", () => {
-  assert.match(
-    STANDARD_CSS,
-    /\.mg :is\(\.langs,\.flangs\) :lang\(hi\),\.mg :is\(\.langs,\.flangs\) :lang\(kn\)\{font-family:system-ui,sans-serif\}/,
-  );
+  // Each name carries its own lang (hi, kn), which the one rule for marked text covers.
+  assert.ok(STANDARD_CSS.includes('.mg [lang]:not([lang="en"]){font-family:system-ui,sans-serif}'));
 });
