@@ -195,3 +195,11 @@ test("the hourly cron: SACHET failing never stops the map, which carries the are
     ["11"],
   );
 });
+
+test("indiaMap: the layer switch fits a phone, one row where it can and even rows where it cannot", () => {
+  // Five layers did not fit 322px at 390 wide and left "Rain" alone on a ragged second row.
+  assert.match(
+    indiaMap(withWarnings([CHURU]), "en", { now: NOW }),
+    /<div class="seg fit"><label><input type="radio" name="layer"/,
+  );
+});

@@ -127,3 +127,9 @@ test("the language names use the system face: two words must not fetch a whole I
   // Each name carries its own lang (hi, kn), which the one rule for marked text covers.
   assert.ok(STANDARD_CSS.includes('.mg [lang]:not([lang="en"]){font-family:system-ui,sans-serif}'));
 });
+
+test("a fitted switch fills its row: options grow, wrap into whole rows, ruled by ink gaps not borders", () => {
+  assert.match(STANDARD_CSS, /\.mg \.seg\.fit\{display:flex;flex-wrap:wrap;gap:2px;background:var\(--ink\)\}/);
+  assert.match(STANDARD_CSS, /\.mg \.seg\.fit>label\{flex:1 1 auto;border:0;padding:0 var\(--sp1\)\}/);
+  assert.match(STANDARD_CSS, /\.mg \.segf>\.seg:not\(\.grid2,\.fit\)\{justify-self:start\}/);
+});

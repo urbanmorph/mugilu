@@ -79,7 +79,7 @@ body{margin:0}
 .mg .btn[disabled]{border-style:dashed;border-color:var(--muted);color:var(--muted);cursor:not-allowed}
 .mg .segf{display:grid;gap:var(--sp2)}
 .mg .segf>legend{padding:0;margin-bottom:var(--sp2)}
-.mg .segf>.seg:not(.grid2){justify-self:start}
+.mg .segf>.seg:not(.grid2,.fit){justify-self:start}
 .mg .seg{display:inline-flex;flex-wrap:wrap;border:2px solid var(--ink);border-radius:var(--r);overflow:hidden}
 .mg .seg :is(label,a){position:relative;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--hit);padding:0 var(--sp3);border-left:2px solid var(--ink);background:var(--bg);color:var(--ink);font-size:var(--t-sm);font-weight:600;text-align:center;line-height:1.2;cursor:pointer}
 .mg .seg :is(label,a):first-child{border-left:0}
@@ -89,6 +89,8 @@ body{margin:0}
 .mg .seg :is(label:has(input:focus-visible),a:focus-visible){outline:3px solid var(--focus);outline-offset:-6px}
 .mg .seg.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;background:var(--ink);overflow:visible}
 .mg .seg.grid2 :is(label,a){border:0;padding:var(--sp1) var(--sp2)}
+.mg .seg.fit{display:flex;flex-wrap:wrap;gap:2px;background:var(--ink)}
+.mg .seg.fit>label{flex:1 1 auto;border:0;padding:0 var(--sp1)}
 .mg .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--r);border:2px solid var(--lv,var(--ink));background:var(--lv,transparent);color:var(--on,var(--ink));font-size:var(--t-xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .mg .chip svg{width:16px;height:16px}
 .mg .lkey{display:flex;flex-wrap:wrap;gap:var(--sp2)}
