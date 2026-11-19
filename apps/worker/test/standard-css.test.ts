@@ -133,3 +133,13 @@ test("a fitted switch fills its row: options grow, wrap into whole rows, ruled b
   assert.match(STANDARD_CSS, /\.mg \.seg\.fit>label\{flex:1 1 auto;border:0;padding:0 var\(--sp1\)\}/);
   assert.match(STANDARD_CSS, /\.mg \.segf>\.seg:not\(\.grid2,\.fit\)\{justify-self:start\}/);
 });
+
+test("the language names sit evenly: the current one is padded like the links, and no link is stretched to 44px", () => {
+  // A 44px minimum width centred the short हिंदी in extra space while English (the current
+  // page, plain bold) had none, so the gaps around the dots differed. Height stays the target.
+  assert.match(
+    STANDARD_CSS,
+    /,\.mg \.langs>b,\.mg \.flangs>b\{display:inline-flex;[^}]*min-height:var\(--hit\);padding-inline:var\(--sp1\)\}/,
+  );
+  assert.doesNotMatch(STANDARD_CSS, /\.mg \.(f?langs) a[^{]*\{min-width/);
+});

@@ -150,3 +150,24 @@ test("mcp: the address, a card per client, a card per tool from the server's own
     /<code>nearest_stations<\/code><\/p><p>The nearest real \(measured\) air-quality monitoring stations to a place/,
   );
 });
+
+test("methodology: the map, glass-box too: how a warned area gets its level, from the code's own mapping", async () => {
+  const { SEVERITY_BAND } = await import("../src/warnareas");
+  const html = renderMethodology("en");
+  const sec = html.match(/<section class="tsec" id="map"[\s\S]*?<\/section>/)?.[0] ?? "";
+  assert.match(sec, /<h2[^>]*>[\s\S]*The map<\/h2>/);
+  assert.match(sec, /takes its level from the severity IMD or NDMA gives/);
+  assert.match(sec, /about 100 km across/);
+  // one row per CAP severity, its level as the chip every page uses, plus the fallback
+  for (const [sev, band] of Object.entries(SEVERITY_BAND))
+    assert.match(
+      sec,
+      new RegExp(`<th scope="row">${sev[0].toUpperCase()}${sev.slice(1)}</th><td><span class="chip ${band}">`),
+    );
+  assert.match(sec, /<th scope="row">Any other<\/th><td><span class="chip moderate">/);
+  for (const lang of ["hi", "kn"] as const) {
+    const s = renderMethodology(lang).match(/<section class="tsec" id="map"[\s\S]*?<\/section>/)?.[0] ?? "";
+    assert.doesNotMatch(s, /The map<\/h2>|takes its level|Any other|Severity in the alert/, lang);
+    assert.match(s, /<th scope="row">[^<(]+ \(Extreme\)<\/th><td><span class="chip severe">/, lang);
+  }
+});

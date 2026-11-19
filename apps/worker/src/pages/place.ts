@@ -202,8 +202,9 @@ export function renderConditionsPage(
         "@graph": [
           {
             "@type": "Dataset",
-            name: `Sky conditions at ${placeName}`,
-            description: `The ${HAZARDS} at ${placeName}, India - right now.`,
+            name: t("Sky conditions at {place}", lang).replace("{place}", placeName),
+            description: t(`The ${HAZARDS} at {place}, India, right now.`, lang).replace("{place}", placeName),
+            inLanguage: lang,
             url: canonical,
             isAccessibleForFree: true,
             creator: { "@type": "Organization", name: "mugilu", url: SITE },

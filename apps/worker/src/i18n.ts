@@ -2,8 +2,8 @@
 //
 // The KEY is the English source string: t("Popular:", lang). An unwired or
 // untranslated string falls back to English automatically, so pages can be
-// localised incrementally. hi drafts come from Sarvam + native review; kn from
-// a native review pass. To add a language L: extend Lang/LANGS/LANG_NAME
+// localised incrementally. hi and kn follow the words IMD, NDMA and KSNDMC use in
+// their own bulletins (no native reviewer yet). To add a language L: extend Lang/LANGS/LANG_NAME
 // and fill TR[...][L]. Brand terms (mugilu, SACHET, NDMA, IMD, QR) stay in Latin.
 
 import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "./hazards";
@@ -84,6 +84,25 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Extremely Severe Cyclonic Storm": { hi: "अत्यंत गंभीर चक्रवाती तूफान", kn: "ಅತ್ಯಂತ ತೀವ್ರ ಚಂಡಮಾರುತ" },
   "Super Cyclonic Storm": { hi: "सुपर चक्रवाती तूफान", kn: "ಸೂಪರ್ ಚಂಡಮಾರುತ" },
   // the kiosk's title and description, the JTWC credit on /terms
+  // /methodology: the map section.
+  "The map": { hi: "मानचित्र", kn: "ನಕ್ಷೆ" },
+  "The map of India on the home page uses the same four levels. When official warnings are in force, it opens on them: each warned area takes its level from the severity IMD or NDMA gives in the alert. Where warnings overlap, the higher level is on top. Otherwise it opens on what is worst.":
+    {
+      hi: "होम पेज पर भारत का मानचित्र यही चार स्तर इस्तेमाल करता है। जब आधिकारिक चेतावनियाँ लागू हों, तो मानचित्र उन्हीं पर खुलता है: चेतावनी वाला हर इलाका अपना स्तर उस गंभीरता से लेता है जो IMD या NDMA चेतावनी में देते हैं। जहाँ चेतावनियाँ एक-दूसरे पर पड़ती हैं, वहाँ ऊँचा स्तर ऊपर दिखता है। वरना मानचित्र सबसे बुरे हाल पर खुलता है।",
+      kn: "ಮುಖಪುಟದಲ್ಲಿರುವ ಭಾರತದ ನಕ್ಷೆ ಇದೇ ನಾಲ್ಕು ಮಟ್ಟಗಳನ್ನು ಬಳಸುತ್ತದೆ. ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಜಾರಿಯಲ್ಲಿದ್ದಾಗ ನಕ್ಷೆ ಅವುಗಳ ಮೇಲೆ ತೆರೆಯುತ್ತದೆ: ಎಚ್ಚರಿಕೆಯಿರುವ ಪ್ರತಿ ಪ್ರದೇಶವು IMD ಅಥವಾ NDMA ಎಚ್ಚರಿಕೆಯಲ್ಲಿ ನೀಡುವ ತೀವ್ರತೆಯಿಂದ ತನ್ನ ಮಟ್ಟವನ್ನು ಪಡೆಯುತ್ತದೆ. ಎಚ್ಚರಿಕೆಗಳು ಒಂದರ ಮೇಲೊಂದು ಬಿದ್ದಲ್ಲಿ, ಹೆಚ್ಚಿನ ಮಟ್ಟ ಮೇಲೆ ಕಾಣುತ್ತದೆ. ಇಲ್ಲದಿದ್ದರೆ ನಕ್ಷೆ ಅತಿ ಕೆಟ್ಟದ್ದರ ಮೇಲೆ ತೆರೆಯುತ್ತದೆ.",
+    },
+  // CAP severity words, as the alert gives them (Severe and Moderate are the level words).
+  Extreme: { hi: "अत्यधिक", kn: "ಅತಿ ತೀವ್ರ" },
+  Minor: { hi: "मामूली", kn: "ಸಣ್ಣ" },
+  "Severity in the alert": { hi: "चेतावनी में गंभीरता", kn: "ಎಚ್ಚರಿಕೆಯಲ್ಲಿನ ತೀವ್ರತೆ" },
+  "Level on the map": { hi: "मानचित्र पर स्तर", kn: "ನಕ್ಷೆಯಲ್ಲಿನ ಮಟ್ಟ" },
+  "Any other": { hi: "कोई और", kn: "ಬೇರೆ ಯಾವುದೇ" },
+  // The place page's schema.org Dataset (its name and description).
+  "Sky conditions at {place}": { hi: "{place}: आसमान का हाल", kn: "{place}: ಆಕಾಶದ ಸ್ಥಿತಿ" },
+  [`The ${HAZARDS} at {place}, India, right now.`]: {
+    hi: `{place}, भारत में अभी ${HAZARDS_TR.hi}।`,
+    kn: `{place}, ಭಾರತದಲ್ಲಿ ಈಗಿನ ${HAZARDS_TR.kn}.`,
+  },
   "{place} on a screen": { hi: "{place} स्क्रीन पर", kn: "{place} ಸ್ಕ್ರೀನ್ ಮೇಲೆ" },
   "{place}: a live wall-display of the whole sky over this spot, self-refreshing.": {
     hi: "{place}: इस जगह के ऊपर के पूरे आसमान का लाइव वॉल डिस्प्ले, जो अपने आप ताज़ा होता है।",
