@@ -133,28 +133,59 @@ export const DISCLAIMER_FULL =
 /** The short live line: only the embed card below 400px wide uses it (rule 6). */
 export const DISCLAIMER_SHORT = "Informational only, not medical advice.";
 
-const FOOT_LINKS: [href: string, label: string, external?: boolean][] = [
-  ["/about", "about"],
-  ["/methodology", "how it works"],
-  ["/places", "all places"],
-  ["/warnings", "warnings"],
-  ["/display", "put this on a screen"],
-  ["/about#build", "build on it"],
-  ["/mcp", "MCP server"],
-  ["/terms", "terms"],
-  ["https://github.com/urbanmorph/mugilu", "code", true],
-  ["https://github.com/urbanmorph/mugilu/blob/main/PDGI.md", "a digital commons", true],
+// The footer's links in three labelled groups, one link a line (a run of links wrapped mid-list).
+const GITHUB = "https://github.com/urbanmorph/mugilu";
+const FOOT_GROUPS: { id: string; title: string; links: [href: string, label: string, external?: boolean][] }[] = [
+  {
+    id: "f-use",
+    title: "Use it",
+    links: [
+      ["/places", "all places"],
+      ["/warnings", "warnings"],
+      ["/display", "put this on a screen"],
+    ],
+  },
+  {
+    id: "f-about",
+    title: "About mugilu",
+    links: [
+      ["/about", "about"],
+      ["/methodology", "how it works"],
+      ["/terms", "terms and sources"],
+    ],
+  },
+  {
+    id: "f-build",
+    title: "Build on it",
+    links: [
+      ["/about#build", "API and embeds"],
+      ["/mcp", "MCP server"],
+      [GITHUB, "code", true],
+      [`${GITHUB}/blob/main/PDGI.md`, "a digital commons", true],
+    ],
+  },
 ];
 
-/** SiteFooter: site links, the language switch, the theme switch, the disclaimer. */
+/** SiteFooter: the link groups, the language and theme switches beside them, then the
+ *  disclaimer and the licence line. */
 export function siteFooter(path: string, lang: Lang, extra = "", query = ""): string {
-  const links = FOOT_LINKS.map(
-    ([h, en, ext]) => `<a href="${ext ? h : lp(h, lang)}"${current(!ext && h === path)}>${esc(t(en, lang))}</a>`,
-  ).join(" · ");
+  const groups = FOOT_GROUPS.map(
+    (g) =>
+      `<nav class="fgroup" aria-labelledby="${g.id}"><h2 id="${g.id}">${esc(t(g.title, lang))}</h2>` +
+      g.links
+        .map(
+          ([h, en, ext]) => `<a href="${ext ? h : lp(h, lang)}"${current(!ext && h === path)}>${esc(t(en, lang))}</a>`,
+        )
+        .join("") +
+      `</nav>`,
+  ).join("");
+  const settings =
+    `<div class="fset"><div class="fgroup"><p class="fhead">${esc(t("Language", lang))}</p>${langSwitch(path, lang, "footer", query)}</div>` +
+    `${themeSwitch(lang)}</div>`;
   return (
-    `<footer class="sf"><div class="wrap"><nav class="flinks" aria-label="${esc(t("Site", lang))}">${links}</nav>` +
-    `<div class="frow">${langSwitch(path, lang, "footer", query)}${themeSwitch(lang)}</div>${extra}` +
-    `<p class="disc">${esc(t(DISCLAIMER_FULL, lang))}</p></div></footer>`
+    `<footer class="sf"><div class="wrap"><div class="fgrid">${groups}${settings}</div>${extra}` +
+    `<div class="fbase"><p class="disc">${esc(t(DISCLAIMER_FULL, lang))}</p>` +
+    `<p class="lic">${esc(t("Code MIT. Each source keeps its own licence.", lang))}</p></div></div></footer>`
   );
 }
 
@@ -211,7 +242,7 @@ function themeSwitch(lang: Lang): string {
       { value: "dark", label: t("Dark", lang) },
       { value: "system", label: t("System", lang), checked: true },
     ],
-    { legendClass: "flabel" },
+    { legendClass: "fhead" },
   );
 }
 
