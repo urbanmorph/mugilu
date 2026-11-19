@@ -74,6 +74,7 @@ export function llmsTxt(siteUrl: string): string {
 - [Place search](${siteUrl}/suggest?q=bengaluru): ${siteUrl}/suggest?q={name}
 - [Air leaderboard](${siteUrl}/index.json): also ${siteUrl}/index.md
 - [Active warnings](${siteUrl}/warnings): national, also .json and .md
+- [Every place](${siteUrl}/places): every district and city by state, each marked when it lies inside an area under an official warning
 - Per-station: ${siteUrl}/s/{provider}/{id}.json and .md
 - Station JSON (/near, /index.json, /s/...json) carries "units" (CO mg/m3, other pollutants ug/m3, CPCB AQI) and lists only stations that reported within "fresh_within_hours" (3); each station has its reading time "ts"
 - Attribution: add ?ref=your-app to any API or /embed URL to identify your app or site (aggregate, domain-level; helps us see who builds on mugilu)

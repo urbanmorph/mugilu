@@ -11,7 +11,7 @@
 [![mugilu MCP connector on mcptry](https://mcptry.com/badge/io.github.sathya-sankaran/mugilu)](https://mcptry.com/servers/io.github.sathya-sankaran/mugilu)
 [![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/urbanmorph/mugilu)
 
-![The mugilu homepage: a place search box and a map of India showing where the air, heat or cold is worst right now](docs/screenshots/home-desktop.png)
+![The mugilu homepage: the place search, an official cyclone warning, and the India now map opened on the warned areas](docs/screenshots/home-desktop.png)
 
 ಮುಗಿಲು (*mugilu*) is Kannada for *cloud* or *sky*. It is the third tool in a small commons, alongside [bharatlas](https://bharatlas.com) (open geo data for India) and [mdshare](https://mdshare.live). Live at [mugilu.live](https://mugilu.live).
 
@@ -47,7 +47,7 @@ Readings are current, not a forecast. They recompute on a cycle of about 15 minu
 - **Ambient read.** One line that names the single worst hazard for you and what to do about it.
 - **Weighted for who is asking.** Pass a persona (asthma, older adults, children, outdoor workers, heart condition) and the Ambient read is weighted for that group.
 - **Health impact.** Years of life lost from the air, using the AQLI methodology.
-- **India now.** A national map and leaderboard of the worst-air, hottest and dustiest places.
+- **India now.** A national map with layers for official warnings (the warned areas, by the level IMD gives), what is worst, air, heat and rain, and the hottest, dustiest and worst-air places.
 - **Many formats.** HTML for people, JSON for apps, Markdown for LLMs, a timestamped PNG, an embeddable card, a self-refreshing display for a wall screen, and an MCP server for agents.
 - **Three languages.** English, Hindi and Kannada pages; place search accepts native scripts (ಬೆಂಗಳೂರು, दिल्ली, சென்னை).
 - **Installable web app.** It keeps the last reading of places you opened for offline use, refreshes itself when it comes back on screen, and can send opt-in alerts for official warnings at a place.
@@ -57,7 +57,7 @@ Readings are current, not a forecast. They recompute on a cycle of about 15 minu
 
 | A city page ([/c/delhi](https://mugilu.live/c/delhi)) | Homepage on a phone |
 | --- | --- |
-| ![The Delhi page: an Ambient read of severe air, the AQI with each pollutant against its CPCB limit, smoke, heat, UV, rain, wind and dust](docs/screenshots/city-delhi.png) | <img src="docs/screenshots/home-mobile.png" alt="The mugilu homepage on a 390 px wide phone screen: the place search and the India now map" width="300"> |
+| ![The Delhi page: an Ambient read of severe air, the persona switch, the AQI with each pollutant against its CPCB limit, and the heat with wet-bulb, WBGT and today against normal](docs/screenshots/city-delhi.png) | <img src="docs/screenshots/home-mobile.png" alt="The mugilu homepage on a 390 px wide phone screen: the Menu button, the place search and an official warning" width="300"> |
 
 ## Use it on the web or as an API
 
@@ -102,7 +102,7 @@ A trimmed response (the full layers are `air`, `heat`, `heat_vs_normal`, `rain`,
 | `?as=` (`asthma`, `elderly`, `child`, `outdoor`, `heart`) | Weight the Ambient read for a vulnerability |
 | `/hi/…`, `/kn/…` | The same pages in Hindi or Kannada |
 | `/display`, `/c/{place}?kiosk` | Set up a wall screen; the self-refreshing display |
-| `/warnings`, `/places` | Active warnings across India; every district and city |
+| `/warnings`, `/places` | Active warnings across India; every district and city, marked when under an official warning |
 | `/near`, `/suggest` | Nearest air stations; place search (native scripts work) |
 | `/index.json`, `/warnings.json` | National air leaderboard; active NDMA/IMD warnings |
 | `/embed/{lat},{lon}` | Embeddable card, one line of HTML |
@@ -169,7 +169,7 @@ The heat normals are built offline on a 1° grid by [`apps/worker/scripts/build-
 
 mugilu is a single Cloudflare Worker ([`apps/worker`](./apps/worker)).
 
-- **Crons** ([`wrangler.toml`](./apps/worker/wrangler.toml)): hourly jobs refresh the air snapshot (each hour also kept in an air archive), NASA FIRMS fires, JTWC cyclone tracks and NDMA/SACHET warnings into R2 and send opt-in warning alerts; every four hours a national heat, rain, UV and dust grid is sampled and kept in a conditions archive (`/health/archives` shows when each archive last grew); a daily job refreshes the place hierarchy, prunes old referrer rows and pings [IndexNow](https://www.indexnow.org) (paused until 21 Nov 2026, then at most weekly and only for pages not yet announced).
+- **Crons** ([`wrangler.toml`](./apps/worker/wrangler.toml)): hourly jobs refresh the air snapshot (each hour also kept in an air archive), NASA FIRMS fires, JTWC cyclone tracks and NDMA/SACHET warnings into R2, fetch each new warning's area once (cached per alert, resumed across runs), compose the national map, and send opt-in warning alerts; every four hours a national heat, rain, UV and dust grid is sampled and kept in a conditions archive (`/health/archives` shows when each archive last grew); a daily job refreshes the place hierarchy, prunes old referrer rows and pings [IndexNow](https://www.indexnow.org) (paused until 21 Nov 2026, then at most weekly and only for pages not yet announced).
 - **Requests:** `/c/{lat},{lon}` assembles the nearest-station air, live Open-Meteo weather, fires and point warnings into one normalized schema, so each source is a swappable adapter.
 - **Caching:** pages that are the same for everyone are cached at the edge for a few minutes; degraded builds are never stored.
 - **Storage:** R2 holds the refreshed snapshots. D1 holds only aggregate usage metrics and opt-in alert subscriptions, and is never on the read path.
@@ -184,7 +184,10 @@ apps/worker/            the product: one Cloudflare Worker
   src/mcptools.ts       MCP tool definitions
   src/sources.ts        data sources, licences and attribution
   src/meta.ts           llms.txt, sitemap and the OpenAPI 3.1 spec (served live at /openapi.json)
-  src/page.ts           HTML templates
+  src/pages/            one module per page (home, place, places, warnings, display, text pages)
+  src/ui/               the shell, components, the map, and standard.ts (the one stylesheet)
+  src/palette.ts        every colour, for both themes
+  src/sachet.ts         official warnings from SACHET; src/warnareas.ts their areas
   src/i18n.ts           English, Hindi and Kannada strings
   test/                 node:test suite (run with tsx)
   scripts/              offline builders (heat normals, sampling grid)

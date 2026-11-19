@@ -18,7 +18,8 @@ pnpm typecheck   # tsc --noEmit
 
 ## Ground rules
 - Every page is plain HTML that reads without JavaScript. Client JS stays small and optional (the offline worker, install, auto-refresh, alerts).
-- No frameworks: pages are rendered by the worker from template strings (`src/page.ts`).
+- No frameworks: pages are rendered by the worker from template strings (`src/pages/`, with shared parts in `src/ui/`).
+- Colours come only from `src/palette.ts`, and styles only from `src/ui/standard.ts`: no per-page CSS.
 - Copy is plain, short sentences; no em-dashes. Every user-facing string goes through `t()` with Hindi and Kannada in `src/i18n.ts`.
 - No medical advice: exposure steps only, with the disclaimer on every surface.
 - Write the failing test first. Conventional commits encouraged (`feat:`, `fix:`, `docs:`, `chore:`).
