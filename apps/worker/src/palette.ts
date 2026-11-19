@@ -61,6 +61,10 @@ export const HAZARD_TINT: Record<string, string> = {
 // ── Signage design standard (supporting-docs/redesign/design-standard.md) ───────────
 // Every colour the new pages use lives here; src/ui/tokens.ts turns them into CSS.
 
+/** The brand blue: the cloud mark, the favicon and the light theme's focus ring, the same
+ *  in both themes (the live sky). */
+export const BRAND = "#0284c7";
+
 /** The neutrals, per theme. The header bar stays near-black in both themes. */
 export const NEUTRAL = {
   light: {
@@ -71,7 +75,7 @@ export const NEUTRAL = {
     line: "#d8d6d0",
     soft: "#f3f2ee",
     track: "#e7e5df",
-    focus: "#0284c7",
+    focus: BRAND,
     bar: "#111111",
     onBar: "#ffffff",
     barRule: "#111111",
@@ -139,8 +143,6 @@ export const WASH_STRENGTH: Record<"light" | "dark", Record<RiskBand, number>> =
   dark: { low: 10, moderate: 12, high: 14, severe: 18 },
 };
 
-/** The brand blue: the cloud mark and the favicon, the same in both themes (the live sky). */
-export const BRAND = "#0284c7";
 /** A QR code is black on white in both themes, so phones can read it. */
 export const QR_INK = "#000000";
 export const QR_PAPER = "#ffffff";

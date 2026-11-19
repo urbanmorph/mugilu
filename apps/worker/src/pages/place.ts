@@ -172,7 +172,7 @@ export function renderConditionsPage(
           [`/c/${slug}.md`, t("Markdown", lang)],
           [`/c/${slug}.png`, t("PNG", lang)],
           [lp(`/embed/${slug}`, lang), t("Embed", lang)],
-          [lp(`/c/${slug}?kiosk`, lang), t("Display", lang)],
+          [screen, t("Display", lang)],
         ]) +
         linkRow(
           [

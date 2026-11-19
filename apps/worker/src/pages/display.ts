@@ -125,7 +125,7 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
           ),
         )
           .replace("{link}", "<code>/c/{place}?kiosk</code>")
-          .replace("{as}", "<code>?as=elderly</code>")}</p>`,
+          .replace("{as}", "<code>&amp;as=elderly</code>")}</p>`,
     ),
     { title: t("How it runs", lang) },
   );
