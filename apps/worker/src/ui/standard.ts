@@ -315,7 +315,9 @@ body{margin:0}
 .mg .kio .plate{display:flex;flex-direction:column;justify-content:center;padding:var(--sp5) var(--gut)}
 .mg .kio .plate .shape{width:1.2em;height:1.2em;font-size:var(--t-3xl)}
 .mg .kio .ktiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;padding:0 var(--sp5)}
-.mg .kio .ktile{padding:var(--sp3) var(--sp2);border-bottom:2px solid var(--line)}
+.mg .kio .ktile{position:relative;padding:var(--sp3) var(--sp2);border-bottom:2px solid var(--line)}
+.mg .kio .ktile>.ico{position:absolute;top:var(--sp3);left:var(--sp2);width:var(--k2);height:var(--k2)}
+.mg .kio .ktile .lab{padding-left:calc(var(--k2) + var(--sp2))}
 .mg .kio .ktile .row-c{gap:var(--sp1) var(--sp3)}
 .mg .kio .ktile .lab{font-size:var(--t-sm);font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .mg .kio .ktile .num{font-size:var(--t-2xl);font-weight:800;font-stretch:80%;line-height:1;font-variant-numeric:tabular-nums}
@@ -394,6 +396,9 @@ body{margin:0}
 .mg .tbl th,.mg .tbl td{padding:var(--sp2)}
 }
 @media (orientation:portrait){
+.mg .kio .ktile{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:var(--sp4);align-items:start}
+.mg .kio .ktile>.ico{position:static;width:var(--k3);height:var(--k3)}
+.mg .kio .ktile .lab{padding-left:0}
 .mg[data-kiosk] .qr .qrimg{width:220px;height:220px}
 .mg .kio .kb{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
 .mg .kio .plate{justify-content:flex-start;gap:var(--sp4);padding:var(--sp7) var(--gut)}
@@ -442,7 +447,7 @@ const READ_CSS = `
 .mg[data-kiosk] main{height:100vh;height:100dvh;overflow:hidden}
 .mg .kio{position:relative;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .mg .kio .kb{overflow:hidden}
-@media (orientation:landscape){.mg .kio .ktile>p.qa{display:none}}
+@media (orientation:landscape){.mg .kio .kt>p.qa{display:none}}
 .mg .kio .kveil{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;gap:var(--sp4);background:var(--bg);opacity:0;pointer-events:none}
 .mg .kio .kveil.on{opacity:.94}
 @media (prefers-reduced-motion:no-preference){.mg .kio .kveil{transition:opacity .3s}}

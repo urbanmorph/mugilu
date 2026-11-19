@@ -55,12 +55,13 @@ start();
    up to 40% of its size first, then today-vs-normal and the also-watch line go, and only then
    does the word shrink further (to the 24px floor). */
 
-/** A reading as a display tile: label, figure, its word and level, its one graphic. */
+/** A reading as a display tile: its icon (as on the place page), then label, figure, its
+ *  word and level, its one graphic. */
 function tile(r: ReadRow): string {
   return (
-    `<div class="ktile" data-k="${r.key}"><p class="lab">${esc(r.label)}</p>` +
+    `<div class="ktile" data-k="${r.key}">${ico(r.icon)}<div class="kt"><p class="lab">${esc(r.label)}</p>` +
     `<p class="row-c"><span class="num">${esc(r.num)}</span>${r.unit ? `<span class="qa">${esc(r.unit)}</span>` : ""}` +
-    `${r.qual ? ` <b class="ql">${esc(r.qual)}</b>` : ""}${r.chip}</p>${r.mini}</div>`
+    `${r.qual ? ` <b class="ql">${esc(r.qual)}</b>` : ""}${r.chip}</p>${r.mini}</div></div>`
   );
 }
 

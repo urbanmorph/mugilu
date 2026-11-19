@@ -184,3 +184,15 @@ test("kiosk refresh: one loading loop at a time, stopped on success and on failu
   assert.match(js, /function hideLoad\(\)\{clearTimeout\(vbT\);/);
   assert.match(js, /replaceChild\([^)]*\)[^;]*;hideLoad\(\);start\(\);/);
 });
+
+test("display: every reading tile carries its hazard icon, as the place page's rows do", () => {
+  const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi");
+  const tiles = [...html.matchAll(/<div class="ktile" data-k="(\w+)">([\s\S]*?)<\/div>/g)];
+  assert.ok(tiles.length >= 2);
+  for (const [, key, body] of tiles) assert.match(body, /^<svg class="ico[^"]*" aria-hidden="true"/, key);
+  const place = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/delhi");
+  for (const [, key, body] of tiles) {
+    const icon = body.match(/<path d="([^"]+)"/)![1];
+    assert.ok(place.includes(icon), `${key}: the same icon as the place page`);
+  }
+});
