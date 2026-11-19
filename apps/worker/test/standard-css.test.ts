@@ -60,6 +60,23 @@ test("a table's cell link is a full-height target, in a row header (the station'
   );
 });
 
+test("the portrait display scales with the screen: its spacing and QR in kiosk units, not pixels", () => {
+  // Kiosk type is in vh; pixel paddings and a 220px QR made a 720x1280 screen overflow while
+  // 1080x1920 (the same shape) fit. In k units the layout is the same at every portrait size.
+  const portrait = STANDARD_CSS.match(/@media \(orientation:portrait\)\{([^@]*)\}/)![1];
+  for (const rule of portrait.match(/\.mg[^{]*\.(?:ktile|plate|ktiles|qrimg)\{[^}]*\}/g)!)
+    assert.doesNotMatch(rule, /padding:[^;}]*var\(--sp|\d+px/, rule);
+  assert.match(
+    portrait,
+    /\.mg\[data-kiosk\] \.qr \.qrimg\{width:calc\(var\(--k4\) \* 1\.31\);height:calc\(var\(--k4\) \* 1\.31\)\}/,
+  );
+});
+
+test("the QR's caption wraps (a long translation must not squeeze the disclaimer beside it)", () => {
+  assert.match(STANDARD_CSS, /\.mg \.qr>span\{flex:0 1 auto;min-width:8em;max-width:16em\}/);
+  assert.doesNotMatch(STANDARD_CSS, /\.mg \.qr>span\{[^}]*nowrap/);
+});
+
 test("a few sample words in another script (.sys) use the system face, after the per-script faces", () => {
   const sys = STANDARD_CSS.indexOf(".mg .sys{font-family:system-ui,sans-serif}");
   assert.ok(sys > 0, "the .sys rule");

@@ -38,7 +38,8 @@ var verbs=[${KIOSK_VERBS.map(s).join(",")}];
 function rel(){if(window.mgRel)mgRel();}
 function p(x){return x<10?'0'+x:''+x}
 function clock(){var c=document.getElementById('clk');if(c){var d=new Date();c.textContent=p(d.getHours())+':'+p(d.getMinutes());}}
-function fit(){var pl=document.querySelector('.kio .plate'),hd=pl&&pl.querySelector('.t-plate');if(!hd)return;hd.style.fontSize='';var drop=[].slice.call(pl.querySelectorAll('.also,.knorm'));drop.forEach(function(e){e.hidden=false;});var s0=parseFloat(getComputedStyle(hd).fontSize),s=s0;function over(){return pl.scrollHeight>pl.clientHeight+1;}function shrink(to){var g=0;while(over()&&s>to&&g++<8){s=Math.max(to,Math.floor(s*Math.min(.96,pl.clientHeight/pl.scrollHeight)));hd.style.fontSize=s+'px';}}shrink(s0*.6);while(over()&&drop.length)drop.pop().hidden=true;shrink(24);}
+function tfit(){var tl=document.querySelector('.kio .ktiles');if(!tl)return;function tov(){return tl.scrollHeight-tl.clientHeight;}var c=[].concat.apply([],['.plate .knorm','.plate .also','.kt>p.qa','.kt>.bars'].map(function(q){return[].slice.call(document.querySelectorAll('.kio '+q)).reverse();}));for(var i=0;i<c.length&&tov()>1;i++){if(c[i].hidden)continue;var b=tov();c[i].hidden=true;if(tov()>=b)c[i].hidden=false;}}
+function fit(){document.querySelectorAll('.kio .kt>p.qa,.kio .kt>.bars').forEach(function(e){e.hidden=false;});var pl=document.querySelector('.kio .plate'),hd=pl&&pl.querySelector('.t-plate');if(!hd)return;hd.style.fontSize='';var drop=[].slice.call(pl.querySelectorAll('.also,.knorm'));drop.forEach(function(e){e.hidden=false;});var tl=document.querySelector('.kio .ktiles'),st=tl&&tl.getBoundingClientRect().top>=pl.getBoundingClientRect().bottom-1;function tov(){return tl?tl.scrollHeight-tl.clientHeight:0;}var s0=parseFloat(getComputedStyle(hd).fontSize),s=s0;function over(){return pl.scrollHeight>pl.clientHeight+1||(st&&tov()>1);}function shrink(to){var g=0;while(over()&&s>to&&g++<8){s=Math.max(to,Math.floor(s*Math.min(.96,pl.clientHeight/pl.scrollHeight,st?pl.clientHeight/(pl.clientHeight+tov()):1)));hd.style.fontSize=s+'px';}}shrink(s0*.6);while(over()&&drop.length)drop.pop().hidden=true;tfit();shrink(24);}
 function veil(){return document.querySelector('.kveil');}
 function showLoad(){clearTimeout(vbT);var v=veil();if(!v)return;var w=v.querySelector('.t-title'),i=0;(function nx(){if(w)w.textContent=verbs[i++%verbs.length]+'…';vbT=setTimeout(nx,1500);})();v.classList.add('on');}
 function hideLoad(){clearTimeout(vbT);var v=veil();if(v)v.classList.remove('on');}
@@ -53,7 +54,11 @@ start();
 
 /* fit(): the level word is what a screen is read for, so when the plate overflows it gives
    up to 40% of its size first, then today-vs-normal and the also-watch line go, and only then
-   does the word shrink further (to the 24px floor). */
+   does the word shrink further (to the 24px floor).
+   On a portrait screen the readings sit under the plate, so their overflow counts too.
+   tfit(): then, while the readings overflow (a tall portrait screen: the plate sits above them),
+   the extra lines go one at a time, today-vs-normal and also-watch first, then the tiles' extra
+   lines and bars from the last tile up; a line whose going does not help stays. */
 
 /** A reading as a display tile: its icon (as on the place page), then label, figure, its
  *  word and level, its one graphic. */

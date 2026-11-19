@@ -173,8 +173,38 @@ test("renderConditionsPage: a visible 'Put this on a screen' for this exact poin
 
 test("kiosk fit: the level word keeps 60% of its size before the also-watch and normal lines go", () => {
   const js = kioskJs("en");
-  assert.match(js, /shrink\(s0\*\.6\);while\(over\(\)&&drop\.length\)drop\.pop\(\)\.hidden=true;shrink\(24\);/);
+  assert.match(
+    js,
+    /shrink\(s0\*\.6\);while\(over\(\)&&drop\.length\)drop\.pop\(\)\.hidden=true;tfit\(\);shrink\(24\);/,
+  );
   assert.match(js, /querySelectorAll\('\.also,\.knorm'\)/);
+});
+
+test("kiosk fit: when the readings overflow, the extra lines go one at a time, kept if it does not help", () => {
+  const js = kioskJs("en");
+  // After the plate fits: today-vs-normal, also-watch, the heat tile's extra lines, then the bars
+  // (from the last tile up), each dropped only while the tiles still overflow and only if it helps.
+  assert.match(js, /\['\.plate \.knorm','\.plate \.also','\.kt>p\.qa','\.kt>\.bars'\]/);
+  assert.match(js, /var b=tov\(\);c\[i\]\.hidden=true;if\(tov\(\)>=b\)c\[i\]\.hidden=false;/);
+  // a resize starts from everything shown
+  assert.match(
+    js,
+    /querySelectorAll\('\.kio \.kt>p\.qa,\.kio \.kt>\.bars'\)\.forEach\(function\(e\)\{e\.hidden=false;\}\)/,
+  );
+  // the readings' extra lines go before the level word shrinks below 60%
+  assert.match(js, /drop\.pop\(\)\.hidden=true;tfit\(\);shrink\(24\);\}/);
+});
+
+test("kiosk fit: on a portrait screen (the readings under the plate) the level word also gives way to them", () => {
+  const js = kioskJs("en");
+  // stacked: the tiles start below the plate, so a smaller plate is room for them
+  assert.match(js, /st=tl&&tl\.getBoundingClientRect\(\)\.top>=pl\.getBoundingClientRect\(\)\.bottom-1/);
+  assert.match(js, /function over\(\)\{return pl\.scrollHeight>pl\.clientHeight\+1\|\|\(st&&tov\(\)>1\);\}/);
+  // the step follows whichever overflows more
+  assert.match(
+    js,
+    /Math\.min\(\.96,pl\.clientHeight\/pl\.scrollHeight,st\?pl\.clientHeight\/\(pl\.clientHeight\+tov\(\)\):1\)/,
+  );
 });
 
 test("kiosk refresh: one loading loop at a time, stopped on success and on failure", async () => {

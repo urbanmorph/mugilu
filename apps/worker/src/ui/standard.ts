@@ -306,7 +306,7 @@ body{margin:0}
 .mg .mempty{min-height:220px;display:grid;place-items:center;background:var(--mland);border:2px dashed var(--muted);border-radius:var(--r);padding:var(--sp5);text-align:center}
 .mg .qr{display:flex;align-items:center;gap:var(--sp3);font-size:var(--t-xs);font-weight:400}
 .mg .qr .qrimg{width:120px;height:120px;flex:none;background:var(--qr-paper);color:var(--qr-ink);padding:6px}
-.mg .qr>span{flex:none;white-space:nowrap}
+.mg .qr>span{flex:0 1 auto;min-width:8em;max-width:16em}
 .mg .kio{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100%}
 .mg .kio .ktop{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp4);padding:var(--sp3) var(--gut);border-bottom:2px solid var(--line)}
 .mg .kio h1.kname{margin:0}
@@ -315,8 +315,8 @@ body{margin:0}
 .mg .kio .plate{display:flex;flex-direction:column;justify-content:center;padding:var(--sp5) var(--gut)}
 .mg .kio .plate .shape{width:1.2em;height:1.2em;font-size:var(--t-3xl)}
 .mg .kio .ktiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;padding:0 var(--sp5)}
-.mg .kio .ktile{position:relative;padding:var(--sp3) var(--sp2);border-bottom:2px solid var(--line)}
-.mg .kio .ktile>.ico{position:absolute;top:var(--sp3);left:var(--sp2);width:var(--k2);height:var(--k2)}
+.mg .kio .ktile{position:relative;padding:var(--sp2);border-bottom:2px solid var(--line)}
+.mg .kio .ktile>.ico{position:absolute;top:var(--sp2);left:var(--sp2);width:var(--k2);height:var(--k2)}
 .mg .kio .ktile .lab{padding-left:calc(var(--k2) + var(--sp2))}
 .mg .kio .ktile .row-c{gap:var(--sp1) var(--sp3)}
 .mg .kio .ktile .lab{font-size:var(--t-sm);font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -399,14 +399,14 @@ body{margin:0}
 .mg .kio .ktile{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:var(--sp4);align-items:start}
 .mg .kio .ktile>.ico{position:static;width:var(--k3);height:var(--k3)}
 .mg .kio .ktile .lab{padding-left:0}
-.mg[data-kiosk] .qr .qrimg{width:220px;height:220px}
+.mg[data-kiosk] .qr .qrimg{width:calc(var(--k4) * 1.31);height:calc(var(--k4) * 1.31)}
 .mg .kio .kb{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
-.mg .kio .plate{justify-content:flex-start;gap:var(--sp4);padding:var(--sp7) var(--gut)}
+.mg .kio .plate{justify-content:flex-start;gap:var(--sp4);padding:var(--k2) var(--gut)}
 .mg .kio .ktiles{grid-template-columns:1fr;gap:0}
-.mg .kio .ktile{padding:var(--sp5) 0}
+.mg .kio .ktile{padding:calc(var(--k1) * .8) 0}
 .mg .kio .ktile .lab,.mg .kio .ktile .qa,.mg .kio .kquiet{font-size:var(--k2)}
 .mg .kio .ktile .num{font-size:var(--k3)}
-.mg .kio .ktiles{padding:var(--sp4) var(--sp5)}
+.mg .kio .ktiles{padding:calc(var(--k1) * .5) var(--k1)}
 }
 @media (forced-colors:active){.mg .seg :is(label:has(input:checked),a[aria-current]){forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media (forced-colors:active){.mg .msvg .pdot,.mg .msvg .wm-bg{stroke:CanvasText}.mg .msvg .wm-bg{fill:CanvasText}}
