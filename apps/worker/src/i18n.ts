@@ -1869,6 +1869,15 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Species of {state}": { hi: "{state} की प्रजातियाँ", kn: "{state}: ಜೀವಪ್ರಭೇದಗಳು" },
   "Nearby places": { hi: "आस-पास के स्थान", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು" },
   "all places": { hi: "सभी स्थान", kn: "ಎಲ್ಲಾ ಸ್ಥಳಗಳು" },
+  // The footer's groups and the two links named for what they open.
+  "Use it": { hi: "इस्तेमाल करें", kn: "ಬಳಸಿ" },
+  "About mugilu": { hi: "mugilu के बारे में", kn: "mugilu ಬಗ್ಗೆ" },
+  "API and embeds": { hi: "API और एम्बेड", kn: "API ಮತ್ತು ಎಂಬೆಡ್" },
+  "terms and sources": { hi: "शर्तें और स्रोत", kn: "ಷರತ್ತುಗಳು ಮತ್ತು ಮೂಲಗಳು" },
+  "Code MIT. Each source keeps its own licence.": {
+    hi: "कोड MIT है। हर स्रोत का अपना लाइसेंस बना रहता है।",
+    kn: "ಕೋಡ್ MIT. ಪ್ರತಿ ಮೂಲವು ತನ್ನದೇ ಪರವಾನಗಿಯನ್ನು ಉಳಿಸಿಕೊಳ್ಳುತ್ತದೆ.",
+  },
   "put this on a screen": { hi: "इसे स्क्रीन पर लगाएँ", kn: "ಇದನ್ನು ಸ್ಕ್ರೀನ್ ಮೇಲೆ ಹಾಕಿ" },
   Menu: { hi: "मेनू", kn: "ಮೆನು" },
   // The /places directory (its hazard lists come from hazards.ts).

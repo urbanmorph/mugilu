@@ -81,14 +81,40 @@ test("langSwitch: the current language bold, the others path-only links in their
   assert.match(s, /<a href="\/kn\/c\/delhi" lang="kn" hreflang="kn">/);
 });
 
-test("siteFooter: links, language group, theme switch (System by default) and the full disclaimer", () => {
+test("siteFooter: three labelled link groups, one link a line, then language and theme, then the disclaimer", () => {
   const f = siteFooter("/terms", "en");
-  assert.match(f, /<a href="\/terms" aria-current="page">terms<\/a>/);
-  assert.match(f, /href="https:\/\/github\.com\/urbanmorph\/mugilu">code<\/a>/);
-  assert.match(f, /<legend class="flabel">Theme<\/legend>/);
+  const group = (id: string) =>
+    f.match(new RegExp(`<nav class="fgroup" aria-labelledby="${id}"><h2 id="${id}">([^<]*)</h2>(.*?)</nav>`))!;
+  const hrefs = (g: RegExpMatchArray) => [...g[2].matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(group("f-use")[1], "Use it");
+  assert.deepEqual(hrefs(group("f-use")), ["/places", "/warnings", "/display"]);
+  assert.equal(group("f-about")[1], "About mugilu");
+  assert.deepEqual(hrefs(group("f-about")), ["/about", "/methodology", "/terms"]);
+  assert.equal(group("f-build")[1], "Build on it");
+  assert.deepEqual(hrefs(group("f-build")), [
+    "/about#build",
+    "/mcp",
+    "https://github.com/urbanmorph/mugilu",
+    "https://github.com/urbanmorph/mugilu/blob/main/PDGI.md",
+  ]);
+  assert.match(f, /<a href="\/terms" aria-current="page">terms and sources<\/a>/);
+  assert.match(f, /<a href="\/about#build">API and embeds<\/a>/);
+  assert.doesNotMatch(f, /class="flinks"| · <a href="\/methodology/, "no run of links to wrap");
+  assert.match(f, /<div class="fset"><div class="fgroup"><p class="fhead">Language<\/p><div class="flangs"/);
+  assert.match(f, /<legend class="fhead">Theme<\/legend>/);
   assert.match(f, /<input type="radio" name="theme" value="system" checked>System/);
-  assert.ok(f.includes(`<p class="disc">${DISCLAIMER_FULL}</p>`));
+  assert.ok(
+    f.includes(
+      `<div class="fbase"><p class="disc">${DISCLAIMER_FULL}</p><p class="lic">Code MIT. Each source keeps its own licence.</p></div>`,
+    ),
+  );
   assert.ok(!/—/.test(f));
+});
+
+test("siteFooter: in Hindi the groups and the renamed links are Hindi", () => {
+  const f = siteFooter("/", "hi");
+  assert.doesNotMatch(f, />(Use it|About mugilu|Build on it|API and embeds|terms and sources)</);
+  assert.match(f, /href="\/hi\/places">सभी स्थान</);
 });
 
 test("segmented: native radios in a fieldset with a legend; values escaped", () => {

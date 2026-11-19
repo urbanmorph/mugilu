@@ -156,3 +156,33 @@ test("stamps in a bar: the selected layer's alone, on one line in the bar's colo
 test("the kiosk's Updated stamp is one line beside the clock: label then age", () => {
   assert.match(STANDARD_CSS, /\.mg \.kio \.stamp\{flex-direction:row;align-items:baseline;gap:\.5em\}/);
 });
+
+test("the footer: link groups in columns (two on a phone, Build on it across), labels capitalised in CSS", () => {
+  assert.match(STANDARD_CSS, /\.mg \.fgrid\{display:grid;[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/);
+  assert.match(
+    STANDARD_CSS,
+    /@media \(min-width:1000px\)\{[^@]*\.mg \.fgrid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\) minmax\(0,1\.3fr\)\}/,
+  );
+  assert.match(STANDARD_CSS, /\.mg \.fgroup a::first-letter\{text-transform:uppercase\}/);
+  assert.match(
+    STANDARD_CSS,
+    /@media \(max-width:999\.98px\)\{[^@]*\.mg \.fgrid>\.fgroup:nth-child\(3\)\{grid-column:1\/-1;/,
+  );
+});
+
+test("the place page's last row on desktop: Stations down the left, Nearby then the screen button on the right", () => {
+  // Three columns left the screen button alone in the middle, over blank space; phones keep the board's order.
+  const desk = STANDARD_CSS.match(/@media \(min-width:1000px\)\{([^@]*)\}/)![1];
+  assert.match(desk, /\.mg \.lane\.l3:has\(>div>\.act\)\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/);
+  assert.match(desk, /\.mg \.lane\.l3>div:has\(>\.act\)\+div\{grid-column:1;grid-row:1 \/ span 2\}/);
+  assert.match(desk, /\.mg \.lane\.l3:has\(>div>\.act\)>div:last-child\{grid-column:2;grid-row:1\}/);
+  assert.match(desk, /\.mg \.lane\.l3>div:has\(>\.act\)\{grid-column:2;grid-row:2\}/);
+});
+
+test("home: with no saved places, Popular takes the whole row, the tiles left and the screen button right", () => {
+  assert.match(STANDARD_CSS, /\.mg \.lane\.l2:has\(>#yp\[hidden\]\)\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(
+    STANDARD_CSS,
+    /\.mg \.lane\.l2:has\(>#yp\[hidden\]\)>\.col\{flex-direction:row;flex-wrap:wrap;align-items:flex-end;justify-content:space-between\}/,
+  );
+});
