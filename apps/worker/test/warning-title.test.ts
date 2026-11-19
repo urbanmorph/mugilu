@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { warningTitle } from "../src/pages/read";
+import { cycloneTitle } from "../src/sachet";
 import type { Warning } from "../src/types";
 
 const w = (headline: string | undefined, event = "Cyclone") => ({ event, headline }) as unknown as Warning;
@@ -44,4 +45,11 @@ test("cycloneIn: a name is a capitalised word that is not a common word", () => 
     name: "Montha",
   });
   assert.equal(cycloneIn("Heavy rain likely over Kerala"), undefined);
+});
+
+test("an IMD cyclone category reads in the page's language; the storm's name stays as named", () => {
+  assert.equal(cycloneTitle("Severe Cyclonic Storm Montha", "en"), "Severe Cyclonic Storm Montha");
+  assert.equal(cycloneTitle("Severe Cyclonic Storm Montha", "hi"), "गंभीर चक्रवाती तूफान Montha");
+  assert.equal(cycloneTitle("Very Severe Cyclonic Storm Akvan", "kn"), "ಅತಿ ತೀವ್ರ ಚಂಡಮಾರುತ Akvan");
+  assert.equal(cycloneTitle("Cyclonic Storm", "hi"), "चक्रवाती तूफान");
 });

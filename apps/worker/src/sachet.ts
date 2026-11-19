@@ -1,4 +1,5 @@
 import type { Warning } from "./types";
+import { t, type Lang } from "./i18n";
 import type { Env } from "./index";
 import { WARNINGS_KEY, putJson } from "./snapshot";
 import { inRing, type Ring } from "./india";
@@ -272,6 +273,21 @@ export function officialCyclone(snap: WarningsSnapshot | null | undefined): Offi
     return { ...c, alert, areas };
   }
   return undefined;
+}
+
+// IMD's cyclone categories, longest first, as cycloneIn() title-cases them.
+const CATEGORIES = [
+  "Super Cyclonic Storm",
+  "Extremely Severe Cyclonic Storm",
+  "Very Severe Cyclonic Storm",
+  "Severe Cyclonic Storm",
+  "Cyclonic Storm",
+];
+
+/** A cyclone's title in the reader's language: IMD's category translated, the storm's name as named. */
+export function cycloneTitle(title: string, lang: Lang): string {
+  const cat = CATEGORIES.find((c) => title.startsWith(c));
+  return cat ? t(cat, lang) + title.slice(cat.length) : title;
 }
 
 /** IMD's category and the storm's name in a warning's message ("Severe Cyclonic Storm Akvan"),

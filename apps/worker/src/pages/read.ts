@@ -36,7 +36,7 @@ import {
 } from "../ui/components";
 import { langAttr, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT } from "../hazards";
-import { cycloneIn } from "../sachet";
+import { cycloneIn, cycloneTitle } from "../sachet";
 import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnormals";
 
 // What a read is made of, shared by the place page, the kiosk, the embed and the share
@@ -447,8 +447,9 @@ export function ambientPlate(risk: AmbientRisk, lang: Lang, more = ""): string {
 
 /** An official warning's title in IMD's own words: the category and the storm's name
  *  ("Severe Cyclonic Storm Akvan") when the message names one, else its type. */
-export function warningTitle(w: Warning): string {
-  return cycloneIn(w.headline)?.title ?? w.event;
+export function warningTitle(w: Warning, lang: Lang = "en"): string {
+  const c = cycloneIn(w.headline);
+  return c ? cycloneTitle(c.title, lang) : w.event;
 }
 
 /** The official warnings over this point: a WarningPlate each (IMD's category and name, the
@@ -456,7 +457,7 @@ export function warningTitle(w: Warning): string {
 export function warningBand(c: Conditions, lang: Lang): string {
   const plates = (c.warnings ?? []).map((w) => {
     const meta = [w.severity, w.until ? t("until X", lang).replace("X", w.until) : ""].filter(Boolean).join(" · ");
-    const title = warningTitle(w);
+    const title = warningTitle(w, lang);
     return warningPlate({
       bar: [`<span>${esc(t("Official warning", lang))} · ${esc(w.issuer)}</span>`],
       title,

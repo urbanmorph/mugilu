@@ -1,5 +1,5 @@
 import { DESKTOP } from "../ui/standard";
-import { cycloneIn, type WarningsSnapshot } from "../sachet";
+import { cycloneIn, cycloneTitle, type WarningsSnapshot } from "../sachet";
 import { esc } from "../html";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { isHttpUrl } from "./read";
@@ -138,10 +138,10 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
       ([name, r]) =>
         `<div data-type="${r.type}" data-issuer="${esc(r.office)}">${warningPlate({
           bar: [`<span>${esc(t(r.label, lang))} · ${esc(r.office)}</span>`, `<span>${r.meta}</span>`],
-          title: name,
+          title: cycloneTitle(name, lang),
           icon: "cyclone",
           body: `<p${langAttr(r.a.headline, lang)}>${esc(r.a.headline)}</p>`,
-          label: name,
+          label: cycloneTitle(name, lang),
           lang,
         })}</div>`,
     )

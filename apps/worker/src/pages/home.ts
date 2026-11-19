@@ -8,7 +8,7 @@ import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
 import { AQI_BAND_LABEL } from "../aqi";
 import { RISK_BANDS, type RiskBand } from "../score";
 import { type IndiaMap } from "../indiamap";
-import { officialCyclone, type WarningsSnapshot } from "../sachet";
+import { cycloneTitle, officialCyclone, type WarningsSnapshot } from "../sachet";
 import { DUST_PHRASE, airBand, dustBand, heatBand, heatPhrase } from "./read";
 import { alertParts } from "./warnings";
 import { CLIENT_ESC, HOME_OG, SITE, ld, relTime } from "../ui/shell";
@@ -131,7 +131,7 @@ function cyclonePlate(c: ReturnType<typeof officialCyclone>, lang: Lang): string
         `<span>${esc(time)}</span>`,
         cap,
       ].filter(Boolean),
-      title: c.title,
+      title: cycloneTitle(c.title, lang),
       icon: "cyclone",
       body: `<p${langAttr(c.alert.headline, lang)}>${esc(c.alert.headline)}</p>`,
       label: t("Active warnings", lang),
@@ -222,7 +222,7 @@ export function renderHome(
   const body = wrap(
     hero +
       cyclonePlate(official, lang) +
-      band(indiaMap(meta?.map, lang, { cyclone: official?.title, aside })) +
+      band(indiaMap(meta?.map, lang, { cyclone: official && cycloneTitle(official.title, lang), aside })) +
       places +
       levels,
   );

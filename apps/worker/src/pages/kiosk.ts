@@ -78,7 +78,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
   // An official warning over the point leads the plate: IMD's words, the end time, the issuer.
   const w0 = c.warnings?.[0];
   const warn = w0
-    ? `<p class="t-lead row-c">${ico("warn")}<span><b>${esc(warningTitle(w0))}</b>${w0.until ? ` · ${esc(t("until X", lang).replace("X", w0.until))}` : ""} · ${esc(w0.issuer)}${
+    ? `<p class="t-lead row-c">${ico("warn")}<span><b>${esc(warningTitle(w0, lang))}</b>${w0.until ? ` · ${esc(t("until X", lang).replace("X", w0.until))}` : ""} · ${esc(w0.issuer)}${
         c.warnings!.length > 1 ? ` · ${esc(t("+X more", lang).replace("X", String(c.warnings!.length - 1)))}` : ""
       }</span></p>`
     : "";

@@ -77,6 +77,12 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   Dark: {},
   System: {},
   "Under an official warning now": {},
+  // IMD's cyclone categories (cycloneTitle): IMD's Hindi bulletin terms; Kannada ಚಂಡಮಾರುತ as IMD Bengaluru / KSNDMC write it.
+  "Cyclonic Storm": { hi: "चक्रवाती तूफान", kn: "ಚಂಡಮಾರುತ" },
+  "Severe Cyclonic Storm": { hi: "गंभीर चक्रवाती तूफान", kn: "ತೀವ್ರ ಚಂಡಮಾರುತ" },
+  "Very Severe Cyclonic Storm": { hi: "अति गंभीर चक्रवाती तूफान", kn: "ಅತಿ ತೀವ್ರ ಚಂಡಮಾರುತ" },
+  "Extremely Severe Cyclonic Storm": { hi: "अत्यंत गंभीर चक्रवाती तूफान", kn: "ಅತ್ಯಂತ ತೀವ್ರ ಚಂಡಮಾರುತ" },
+  "Super Cyclonic Storm": { hi: "सुपर चक्रवाती तूफान", kn: "ಸೂಪರ್ ಚಂಡಮಾರುತ" },
   // Fix round 1: strings that reached hi/kn pages without a key.
   "MCP server for AI assistants": {},
   "Connect Claude, Cursor or any MCP client to mugilu: live {hazards} for any place in India. No key, read only.": {},

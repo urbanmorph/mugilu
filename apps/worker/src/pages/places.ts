@@ -4,7 +4,7 @@ import { allSlugPlaces, slugPlacesByState } from "../slugs";
 import { lp, quoted, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { type IndiaMap } from "../indiamap";
-import { officialCyclone, type WarningsSnapshot } from "../sachet";
+import { cycloneTitle, officialCyclone, type WarningsSnapshot } from "../sachet";
 import { alertParts } from "./warnings";
 import { breadcrumb, HOME_OG, SITE, ld } from "../ui/shell";
 import { istTime } from "../ist";
@@ -89,7 +89,7 @@ export function renderPlaces(
     ? band(
         panel(
           stack(
-            `<p><b>${quoted(official.title, lang)}</b> · ${esc(issued!.office)} · <span class="t-meta">${esc(issued!.time)}</span></p>` +
+            `<p><b>${quoted(cycloneTitle(official.title, lang), lang)}</b> · ${esc(issued!.office)} · <span class="t-meta">${esc(issued!.time)}</span></p>` +
               placeTiles(
                 allSlugPlaces()
                   .filter((p) => isWarned.has(p.slug))
