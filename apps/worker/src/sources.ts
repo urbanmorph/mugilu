@@ -51,7 +51,7 @@ export function sourcesMarkdown(): string {
 export const providerName = (p: ProviderId): string => AIR_PROVIDERS[p]?.name ?? p;
 
 // Per-source credit for the one-line attribution inside each conditions response.
-const SOURCE_CREDIT: Record<string, string> = {
+export const SOURCE_CREDIT: Record<string, string> = {
   ...Object.fromEntries(Object.entries(AIR_PROVIDERS).map(([id, p]) => [id, `${p.short} via OAQ`])),
   "open-meteo": "Open-Meteo (CC-BY 4.0)",
   // The heat normals (heatnormals.ts): the Copernicus licence asks for this credit.

@@ -123,3 +123,42 @@ test("llms.txt: lists /places, the directory of every district and city, and wha
     /- \[Every place\]\(https:\/\/mugilu\.live\/places\): [^\n]*official warning/,
   );
 });
+
+// The two manifests are kept by hand in one file; this keeps them from drifting apart.
+test("OpenAPI covers every machine-readable URL llms.txt advertises", () => {
+  const spec = openApiSpec("https://mugilu.live") as { paths: Record<string, unknown> };
+  const urls = [...llmsTxt("https://mugilu.live").matchAll(/https:\/\/mugilu\.live(\/[^\s)?]*)/g)].map((m) => m[1]);
+  const machine = urls
+    .map((p) => p.replace(/\{lat\},\{lon\}|-?\d+\.\d+,-?\d+\.\d+/, "{coord}"))
+    .filter((p) => p !== "/openapi.json") // the spec itself
+    .filter((p) => /\.(json|md|png)$/.test(p) || p === "/near" || p === "/suggest");
+  assert.ok(machine.length >= 8, `found ${machine.length}`);
+  for (const p of new Set(machine)) assert.ok(p in spec.paths, `${p} is in llms.txt but not the OpenAPI spec`);
+});
+
+test("OpenAPI: the Markdown twins, the snapshot image and the station endpoints, each with its media type", () => {
+  const { paths } = openApiSpec("https://mugilu.live") as {
+    paths: Record<string, { get: { responses: { "200": { content: Record<string, unknown> } } } }>;
+  };
+  const type = (p: string) => Object.keys(paths[p]?.get.responses["200"].content ?? {})[0];
+  for (const p of ["/c/{coord}.md", "/index.md", "/warnings.md", "/s/{provider}/{id}.md"])
+    assert.equal(type(p), "text/markdown", p);
+  assert.equal(type("/c/{coord}.png"), "image/png");
+  assert.equal(type("/s/{provider}/{id}.json"), "application/json");
+});
+
+test("OpenAPI: /warnings.json describes the snapshot and each alert, as the code stores it", () => {
+  const { paths } = openApiSpec("https://mugilu.live") as {
+    paths: Record<string, { get: { responses: { "200": { content: Record<string, { schema: any }> } } } }>;
+  };
+  const s = paths["/warnings.json"].get.responses["200"].content["application/json"].schema;
+  assert.deepEqual(s.required, ["generated_at", "count", "alerts"]);
+  assert.deepEqual(Object.keys(s.properties.alerts.items.properties), [
+    "identifier",
+    "headline",
+    "category",
+    "issuer",
+    "link",
+    "sent",
+  ]);
+});

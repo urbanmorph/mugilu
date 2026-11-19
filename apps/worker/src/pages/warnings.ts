@@ -3,7 +3,8 @@ import { cycloneIn, cycloneTitle, type WarningsSnapshot } from "../sachet";
 import { esc } from "../html";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { isHttpUrl } from "./read";
-import { SITE } from "../ui/shell";
+import { breadcrumb, ld, SITE } from "../ui/shell";
+import { SOURCE_CREDIT } from "../sources";
 import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
@@ -193,12 +194,40 @@ export function renderWarningsPage(snap: WarningsSnapshot | null, lang: Lang = "
           backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`),
       ),
   );
+  const desc = t(
+    "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
+    lang,
+  );
+  // schema.org Dataset: the official feed as mugilu mirrors it, credited to NDMA/IMD.
+  const url = `${SITE}${lp("/warnings", lang)}`;
+  const dataset = ld({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Dataset",
+        name: t("Active official warnings in India", lang),
+        description: desc,
+        url,
+        inLanguage: lang,
+        isAccessibleForFree: true,
+        creator: { "@type": "Organization", name: "mugilu", url: SITE },
+        creditText: SOURCE_CREDIT.sachet,
+        isBasedOn: "https://sachet.ndma.gov.in",
+        license: `${SITE}/terms`,
+        temporalCoverage: snap?.generated_at,
+        spatialCoverage: { "@type": "Place", name: "India" },
+        distribution: [
+          { "@type": "DataDownload", encodingFormat: "application/json", contentUrl: `${SITE}/warnings.json` },
+          { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${SITE}/warnings.md` },
+        ],
+      },
+      breadcrumb([t("Active warnings", lang), url]),
+    ],
+  });
   return pageShell(`${t("Active warnings", lang)}: mugilu`, body, {
     path: "/warnings",
-    desc: t(
-      "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
-      lang,
-    ),
+    desc,
+    jsonLd: dataset,
     canonical: `${SITE}/warnings`,
     ogImage: HOME_OG,
     lang,
