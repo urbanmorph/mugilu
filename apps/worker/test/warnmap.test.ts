@@ -203,3 +203,22 @@ test("indiaMap: the layer switch fits a phone, one row where it can and even row
     /<div class="seg fit"><label><input type="radio" name="layer"/,
   );
 });
+
+test("indiaMap: the data-age stamps sit in the map's bar, the selected layer's shown, the switch moves it", () => {
+  const html = indiaMap(withWarnings([CHURU]), "en", { now: NOW });
+  const bar =
+    html.match(/<div class="panel"><div class="bar"><h2>India now<\/h2>(<div class="stamps">.*?<\/div>)<\/div>/)?.[1] ??
+    "";
+  assert.match(
+    bar,
+    /<span class="stamp" data-layers="o"><span class="k">Official warnings</,
+    "the open layer's stamp lit",
+  );
+  assert.match(
+    bar,
+    /<span class="stamp off" data-layers="whr">/,
+    "the others marked off (hidden), for the switch to show",
+  );
+  // and no longer beside the map
+  assert.equal((html.match(/class="stamps"/g) ?? []).length, 1);
+});

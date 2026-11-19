@@ -376,7 +376,8 @@ export function indiaMap(m: IndiaMap | undefined, lang: Lang, o: IndiaMapOpts = 
   );
   const svg = mapSvg(m, "m", t(LABEL[first], lang), lang, "", "", false, warned);
   const box = stack(seg + svg + legends("m", lang, rain, warned.length > 0));
-  // Each stamp dates its layers, and is dimmed on the others.
+  // Each stamp dates its layers. They sit in the map's bar, the selected layer's alone: the
+  // switch's script marks the others off as the tab changes.
   const dated = (label: string, iso: string, layers: string) =>
     stamp(t(label, lang), asOf(iso, lang), { layers, off: !layers.includes(first) });
   const st = stamps([
@@ -395,15 +396,14 @@ export function indiaMap(m: IndiaMap | undefined, lang: Lang, o: IndiaMapOpts = 
       ? `<p class="t-meta">${esc(t("No official warnings are on the map now.", lang))}</p>${allWarningsLink(lang)}`
       : offMap;
   const side = stack(
-    st +
-      gapLine(m, lang) +
+    gapLine(m, lang) +
       notes +
       summaries(m, warned, lang) +
       offNote +
       cycloneNotes(m, lang, o.cyclone) +
       (o.aside ?? ""),
   );
-  return `<div class="imap" data-layer="${first}"><div class="lane l75">${panel(box, { title: t("India now", lang), tag: "div" })}${side}</div></div>`;
+  return `<div class="imap" data-layer="${first}"><div class="lane l75">${panel(box, { title: t("India now", lang), tag: "div", end: st })}${side}</div></div>`;
 }
 
 // ── /places: the states to click, a dot per place ──────────────────────────────────

@@ -6,7 +6,7 @@ import { START_CITIES } from "../slugs";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
 import { AQI_BAND_LABEL } from "../aqi";
-import { RISK_BANDS, type RiskBand } from "../score";
+import type { RiskBand } from "../score";
 import { type IndiaMap } from "../indiamap";
 import { cycloneTitle, officialCyclone, type WarningsSnapshot } from "../sachet";
 import { DUST_PHRASE, airBand, dustBand, heatBand, heatPhrase } from "./read";
@@ -219,13 +219,11 @@ export function renderHome(
       `<div class="col"><div class="stack"><p class="t-kicker">${T("Popular:")}</p>${popularTiles(meta?.popular ?? [], lang)}</div><div class="grow"></div>${linkButton(lp("/display", lang), t("Put this on a screen", lang), false, "screen")}</div>`,
     ]),
   );
-  const levels = band(`<div class="lkey">${RISK_BANDS.map((b) => levelChip(b, lang)).join("")}</div>`);
   const body = wrap(
     hero +
       cyclonePlate(official, lang) +
       band(indiaMap(meta?.map, lang, { cyclone: official && cycloneTitle(official.title, lang), aside })) +
-      places +
-      levels,
+      places,
   );
 
   // schema.org WebSite + SearchAction (a search box in results; credits the publisher).
