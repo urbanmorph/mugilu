@@ -10,10 +10,12 @@
 import { esc } from "./html";
 import { lp, t, type Lang } from "./i18n";
 import { SITE_DESC } from "./hazards";
+import { NEUTRAL } from "./palette";
 
-/** Page backgrounds (BASE_CSS --bg), so the browser/app chrome blends with the page. */
-const BG_LIGHT = "#f8fafc";
-const BG_DARK = "#0b1220";
+/** The browser and app chrome take the header bar's colour (it meets the top of every
+ *  page); the launch screen takes the page's. From palette.ts, the one source. */
+const BAR_LIGHT = NEUTRAL.light.bar;
+const BAR_DARK = NEUTRAL.dark.bar;
 
 export const MANIFEST_PATH = "/manifest.webmanifest";
 
@@ -46,8 +48,8 @@ export function webManifest(lang: Lang = "en") {
     scope: "/",
     display: "standalone",
     description: t(SITE_DESC, lang),
-    theme_color: BG_LIGHT,
-    background_color: BG_LIGHT,
+    theme_color: BAR_LIGHT,
+    background_color: NEUTRAL.light.bg,
     lang,
     icons: Object.entries(ICONS).map(([src, { size, maskable }]) => ({
       src,
@@ -64,28 +66,18 @@ export function webManifest(lang: Lang = "en") {
   };
 }
 
-/** <head> tags for every shell() page: the page language's manifest, and theme colours. */
+/** <head> tags for every page: the page language's manifest, and theme colours. */
 export const installHead = (lang: Lang) =>
   `<link rel="manifest" href="${lp(MANIFEST_PATH, lang)}">` +
-  `<meta name="theme-color" media="(prefers-color-scheme: light)" content="${BG_LIGHT}">` +
-  `<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${BG_DARK}">`;
+  `<meta name="theme-color" media="(prefers-color-scheme: light)" content="${BAR_LIGHT}">` +
+  `<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${BAR_DARK}">`;
 
-export const INSTALL_CSS = `
-.install{margin-left:auto;font:500 .82rem/1 var(--sans);color:var(--sky);background:transparent;border:1px solid color-mix(in srgb,var(--sky) 40%,transparent);border-radius:999px;padding:7px 13px;cursor:pointer}
-.install:hover{border-color:var(--sky)}
-.install-guide{max-width:22rem;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:18px 20px}
-.install-guide::backdrop{background:rgb(0 0 0/.45)}
-.install-guide h2{font-size:1.05rem;margin:0 0 .6rem}
-.install-guide ol{margin:0 0 1rem;padding-left:1.2rem;line-height:1.55}
-.install-guide form{text-align:right}
-.install-guide button{font:600 .9rem var(--sans);color:#fff;background:var(--sky);border:0;border-radius:8px;padding:8px 18px;cursor:pointer}
-`;
-
-/** Header button (hidden until the script decides) + the iOS guide dialog. */
-export function installButton(lang: Lang): string {
+/** Header button (hidden until the script decides) + the iOS guide dialog. The classes
+ *  default to the old pages'; the signage pages pass the standard's (btn, isheet). */
+export function installButton(lang: Lang, cls = { button: "install", dialog: "install-guide" }): string {
   return (
-    `<button type="button" class="install" id="install-app" hidden>${esc(t("Install app", lang))}</button>` +
-    `<dialog class="install-guide" id="install-guide" aria-labelledby="install-guide-title">` +
+    `<button type="button" class="${cls.button}" id="install-app" hidden>${esc(t("Install app", lang))}</button>` +
+    `<dialog class="${cls.dialog}" id="install-guide" aria-labelledby="install-guide-title">` +
     `<h2 id="install-guide-title">${esc(t("Add mugilu to your Home Screen", lang))}</h2><ol>` +
     `<li>${esc(t("Tap the Share button (the square with an arrow) in Safari's toolbar.", lang))}</li>` +
     `<li>${esc(t("Scroll down and tap Add to Home Screen.", lang))}</li>` +

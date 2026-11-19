@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260701.1",
+    "prettier": "3.10.1",
     "tsx": "^4.22.5",
     "typescript": "^5.6.0",
     "wrangler": "^4.107.0"

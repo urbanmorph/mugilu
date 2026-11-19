@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderStationPage, renderConditionsPage } from "../src/page";
+import { renderStationPage } from "../src/pages/station";
+import { renderConditionsPage } from "../src/pages/place";
 import { robotsTxt } from "../src/meta";
 import type { Conditions, NormalizedStation } from "../src/types";
 
@@ -96,5 +97,8 @@ test("renderConditionsPage: lists the air stations near the place, linking to ea
     /<meta name="robots" content="noindex, follow">/,
   );
   assert.match(html, /Air stations near here/);
-  assert.match(html, /href="\/s\/cpcb\/1558"[^>]*>Anand Vihar<\/a> 412/);
+  assert.match(
+    html,
+    /<a class="srow" href="\/s\/cpcb\/1558"><span class="n">Anand Vihar<\/span><span class="a">412<\/span>/,
+  );
 });

@@ -1,88 +1,172 @@
-// The conditions image (/c/{place}.png) as markup, kept apart from og.ts so it can
-// be tested without the image renderer. The same read as the page: the headline,
-// one sentence, the high against normal when it stands out, and the four readings
-// that matter most, each on a bar against its thresholds, over the hazard's tint.
+// The share images (1200x630) as markup, kept apart from og.ts so they can be tested
+// without the image renderer. The standard's ShareImage: light only (the image is the light
+// set), a black bar on top, the level as a plate in its fill with its shape and word, the
+// readings that matter most on gauges, and the full disclaimer at the foot.
 //
-// Layout rules (Satori is strict): every div sets display:flex (a div with more
-// than one child must), and text sits in its own div.
+// Layout rules (Satori is strict): every div sets display:flex (a div with more than one
+// child must), text sits in its own div, sizes are pixels.
 
-import type { Conditions } from "./types";
-import { ambientRisk, ambientMeaning, headline } from "./score";
+import type { Conditions, NormalizedStation } from "./types";
+import { ambientRisk, ambientMeaning, headline, RISK_BANDS } from "./score";
 import type { Persona } from "./score";
-import { BAND_COLOR, RISK_COLOR, levelColor, tintOf } from "./palette";
-import { briefs, gaugePos, isDriver, placeLabel, type Brief } from "./readings";
-import { istStamp } from "./html";
+import { BAND_COLOR, BAND_ON_FILL, BRAND, NEUTRAL, ON_FILL, RISK_COLOR } from "./palette";
+import { briefs, gaugePos, type Brief } from "./readings";
+import { placeLabel } from "./readings";
+import { istStamp } from "./ist";
 import { heatVsNormalLine, heatVsNormalShown } from "./heatnormals";
+import { AQI_BAND_LABEL } from "./aqi";
+import { BAND_SHAPE, CLOUD_PATHS, LEVEL_SHAPE, SHAPE, DISCLAIMER_FULL, type ShapeName } from "./ui/components";
 
 /** Text for the image. Satori draws text as written and never decodes HTML
  *  entities, so `esc()` would show "&amp;" ("Asthma &amp; lungs"); only the angle
  *  brackets that could open a tag are dropped. */
 export const ogText = (s: string) => s.replace(/[<>]/g, "");
 
-/** "#f97316" at `a` (0-1) as rgba(), for the tint's gradient. */
-function rgba(hex: string, a: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${+a.toFixed(2)})`;
+const N = NEUTRAL.light;
+/** The share images are set in Anek Latin, as the pages are (og.ts hands Satori the font). */
+const FONT = "font-family:'Anek Latin';";
+
+/** A flex box (Satori needs display:flex on any div with more than one child). */
+const box = (style: string, ...children: string[]) => `<div style="display:flex;${style}">${children.join("")}</div>`;
+/** A line of text. */
+const txt = (style: string, s: string) => box(style, ogText(s));
+
+/** A level's shape, filled: an SVG image (Satori draws images, but no inline <svg> from HTML). */
+const shapeSvg = (kind: ShapeName, size: number, colour: string) =>
+  `<img width="${size}" height="${size}" src="data:image/svg+xml;base64,${btoa(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${SHAPE[kind]}" fill="${colour}" fill-rule="evenodd"/></svg>`,
+  )}">`;
+
+/** The cloud mark in the brand blue, as an image (Satori draws no inline <svg>). */
+const cloudSvg = (size: number) =>
+  `<img width="${size}" height="${size}" src="data:image/svg+xml;base64,${btoa(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="${BRAND}">${CLOUD_PATHS}</g></svg>`,
+  )}">`;
+
+/** The frame: the black bar, the middle, the foot. Bar and foot are regular weight: the
+ *  plate, the title or the wordmark carries the weight. */
+function frame(top: [string, string], mid: string, foot: [string, string]): string {
+  return box(
+    `flex-direction:column;width:1200px;height:630px;background:${N.bg};color:${N.ink};${FONT}`,
+    box(
+      `justify-content:space-between;align-items:center;background:${N.bar};color:${N.onBar};padding:24px 48px;font-size:26px;`,
+      txt("", top[0]),
+      txt("", top[1]),
+    ),
+    mid,
+    box(
+      `justify-content:space-between;align-items:center;padding:18px 48px;border-top:2px solid ${N.ink};font-size:18px;color:${N.muted};`,
+      txt("max-width:860px;", foot[0]),
+      txt(`color:${N.ink};`, foot[1]),
+    ),
+  );
 }
 
 const pos = (v: number, g: Brief["gauge"]) => gaugePos(v, g.lo, g.hi, g.log);
 
-function stat(b: Brief, c: Conditions, label: string): string {
+/** A reading under the plate: its label, value and gauge (fill in its level, ticks in ink). */
+function stat(b: Brief, c: Conditions): string {
   const fill =
-    b.key === "air" ? (BAND_COLOR[c.air?.band ?? "unknown"] ?? BAND_COLOR.unknown) : levelColor(b.level, "#475569");
+    b.key === "air"
+      ? (BAND_COLOR[c.air?.band ?? "unknown"] ?? BAND_COLOR.unknown)
+      : b.level
+        ? RISK_COLOR[RISK_BANDS[b.level]]
+        : N.muted;
   const value = b.key === "heat" ? `feels ${b.value}` : b.value;
   const ticks = b.gauge.ticks
     .map(
       (x) =>
-        `<div style="display:flex;position:absolute;top:-4px;bottom:-4px;left:${pos(x, b.gauge)}%;width:3px;background:#94a3b8;"></div>`,
+        `<div style="display:flex;position:absolute;top:-4px;bottom:-4px;left:${pos(x, b.gauge)}%;width:3px;background:${N.ink};"></div>`,
     )
     .join("");
   return (
     `<div data-k="${b.key}" style="display:flex;flex-direction:column;flex:1;margin-right:28px;">` +
-    `<div style="display:flex;font-size:21px;letter-spacing:2px;color:${label};">${ogText(b.label.toUpperCase())}</div>` +
-    `<div style="display:flex;font-size:36px;font-weight:700;color:#e2e8f0;margin-top:6px;">${ogText(value)}</div>` +
-    `<div style="display:flex;position:relative;height:10px;border-radius:5px;background:#1f2937;margin-top:10px;">` +
-    `<div style="display:flex;position:absolute;top:0;bottom:0;left:0;width:${pos(b.gauge.v, b.gauge)}%;border-radius:5px;background:${fill};"></div>` +
-    ticks +
-    `</div>` +
+    txt(`font-size:20px;font-weight:700;letter-spacing:2px;color:${N.muted};`, b.label.toUpperCase()) +
+    txt("font-size:36px;font-weight:800;margin-top:4px;", value) +
+    box(
+      `position:relative;height:12px;background:${N.track};margin-top:10px;`,
+      `<div style="display:flex;position:absolute;top:0;bottom:0;left:0;width:${pos(b.gauge.v, b.gauge)}%;background:${fill};"></div>`,
+      ticks,
+    ) +
     `</div>`
   );
 }
 
-/** The conditions image's markup (1200x630, sized in pixels: Satori resolves a
- *  percentage width against an unsized wrapper, and the card would shrink to its text). */
+/** /c/{place}.png: the place's read, when it was built, the four readings that matter most. */
 export function conditionsOgHtml(c: Conditions, persona: Persona): string {
   const risk = ambientRisk(c, persona);
-  const { hue, strength } = tintOf(risk);
   const placeRaw = placeLabel(c);
   const place = placeRaw.length > 30 ? placeRaw.slice(0, 29) + "…" : placeRaw;
   const h = headline(risk);
-  const head = h.noun ? `${h.word} ${h.noun}` : h.word;
-  const updated = istStamp(c.as_of);
+  const head = h.noun ? `${h.word} ${h.noun}.` : `${h.word}.`;
+  const on = ON_FILL[risk.band];
   const n = c.heat_vs_normal;
   const normal = heatVsNormalShown(n)
-    ? `<div style="display:flex;font-size:26px;color:#cbd5e1;margin-top:14px;">${ogText(heatVsNormalLine(n, "en"))}</div>`
+    ? txt(`font-size:26px;margin-top:12px;color:${on};`, heatVsNormalLine(n, "en"))
     : "";
-  const stats = briefs(c, risk)
-    .slice(0, 4)
-    .map((b) => stat(b, c, isDriver(b.key, risk) ? RISK_COLOR[risk.band] : "#64748b"))
-    .join("");
+  const plate = box(
+    `flex-direction:column;justify-content:center;flex:1;padding:0 48px;background:${RISK_COLOR[risk.band]};color:${on};`,
+    box(
+      "align-items:center;",
+      shapeSvg(LEVEL_SHAPE[risk.band], 96, on),
+      txt("font-size:104px;font-weight:800;line-height:1;margin-left:24px;", head.toUpperCase()),
+    ),
+    txt("font-size:32px;margin-top:14px;", ambientMeaning(risk)),
+    normal,
+  );
+  const stats = box(
+    "padding:20px 48px;align-items:flex-start;",
+    ...briefs(c, risk)
+      .slice(0, 4)
+      .map((b) => stat(b, c)),
+  );
+  return frame(
+    [`mugilu · the sky over ${place}`, istStamp(c.as_of)],
+    box("flex-direction:column;flex:1;", plate, stats),
+    [DISCLAIMER_FULL, "mugilu.live"],
+  );
+}
 
-  return (
-    `<div style="display:flex;flex-direction:column;width:1200px;height:630px;background-color:#0b1220;background-image:radial-gradient(circle at 100% 0%, ${rgba(hue, (strength * 1.1) / 100)}, ${rgba(hue, 0)} 70%);color:#e2e8f0;padding:56px 72px 48px;font-family:sans-serif;">` +
-    `<div style="display:flex;justify-content:space-between;font-size:28px;color:#94a3b8;">` +
-    `<div style="display:flex;">mugilu · the sky over ${ogText(place)}</div>` +
-    `<div style="display:flex;color:#cbd5e1;">${ogText(updated)}</div>` +
-    `</div>` +
-    `<div style="display:flex;flex-direction:column;flex:1;justify-content:center;">` +
-    `<div style="display:flex;font-size:112px;font-weight:800;line-height:1;color:${RISK_COLOR[risk.band]};">${ogText(head)}</div>` +
-    `<div style="display:flex;font-size:34px;color:#cbd5e1;margin-top:18px;">${ogText(ambientMeaning(risk))}</div>` +
-    normal +
-    `</div>` +
-    `<div style="display:flex;align-items:flex-end;border-top:1px solid #1f2937;padding-top:26px;">` +
-    stats +
-    `<div style="display:flex;font-size:26px;color:#64748b;">mugilu.live</div>` +
-    `</div>` +
-    `</div>`
+/** /og/s/{provider}/{id}.png: one station, its AQI on its band's plate. */
+export function stationOgHtml(s: NormalizedStation, generatedAt: string): string {
+  const name = s.name.length > 34 ? s.name.slice(0, 32) + "…" : s.name;
+  const band = s.band in BAND_COLOR ? s.band : "unknown";
+  const on = BAND_ON_FILL[band];
+  const plate = box(
+    `flex-direction:column;justify-content:center;width:440px;padding:0 48px;background:${BAND_COLOR[band]};color:${on};`,
+    txt("font-size:180px;font-weight:800;line-height:.9;", s.aqi != null ? String(s.aqi) : "n/a"),
+    box(
+      "align-items:center;margin-top:12px;",
+      shapeSvg(BAND_SHAPE[band], 36, on),
+      txt("font-size:32px;font-weight:700;margin-left:12px;", `AQI (${AQI_BAND_LABEL[band] ?? "n/a"})`),
+    ),
+  );
+  const who = box(
+    "flex-direction:column;justify-content:center;flex:1;padding:48px;",
+    txt("font-size:64px;font-weight:800;line-height:1;", name.toUpperCase()),
+    txt(`font-size:34px;color:${N.muted};margin-top:12px;`, s.city || "India"),
+  );
+  return frame(["mugilu · India air quality", istStamp(generatedAt)], box("flex:1;", plate, who), [
+    `${s.provider.toUpperCase()} via oaq.notf.in · urbanmorph/mugilu · ${DISCLAIMER_FULL}`,
+    "mugilu.live",
+  ]);
+}
+
+/** /og.png: the brand card for the home page and the content pages. */
+export function homeOgHtml(): string {
+  const covers = ["air", "heat", "rain", "UV", "dust", "warnings"];
+  return frame(
+    ["", "mugilu.live"],
+    box(
+      "flex-direction:column;justify-content:center;flex:1;padding:0 48px;",
+      box(
+        "align-items:center;",
+        cloudSvg(150),
+        txt("font-size:132px;font-weight:700;letter-spacing:-2px;line-height:1;margin-left:24px;", "mugilu"),
+      ),
+      txt("font-size:42px;margin-top:24px;", "The open sky of India, one coordinate at a time."),
+      txt(`margin-top:28px;font-size:28px;color:${N.muted};`, covers.join("  ·  ")),
+    ),
+    ["open · free · built to be built on", "mugilu.live"],
   );
 }

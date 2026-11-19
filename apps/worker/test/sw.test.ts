@@ -3,8 +3,12 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
-import { SW_JS, SW_PATH, SW_REGISTER, serviceWorker, OFFLINE_NOTE_ID } from "../src/sw";
-import { renderConditionsPage, renderEmbed, renderHome, renderKioskPage } from "../src/page";
+import { swJs, SW_PATH, SW_REGISTER, serviceWorker, OFFLINE_NOTE_ID } from "../src/sw";
+import { SITE_CSS_LINK, SITE_CSS_PATH } from "../src/ui/assets";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderEmbed } from "../src/pages/embed";
+import { renderHome } from "../src/pages/home";
+import { renderKioskPage } from "../src/pages/kiosk";
 import type { Conditions } from "../src/types";
 
 const ORIGIN = "https://mugilu.live";
@@ -83,7 +87,7 @@ function makeWorker() {
       showNotification: async (title: string, options: Record<string, unknown>) => void shown.push({ title, options }),
     },
   };
-  runInNewContext(SW_JS, { self, caches, fetch: net, Request: WorkerRequest, Response, URL, Promise });
+  runInNewContext(swJs(), { self, caches, fetch: net, Request: WorkerRequest, Response, URL, Promise });
 
   async function lifecycle(type: "install" | "activate") {
     let done: Promise<unknown> = Promise.resolve();
@@ -161,7 +165,42 @@ test("offline, a place never opened here gets a plain offline page, as a 503, in
   assert.match(res.headers.get("content-type") ?? "", /^text\/html/);
   const body = await res.text();
   assert.match(body, /lang="kn"/);
-  assert.match(body, /href="\/"/);
+  assert.match(body, /href="\/kn"/, "See your places opens the home page in the page's language");
+});
+
+test("the offline page is the standard's: the site stylesheet, header, one main with its h1, footer, disclaimer", async () => {
+  w.state.online = false;
+  const body = await (await w.page("/warnings"))!.text();
+  assert.ok(body.includes(SITE_CSS_LINK), "the site stylesheet, saved at install");
+  assert.match(
+    body,
+    /<body class="mg">[\s\S]*<header class="sh">[\s\S]*<main id="main"[^>]*>[\s\S]*<h1 class="t-title">You are offline<\/h1>/,
+  );
+  assert.match(body, /<a class="btn primary" href="\/">See your places<\/a>/);
+  assert.match(
+    body,
+    /<footer class="sf">[\s\S]*Informational only, not for medical, emergency, or safety-critical decisions\./,
+  );
+  assert.equal((body.match(/<main/g) ?? []).length, 1);
+});
+
+test("the worker carries no stylesheet of its own: it saves the site's at install and serves it offline", async () => {
+  assert.doesNotMatch(swJs(), /\.mg \.kio\{display:grid/);
+  const fresh = makeWorker();
+  await fresh.lifecycle("install");
+  assert.ok(fresh.saved().includes(SITE_CSS_PATH));
+  fresh.state.online = false;
+  const css = await fresh.request(SITE_CSS_PATH);
+  assert.ok(css, "answered from the cache");
+});
+
+test("activating drops stylesheets from earlier deploys", async () => {
+  const fresh = makeWorker();
+  await fresh.lifecycle("install");
+  fresh.stores.get("mugilu-readings")!.set(`${ORIGIN}/assets/site-old.css`, new Response("x"));
+  await fresh.lifecycle("activate");
+  assert.ok(!fresh.saved().includes("/assets/site-old.css"));
+  assert.ok(fresh.saved().includes(SITE_CSS_PATH));
 });
 
 test("the home page is saved when the worker installs, so the installed app opens offline", async () => {
@@ -176,7 +215,7 @@ test("the installed app's start URL (?src=pwa) opens the saved home offline, and
   await fresh.lifecycle("install");
   await fresh.page("/hi?src=pwa"); // online: the launch is fetched as is, so it is counted
   assert.ok(fresh.state.fetched.includes("/hi?src=pwa"));
-  assert.deepEqual(fresh.saved().sort(), ["/", "/hi"]);
+  assert.deepEqual(fresh.saved().sort(), ["/", "/hi", SITE_CSS_PATH].sort());
   fresh.state.online = false;
   assert.equal(await text(fresh.page("/?src=pwa")), "home /");
   assert.equal(await text(fresh.page("/hi?src=pwa")), "home /hi");
@@ -208,12 +247,17 @@ test("never touches data, images, the API, POSTs, other pages' copies or other s
   assert.ok(!w.saved().includes("/about"));
 });
 
-test("/sw.js is served as a script the browser always re-checks", async () => {
-  const res = serviceWorker();
+test("/sw.js is served as a script the browser always re-checks, cheaply (ETag, 304)", async () => {
+  const res = serviceWorker(new Request(`${ORIGIN}/sw.js`));
   assert.equal(SW_PATH, "/sw.js");
   assert.match(res.headers.get("content-type") ?? "", /javascript/);
   assert.equal(res.headers.get("cache-control"), "no-cache");
-  assert.equal(await res.text(), SW_JS);
+  assert.equal(await res.text(), swJs());
+  const etag = res.headers.get("etag")!;
+  assert.match(etag, /^"[0-9a-z]+"$/);
+  const again = serviceWorker(new Request(`${ORIGIN}/sw.js`, { headers: { "if-none-match": etag } }));
+  assert.equal(again.status, 304);
+  assert.equal(again.headers.get("etag"), etag);
 });
 
 // --- the pages ---------------------------------------------------------------------
@@ -249,7 +293,7 @@ test("a place's page carries the hidden last-reading note, with the reading's ti
 
 test("ordinary pages register the worker; the kiosk display and the embed card do not", () => {
   assert.ok(renderHome().includes(SW_REGISTER));
-  const kiosk = renderKioskPage(C, "everyone", "https://mugilu.live/c/bengaluru", "<svg></svg>");
+  const kiosk = renderKioskPage(C, "everyone", "https://mugilu.live/c/bengaluru");
   const embed = renderEmbed(C, "everyone", "https://mugilu.live");
   assert.ok(!kiosk.includes(SW_REGISTER));
   assert.ok(!embed.includes(SW_REGISTER));

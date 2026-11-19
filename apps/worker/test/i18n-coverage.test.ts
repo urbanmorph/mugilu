@@ -1,10 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderConditionsPage, renderEmbed, renderKioskPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderEmbed } from "../src/pages/embed";
+import { renderKioskPage } from "../src/pages/kiosk";
 import { personaAlso } from "../src/score";
 import { ambientRisk } from "../src/score";
 import type { Conditions } from "../src/types";
-import type { Lang } from "../src/i18n";
+import { TR, type Lang } from "../src/i18n";
+import { testWorker } from "./helpers/worker";
 
 // Every layer present, an official warning over the spot, more nearby, and an
 // asthma persona whose own trigger (air) is elevated but is not the headline (heat).
@@ -80,7 +83,7 @@ const LEAKS = [
 for (const lang of ["hi", "kn"] as Lang[]) {
   const pages = {
     page: renderConditionsPage(c, "asthma", "https://mugilu.live/c/new-delhi", lang),
-    kiosk: renderKioskPage(c, "asthma", "https://mugilu.live/c/new-delhi", "<svg></svg>", lang),
+    kiosk: renderKioskPage(c, "asthma", "https://mugilu.live/c/new-delhi", lang),
     embed: renderEmbed(c, "asthma", "https://mugilu.live", lang),
   };
   for (const [name, html] of Object.entries(pages)) {
@@ -94,11 +97,88 @@ for (const lang of ["hi", "kn"] as Lang[]) {
 test("the persona 'also watch' line is localised, not an English sentence looked up whole", () => {
   assert.match(personaAlso(ambientRisk(c, "asthma"))!, /^For asthma & lungs, also watch: smoke is severe\.$/);
   const kn = renderConditionsPage(c, "asthma", undefined, "kn");
-  assert.match(kn, /class="amb-also"/);
+  assert.match(kn, /class="row-c also"/);
 });
 
 test("English pages keep their English wording", () => {
   const text = visible(renderConditionsPage(c, "asthma", undefined, "en"));
   for (const re of [/also watch: smoke is severe/, /% humidity/, /km\/h steady/, /from W/, /MW of fire power/])
     assert.match(text, re);
+});
+
+// ── Every page in hi and kn, through the real worker: no English fallback a reader sees,
+// in the text or in the words a screen reader or a search result shows (aria-label, title,
+// alt, placeholder, the page title and description). Latin that stays Latin on purpose is
+// listed here: brand and source names, acronyms, units, and the data the fixtures carry
+// (place and office names, which are proper nouns).
+const PAGES = [
+  "/",
+  "/c/delhi",
+  "/c/delhi?kiosk",
+  "/embed/28.61,77.21",
+  "/s/cpcb/6081",
+  "/places",
+  "/warnings",
+  "/display",
+  "/about",
+  "/methodology",
+  "/terms",
+  "/no-such-page",
+];
+const LATIN_OK = new Set(
+  (
+    "mugilu bharatlas mdshare yellide urbanmorph via km kmph mm mg min h ref your-app iframe " +
+    // the persona values typed into a display link (?as=asthma)
+    "asthma child outdoor heart elderly"
+  ).split(" "),
+);
+// Data the fixtures carry, as written: names with a lowercase word, and source credits.
+const DATA =
+  /Jammu and Kashmir|Itanagar capital complex|Central Pollution Control Board, Government of India|Govt\. of India|ERA5 \(Copernicus C3S\) normals|mugilu\.live|(?:^|\s)\/[a-z/{},.?=]+/g;
+
+/** What a hi/kn reader is shown, as text runs: text nodes, the attributes read aloud or shown,
+ *  the title and description. Quoted text marked with its own language, code samples and
+ *  scripts are left out (scripts get their strings through t()). */
+function shown(html: string): string[] {
+  const b = html
+    .replace(/<(script|style|svg|template|code|pre|textarea)\b[\s\S]*?<\/\1>/g, " ")
+    .replace(/<(\w+)[^>]*\blang="(?!hi|kn)[a-z-]+"[^>]*>[\s\S]*?<\/\1>/g, " ");
+  const attrs = [...b.matchAll(/\b(?:aria-label|title|alt|placeholder)="([^"]*)"/g)].map((m) => m[1]);
+  const meta = [
+    ...b.matchAll(/<meta (?:name|property)="(?:description|og:title|og:description)" content="([^"]*)"/g),
+  ].map((m) => m[1]);
+  const text = b.replace(/<(meta|link)\b[^>]*>/g, " ").split(/<[^>]+>/);
+  return [...meta, ...attrs, ...text]
+    .map((s) =>
+      s
+        .replace(/&[a-z#0-9]+;/g, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
+for (const lang of ["hi", "kn"] as const) {
+  test(`${lang}: no English fallback on any page (text, labels, title, description)`, async () => {
+    const w = testWorker();
+    const leaks = new Set<string>();
+    for (const p of PAGES) {
+      const res = await w.get(`/${lang}${p === "/" ? "" : p}`, { headers: { accept: "text/html" } });
+      for (const run of shown(await res.text())) {
+        const rest = run.replace(/https?:\/\/\S+|\S+\.(?:ts|txt)\b/g, " ").replace(DATA, " ");
+        const english = (rest.match(/\b[a-z][a-z'-]+\b/g) ?? []).filter((x) => !LATIN_OK.has(x));
+        // A key shown as itself is a missing translation, unless its translation is the same Latin (JSON).
+        const untranslated = run in TR && TR[run][lang] !== run;
+        if (untranslated || english.length) leaks.add(`${p}: ${run.slice(0, 100)}`);
+      }
+    }
+    assert.deepEqual([...leaks], []);
+  });
+}
+
+test("every entry in the translation table has its hi and kn", () => {
+  const empty = Object.entries(TR)
+    .filter(([, v]) => !v.hi || !v.kn)
+    .map(([k]) => k);
+  assert.deepEqual(empty, []);
 });

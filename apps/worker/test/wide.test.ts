@@ -1,21 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  renderAbout,
-  renderConditionsPage,
-  renderDisplayBuilder,
-  renderHome,
-  renderMcpPage,
-  renderNotFound,
-  renderMethodology,
-  renderPlaces,
-  renderStationPage,
-  renderTerms,
-  renderWarningsPage,
-  warningType,
-} from "../src/page";
+import { renderAbout } from "../src/pages/about";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderHome } from "../src/pages/home";
+import { renderMcpPage } from "../src/pages/mcp";
+import { renderMethodology } from "../src/pages/methodology";
+import { renderPlaces } from "../src/pages/places";
+import { renderStationPage } from "../src/pages/station";
+import { renderTerms } from "../src/pages/terms";
+import { renderWarningsPage, warningType } from "../src/pages/warnings";
 import type { Conditions, NormalizedStation } from "../src/types";
 import type { WarningsSnapshot } from "../src/sachet";
+import { withCss } from "./helpers/css";
 
 // Wide layouts (960 px and up) for the pages that sat in a 560 px column: a header nav
 // and room for filters, indexes, maps and tables. The place pages (/c) and the home page
@@ -82,34 +78,8 @@ const SNAP: WarningsSnapshot = {
   ],
 } as WarningsSnapshot;
 
-const WIDE = [
-  ["/warnings", renderWarningsPage(SNAP)],
-  ["/places", renderPlaces()],
-  ["/s/…", renderStationPage(st(), near, true)],
-  ["/about", renderAbout()],
-  ["/methodology", renderMethodology()],
-  ["/terms", renderTerms()],
-  ["/display", renderDisplayBuilder()],
-] as const;
-
-test("wide pages: a header nav to the main pages, and the wide layout from 960 px", () => {
-  for (const [name, html] of WIDE) {
-    assert.match(html, /<body class="wide">/, name);
-    const nav = html.match(/<nav class="topnav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? "";
-    for (const p of ["/places", "/warnings", "/display", "/methodology", "/about"])
-      assert.match(nav, new RegExp(`href="${p}"`), `${name} nav ${p}`);
-    assert.match(
-      html,
-      /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}body\.wide main\{max-width:1180px/,
-      name,
-    );
-  }
-  // in Hindi the nav links carry the prefix and the labels are Hindi
-  const hi = renderPlaces("hi").match(/<nav class="topnav"[^>]*>([\s\S]*?)<\/nav>/)![1];
-  assert.match(hi, /href="\/hi\/warnings">चेतावनियाँ</);
-});
-
-test("every page shares the header nav and the footer width; home and /c keep their own body layouts", () => {
+// Every page is on the signage shell: the one header (with its nav) and the one footer.
+test("every page shares the signage header nav and footer; none keeps the old wide body", () => {
   const c = {
     location: { lat: 28.61, lon: 77.21 },
     as_of: "2026-11-18T11:05:00.000Z",
@@ -124,14 +94,20 @@ test("every page shares the header nav and the footer width; home and /c keep th
     attribution: "x",
     disclaimer: "y",
   } as unknown as Conditions;
-  for (const html of [renderConditionsPage(c), renderHome(), renderMcpPage(), renderNotFound()]) {
-    assert.match(html, /<nav class="topnav"[^>]*>[\s\S]*href="\/warnings"/);
-    assert.match(html, /@media\(min-width:960px\)\{:is\(\.foot,\.langsw\)\{max-width:1180px\}/);
+  const pages = {
+    home: renderHome(),
+    places: renderPlaces(),
+    place: renderConditionsPage(c),
+    station: renderStationPage(st(), near, true),
+  };
+  for (const [name, html] of Object.entries(pages)) {
+    assert.match(html, /<nav class="nav" aria-label="Main">[\s\S]*href="\/warnings"/, name);
+    assert.match(html, /<footer class="sf">/, name);
+    assert.doesNotMatch(html, /<body class="wide">|class="topnav"/, name);
   }
-  for (const html of [renderConditionsPage(c), renderHome()]) assert.doesNotMatch(html, /<body class="wide">/);
-  for (const html of [renderMcpPage(), renderNotFound()]) assert.match(html, /<body class="wide">/);
-  // phones: the nav is a second row under the logo, scrolling sideways if it must
-  assert.match(renderHome(), /\.topnav\{[^}]*order:3[^}]*overflow-x:auto/);
+  // in Hindi the nav links carry the prefix and the labels are Hindi
+  const hi = renderPlaces("hi").match(/<nav class="nav"[^>]*>([\s\S]*?)<\/nav>/)![1];
+  assert.match(hi, /href="\/hi\/warnings">चेतावनियाँ</);
 });
 
 test("warningType: the kind of hazard, from the headline", () => {
@@ -144,71 +120,59 @@ test("warningType: the kind of hazard, from the headline", () => {
   assert.equal(warningType("Something else entirely"), "other");
 });
 
-test("/warnings: filters by type and office, cards carry what the filters read, long headlines wrap", () => {
+test("/warnings: filters by type and office, rows carry what the filters read", () => {
   const html = renderWarningsPage(SNAP);
-  assert.match(html, /<aside class="wfilter"/);
-  assert.match(html, /<input type="checkbox" name="type" value="storm" checked>[^<]*<\/span><span class="wc">2</);
-  assert.match(
-    html,
-    /<input type="checkbox" name="issuer" value="IMD Guwahati" checked>[^<]*<\/span><span class="wc">2</,
-  );
-  assert.match(html, /<li data-type="storm" data-issuer="IMD Srinagar">/);
-  assert.match(html, /\.whead\{[^}]*overflow-wrap:anywhere/); // the sideways-scroll fix
-  assert.match(html, /\.wlist\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(html, /name="type" value="storm" checked><span>Thunderstorm, lightning<\/span><span class="c">2</);
+  assert.match(html, /name="issuer" value="IMD Guwahati" checked><span>IMD Guwahati<\/span><span class="c">2</);
+  assert.match(html, /<li class="wrow" data-type="storm" data-issuer="IMD Srinagar">/);
 });
 
-test("/places: a state index and a search, each state an anchor", () => {
+test("/places: a state picker and a search, each state an anchor", () => {
   const html = renderPlaces();
-  assert.match(html, /<nav class="pindex" aria-label="States">[\s\S]*href="#st-delhi">Delhi</);
-  assert.match(html, /<section class="st" id="st-delhi">/);
+  assert.match(html, /<option value="st-delhi">Delhi<\/option>/);
+  assert.match(html, /<details class="fold" open id="st-delhi">/);
   assert.match(html, /<input[^>]*id="pq"/);
 });
 
-test("station page: pollutant bars on CPCB's scale, a map and table of the stations around it, the source once", () => {
+test("station page: pollutant bars on CPCB's scale with the limit, a table of the stations around it, the source once", () => {
   const html = renderStationPage(st(), near, true);
-  assert.match(html, /PM2\.5[\s\S]*?class="pbar"[^>]*style="width:[\d.]+%;background:/);
-  const map = html.match(/<svg class="smap"[\s\S]*?<\/svg>/)?.[0] ?? "";
-  assert.equal((map.match(/<circle /g) ?? []).length, 3); // itself and two neighbours
-  assert.match(html, /<table class="snear">[\s\S]*Vivek Vihar[\s\S]*2\.1 km/);
+  assert.match(html, /<div class="bars" style="--lim:20\.0%">[\s\S]*?<span>PM2\.5<\/span>/);
+  assert.match(html, /<table class="tbl">[\s\S]*Vivek Vihar[\s\S]*2\.1 km/);
   assert.equal((html.match(/Measured by Central Pollution Control Board/g) ?? []).length, 1);
+  assert.match(html, /<header class="sh">[\s\S]*<main id="main"[\s\S]*<footer class="sf">/, "the standard's shell");
 });
 
 test("text pages: a contents list linking each section", () => {
   for (const html of [renderAbout(), renderMethodology(), renderTerms()]) {
-    const toc = html.match(/<nav class="toc" aria-label="On this page">([\s\S]*?)<\/nav>/)?.[1] ?? "";
+    const toc = html.match(/<nav class="panel toc" aria-label="On this page">([\s\S]*?)<\/nav>/)?.[1] ?? "";
     const links = [...toc.matchAll(/href="#([a-z0-9-]+)"/g)].map((m) => m[1]);
     assert.ok(links.length >= 3, `only ${links.length} contents links`);
     for (const id of links) assert.match(html, new RegExp(`id="${id}"`), id);
   }
 });
 
-test("/display: the preview and the setup sit side by side", () => {
-  const html = renderDisplayBuilder();
-  assert.match(html, /<div class="dleft">[\s\S]*class="dprev"[\s\S]*<div class="dright">[\s\S]*action="\/go"/);
-});
-
 // The backdrop says what the data says, by the canonical rule (palette.ts tintOf), as on /c.
 test("tinted backdrops: a station by its air band, /warnings by its warnings, calm sky when quiet", () => {
-  const body = /body\{background:linear-gradient\(180deg,color-mix\(in srgb,var\(--tint\) var\(--tk\),var\(--bg\)\)/;
-  const vpoor = renderStationPage(st({ aqi: 344, band: "vpoor" }), near, true);
-  assert.match(vpoor, /:root\{--tint:#a0785a;--tk:34%\}/); // the air hue, severe strength
-  assert.match(vpoor, body);
-  assert.match(renderStationPage(st(), near, true), /:root\{--tint:#a0785a;--tk:20%\}/); // moderate
-  assert.match(renderStationPage(st(), near, false), /:root\{--tint:#38bdf8;--tk:16%\}/); // no recent reading: calm
-  assert.match(renderWarningsPage(SNAP), /:root\{--tint:#ef4444;--tk:20%\}/); // 4 warnings
-  assert.match(renderWarningsPage(SNAP), body);
-  const many = {
-    ...SNAP,
-    alerts: Array.from({ length: 30 }, (_, i) => ({ ...SNAP.alerts[0], identifier: String(i) })),
-  };
-  assert.match(renderWarningsPage(many as WarningsSnapshot), /:root\{--tint:#ef4444;--tk:26%\}/);
-  assert.match(renderWarningsPage({ ...SNAP, alerts: [] } as WarningsSnapshot), /:root\{--tint:#38bdf8;--tk:16%\}/);
+  const body = (html: string) => html.match(/<body class="mg"[^>]*>/)![0];
+  assert.match(
+    body(renderStationPage(st({ aqi: 344, band: "vpoor" }), near, true)),
+    /data-tint="Air" data-level="severe"/,
+  );
+  assert.match(body(renderStationPage(st(), near, true)), /data-tint="Air" data-level="moderate"/);
+  assert.match(
+    body(renderStationPage(st(), near, false)),
+    /data-tint="none" data-level="low"/,
+    "no recent reading: calm",
+  );
+  assert.match(body(renderWarningsPage(SNAP)), /data-tint="Warning" data-level="high"/);
+  assert.doesNotMatch(body(renderWarningsPage({ ...SNAP, alerts: [] } as WarningsSnapshot)), /data-tint/);
   // the explainer pages stay neutral
-  assert.doesNotMatch(renderAbout(), /--tint:/);
+  assert.doesNotMatch(body(renderAbout()), /data-tint=/);
 });
 
 test("text pages: long inline code (the MCP inspector command) wraps instead of pushing the page sideways", () => {
-  assert.match(renderMcpPage(), /\.ax code\{overflow-wrap:anywhere\}/);
-  // each list item's text in one cell (.t), so the row's label, code and words don't split into columns
-  assert.doesNotMatch(renderMcpPage(), /<li><(b|code)>/);
+  const html = withCss(renderMcpPage());
+  assert.match(html, /\.mg code\{[^}]*overflow-wrap:anywhere/);
+  assert.match(html, /\.mg \.code\{[^}]*white-space:pre-wrap;overflow-wrap:anywhere/);
+  assert.match(html, /<code class="code">npx @modelcontextprotocol\/inspector/);
 });

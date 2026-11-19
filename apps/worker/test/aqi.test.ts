@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { computeAqi, aqiBand, subIndex, lifeYearsLost, AQI_BAND_LABEL } from "../src/aqi";
-import { renderConditionsPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
 import { renderStationMarkdown } from "../src/formats";
 import type { Conditions, NormalizedStation } from "../src/types";
 
@@ -134,7 +134,7 @@ test("AQI band labels: CPCB's names, the same on the page and in the Markdown", 
     attribution: "",
     disclaimer: "",
   } as unknown as Conditions;
-  assert.match(renderConditionsPage(c), /AQI<\/span> <b[^>]*>Satisfactory<\/b>/);
+  assert.match(renderConditionsPage(c), /<span class="chip b-satisfactory">[\s\S]*?Satisfactory<\/span>/);
   const s = {
     name: "X",
     city: "Y",

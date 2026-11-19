@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { handleMcp } from "../src/mcp";
 import { TOOLS } from "../src/mcptools";
-import { renderMcpPage } from "../src/page";
+import { renderMcpPage } from "../src/pages/mcp";
 import type { Env } from "../src/index";
 
 const env = {} as Env;
@@ -30,14 +30,14 @@ test("renderMcpPage: the endpoint, setup for Claude and Claude Code, every tool,
   assert.match(html, /https:\/\/mugilu\.live\/mcp/);
   assert.match(html, /claude mcp add --transport http mugilu https:\/\/mugilu\.live\/mcp/);
   for (const tool of TOOLS) assert.ok(html.includes(`<code>${tool.name}</code>`), tool.name);
-  // each tool reads as a whole phrase, not one cut off at a bracket
+  // each tool a card: its name, then its description as a whole phrase, not one cut off at a bracket
   assert.match(
     html,
-    /<code>nearest_stations<\/code>: The nearest real \(measured\) air-quality monitoring stations to a place/,
+    /<code>nearest_stations<\/code><\/p><p>The nearest real \(measured\) air-quality monitoring stations to a place/,
   );
   assert.match(
     html,
-    /<code>national_now<\/code>: The national picture right now: the worst-air, hottest, and dustiest spots in India\./,
+    /<code>national_now<\/code><\/p><p>The national picture right now: the worst-air, hottest, and dustiest spots in India\./,
   );
   assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live\/mcp">/);
   assert.match(html, /"@type":"WebAPI"/);

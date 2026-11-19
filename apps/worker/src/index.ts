@@ -11,21 +11,18 @@ import { findNearest, parseLatLon, STATION_META } from "./near";
 import { renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
 import { lookupConditions, recordUsage, type LookupFormat } from "./lookup";
 import { cacheKey, edgeServe } from "./edge";
-import {
-  renderConditionsPage,
-  renderKioskPage,
-  renderDisplayBuilder,
-  renderStationPage,
-  renderHome,
-  renderAbout,
-  renderTerms,
-  renderPlaces,
-  renderNotFound,
-  renderEmbed,
-  renderWarningsPage,
-  renderMethodology,
-} from "./page";
-import { qrSvg } from "./qr";
+import { renderConditionsPage } from "./pages/place";
+import { renderKioskPage } from "./pages/kiosk";
+import { renderDisplayBuilder } from "./pages/display";
+import { renderStationPage } from "./pages/station";
+import { renderHome } from "./pages/home";
+import { renderAbout } from "./pages/about";
+import { renderTerms } from "./pages/terms";
+import { renderPlaces } from "./pages/places";
+import { renderNotFound } from "./pages/notfound";
+import { renderEmbed } from "./pages/embed";
+import { renderWarningsPage } from "./pages/warnings";
+import { renderMethodology } from "./pages/methodology";
 import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec, mcpJson } from "./meta";
 import { geocodeList } from "./geocode";
@@ -35,7 +32,8 @@ import { collectConditions } from "./collect";
 import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectFires } from "./firms";
 import { collectCyclones } from "./cyclones";
-import { composeMap } from "./indiamap";
+import { loadMap, writeMap } from "./indiamap";
+import { assetResponse } from "./ui/assets";
 import { composeHighlights } from "./highlights";
 import {
   topPlaces,
@@ -106,6 +104,8 @@ function cachedResponse(body: string, contentType: string, clientMaxAge?: number
  *  weather upstream is itself cached 15 min and air/warnings move hourly. */
 const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 const LIVE_EDGE_TTL = 300;
+/** Share images: CPU-heavy renders, kept at the edge as long as their s-maxage (og.ts LIVE_IMAGE). */
+const OG_EDGE_TTL = 3600;
 /** Output fixed by the deployed code (front-door files, static pages, manifest):
  *  short enough that a deploy shows within 15 minutes. */
 const STATIC_EDGE_TTL = 900;
@@ -121,6 +121,14 @@ const BAD_COORDS = "valid coordinates in India are required (mugilu covers India
 
 function badRequest(message: string): Response {
   return Response.json({ error: message }, { status: 400, headers: { "access-control-allow-origin": "*" } });
+}
+
+/** Write the composed map (data/map.json) and log the outcome; never throws. */
+function storeMap(env: Env): Promise<void> {
+  return writeMap(env).then(
+    (r) => console.log(`[map] ${r}`),
+    (e) => console.error(`[map] failed: ${reason(e)}`),
+  );
 }
 
 export default {
@@ -203,8 +211,18 @@ export default {
     // The place directory: every named /c/{slug} page, grouped by state. A crawlable
     // index that gives search engines a path to all ~800 place pages (and readers a
     // way to browse), so they aren't discoverable only through the sitemap.
+    // With the map of India (the squares as a backdrop) and the places under an
+    // official cyclone warning marked, so it follows the live snapshots.
     if (url.pathname === "/places") {
-      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderPlaces(lang), "text/html; charset=utf-8"));
+      return cached(LIVE_EDGE_TTL, async () => {
+        const [{ map, stored }, warnings] = await Promise.all([
+          loadMap(env),
+          loadWarningsSnapshot(env).catch(() => null),
+        ]);
+        const res = cachedResponse(renderPlaces(lang, { map, warnings }), "text/html; charset=utf-8");
+        // A missing stored map or warnings snapshot is passing: serve it, but do not keep it for the TTL.
+        return { res, store: stored && warnings !== null };
+      });
     }
 
     // Crawler + agent front-door files, built from the live route set. Edge-cached:
@@ -232,10 +250,14 @@ export default {
     if (url.pathname === INDEXNOW_PATH)
       return new Response(INDEXNOW_KEY, { headers: { "content-type": "text/plain; charset=utf-8" } });
 
+    if (url.pathname.startsWith("/assets/")) {
+      const asset = assetResponse(url.pathname);
+      if (asset) return asset;
+    }
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
     if (url.pathname === "/apple-touch-icon.png") return cached(IMAGE_EDGE_TTL, () => iconPng());
     // The PWA service worker (sw.ts): no-cache, so an update reaches browsers at once.
-    if (url.pathname === SW_PATH) return serviceWorker();
+    if (url.pathname === SW_PATH) return serviceWorker(req);
     // Opt-in alerts for official warnings (alerts.ts).
     if (url.pathname === "/push/subscribe" && alertsOn(env)) return handleSubscribe(req, env);
     if (url.pathname === "/push/unsubscribe" && alertsOn(env)) return handleUnsubscribe(req, env);
@@ -256,20 +278,27 @@ export default {
     if (url.pathname === "/") {
       const notfound = url.searchParams.get("notfound") ?? undefined;
       const home = async () => {
-        const [hl, popular, map] = await Promise.all([
+        const [hl, popular, { map, stored }, warnings] = await Promise.all([
           composeHighlights(env),
           topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
-          composeMap(env),
+          loadMap(env),
+          loadWarningsSnapshot(env).catch(() => null), // an official cyclone is pinned
         ]);
         // Only show the "India now" hero when there's something in it.
         const highlights =
           hl.highlights.hottest || hl.highlights.dustiest || hl.highlights.worstAir ? hl.highlights : undefined;
         const res = cachedResponse(
-          renderHome(notfound, highlights, { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map }, lang),
+          renderHome(
+            notfound,
+            highlights,
+            { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map, warnings },
+            lang,
+          ),
           "text/html; charset=utf-8",
         );
-        // A missing grid or air snapshot leaves the hero partial: served, not stored.
-        return { res, store: hl.complete };
+        // A missing grid or air snapshot leaves the hero partial, and a map composed here
+        // (none stored yet) is slow: served, not stored.
+        return { res, store: hl.complete && stored };
       };
       // A "not found" echo carries the visitor's own search: built fresh, never stored.
       return notfound === undefined ? cached(LIVE_EDGE_TTL, home) : (await home()).res;
@@ -415,13 +444,13 @@ export default {
         req,
         ctx,
         key,
-        LIVE_EDGE_TTL,
+        ext === "png" ? OG_EDGE_TTL : LIVE_EDGE_TTL,
         async () => {
           // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
           const { conditions, usage } = await lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName });
           // A reading built while an upstream was down is served, never cached.
-          const res = renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
+          const res = await renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
           return { res, usage, store: !conditions.degraded };
         },
         (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
@@ -435,7 +464,7 @@ export default {
       persona: Persona,
       canonicalPath: string,
       placeName?: string,
-    ): Response {
+    ): Response | Promise<Response> {
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
       // with /c/lucknow for the same place. Arbitrary points stay self-canonical.
@@ -460,11 +489,7 @@ export default {
           REFRESH_AFTER_SECONDS,
         );
       if (kiosk) {
-        const qrTarget = persona === "everyone" ? canonical : `${canonical}?as=${persona}`;
-        return cachedResponse(
-          renderKioskPage(conditions, persona, canonical, qrSvg(qrTarget), lang),
-          "text/html; charset=utf-8",
-        );
+        return cachedResponse(renderKioskPage(conditions, persona, canonical, lang), "text/html; charset=utf-8");
       }
       return cachedResponse(
         renderConditionsPage(
@@ -541,7 +566,7 @@ export default {
     if (ogMatch) {
       const [, provider, rawId] = ogMatch;
       // A CPU-heavy render: edge-cached, and query params cannot force a re-render.
-      return cached(LIVE_EDGE_TTL, async () => {
+      return cached(OG_EDGE_TTL, async () => {
         const snap = await loadSnapshot(env);
         if (!snap) return new Response("no snapshot yet", { status: 503 });
         const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
@@ -694,12 +719,11 @@ export default {
     console.log("[scheduled]", event.cron, new Date(event.scheduledTime).toISOString());
     // Hourly refresh.
     if (event.cron === "5 * * * *") {
-      ctx.waitUntil(
-        refreshLatest(env).then(
-          (snap) => console.log(`[refresh] ${snap.station_count} stations`),
-          (e) => console.error(`[refresh] failed: ${reason(e)}`),
-        ),
+      const refreshed = refreshLatest(env).then(
+        (snap) => console.log(`[refresh] ${snap.station_count} stations`),
+        (e) => console.error(`[refresh] failed: ${reason(e)}`),
       );
+      ctx.waitUntil(refreshed);
       ctx.waitUntil(
         collectWarnings(env).then(
           (r) => console.log(`[warnings] ${r.changed ? `${r.count} active, ${r.archived} new` : "no change"}`),
@@ -716,26 +740,26 @@ export default {
             (e) => console.error(`[alerts] failed: ${reason(e)}`),
           ),
         );
-      ctx.waitUntil(
-        collectCyclones(env).then(
-          (r) => console.log(`[cyclones] ${r.systems.length} in the North Indian Ocean`),
-          (e) => console.error(`[cyclones] failed: ${reason(e)}`),
-        ),
+      const cyclones = collectCyclones(env).then(
+        (r) => console.log(`[cyclones] ${r.systems.length} in the North Indian Ocean`),
+        (e) => console.error(`[cyclones] failed: ${reason(e)}`),
       );
-      ctx.waitUntil(
-        collectFires(env).then(
-          (r) => console.log(`[firms] ${r.count} detections (${r.source})`),
-          (e) => console.error(`[firms] failed: ${reason(e)}`),
-        ),
+      const fires = collectFires(env).then(
+        (r) => console.log(`[firms] ${r.count} detections (${r.source})`),
+        (e) => console.error(`[firms] failed: ${reason(e)}`),
       );
+      // The map is composed once from what the three just wrote (each logs its own failure).
+      ctx.waitUntil(Promise.all([refreshed, cyclones, fires]).then(() => storeMap(env)));
     }
     // National conditions grid every 4h, ~6 collects/day fits Open-Meteo's free quota.
     if (event.cron === "5 */4 * * *") {
       ctx.waitUntil(
-        collectConditions(env).then(
-          (s) => console.log(`[collect] ${s.point_count} points`),
-          (e) => console.error(`[collect] failed: ${reason(e)}`),
-        ),
+        collectConditions(env)
+          .then(
+            (s) => console.log(`[collect] ${s.point_count} points`),
+            (e) => console.error(`[collect] failed: ${reason(e)}`),
+          )
+          .then(() => storeMap(env)),
       );
     }
     // Daily hierarchy refresh.

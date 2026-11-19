@@ -4,7 +4,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
 import { FRESHEN_JS } from "../src/freshen";
-import { renderConditionsPage, renderHome, renderKioskPage, renderEmbed } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderHome } from "../src/pages/home";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderEmbed } from "../src/pages/embed";
 import type { Conditions } from "../src/types";
 
 function page(o: { online?: boolean; standalone?: boolean; scrollY?: number } = {}) {
@@ -116,7 +119,7 @@ test("the place page and the home page (where the installed app opens) carry it;
   assert.ok(renderConditionsPage(C).includes(FRESHEN_JS));
   assert.ok(renderHome().includes(FRESHEN_JS));
   assert.ok(
-    !renderKioskPage(C, "everyone", "https://mugilu.live/c/x", "<svg/>").includes(FRESHEN_JS),
+    !renderKioskPage(C, "everyone", "https://mugilu.live/c/x").includes(FRESHEN_JS),
     "the display has its own refresh",
   );
   assert.ok(!renderEmbed(C, "everyone", "https://mugilu.live").includes(FRESHEN_JS));

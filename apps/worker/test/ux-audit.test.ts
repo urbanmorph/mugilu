@@ -2,11 +2,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ambientMeaning, ambientRisk } from "../src/score";
-import { renderConditionsPage, renderDisplayBuilder, renderEmbed, renderWarningsPage } from "../src/page";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderDisplayBuilder } from "../src/pages/display";
+import { renderEmbed } from "../src/pages/embed";
+import { renderWarningsPage } from "../src/pages/warnings";
 import { buildSuggestions } from "../src/suggest";
 import { buildGazIndex, type GazRow } from "../src/gazetteer";
 import type { Conditions, NormalizedStation } from "../src/types";
 import type { WarningsSnapshot } from "../src/sachet";
+import { withCss } from "./helpers/css";
 
 const c = (o: Partial<Conditions> = {}) =>
   ({
@@ -34,16 +38,23 @@ test("2. the page says when it was built; an older air reading is named separate
     source: "cpcb",
   };
   const old = renderConditionsPage(c({ air, air_as_of: "2026-10-25T05:00:00.000Z" } as Partial<Conditions>));
-  const when = old.match(/<p class="when">([\s\S]*?)<\/p>/)![1];
-  assert.match(when, /updated <time data-rel datetime="2026-10-25T07:00:00.000Z"/);
-  assert.match(when, /air reading <time data-rel datetime="2026-10-25T05:00:00.000Z"/);
+  const stampsOf = (html: string) => html.match(/<div class="stamps">([\s\S]*?)<\/div>/)![1];
+  const when = stampsOf(old);
+  assert.match(
+    when,
+    /<span class="k">updated<\/span><span class="v"><time data-rel datetime="2026-10-25T07:00:00.000Z"/,
+  );
+  assert.match(
+    when,
+    /<span class="k">air reading<\/span><span class="v"><time data-rel datetime="2026-10-25T05:00:00.000Z"/,
+  );
   const fresh = renderConditionsPage(c({ air, air_as_of: "2026-10-25T06:50:00.000Z" } as Partial<Conditions>));
-  assert.doesNotMatch(fresh.match(/<p class="when">([\s\S]*?)<\/p>/)![1], /air reading/);
+  assert.doesNotMatch(stampsOf(fresh), /air reading/);
   // Weather taken from the 4-hourly grid (the live call failed) is named the same way.
   const grid = renderConditionsPage(c({ weather_as_of: "2026-10-25T04:05:00.000Z" } as Partial<Conditions>));
   assert.match(
-    grid.match(/<p class="when">([\s\S]*?)<\/p>/)![1],
-    /weather reading <time data-rel datetime="2026-10-25T04:05:00.000Z"/,
+    stampsOf(grid),
+    /<span class="k">weather reading<\/span><span class="v"><time data-rel datetime="2026-10-25T04:05:00.000Z"/,
   );
   assert.match(
     renderConditionsPage(
@@ -90,9 +101,9 @@ test("3. warnings: an honest count, grouped by issuer with a readable name, newe
 });
 
 test("4. the 'for you' tag never breaks inside, and wraps under the label instead of squeezing it", () => {
-  const html = renderConditionsPage(c(), "child");
-  assert.match(html, /\.lyr \.fy\{[^}]*white-space:nowrap/);
-  assert.match(html, /\.lyr dt\{[^}]*flex-wrap:wrap/);
+  const html = withCss(renderConditionsPage(c(), "child"));
+  assert.match(html, /\.mg \.fy\{[^}]*white-space:nowrap/);
+  assert.match(html, /<p class="lab">[^<]*<span class="fy">for you<\/span><\/p>/, "inside the label line, which wraps");
 });
 
 test("5. Kannada and Hindi /c pages carry no English 'Nearby:' or 'all places'", () => {
@@ -132,17 +143,21 @@ test("6. search: a place whose name starts with the query ranks above stations t
   );
 });
 
-test("7. the embed card's cloud mark has its sky colour", () => {
-  assert.match(renderEmbed(c(), "everyone", "https://mugilu.live"), /--sky:/);
+test("7. the embed card carries the brand mark beside the place", () => {
+  assert.match(
+    renderEmbed(c(), "everyone", "https://mugilu.live"),
+    /<span class="ebrand"><svg class="bm"[^>]*>[\s\S]*?<\/svg><span class="wm"[^>]*>mugilu<\/span><\/span>/,
+  );
 });
 
 test("8. the display setup page previews a live display and suggests places as you type", () => {
   const html = renderDisplayBuilder("elderly");
   assert.match(html, /<iframe[^>]+src="\/c\/bengaluru\?kiosk&amp;as=elderly"[^>]+tabindex="-1"/);
-  assert.match(html, /id="dac"/);
-  assert.match(html, /'\?kiosk'/);
+  assert.match(html, /<ul class="ac" role="listbox" id="dq-list"/);
+  assert.match(html, /fetch\('\/suggest\?q='/);
 });
 
 test("9. on laptops the layers flow in two balanced columns (no gaps under short tiles)", () => {
-  assert.match(renderConditionsPage(c()), /\.cx-r \.strata\{[^}]*column-count:2/);
+  assert.match(withCss(renderConditionsPage(c())), /\.mg \.flow\{columns:2/);
+  assert.match(withCss(renderConditionsPage(c())), /\.mg \.flow>\*\{break-inside:avoid/);
 });

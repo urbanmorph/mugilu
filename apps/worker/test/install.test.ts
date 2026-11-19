@@ -3,8 +3,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { INSTALL_JS, webManifest } from "../src/install";
-import { renderHome, renderKioskPage, renderEmbed, renderAbout, renderConditionsPage } from "../src/page";
+import { NEUTRAL } from "../src/palette";
+import { renderHome } from "../src/pages/home";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderEmbed } from "../src/pages/embed";
+import { renderAbout } from "../src/pages/about";
+import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions } from "../src/types";
+import { withCss } from "./helpers/css";
 
 // --- the client script, run against a fake browser -------------------------------
 
@@ -230,7 +236,7 @@ test("pages: install strings follow the page language", () => {
 });
 
 test("kiosk + embed: no install button (kiosk keeps the manifest link)", () => {
-  const kiosk = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>");
+  const kiosk = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi");
   assert.match(kiosk, /rel="manifest"/);
   assert.doesNotMatch(kiosk, /id="install-app"/);
   assert.ok(!kiosk.includes(INSTALL_JS));
@@ -243,7 +249,7 @@ test("kiosk + embed: no install button (kiosk keeps the manifest link)", () => {
 
 /** All declarations of every `selector{...}` rule in the page's CSS, one string per rule. */
 function rules(html: string, selector: string): string[] {
-  const re = new RegExp(`(?:^|[}\\s])${selector.replace(/\./g, "\\.")}\\{([^}]*)\\}`, "g");
+  const re = new RegExp(`(?:^|[}\\s])${selector.replace(/[.[\]]/g, "\\$&")}\\{([^}]*)\\}`, "g");
   return [...html.matchAll(re)].map((m) => m[1]);
 }
 
@@ -254,7 +260,7 @@ test("pages: every page, language, kiosk and embed opt into viewport-fit=cover",
     renderHome(undefined, undefined, undefined, "kn"),
     renderAbout(),
     renderConditionsPage(cond()),
-    renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>"),
+    renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi"),
     renderEmbed(cond(), "everyone", "https://mugilu.live"),
   ];
   for (const html of pages) {
@@ -266,21 +272,31 @@ test("pages: every page, language, kiosk and embed opt into viewport-fit=cover",
 });
 
 test("pages: header clears the top/side insets, the page end clears the bottom one", () => {
-  for (const html of [renderHome(), renderHome(undefined, undefined, undefined, "kn"), renderAbout()]) {
-    const bar = rules(html, ".bar").join(";");
+  // Every page here is on the signage shell: the header is .sh.
+  for (const [html, header] of [
+    [withCss(renderHome()), ".sh"],
+    [withCss(renderHome(undefined, undefined, undefined, "kn")), ".sh"],
+    [withCss(renderAbout()), ".sh"],
+  ]) {
+    const bar = rules(html, header).join(";");
     for (const side of ["top", "left", "right"]) assert.match(bar, new RegExp(`env\\(safe-area-inset-${side}\\)`));
     assert.doesNotMatch(bar, /safe-area-inset-bottom/);
     assert.match(rules(html, "body").join(";"), /padding-bottom:env\(safe-area-inset-bottom\)/);
   }
 });
 
-test("kiosk + embed: the full-bleed frame/card is padded on all four sides, landscape and portrait", () => {
-  const kiosk = rules(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi", "<svg>QR</svg>"), ".k");
-  const embed = rules(renderEmbed(cond(), "everyone", "https://mugilu.live"), "body");
-  assert.equal(kiosk.length, 2, "landscape rule + portrait override");
-  for (const rule of [...kiosk, ...embed.filter((r) => r.includes("padding"))]) {
+test("kiosk + embed: the full-bleed frame/card is padded on all four sides (notches, TV overscan)", () => {
+  const kiosk = rules(withCss(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/delhi")), ".mg .kio");
+  const embed = rules(renderEmbed(cond(), "everyone", "https://mugilu.live"), ".mg[data-embed]");
+  for (const rule of [kiosk.find((r) => r.includes("padding")), embed.find((r) => r.includes("padding"))]) {
+    assert.ok(rule);
     for (const side of ["top", "right", "bottom", "left"])
       assert.match(rule, new RegExp(`env\\(safe-area-inset-${side}\\)`));
   }
-  assert.ok(embed.some((r) => r.includes("safe-area")));
+});
+
+test("the app and browser chrome take the header bar's colour, from the palette", () => {
+  const m = webManifest("en");
+  assert.equal(m.theme_color, NEUTRAL.light.bar);
+  assert.equal(m.background_color, NEUTRAL.light.bg);
 });

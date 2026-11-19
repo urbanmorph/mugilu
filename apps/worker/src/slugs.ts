@@ -140,7 +140,11 @@ export function allSlugPlaces(): SlugPlace[] {
 /** Named places grouped by state (for the /places directory), states A→Z and
  *  places A→Z within each. The directory is the crawlable index that links every
  *  /c/{slug} page, so search engines have a path to them (not sitemap-only). */
+let byStateMemo: { state: string; places: SlugPlace[] }[] | undefined;
 export function slugPlacesByState(): { state: string; places: SlugPlace[] }[] {
+  return (byStateMemo ??= groupByState());
+}
+function groupByState(): { state: string; places: SlugPlace[] }[] {
   const byState = new Map<string, SlugPlace[]>();
   for (const p of SLUGS.values()) {
     const st = p.state ?? "Other";
@@ -167,3 +171,19 @@ export function siblingPlaces(slug: string, limit = 6): SlugPlace[] {
     .sort((a, b) => haversineKm(here.lat, here.lon, a.lat, a.lon) - haversineKm(here.lat, here.lon, b.lat, b.lon))
     .slice(0, limit);
 }
+
+/** The cities offered as a start (the display builder's tiles, home's seed for Popular), in order. */
+export const START_CITIES: SlugPlace[] = [
+  "bengaluru",
+  "delhi",
+  "mumbai",
+  "chennai",
+  "kolkata",
+  "hyderabad",
+  "pune",
+  "ahmedabad",
+  "lucknow",
+  "jaipur",
+  "patna",
+  "guwahati",
+].map((slug) => placeBySlug(slug)!);

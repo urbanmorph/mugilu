@@ -1,18 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { t, lp, langUrl, langCss, LANG_NAME, LANGS, TR } from "../src/i18n";
-import {
-  renderHome,
-  renderNotFound,
-  renderConditionsPage,
-  renderDisplayBuilder,
-  renderWarningsPage,
-  renderKioskPage,
-  renderAbout,
-  renderMethodology,
-  renderTerms,
-} from "../src/page";
+import { t, lp, langUrl, LANG_NAME, LANGS, TR } from "../src/i18n";
+import { renderHome } from "../src/pages/home";
+import { renderNotFound } from "../src/pages/notfound";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderDisplayBuilder } from "../src/pages/display";
+import { renderWarningsPage } from "../src/pages/warnings";
+import { renderKioskPage } from "../src/pages/kiosk";
+import { renderAbout } from "../src/pages/about";
+import { renderMethodology } from "../src/pages/methodology";
+import { renderTerms } from "../src/pages/terms";
 import type { Conditions } from "../src/types";
+import { withCss } from "./helpers/css";
 
 const REAL_DISCLAIMER =
   "Informational only, not for medical, emergency, or safety-critical decisions. For official hazard warnings consult NDMA / IMD.";
@@ -64,14 +63,6 @@ test("langUrl(): inserts the prefix into a canonical URL, home + deep + query", 
   assert.equal(langUrl("https://mugilu.live/go?q=delhi", "kn"), "https://mugilu.live/kn/go?q=delhi");
 });
 
-test("langCss(): none for English; Indic font vars + relaxed line-height otherwise", () => {
-  assert.equal(langCss("en"), "");
-  assert.match(langCss("kn"), /Noto Serif Kannada/);
-  assert.match(langCss("kn"), /Noto Sans Kannada/);
-  assert.match(langCss("hi"), /Noto Serif Devanagari/);
-  assert.match(langCss("hi"), /line-height/);
-});
-
 test("renderHome(en): unchanged English, html lang=en, unprefixed canonical", () => {
   const html = renderHome(undefined, undefined, undefined, "en");
   assert.match(html, /<html lang="en">/);
@@ -85,13 +76,13 @@ test("renderHome(en): unchanged English, html lang=en, unprefixed canonical", ()
 });
 
 test("renderHome(kn): Kannada hero + tagline, html lang=kn, /kn canonical, Indic font", () => {
-  const html = renderHome(undefined, undefined, undefined, "kn");
+  const html = withCss(renderHome(undefined, undefined, undefined, "kn"));
   assert.match(html, /<html lang="kn">/);
   assert.match(html, /ಈಗ ಹೊರಗೆ ಹೇಗಿದೆ\?/); // hero
   assert.match(html, /ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ, ನಿರ್ದೇಶಾಂಕ ಒಂದೊಂದಾಗಿ\./); // tagline
   assert.match(html, /ಜನಪ್ರಿಯ ಸ್ಥಳಗಳು:/); // Popular:
   assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live\/kn">/);
-  assert.match(html, /Noto Serif Kannada/); // font override injected
+  assert.match(html, /font-family:'Anek Kannada';src:url\(\/fonts\/anek-kannada-2\.woff2\)/); // the Kannada face of the signage type
   assert.match(html, /ಎಚ್ಚರಿಕೆಗಳು<\/span>/); // covers row localized (warnings)
   assert.match(html, /placeholder="ಭಾರತದಲ್ಲಿ ಒಂದು ಸ್ಥಳ/); // localized, no leak
   assert.doesNotMatch(html, /\(placeholder\)/); // the disambiguation key never leaks
@@ -105,7 +96,7 @@ test("renderHome(kn): highlights hero localized; place + state names kept Englis
   } as unknown as Parameters<typeof renderHome>[1];
   const html = renderHome(undefined, hl, undefined, "kn");
   assert.match(html, /ಈಗ ಭಾರತದಾದ್ಯಂತ/); // "India now" heading
-  assert.match(html, /ಅತ್ಯಂತ ಬಿಸಿಲು: <b>Sitapur, Uttar Pradesh<\/b>/); // label localized, place English
+  assert.match(html, /ಅತ್ಯಂತ ಬಿಸಿಲು:<\/span> <b class="t-value">Sitapur, Uttar Pradesh<\/b>/); // label localized, place English
   assert.match(html, /41° ಅನಿಸುತ್ತದೆ/); // "feels" (anisuttade), after the number
   assert.match(html, /ಅಪಾಯಕಾರಿ ಆರ್ದ್ರತೆ ಮತ್ತು ಬಿಸಿಲು/); // heat phrase
   assert.match(html, /ತೀವ್ರ ಧೂಳು/); // dust phrase
@@ -121,12 +112,12 @@ test("renderHome(hi): Hindi hero, html lang=hi", () => {
 
 test("language switcher: current language bold, the others link to the same page", () => {
   const kn = renderHome(undefined, undefined, undefined, "kn");
-  assert.match(kn, /class="langsw"/);
+  assert.match(kn, /<nav class="langs" aria-label="[^"]+">/);
   assert.match(kn, /<b>ಕನ್ನಡ<\/b>/); // current is not a link
   // switcher links are relative (host-agnostic), not absolute prod URLs
-  assert.match(kn, /href="\/" hreflang="en">English<\/a>/);
-  assert.match(kn, /href="\/hi" hreflang="hi">हिंदी<\/a>/);
-  assert.doesNotMatch(kn, /langsw[\s\S]*href="https:\/\/mugilu/);
+  assert.match(kn, /href="\/" lang="en" hreflang="en">English<\/a>/);
+  assert.match(kn, /href="\/hi" lang="hi" hreflang="hi">हिंदी<\/a>/);
+  assert.doesNotMatch(kn, /class="langs"[^]*?href="https:\/\/mugilu[^]*?<\/nav>/);
 });
 
 test("footer nav: internal links carry the lang prefix; labels localized", () => {
@@ -185,7 +176,7 @@ test("conditions /c (en): unchanged — English format words, unprefixed links",
 
 test("display builder (kn): tiles + form + button carry the prefix / localise", () => {
   const html = renderDisplayBuilder("everyone", "kn");
-  assert.match(html, /class="dtile" href="\/kn\/c\/[a-z]+\?kiosk"/); // tile prefixed
+  assert.match(html, /<a href="\/kn\/c\/[a-z]+\?kiosk" data-slug=/); // tile prefixed
   assert.match(html, /action="\/kn\/go"/); // search form prefixed
   assert.match(html, /ಪ್ರದರ್ಶನವನ್ನು ತೆರೆಯಿರಿ/); // "Open display" localised
 });
@@ -197,19 +188,19 @@ test("warnings (kn): heading + empty state localised", () => {
 });
 
 test("kiosk (?kiosk) is chromeless: no header bar, footer nav or language switcher bleeds through", () => {
-  const html = renderKioskPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "<svg></svg>", "kn");
-  assert.match(html, /<html lang="kn">/); // still localized + Indic fonts
-  assert.match(html, /Noto Serif Kannada/);
-  assert.doesNotMatch(html, /class="langsw"/); // no language switcher on a wall display
-  assert.doesNotMatch(html, /class="foot"/); // no footer nav
-  assert.doesNotMatch(html, /class="bar"/); // no header bar
+  const html = withCss(renderKioskPage(cond(), "everyone", "https://mugilu.live/c/28.61,77.21", "kn"));
+  assert.match(html, /<html lang="kn" data-theme="dark">/); // still localized + Indic fonts, always dark
+  assert.match(html, /font-family:'Anek Kannada'/);
+  assert.doesNotMatch(html, /class="langs"|class="flangs"/); // no language switcher on a wall display
+  assert.doesNotMatch(html, /<footer class="sf"/); // no footer nav
+  assert.doesNotMatch(html, /<header class="sh"/); // no header bar
 });
 
 test("renderAbout(kn): prose localized, proper nouns + brand Latin, gloss present; en unchanged", () => {
   const kn = renderAbout("kn");
   assert.match(kn, /<html lang="kn">/);
   assert.match(kn, /ಜನರಿಗೆ ಸಂಪೂರ್ಣ ಆಕಾಶದ ನೋಟ/); // lead
-  assert.match(kn, /<span>mugilu ಏಕೆ<\/span>/); // heading, brand Latin
+  assert.match(kn, />mugilu ಏಕೆ<\/h2>/); // heading, brand Latin
   assert.match(kn, /ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಇರುವ ಕನ್ನಡ ಪದ/); // the meaning gloss
   assert.match(kn, /ಡೆವಲಪರ್‌ಗಳಿಗೆ/); // developer label (tech, not property)
   assert.match(kn, /CPCB/); // proper nouns stay Latin
@@ -258,7 +249,7 @@ test("renderTerms(kn): prose localized, source names + brand Latin, links preser
   assert.match(kn, /← mugilu ಗೆ ಹಿಂತಿರುಗಿ/); // back-link text localized
   // English is byte-for-byte the pre-i18n page: inline markup + entity + links intact
   const en = renderTerms("en");
-  assert.match(en, /<h1 class="ahero">Terms &amp; attribution<\/h1>/);
+  assert.match(en, /<h1 class="t-title">Terms &amp; attribution<\/h1>/);
   assert.match(en, /<b>code is MIT<\/b>/);
   assert.match(en, /A digital commons by <a href="https:\/\/urbanmorph\.com">urbanmorph<\/a>, alongside/);
 });
@@ -300,19 +291,19 @@ test("SEO: /c conditions description localized (place verbatim); en byte-identic
 });
 
 test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {
-  const about = renderAbout("hi");
+  const about = withCss(renderAbout("hi"));
   assert.match(about, /<html lang="hi">/);
-  assert.match(about, /Noto (Serif|Sans) Devanagari/); // Indic font override
+  assert.match(about, /font-family:'Anek Devanagari';src:url\(\/fonts\/anek-devanagari-2\.woff2\)/); // the Devanagari face of the signage type
   assert.match(about, /पूरे आकाश/); // lead localized (Sarvam + restore)
   assert.match(about, /mugilu/); // brand stays Latin, not मुगिलु
   assert.doesNotMatch(about, /मुगिल|मगुल|भारतल|सी\.पी\.सी/); // no residual transliteration
-  const meth = renderMethodology("hi");
+  const meth = withCss(renderMethodology("hi"));
   assert.match(meth, /पारदर्शी व्यवस्था/); // "glass box" (hand-constructed, no Sarvam)
   assert.match(meth, /CPCB/); // acronyms Latin
   assert.match(meth, /301\+/); // numbers stay Latin
   assert.match(meth, /href="\/hi\/terms"/); // {terms} slot filled, lang-prefixed
   assert.match(meth, /score\.ts<\/a>/); // {score} slot filled
-  const terms = renderTerms("hi");
+  const terms = withCss(renderTerms("hi"));
   assert.match(terms, /शर्तें और श्रेय/); // H1 localized
   assert.match(terms, /Cloudflare Web Analytics/); // brand Latin in privacy note
   assert.match(terms, /ब्रोकर के माध्यम से/); // source-detail line localized (hi)
@@ -368,7 +359,7 @@ test("every translation keeps its placeholders, its script, the Latin names and 
 
 test("footer links the MCP page in every language; build on it stays for the data formats", () => {
   const en = renderHome(undefined, undefined, undefined, "en");
-  assert.match(en, /<footer class="foot">[\s\S]*<a href="\/mcp">MCP server<\/a>/);
+  assert.match(en, /<footer class="sf">[\s\S]*<a href="\/mcp">MCP server<\/a>/);
   assert.match(en, /<a href="\/about#build">build on it<\/a>/);
   const hi = renderHome(undefined, undefined, undefined, "hi");
   assert.match(hi, /<a href="\/hi\/mcp">MCP सर्वर<\/a>/);

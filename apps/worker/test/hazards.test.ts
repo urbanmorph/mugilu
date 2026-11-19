@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { HAZARDS, HAZARDS_SHORT, SITE_DESC } from "../src/hazards";
 import { llmsTxt, mcpJson, openApiSpec } from "../src/meta";
-import { renderAbout, renderConditionsPage, renderHome, renderPlaces } from "../src/page";
+import { renderAbout } from "../src/pages/about";
+import { renderConditionsPage } from "../src/pages/place";
+import { renderHome } from "../src/pages/home";
+import { renderPlaces } from "../src/pages/places";
 import { t } from "../src/i18n";
 import { webManifest } from "../src/install";
 import type { Conditions } from "../src/types";
@@ -65,7 +68,7 @@ test("/places: the title, description and lede carry the shared list, in each la
   const en = renderPlaces("en");
   assert.ok(title(en).includes(HAZARDS_SHORT), title(en));
   assert.ok(desc(en).includes(HAZARDS), desc(en));
-  assert.ok(en.match(/<p class="lede">([^<]*)</)![1].includes(HAZARDS));
+  assert.ok(en.match(/<p class="t-lead">([^<]*)</)![1].includes(HAZARDS));
   for (const [lang, list, short] of [
     ["hi", "वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं, UV और आधिकारिक चेतावनियाँ", "वायु, गर्मी, ठंड, कोहरा और चेतावनियाँ"],
     ["kn", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ, UV ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು", "ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಂಜು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು"],
@@ -73,7 +76,7 @@ test("/places: the title, description and lede carry the shared list, in each la
     const html = renderPlaces(lang);
     assert.ok(title(html).includes(short), title(html));
     assert.ok(desc(html).includes(list), desc(html));
-    assert.ok(html.match(/<p class="lede">([^<]*)</)![1].includes(list));
+    assert.ok(html.match(/<p class="t-lead">([^<]*)</)![1].includes(list));
   }
 });
 
