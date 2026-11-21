@@ -97,7 +97,7 @@ const DAY_RANGE = 2;
 const WINDOW_MS = 24 * 3600_000;
 
 /** A detection's time: acq is "YYYY-MM-DD HHMM" in UTC (HHMM may lose its leading zeros). */
-const acqTime = (acq: string) => {
+export const acqTime = (acq: string) => {
   const [date, hhmm = "0"] = acq.split(" ");
   const t = hhmm.padStart(4, "0");
   return Date.parse(`${date}T${t.slice(0, 2)}:${t.slice(2)}:00Z`);

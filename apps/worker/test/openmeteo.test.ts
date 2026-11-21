@@ -136,3 +136,74 @@ test("getOpenMeteoBulk: maps bulk forecast + air-quality per coordinate, in orde
     globalThis.fetch = realFetch;
   }
 });
+
+// The day just ended, on the same bulk calls: Open-Meteo's daily figures for yesterday (past_days=1)
+// and the day's highest hourly dust, so the history panel has a daily record of every modelled hazard.
+test("getOpenMeteoBulk pastDay: yesterday's daily figures and its highest dust ride on the same two calls", async () => {
+  const realFetch = globalThis.fetch;
+  const urls: string[] = [];
+  const day = {
+    time: ["2026-11-20", "2026-11-21"],
+    apparent_temperature_max: [25.4, 24.8],
+    apparent_temperature_min: [14, 15],
+    precipitation_sum: [3.2, 0],
+    wind_gusts_10m_max: [41.8, 15.8],
+    uv_index_max: [4.2, 4.15],
+    visibility_min: [380, 5560],
+  };
+  const hours = (d: string) => Array.from({ length: 24 }, (_, h) => `${d}T${String(h).padStart(2, "0")}:00`);
+  const dust = {
+    time: [...hours("2026-11-20"), ...hours("2026-11-21")],
+    dust: [...Array(24).fill(10), 600, ...Array(23).fill(1)],
+  };
+  dust.dust[5] = 95;
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    const body = String(input).includes("air-quality")
+      ? [{ ...AQ_BULK[0], hourly: dust }]
+      : [{ ...FC_BULK[0], daily: day }];
+    return new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
+  }) as typeof fetch;
+  try {
+    const [out] = await getOpenMeteoBulk([{ lat: 28.61, lon: 77.21 }], 0, { pastDay: true });
+    assert.equal(out.apparent_c, 28, "the current reading is unchanged");
+    assert.deepEqual(out.day, {
+      date: "2026-11-20",
+      feels_max: 25.4,
+      feels_min: 14,
+      rain_mm: 3.2,
+      gust_kmh: 41.8,
+      uv_max: 4.2,
+      vis_min_m: 380,
+      dust_max: 95,
+    });
+    const [fc, aq] = [urls.find((u) => !u.includes("air-quality"))!, urls.find((u) => u.includes("air-quality"))!];
+    for (const u of [fc, aq]) assert.match(u, /past_days=1&forecast_days=1/);
+    assert.match(
+      fc,
+      /daily=apparent_temperature_max,apparent_temperature_min,precipitation_sum,wind_gusts_10m_max,uv_index_max,visibility_min/,
+    );
+    assert.match(aq, /hourly=dust/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("getOpenMeteoBulk: without pastDay, no daily figures and no extra variables are asked for", async () => {
+  const realFetch = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    return new Response(JSON.stringify(String(input).includes("air-quality") ? AQ_BULK : FC_BULK));
+  }) as typeof fetch;
+  try {
+    const out = await getOpenMeteoBulk([
+      { lat: 12.97, lon: 77.59 },
+      { lat: 28.61, lon: 77.21 },
+    ]);
+    assert.equal(out[0].day, undefined);
+    assert.ok(urls.every((u) => !u.includes("past_days") && !u.includes("daily=")));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

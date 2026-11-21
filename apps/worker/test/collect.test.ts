@@ -30,7 +30,10 @@ test("conditionsArchiveKey: the snapshot's UTC date and hour", () => {
 function fakeEnv() {
   const puts = new Map<string, { body: unknown; meta: unknown }>();
   const env = {
-    OAQ_R2: { put: async (k: string, body: unknown, meta: unknown) => void puts.set(k, { body, meta }) },
+    OAQ_R2: {
+      put: async (k: string, body: unknown, meta: unknown) => void puts.set(k, { body, meta }),
+      head: async () => null,
+    },
   } as unknown as Env;
   return { env, puts };
 }
@@ -73,5 +76,103 @@ test("collectConditions: a failed run writes nothing, to the live file or the ar
     assert.equal(puts.size, 0);
   } finally {
     restore();
+  }
+});
+
+// The day just ended, once: the first run of an India day also asks Open-Meteo for yesterday's daily
+// figures (on the same calls) and keeps them as archive/wx-daily/{date}.json.gz, by grid point id.
+import { WX_DAILY_PREFIX } from "../src/collect";
+
+function fakeEnvWith(have: string[] = []) {
+  const { env, puts } = fakeEnv();
+  (env.OAQ_R2 as unknown as { head: (k: string) => Promise<unknown> }).head = async (k: string) =>
+    have.includes(k) || puts.has(k) ? {} : null;
+  return { env, puts };
+}
+
+function fakeOpenMeteoDay(date: string) {
+  const real = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    urls.push(url);
+    const n = new URL(url).searchParams.get("latitude")!.split(",").length;
+    const past = url.includes("past_days=1");
+    const one = url.includes("air-quality")
+      ? {
+          current: { uv_index: 5, dust: 10 },
+          ...(past ? { hourly: { time: [`${date}T03:00`, `${date}T04:00`], dust: [40, 90] } } : {}),
+        }
+      : {
+          current: { temperature_2m: 30 },
+          hourly: { precipitation: [0] },
+          ...(past
+            ? {
+                daily: {
+                  time: [date, "next"],
+                  apparent_temperature_max: [33, 0],
+                  apparent_temperature_min: [12, 0],
+                  precipitation_sum: [0, 0],
+                  wind_gusts_10m_max: [20, 0],
+                  uv_index_max: [6, 0],
+                  visibility_min: [900, 0],
+                },
+              }
+            : {}),
+        };
+    return Response.json(Array.from({ length: n }, () => one));
+  }) as typeof fetch;
+  return { urls, restore: () => (globalThis.fetch = real) };
+}
+
+// 21 Nov, 01:35 in India: the 20th ended 95 minutes ago.
+const AFTER_MIDNIGHT = Date.parse("2026-11-20T20:05:00Z");
+
+test("collectConditions: the first run of an India day keeps yesterday's figures for every grid point", async () => {
+  const om = fakeOpenMeteoDay("2026-11-20");
+  try {
+    const { env, puts } = fakeEnvWith();
+    const snap = await collectConditions(env, 0, AFTER_MIDNIGHT);
+    assert.ok(om.urls.every((u) => u.includes("past_days=1")));
+    const kept = puts.get(`${WX_DAILY_PREFIX}2026-11-20.json.gz`)!;
+    assert.deepEqual(kept.meta, { httpMetadata: { contentType: "application/json", contentEncoding: "gzip" } });
+    const d = JSON.parse(gunzipSync(Buffer.from(kept.body as ArrayBuffer)).toString());
+    assert.equal(d.date, "2026-11-20");
+    const id = snap.points[0].id;
+    assert.deepEqual(d.points[id], {
+      feels_max: 33,
+      feels_min: 12,
+      rain_mm: 0,
+      gust_kmh: 20,
+      uv_max: 6,
+      vis_min_m: 900,
+      dust_max: 90,
+    });
+    assert.equal(Object.keys(d.points).length, snap.point_count);
+    assert.equal((snap.points[0].wx as { day?: unknown }).day, undefined, "the live grid stays as it was");
+  } finally {
+    om.restore();
+  }
+});
+
+test("collectConditions: later runs that day ask for nothing more", async () => {
+  const om = fakeOpenMeteoDay("2026-11-20");
+  try {
+    const { env, puts } = fakeEnvWith([`${WX_DAILY_PREFIX}2026-11-20.json.gz`]);
+    await collectConditions(env, 0, AFTER_MIDNIGHT + 4 * 3600_000);
+    assert.ok(om.urls.every((u) => !u.includes("past_days")));
+    assert.ok(![...puts.keys()].some((k) => k.startsWith(WX_DAILY_PREFIX)));
+  } finally {
+    om.restore();
+  }
+});
+
+test("collectConditions: figures for another day (Open-Meteo's day not yet turned) are not kept as yesterday", async () => {
+  const om = fakeOpenMeteoDay("2026-11-19");
+  try {
+    const { env, puts } = fakeEnvWith();
+    await collectConditions(env, 0, AFTER_MIDNIGHT);
+    assert.ok(![...puts.keys()].some((k) => k.startsWith(WX_DAILY_PREFIX)));
+  } finally {
+    om.restore();
   }
 });

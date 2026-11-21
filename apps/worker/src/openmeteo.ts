@@ -51,8 +51,8 @@ export function wbgt(t?: number, rh?: number): number | undefined {
 
 interface OmResponse {
   current?: Record<string, unknown>;
-  daily?: { time?: string[]; temperature_2m_max?: unknown[] };
-  hourly?: { precipitation?: unknown[] };
+  daily?: { time?: string[] } & Record<string, unknown[] | undefined>;
+  hourly?: { time?: string[]; precipitation?: unknown[]; dust?: unknown[] };
   elevation?: number;
 }
 
@@ -169,6 +169,52 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
 
 const BULK_BATCH = 100;
 
+/** A whole local day's modelled figures at a point: the history panel's record of each
+ *  modelled hazard (heat, cold, rain, wind, fog, UV, dust). */
+export interface WxDay {
+  /** The local (India) date, YYYY-MM-DD. */
+  date: string;
+  feels_max?: number;
+  feels_min?: number;
+  rain_mm?: number;
+  gust_kmh?: number;
+  uv_max?: number;
+  vis_min_m?: number;
+  /** The day's highest hourly dust (µg/m³). */
+  dust_max?: number;
+}
+
+/** Open-Meteo's daily variables for a WxDay, in the order of its fields. */
+const DAILY_VARS = [
+  ["feels_max", "apparent_temperature_max"],
+  ["feels_min", "apparent_temperature_min"],
+  ["rain_mm", "precipitation_sum"],
+  ["gust_kmh", "wind_gusts_10m_max"],
+  ["uv_max", "uv_index_max"],
+  ["vis_min_m", "visibility_min"],
+] as const;
+// Yesterday and today in the daily arrays (index 0 is the day just ended); the hourly
+// forecast keeps its own length (forecast_hours), so the 24-hour rain sum is unchanged.
+const PAST_DAY = "&past_days=1&forecast_days=1";
+
+/** The first (just ended) day of a pastDay response, with that day's highest hourly dust. */
+function dayOf(fc: OmResponse | undefined, aq: OmResponse | undefined): WxDay | undefined {
+  const date = fc?.daily?.time?.[0];
+  if (!date) return undefined;
+  const out: WxDay = { date };
+  for (const [k, v] of DAILY_VARS) {
+    const n = num(fc?.daily?.[v]?.[0]);
+    if (n != null) out[k] = n;
+  }
+  const times = aq?.hourly?.time ?? [];
+  const dust = (aq?.hourly?.dust ?? [])
+    .filter((_, i) => times[i]?.startsWith(date))
+    .map(num)
+    .filter((n): n is number => n != null);
+  if (dust.length) out.dust_max = Math.max(...dust);
+  return out;
+}
+
 async function fetchBulk(url: string): Promise<OmResponse[]> {
   // Cron-only, but still bounded so one stuck batch can't eat the whole run.
   const res = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true }, signal: AbortSignal.timeout(20_000) });
@@ -183,22 +229,30 @@ async function fetchBulk(url: string): Promise<OmResponse[]> {
  * Open-Meteo accepts ~100 coordinates per call and returns results in input
  * order, so we batch and stitch. Forecast + air-quality are fetched per batch
  * with allSettled, so one flaky endpoint only nulls those fields.
+ * `pastDay` also asks, on the same two calls, for the day just ended (`day`): six daily
+ * variables and the hourly dust, about a fifth more of Open-Meteo's quota for that run.
  */
-export async function getOpenMeteoBulk(coords: Array<{ lat: number; lon: number }>, delayMs = 0): Promise<Wx[]> {
-  const out: Wx[] = new Array(coords.length);
+export async function getOpenMeteoBulk(
+  coords: Array<{ lat: number; lon: number }>,
+  delayMs = 0,
+  { pastDay = false }: { pastDay?: boolean } = {},
+): Promise<(Wx & { day?: WxDay })[]> {
+  const out: (Wx & { day?: WxDay })[] = new Array(coords.length);
   for (let i = 0; i < coords.length; i += BULK_BATCH) {
     if (i > 0 && delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
     const chunk = coords.slice(i, i + BULK_BATCH);
     const lats = chunk.map((c) => c.lat.toFixed(3)).join(",");
     const lons = chunk.map((c) => c.lon.toFixed(3)).join(",");
     const common = `latitude=${lats}&longitude=${lons}&timezone=auto`;
+    const past = pastDay ? PAST_DAY : "";
     const [fc, aq] = await Promise.allSettled([
       fetchBulk(
         `${FORECAST_URL}?${common}&current=` +
           "temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation" +
-          "&hourly=precipitation&forecast_hours=24",
+          "&hourly=precipitation&forecast_hours=24" +
+          (pastDay ? `${past}&daily=${DAILY_VARS.map(([, v]) => v).join(",")}` : ""),
       ),
-      fetchBulk(`${AIR_QUALITY_URL}?${common}&current=uv_index,dust`),
+      fetchBulk(`${AIR_QUALITY_URL}?${common}&current=uv_index,dust${pastDay ? `${past}&hourly=dust` : ""}`),
     ]);
     const fcArr = fc.status === "fulfilled" ? fc.value : [];
     const aqArr = aq.status === "fulfilled" ? aq.value : [];
@@ -215,6 +269,7 @@ export async function getOpenMeteoBulk(coords: Array<{ lat: number; lon: number 
         rain_24h_mm: next24 ? +next24.reduce((s: number, v) => s + (num(v) ?? 0), 0).toFixed(1) : undefined,
         uv: num(a.uv_index),
         dust_ug_m3: num(a.dust),
+        ...(pastDay ? { day: dayOf(fcArr[j], aqArr[j]) } : {}),
       };
     }
   }
