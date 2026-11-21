@@ -94,6 +94,7 @@ test("summarizePlaces: no fire record that day is no data, not zero fires", () =
 
 test("trendKey: one file per state", () => {
   assert.equal(trendKey(DELHI), "trends/30/delhi.json");
+  assert.equal(trendKey(DELHI, 90), "trends/90/delhi.json");
   assert.equal(trendKey({ ...PUNE, state: "Jammu and Kashmir" }), "trends/30/jammu-and-kashmir.json");
   assert.equal(trendKey({ ...PUNE, state: undefined }), "trends/30/other.json");
 });
@@ -125,7 +126,13 @@ test("collectPlaceDaily: joins each ready day, newest first, then the 30-day fil
     "archive/firms/2026-11-12.json",
     JSON.stringify(firms("2026-11-12", [fire(28.7, 77.3, "2026-11-12 0800"), fire(28.7, 77.3, "2026-11-12 1900")])),
   );
-  const r = await collectPlaceDaily(env, { now: NOW, start: "2026-11-11", places: [DELHI, PUNE], grid: GRID });
+  const r = await collectPlaceDaily(env, {
+    now: NOW,
+    start: "2026-11-11",
+    indiaStart: "2026-11-11",
+    places: [DELHI, PUNE],
+    grid: GRID,
+  });
   assert.deepEqual(r.written, ["2026-11-12", "2026-11-11"]);
   const t = await loadPlaceTrend(env, DELHI);
   assert.ok(t);
@@ -146,7 +153,13 @@ test("collectPlaceDaily: a day waits for its air and weather, until it is two da
   await seed(env, "2026-11-12", { wx: false }); // the weather comes with the next 4-hourly run
   // The 11th has nothing yet and ended 26 hours ago: it waits too.
   await seed(env, "2026-11-10", { wx: false }); // ended 50 hours ago, its weather never came
-  const r = await collectPlaceDaily(env, { now: NOW, start: "2026-11-10", places: [DELHI], grid: GRID });
+  const r = await collectPlaceDaily(env, {
+    now: NOW,
+    start: "2026-11-10",
+    indiaStart: "2026-11-10",
+    places: [DELHI],
+    grid: GRID,
+  });
   assert.deepEqual(r.written, ["2026-11-10"], "built with what there is");
   assert.equal(r.waiting, 2);
   assert.ok(!(await env.OAQ_R2.head(`${PLACE_DAILY_PREFIX}2026-11-11.json.gz`)));
@@ -158,14 +171,26 @@ test("collectPlaceDaily: a day waits for its air and weather, until it is two da
 test("collectPlaceDaily: a rerun with nothing new reads and writes nothing", async () => {
   const { env } = testWorker();
   await seed(env, "2026-11-12");
-  await collectPlaceDaily(env, { now: NOW, start: "2026-11-12", places: [DELHI], grid: GRID });
+  await collectPlaceDaily(env, {
+    now: NOW,
+    start: "2026-11-12",
+    indiaStart: "2026-11-12",
+    places: [DELHI],
+    grid: GRID,
+  });
   const puts: string[] = [];
   const put = env.OAQ_R2.put.bind(env.OAQ_R2);
   env.OAQ_R2.put = (async (k: string, ...rest: unknown[]) => {
     puts.push(k);
     return (put as (...a: unknown[]) => unknown)(k, ...rest);
   }) as typeof env.OAQ_R2.put;
-  const r = await collectPlaceDaily(env, { now: NOW, start: "2026-11-12", places: [DELHI], grid: GRID });
+  const r = await collectPlaceDaily(env, {
+    now: NOW,
+    start: "2026-11-12",
+    indiaStart: "2026-11-12",
+    places: [DELHI],
+    grid: GRID,
+  });
   assert.deepEqual(r.written, []);
   assert.deepEqual(puts, []);
 });
@@ -174,7 +199,14 @@ test("collectPlaceDaily: out of time it stops between days, and the state files 
   const { env } = testWorker();
   await seed(env, "2026-11-12");
   await seed(env, "2026-11-11");
-  const r = await collectPlaceDaily(env, { now: NOW, start: "2026-11-11", places: [DELHI], grid: GRID, maxDays: 1 });
+  const r = await collectPlaceDaily(env, {
+    now: NOW,
+    start: "2026-11-11",
+    indiaStart: "2026-11-11",
+    places: [DELHI],
+    grid: GRID,
+    maxDays: 1,
+  });
   assert.deepEqual(r.written, ["2026-11-12"]);
   assert.equal(r.pending, 1);
   assert.equal((await loadPlaceTrend(env, DELHI))?.air.at(-1), 300);
@@ -188,4 +220,45 @@ test("loadPlaceTrend: no file yet is null", async () => {
 test("the place-daily file keeps no empty places", () => {
   const d: PlaceDailyFile = summarizePlaces("2026-11-10", [PUNE], null, null, null, GRID);
   assert.deepEqual(d.places, {});
+});
+
+// ── India's day, for the home page ──────────────────────────────────────────────────
+import { INDIA_DAILY_PREFIX, loadIndiaTrend, summarizeIndia } from "../src/placedaily";
+
+const city = (aqi_max: number) => ({ name: "c", state: "s", stations: 3, hours: 24, aqi_max, aqi_mean: aqi_max - 40 });
+
+test("summarizeIndia: cities by their worst hour (poor; very poor or severe), fires across India", () => {
+  const air = { ...AIR, cities: { a: city(150), b: city(201), c: city(300), d: city(301), e: city(480) } };
+  assert.deepEqual(summarizeIndia("2026-11-10", air, [fire(28.9, 77.5, "x"), fire(10, 77, "x")]), {
+    date: "2026-11-10",
+    cities: 5,
+    poor: 2,
+    very: 2,
+    fires: 2,
+  });
+  assert.equal(summarizeIndia("2026-11-10", null, null).fires, null, "no fire record is no data");
+});
+
+test("collectPlaceDaily: India's days go back further than the places', and its 90 days follow", async () => {
+  const { env } = testWorker();
+  await seed(env, "2026-11-12");
+  await seed(env, "2026-11-11", { wx: false }); // the place day waits for its weather; India's does not
+  const r = await collectPlaceDaily(env, {
+    now: NOW,
+    start: "2026-11-12",
+    indiaStart: "2026-11-11",
+    places: [DELHI],
+    grid: GRID,
+  });
+  assert.deepEqual(r.written, ["2026-11-12", "2026-11-11"]);
+  assert.ok(await env.OAQ_R2.head(`${INDIA_DAILY_PREFIX}2026-11-11.json`));
+  assert.ok(!(await env.OAQ_R2.head(`${PLACE_DAILY_PREFIX}2026-11-11.json.gz`)));
+  const t = await loadIndiaTrend(env);
+  assert.equal(t?.days.length, 90);
+  assert.equal(t?.days.at(-1), "2026-11-12");
+  assert.equal(t?.cities.at(-1), null, "a day with no city reading is no data");
+  assert.equal(t?.cities[0], null);
+  const ninety = await loadPlaceTrend(env, DELHI, 90);
+  assert.equal(ninety?.days.length, 90);
+  assert.equal(ninety?.air.at(-1), 300);
 });

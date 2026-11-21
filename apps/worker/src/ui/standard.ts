@@ -479,7 +479,18 @@ const HISTORY_CSS = `
 @media (max-width:599.98px){.mg .tchart .tlab,.mg .tchart .ttick{font-size:19px}.mg .tchart .ttick.mid,.mg .tchart .tlab .w{display:none}}
 .mg .tsplit{display:grid;gap:var(--sp4) var(--sp6);align-items:start}
 .mg .tsplit>div{display:grid;gap:var(--sp2);min-width:0}
-@media (min-width:1000px){.mg .tsplit{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}}
+@media (min-width:1000px){.mg .tsplit{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}.mg .tsplit.even{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mg .tchart .tbar.ink{fill:var(--ink)}
+.mg .t-lead+.tsplit,.mg .tsplit+.t-meta{margin-top:var(--sp3)}
+.mg .tgrid{display:grid;gap:var(--sp4);align-items:start}
+@media (min-width:1000px){.mg .tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mg .tsrc{gap:var(--sp2);flex-wrap:wrap}
+.mg .kind{font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:var(--t-xs);padding:2px var(--sp1);border:1px solid var(--line);border-radius:var(--r)}
+.mg .tdays summary{cursor:pointer;font-weight:600;min-height:var(--hit);display:flex;align-items:center}
+.mg .tkey{display:flex;flex-wrap:wrap;gap:var(--sp1) var(--sp4);margin:0;font-size:var(--t-sm)}
+.mg .tkey span{display:inline-flex;gap:6px;align-items:center}
+.mg .tkey i{display:inline-block;width:14px;height:14px;border-radius:2px;background:var(--lv);flex:none}
+.mg .tkey .shape{width:14px;height:14px;flex:none}
 .mg .tlist{display:grid;gap:var(--sp2);margin:0;padding:0;list-style:none}
 .mg .tlist li{display:flex;gap:var(--sp2);align-items:flex-start}
 .mg .tlist .shape{width:16px;height:16px;flex:none;margin-top:.2em}

@@ -1,5 +1,5 @@
 import { collectAirDaily } from "./airdaily";
-import { collectPlaceDaily, loadPlaceTrend, type PlaceTrend } from "./placedaily";
+import { collectPlaceDaily, loadIndiaTrend, loadPlaceTrend, type PlaceTrend } from "./placedaily";
 import { refreshLatest } from "./refresh";
 import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
@@ -19,6 +19,7 @@ import { renderKioskPage } from "./pages/kiosk";
 import { renderDisplayBuilder } from "./pages/display";
 import { renderStationPage } from "./pages/station";
 import { renderHome } from "./pages/home";
+import { renderTrendsPage, sliceTrend, spanOf } from "./pages/trends";
 import { renderAbout } from "./pages/about";
 import { renderTerms } from "./pages/terms";
 import { renderPlaces } from "./pages/places";
@@ -108,6 +109,8 @@ function cachedResponse(body: string, contentType: string, clientMaxAge?: number
  *  weather upstream is itself cached 15 min and air/warnings move hourly. */
 const SITE_URL = "https://mugilu.live"; // TODO: wire via env
 const LIVE_EDGE_TTL = 300;
+/** The trend pages change once a night. */
+const TRENDS_EDGE_TTL = 1800;
 /** Share images: CPU-heavy renders, kept at the edge as long as their s-maxage (og.ts LIVE_IMAGE). */
 const OG_EDGE_TTL = 3600;
 /** Output fixed by the deployed code (front-door files, static pages, manifest):
@@ -282,11 +285,15 @@ export default {
     if (url.pathname === "/") {
       const notfound = url.searchParams.get("notfound") ?? undefined;
       const home = async () => {
-        const [hl, popular, { map, stored }, warnings] = await Promise.all([
+        const [hl, popular, { map, stored }, warnings, india] = await Promise.all([
           composeHighlights(env),
           topPlaces(env, 8, POPULAR_MIN), // public: only places past a decent threshold
           loadMap(env),
           loadWarningsSnapshot(env).catch(() => null), // an official cyclone is pinned
+          loadIndiaTrend(env).catch((e) => {
+            console.error(`[place-daily] india trend: ${reason(e)}`);
+            return null;
+          }),
         ]);
         // Only show the "India now" hero when there's something in it.
         const highlights =
@@ -295,7 +302,7 @@ export default {
           renderHome(
             notfound,
             highlights,
-            { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map, warnings },
+            { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map, warnings, india },
             lang,
           ),
           "text/html; charset=utf-8",
@@ -537,6 +544,33 @@ export default {
 
     // Named place: /c/{slug}.{json,md,png} (e.g. /c/lucknow), keyword URLs for
     // search. Resolve the slug to its centroid and serve the same conditions.
+    // A named place's trend page: /c/{slug}/trends(?days=7|90), every hazard a day at a time.
+    const trendsMatch = url.pathname.match(/^\/c\/([a-z0-9-]+)\/trends$/);
+    if (trendsMatch) {
+      const place = placeBySlug(trendsMatch[1]);
+      if (!place)
+        return new Response(renderNotFound(lang), {
+          status: 404,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      const span = spanOf(url.searchParams.get("days"));
+      return cached(
+        TRENDS_EDGE_TTL,
+        async () => {
+          const tr = await loadPlaceTrend(env, place, span === 90 ? 90 : 30).catch((e) => {
+            console.error(`[place-daily] trends for ${place.slug}: ${reason(e)}`);
+            return null;
+          });
+          const res = cachedResponse(
+            renderTrendsPage(place, tr && sliceTrend(tr, span), span, lang),
+            "text/html; charset=utf-8",
+          );
+          return { res, store: !!tr };
+        },
+        { days: span === 30 ? undefined : String(span) },
+      );
+    }
+
     const slugMatch = slugFromPath(url.pathname);
     if (slugMatch) {
       const { slug, ext } = slugMatch;

@@ -58,7 +58,7 @@ test("historyPanel: a bar a day, filled by its level; a day with no reading is a
   const svg = html.match(/<svg class="tchart"[\s\S]*?<\/svg>/)![0];
   assert.equal((svg.match(/class="tbar /g) ?? []).length, 29);
   assert.equal((svg.match(/class="tnone"/g) ?? []).length, 1);
-  assert.match(svg, /class="tbar severe"[^>]*><title>21 Oct: AQI 450, Severe<\/title>/);
+  assert.match(svg, /<g><title>21 Oct: AQI 450, Severe<\/title><rect class="tbar severe"/);
   assert.match(svg, /class="tbar moderate"/);
   assert.match(svg, /role="img" aria-label="[^"]+"/);
   assert.match(svg, />Poor\u00a0<\/tspan>201</, "the level edges are labelled");
@@ -177,4 +177,58 @@ test("/c/delhi with no 30-day file yet is the page as before", async () => {
   const html = await (await w.get("/c/delhi")).text();
   assert.match(html, /<h1/);
   assert.doesNotMatch(html, /id="last30"/);
+});
+
+// ── India, the last 30 days (the home page) ─────────────────────────────────────────
+import { indiaPanel } from "../src/ui/history";
+import type { IndiaTrend } from "../src/placedaily";
+
+const days90 = Array.from({ length: 90 }, (_, i) => new Date(Date.UTC(2026, 7, 23 + i)).toISOString().slice(0, 10));
+function india(o: Partial<IndiaTrend> = {}): IndiaTrend {
+  const n = (v: number | null) => Array<number | null>(90).fill(v);
+  return { days: days90, cities: n(250), poor: n(40), very: n(10), fires: n(3000), ...o };
+}
+
+test("indiaPanel: the last of the 30 days leads, with the peak when it was another day", () => {
+  const poor = Array<number | null>(90).fill(40);
+  poor[70] = 150; // inside the last 30
+  poor[20] = 400; // before them: not the peak of these 30
+  const html = text(indiaPanel(india({ poor }), "en"));
+  assert.match(html, /India, the last 30 days/);
+  assert.match(html, /Poor or worse air in 50 of 250 cities on 20 Nov\. At the peak, 1 Nov, it was 160\./);
+});
+
+test("indiaPanel: two charts, cities stacked by level and fires; a day with no fire record is an outline", () => {
+  const fires = Array<number | null>(90).fill(3000);
+  fires[80] = null;
+  const html = indiaPanel(india({ fires }), "en");
+  const charts = html.match(/<svg class="tchart"[\s\S]*?<\/svg>/g)!;
+  assert.equal(charts.length, 2);
+  assert.equal((charts[0].match(/class="tbar severe"/g) ?? []).length, 30);
+  assert.equal((charts[0].match(/class="tbar high"/g) ?? []).length, 30);
+  assert.match(charts[0], /<title>20 Nov: 50 cities poor or worse, 10 very poor or severe<\/title>/);
+  assert.equal((charts[1].match(/class="tnone"/g) ?? []).length, 1);
+  assert.match(text(html), /No fire record on 1 day\./);
+});
+
+test("indiaPanel: no record yet is no panel; in Hindi and Kannada no English sentence shows", () => {
+  assert.equal(indiaPanel(null, "en"), "");
+  assert.equal(indiaPanel(india({ cities: Array(90).fill(null) }), "en"), "");
+  for (const lang of ["hi", "kn"] as const) {
+    const html = text(indiaPanel(india(), lang));
+    for (const en of [/the last 30 days/i, /cities/, /Fires seen/, /Pick a place/, /Measured/])
+      assert.doesNotMatch(html, en, `${lang}: ${en}`);
+  }
+});
+
+test("home: India's 30 days after the map, before your places; none before the first file", async () => {
+  const w = testWorker();
+  const before = await (await w.get("/")).text();
+  assert.doesNotMatch(before, /id="india30"/);
+  await w.env.OAQ_R2.put("trends/india.json", JSON.stringify(india()));
+  const html = await (await w.get("/")).text();
+  const at = html.indexOf('id="india30"');
+  assert.ok(at > 0);
+  assert.ok(at > html.indexOf('id="mland"'), "after the map");
+  assert.ok(at < html.indexOf('id="yp"'), "before your places");
 });
