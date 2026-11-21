@@ -192,7 +192,7 @@ export function renderConditionsPage(
     hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), lang) +
       warningBand(c, lang) +
       readings +
-      (trend ? band(historyPanel(trend, lang)) : "") +
+      (trend ? band(historyPanel(trend, lang, lp(`${path}/trends`, lang))) : "") +
       secondary([alertsCol, stationsPanel(c, lang), nearbyPanel(canonical, lang)]) +
       reference,
   );

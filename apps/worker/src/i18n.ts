@@ -1942,6 +1942,127 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     kn: "{d} ದಿನಗಳಲ್ಲಿ {n} ದಿನ ಏರಿಕೆ, ಗರಿಷ್ಠ {level}.",
   },
   "low on every day.": { hi: "हर दिन कम।", kn: "ಪ್ರತಿ ದಿನ ಕಡಿಮೆ." },
+  // A place's trend page, /c/{slug}/trends (pages/trends.ts), and the hazards' chart notes (ui/history.ts).
+  "Every hazard, day by day": { hi: "हर खतरा, दिन-ब-दिन", kn: "ಪ್ರತಿ ಅಪಾಯ, ದಿನದಿಂದ ದಿನಕ್ಕೆ" },
+  "{n} fires": { hi: "{n} आग", kn: "{n} ಬೆಂಕಿ" },
+  "{place}: the last {n} days": { hi: "{place}: पिछले {n} दिन", kn: "{place}: ಕಳೆದ {n} ದಿನಗಳು" },
+  Period: { hi: "अवधि", kn: "ಅವಧಿ" },
+  "{n} days": { hi: "{n} दिन", kn: "{n} ದಿನಗಳು" },
+  "{place} now": { hi: "{place} अभी", kn: "{place} ಈಗ" },
+  Trends: { hi: "रुझान", kn: "ಪ್ರವೃತ್ತಿಗಳು" },
+  "{place}, India: air, heat, cold, rain, wind, fog, dust, smoke and UV, a day at a time over the last {n} days.": {
+    hi: "{place}, भारत: वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं और UV, पिछले {n} दिन, एक-एक दिन।",
+    kn: "{place}, ಭಾರತ: ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ ಮತ್ತು UV, ಕಳೆದ {n} ದಿನಗಳು, ದಿನಕ್ಕೊಂದರಂತೆ.",
+  },
+  "No record for this place yet. It fills in each night.": {
+    hi: "इस स्थान का अभी कोई रिकॉर्ड नहीं। यह हर रात भरता है।",
+    kn: "ಈ ಸ್ಥಳದ ದಾಖಲೆ ಇನ್ನೂ ಇಲ್ಲ. ಇದು ಪ್ರತಿ ರಾತ್ರಿ ತುಂಬುತ್ತದೆ.",
+  },
+  "The {n} days in one line": { hi: "{n} दिन एक पंक्ति में", kn: "{n} ದಿನಗಳು ಒಂದೇ ಸಾಲಿನಲ್ಲಿ" },
+  "Every hazard stayed low.": { hi: "हर खतरा कम रहा।", kn: "ಪ್ರತಿ ಅಪಾಯ ಕಡಿಮೆಯಾಗಿಯೇ ಇತ್ತು." },
+  "Days at each level, by hazard": { hi: "हर स्तर पर दिन, खतरे के अनुसार", kn: "ಪ್ರತಿ ಮಟ್ಟದ ದಿನಗಳು, ಅಪಾಯವಾರು" },
+  "Days at each level": { hi: "हर स्तर पर दिन", kn: "ಪ್ರತಿ ಮಟ್ಟದ ದಿನಗಳು" },
+  "{from} to {to}. Every hazard mugilu reads, a day at a time, in the order of the risk it brought.": {
+    hi: "{from} से {to}। mugilu जो भी खतरा पढ़ता है, एक-एक दिन, जोखिम के क्रम में।",
+    kn: "{from} ರಿಂದ {to}. mugilu ಓದುವ ಪ್ರತಿ ಅಪಾಯ, ದಿನಕ್ಕೊಂದರಂತೆ, ಅದು ತಂದ ಅಪಾಯದ ಕ್ರಮದಲ್ಲಿ.",
+  },
+  "Official warnings will show here too: the days this place was under an NDMA or IMD warning. mugilu is filling that record now.":
+    {
+      hi: "आधिकारिक चेतावनियाँ भी यहाँ दिखेंगी: वे दिन जब यह स्थान NDMA या IMD की चेतावनी में था। mugilu अभी वह रिकॉर्ड भर रहा है।",
+      kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳೂ ಇಲ್ಲಿ ಕಾಣುತ್ತವೆ: ಈ ಸ್ಥಳ NDMA ಅಥವಾ IMD ಎಚ್ಚರಿಕೆಯಡಿ ಇದ್ದ ದಿನಗಳು. mugilu ಈಗ ಆ ದಾಖಲೆಯನ್ನು ತುಂಬುತ್ತಿದೆ.",
+    },
+  "Poor or worse on {h} of {d} days, very poor or severe on {s}.": {
+    hi: "{d} में से {h} दिन खराब या उससे बुरी, {s} दिन बहुत खराब या गंभीर।",
+    kn: "{d} ದಿನಗಳಲ್ಲಿ {h} ದಿನ ಕೆಟ್ಟ ಅಥವಾ ಅದಕ್ಕಿಂತ ಕೆಟ್ಟ, {s} ದಿನ ತುಂಬಾ ಕೆಟ್ಟ ಅಥವಾ ತೀವ್ರ.",
+  },
+  "High or severe on {h} of {d} days.": {
+    hi: "{d} में से {h} दिन अधिक या गंभीर।",
+    kn: "{d} ದಿನಗಳಲ್ಲಿ {h} ದಿನ ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರ.",
+  },
+  "Moderate on {n} of {d} days, never higher.": {
+    hi: "{d} में से {n} दिन मध्यम, इससे ऊपर कभी नहीं।",
+    kn: "{d} ದಿನಗಳಲ್ಲಿ {n} ದಿನ ಮಧ್ಯಮ, ಅದಕ್ಕಿಂತ ಹೆಚ್ಚು ಎಂದೂ ಇಲ್ಲ.",
+  },
+  "Low on every one of {d} days.": { hi: "सभी {d} दिन कम।", kn: "ಎಲ್ಲಾ {d} ದಿನಗಳೂ ಕಡಿಮೆ." },
+  "Highest: {v} on {day}.": { hi: "सबसे अधिक: {day} को {v}।", kn: "ಗರಿಷ್ಠ: {day} ರಂದು {v}." },
+  "Lowest: {v} on {day}.": { hi: "सबसे कम: {day} को {v}।", kn: "ಕನಿಷ್ಠ: {day} ರಂದು {v}." },
+  "The day's worst AQI: the middle of the stations within 25 km, each by its worst reading": {
+    hi: "दिन का सबसे खराब AQI: 25 km के भीतर के स्टेशनों में बीच वाला, हर एक अपनी सबसे खराब रीडिंग से",
+    kn: "ದಿನದ ಅತಿ ಕೆಟ್ಟ AQI: 25 km ಒಳಗಿನ ನಿಲ್ದಾಣಗಳಲ್ಲಿ ಮಧ್ಯದ್ದು, ಪ್ರತಿಯೊಂದೂ ತನ್ನ ಅತಿ ಕೆಟ್ಟ ಮಾಪನದಂತೆ",
+  },
+  "The day's highest feels-like temperature": {
+    hi: "दिन का सबसे अधिक महसूस होने वाला तापमान",
+    kn: "ದಿನದ ಗರಿಷ್ಠ ಅನುಭವದ ತಾಪಮಾನ",
+  },
+  "The day's lowest feels-like temperature": { hi: "दिन का सबसे कम महसूस होने वाला तापमान", kn: "ದಿನದ ಕನಿಷ್ಠ ಅನುಭವದ ತಾಪಮಾನ" },
+  "Rain over the day": { hi: "दिन भर की बारिश", kn: "ದಿನವಿಡೀ ಮಳೆ" },
+  "The day's strongest gust": { hi: "दिन का सबसे तेज़ झोंका", kn: "ದಿನದ ಅತಿ ಬಲವಾದ ಗಾಳಿ ರಭಸ" },
+  "The day's lowest visibility": { hi: "दिन की सबसे कम दृश्यता", kn: "ದಿನದ ಕನಿಷ್ಠ ಗೋಚರತೆ" },
+  "The day's highest dust": { hi: "दिन की सबसे अधिक धूल", kn: "ದಿನದ ಗರಿಷ್ಠ ಧೂಳು" },
+  "Fires seen by satellite within 100 km": { hi: "100 km के भीतर उपग्रह से देखी गई आग", kn: "100 km ಒಳಗೆ ಉಪಗ್ರಹದಿಂದ ಕಂಡ ಬೆಂಕಿ" },
+  "The day's highest UV index": { hi: "दिन का सबसे अधिक UV सूचकांक", kn: "ದಿನದ ಗರಿಷ್ಠ UV ಸೂಚ್ಯಂಕ" },
+  Measured: { hi: "मापा गया", kn: "ಅಳೆದದ್ದು" },
+  Modelled: { hi: "अनुमानित", kn: "ಅಂದಾಜು" },
+  "Seen by satellite": { hi: "उपग्रह से देखा गया", kn: "ಉಪಗ್ರಹದಿಂದ ಕಂಡದ್ದು" },
+  "no data": { hi: "कोई डेटा नहीं", kn: "ದತ್ತಾಂಶ ಇಲ್ಲ" },
+  Day: { hi: "दिन", kn: "ದಿನ" },
+  Level: { hi: "स्तर", kn: "ಮಟ್ಟ" },
+  "day by day": { hi: "दिन-ब-दिन", kn: "ದಿನದಿಂದ ದಿನಕ್ಕೆ" },
+  "Day by day": { hi: "दिन-ब-दिन", kn: "ದಿನದಿಂದ ದಿನಕ್ಕೆ" },
+  "Its peak": { hi: "उसका चरम", kn: "ಅದರ ಗರಿಷ್ಠ" },
+  "Low on every day": { hi: "हर दिन कम", kn: "ಪ್ರತಿ ದಿನ ಕಡಿಮೆ" },
+  "A taller bar is a colder day: it grows as the feels-like low falls below 20°C.": {
+    hi: "ऊँची पट्टी यानी ज़्यादा ठंडा दिन: महसूस होने वाला न्यूनतम तापमान 20°C से जितना नीचे, पट्टी उतनी ऊँची।",
+    kn: "ಎತ್ತರದ ಪಟ್ಟಿ ಎಂದರೆ ಹೆಚ್ಚು ಚಳಿಯ ದಿನ: ಅನುಭವದ ಕನಿಷ್ಠ ತಾಪಮಾನ 20°C ಗಿಂತ ಎಷ್ಟು ಕೆಳಗೋ ಪಟ್ಟಿ ಅಷ್ಟು ಎತ್ತರ.",
+  },
+  "A taller bar is a thicker fog: it grows as the lowest visibility falls below 2,000 m.": {
+    hi: "ऊँची पट्टी यानी घना कोहरा: न्यूनतम दृश्यता 2,000 m से जितनी नीचे, पट्टी उतनी ऊँची।",
+    kn: "ಎತ್ತರದ ಪಟ್ಟಿ ಎಂದರೆ ದಟ್ಟ ಮಂಜು: ಕನಿಷ್ಠ ಗೋಚರತೆ 2,000 m ಗಿಂತ ಎಷ್ಟು ಕೆಳಗೋ ಪಟ್ಟಿ ಅಷ್ಟು ಎತ್ತರ.",
+  },
+  "These stayed low on every one of the {n} days.": {
+    hi: "ये सभी {n} दिन कम रहे।",
+    kn: "ಇವು ಎಲ್ಲಾ {n} ದಿನಗಳೂ ಕಡಿಮೆಯಾಗಿಯೇ ಇದ್ದವು.",
+  },
+  // The home page's "India, the last 30 days" (ui/history.ts).
+  "India, the last 30 days": { hi: "भारत, पिछले 30 दिन", kn: "ಭಾರತ, ಕಳೆದ 30 ದಿನಗಳು" },
+  "Poor or worse air in {n} of {c} cities on {day}.": {
+    hi: "{day} को {c} में से {n} शहरों में वायु खराब या उससे बुरी रही।",
+    kn: "{day} ರಂದು {c} ನಗರಗಳಲ್ಲಿ {n} ನಗರಗಳಲ್ಲಿ ವಾಯು ಕೆಟ್ಟ ಅಥವಾ ಅದಕ್ಕಿಂತ ಹೆಚ್ಚು ಕೆಟ್ಟದಾಗಿತ್ತು.",
+  },
+  "At the peak, {day}, it was {n}.": {
+    hi: "सबसे अधिक {day} को: {n}।",
+    kn: "ಗರಿಷ್ಠ {day} ರಂದು: {n}.",
+  },
+  "Cities with poor or worse air, each day for {n} days": {
+    hi: "खराब या उससे बुरी वायु वाले शहर, {n} दिनों तक हर दिन",
+    kn: "ಕೆಟ್ಟ ಅಥವಾ ಅದಕ್ಕಿಂತ ಕೆಟ್ಟ ವಾಯು ಇದ್ದ ನಗರಗಳು, {n} ದಿನಗಳ ಕಾಲ ಪ್ರತಿ ದಿನ",
+  },
+  "{day}: {n} cities poor or worse, {v} very poor or severe": {
+    hi: "{day}: {n} शहर खराब या बुरे, {v} बहुत खराब या गंभीर",
+    kn: "{day}: {n} ನಗರಗಳು ಕೆಟ್ಟ ಅಥವಾ ಹೆಚ್ಚು, {v} ತುಂಬಾ ಕೆಟ್ಟ ಅಥವಾ ತೀವ್ರ",
+  },
+  "Fires seen by satellite across India, each day for {n} days": {
+    hi: "भारत भर में उपग्रह से देखी गई आग, {n} दिनों तक हर दिन",
+    kn: "ಭಾರತದಾದ್ಯಂತ ಉಪಗ್ರಹದಿಂದ ಕಂಡ ಬೆಂಕಿ, {n} ದಿನಗಳ ಕಾಲ ಪ್ರತಿ ದಿನ",
+  },
+  "{day}: {n} fires": { hi: "{day}: {n} आग", kn: "{day}: {n} ಬೆಂಕಿ" },
+  "Cities with poor or worse air": { hi: "खराब या उससे बुरी वायु वाले शहर", kn: "ಕೆಟ್ಟ ಅಥವಾ ಅದಕ್ಕಿಂತ ಕೆಟ್ಟ ವಾಯು ಇದ್ದ ನಗರಗಳು" },
+  "Cities with an air station, each by its worst hour of the day.": {
+    hi: "वायु स्टेशन वाले शहर, हर एक दिन के अपने सबसे खराब घंटे से।",
+    kn: "ವಾಯು ನಿಲ್ದಾಣವಿರುವ ನಗರಗಳು, ಪ್ರತಿಯೊಂದೂ ದಿನದ ತನ್ನ ಅತಿ ಕೆಟ್ಟ ಗಂಟೆಯಂತೆ.",
+  },
+  "Very poor or severe": { hi: "बहुत खराब या गंभीर", kn: "ತುಂಬಾ ಕೆಟ್ಟ ಅಥವಾ ತೀವ್ರ" },
+  "Fires seen by satellite": { hi: "उपग्रह से देखी गई आग", kn: "ಉಪಗ್ರಹದಿಂದ ಕಂಡ ಬೆಂಕಿ" },
+  "Crop and forest burning across India, from NASA FIRMS.": {
+    hi: "भारत भर में फसल और जंगल की आग, NASA FIRMS से।",
+    kn: "ಭಾರತದಾದ್ಯಂತ ಬೆಳೆ ಮತ್ತು ಅರಣ್ಯ ಸುಡುವಿಕೆ, NASA FIRMS ನಿಂದ.",
+  },
+  "No fire record on 1 day.": { hi: "1 दिन आग का कोई रिकॉर्ड नहीं।", kn: "1 ದಿನ ಬೆಂಕಿಯ ದಾಖಲೆ ಇಲ್ಲ." },
+  "No fire record on {m} days.": { hi: "{m} दिन आग का कोई रिकॉर्ड नहीं।", kn: "{m} ದಿನ ಬೆಂಕಿಯ ದಾಖಲೆ ಇಲ್ಲ." },
+  "Pick a place on the map or in the list to see its own 30 days.": {
+    hi: "किसी स्थान के अपने 30 दिन देखने के लिए उसे नक्शे या सूची में चुनें।",
+    kn: "ಒಂದು ಸ್ಥಳದ ತನ್ನದೇ 30 ದಿನಗಳನ್ನು ನೋಡಲು ಅದನ್ನು ನಕ್ಷೆಯಲ್ಲಿ ಅಥವಾ ಪಟ್ಟಿಯಲ್ಲಿ ಆರಿಸಿ.",
+  },
   "Weather and dust modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.": {
     hi: "मौसम और धूल Open-Meteo का अनुमान; आग उपग्रह से देखी गई (NASA FIRMS), 100 km के भीतर।",
     kn: "ಹವಾಮಾನ ಮತ್ತು ಧೂಳು Open-Meteo ಅಂದಾಜು; ಬೆಂಕಿ ಉಪಗ್ರಹದಿಂದ ಕಂಡದ್ದು (NASA FIRMS), 100 km ಒಳಗೆ.",

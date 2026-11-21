@@ -1,4 +1,6 @@
 import { PLACES_STORE_JS } from "../ui/places-store";
+import { indiaPanel } from "../ui/history";
+import type { IndiaTrend } from "../placedaily";
 import { type NationalHighlights } from "../highlights";
 import { esc } from "../html";
 import { coordKey, langPrefixJs, placeHref } from "../links";
@@ -167,6 +169,8 @@ export function renderHome(
     popular?: { label: string; lat: number; lon: number }[];
     map?: IndiaMap;
     warnings?: WarningsSnapshot | null;
+    /** India's last days (placedaily.ts), when kept. */
+    india?: IndiaTrend | null;
   },
   lang: Lang = "en",
 ): string {
@@ -223,6 +227,7 @@ export function renderHome(
     hero +
       cyclonePlate(official, lang) +
       band(indiaMap(meta?.map, lang, { cyclone: official && cycloneTitle(official.title, lang), aside })) +
+      (meta?.india ? band(indiaPanel(meta.india, lang)) : "") +
       places,
   );
 
