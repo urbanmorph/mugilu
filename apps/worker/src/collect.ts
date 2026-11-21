@@ -1,7 +1,7 @@
 import type { Env } from "./index";
 import { GRID_KEY, putJson } from "./snapshot";
 import type { Centroid, ConditionsPoint, ConditionsSnapshot } from "./types";
-import { getOpenMeteoBulk } from "./openmeteo";
+import { getOpenMeteoBulk, type WxDay } from "./openmeteo";
 import { counted } from "./metrics";
 import centroids from "../data/centroids.json";
 import { gzip } from "./gzip";
@@ -28,6 +28,40 @@ export function conditionsArchiveKey(generatedAt: string): string {
   return `archive/conditions/${generatedAt.slice(0, 10)}/${generatedAt.slice(11, 13)}.json.gz`;
 }
 
+const DAY = 86_400_000;
+const IST = 19_800_000;
+/** Each India day's modelled figures by grid point: archive/wx-daily/{YYYY-MM-DD}.json.gz. */
+export const WX_DAILY_PREFIX = "archive/wx-daily/";
+
+/** One day's figures for every grid point (WxDay without its date), by point id. */
+export interface WxDailyFile {
+  date: string;
+  points: Record<string, Omit<WxDay, "date">>;
+}
+
+/** Keep the day's figures, when Open-Meteo gave them for that day at enough points (its day can
+ *  lag a few minutes past midnight; the next run asks again). */
+async function keepDay(env: Env, date: string, days: (WxDay | undefined)[]): Promise<void> {
+  const points: WxDailyFile["points"] = {};
+  GRID.forEach((c, i) => {
+    const d = days[i];
+    if (d?.date !== date) return;
+    const { date: _, ...figures } = d;
+    if (Object.keys(figures).length) points[c.id] = figures;
+  });
+  if (Object.keys(points).length < GRID.length * MIN_COVERAGE) {
+    console.log(
+      `[collect] ${date}: daily figures for ${Object.keys(points).length} points only; asking again next run`,
+    );
+    return;
+  }
+  const file: WxDailyFile = { date, points };
+  await env.OAQ_R2.put(`${WX_DAILY_PREFIX}${date}.json.gz`, await gzip(JSON.stringify(file)), {
+    httpMetadata: { contentType: "application/json", contentEncoding: "gzip" },
+  });
+  console.log(`[collect] ${date}: daily figures for ${Object.keys(points).length} points`);
+}
+
 /**
  * Collect modelled conditions (heat/rain/UV/dust) over the national grid and
  * write the snapshot to R2. This is what makes heat etc. national, rankable and
@@ -36,17 +70,25 @@ export function conditionsArchiveKey(generatedAt: string): string {
  * it already fetches (about 26 KB a run), instead of overwriting it. `delayMs` paces
  * the Open-Meteo batches (tests pass 0).
  */
-export async function collectConditions(env: Env, delayMs = 12_000): Promise<ConditionsSnapshot> {
+export async function collectConditions(env: Env, delayMs = 12_000, now = Date.now()): Promise<ConditionsSnapshot> {
+  // The day just ended in India, asked for once: by the first run that finds it missing.
+  const yesterday = new Date(now + IST - DAY).toISOString().slice(0, 10);
+  const dayKey = `${WX_DAILY_PREFIX}${yesterday}.json.gz`;
+  const pastDay = !(await env.OAQ_R2.head(dayKey));
   // Throttle ~12s/batch to keep any 60s window under Open-Meteo's minute limit.
   // A failed bulk call, or too few points answered, counts as err:upstream:openmeteo.
-  const points = await counted(env, "openmeteo", async () => {
+  const { points, days } = await counted(env, "openmeteo", async () => {
     const wx = await getOpenMeteoBulk(
       GRID.map((c) => ({ lat: c.lat, lon: c.lon })),
       delayMs,
+      { pastDay },
     );
-    const pts: ConditionsPoint[] = GRID.map((c, i) => ({ ...c, wx: wx[i] ?? {} }));
+    const pts: ConditionsPoint[] = GRID.map((c, i) => {
+      const { day: _, ...current } = wx[i] ?? {};
+      return { ...c, wx: current };
+    });
     if (!hasCoverage(pts)) throw new Error("[collect] too few grid points came back; kept the previous grid");
-    return pts;
+    return { points: pts, days: wx.map((w) => w?.day) };
   });
 
   const snapshot: ConditionsSnapshot = {
@@ -55,6 +97,7 @@ export async function collectConditions(env: Env, delayMs = 12_000): Promise<Con
     points,
   };
 
+  if (pastDay) await keepDay(env, yesterday, days);
   const body = JSON.stringify(snapshot);
   const gz = await gzip(body);
   await Promise.all([

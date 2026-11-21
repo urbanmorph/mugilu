@@ -144,7 +144,7 @@ export function summarizeDay(day: string, snaps: Snapshot[]): AirDay {
 }
 
 /** An R2 object as JSON, gunzipping when it is gzip (the archives are stored compressed). */
-async function readJson<T>(env: Env, key: string): Promise<T | null> {
+export async function readJson<T>(env: Env, key: string): Promise<T | null> {
   const o = await env.OAQ_R2.get(key);
   if (!o) return null;
   const bytes = new Uint8Array(await o.arrayBuffer());

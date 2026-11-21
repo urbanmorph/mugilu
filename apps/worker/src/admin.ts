@@ -26,6 +26,7 @@ const ADMIN_PATHS = new Set([
   "/warnings/collect",
   "/fires/collect",
   "/air-daily/collect",
+  "/place-daily/collect",
   "/sig",
 ]);
 
