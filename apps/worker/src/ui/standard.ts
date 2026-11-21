@@ -467,6 +467,25 @@ body{margin:0}
 @container (min-width:372px){.mg .ecard .disc-long{display:block}.mg .ecard .disc-short{display:none}.mg .ecard .ereads{display:flex}}
 `;
 
+/** A place's last 30 days (ui/history.ts): the air chart (a bar a day filled by its level, the level
+ *  edges dashed and labelled, a day with no reading an empty outline) beside the other hazards. */
+const HISTORY_CSS = `
+.mg .tchart{display:block;width:100%;height:auto;margin-top:var(--sp2)}
+.mg .tchart .tbar{fill:var(--lv)}
+.mg .tchart .tnone{fill:none;stroke:var(--line);stroke-dasharray:3 3}
+.mg .tchart .tedge{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}
+.mg .tchart .tlab,.mg .tchart .ttick{fill:var(--muted);font-size:13px;font-family:inherit}
+.mg .tchart .tlab{font-weight:600;font-size:12px}
+@media (max-width:599.98px){.mg .tchart .tlab,.mg .tchart .ttick{font-size:19px}.mg .tchart .ttick.mid,.mg .tchart .tlab .w{display:none}}
+.mg .tsplit{display:grid;gap:var(--sp4) var(--sp6);align-items:start}
+.mg .tsplit>div{display:grid;gap:var(--sp2);min-width:0}
+@media (min-width:1000px){.mg .tsplit{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}}
+.mg .tlist{display:grid;gap:var(--sp2);margin:0;padding:0;list-style:none}
+.mg .tlist li{display:flex;gap:var(--sp2);align-items:flex-start}
+.mg .tlist .shape{width:16px;height:16px;flex:none;margin-top:.2em}
+@media (forced-colors:active){.mg .tchart .tbar{fill:CanvasText}.mg .tchart .tnone,.mg .tchart .tedge{stroke:CanvasText}.mg .tchart .tlab,.mg .tchart .ttick{fill:CanvasText}}
+`;
+
 /** Display preview: a live screen display scaled into a 16:9 frame; the chosen place tile. The install sheet shows only when opened, as a centred dialog. */
 const PREVIEW_CSS = `
 .mg .pvframe{position:relative;aspect-ratio:16/9;overflow:hidden;border:2px solid var(--ink);border-radius:var(--r);background:var(--ink)}
@@ -528,4 +547,5 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .mg [hidden]{display:none!important}
 `;
 
-export const STANDARD_CSS = COMPONENTS_CSS + PREVIEW_CSS + READ_CSS + PULL_CSS + LANG_NAMES_CSS + SAFE_AREA_CSS;
+export const STANDARD_CSS =
+  COMPONENTS_CSS + HISTORY_CSS + PREVIEW_CSS + READ_CSS + PULL_CSS + LANG_NAMES_CSS + SAFE_AREA_CSS;

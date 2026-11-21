@@ -1,5 +1,5 @@
 import { collectAirDaily } from "./airdaily";
-import { collectPlaceDaily } from "./placedaily";
+import { collectPlaceDaily, loadPlaceTrend, type PlaceTrend } from "./placedaily";
 import { refreshLatest } from "./refresh";
 import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
@@ -51,7 +51,7 @@ import {
 } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
-import { placeBySlug, slugForName, slugFromPath, slugLabel } from "./slugs";
+import { placeBySlug, slugForName, slugFromPath, slugLabel, type SlugPlace } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
 import { loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
@@ -438,6 +438,8 @@ export default {
       persona: Persona,
       canonicalPath: string,
       placeName?: string,
+      /** A named place: its page shows its last 30 days. */
+      named?: SlugPlace,
     ): Promise<Response> {
       const kiosk = !ext && url.searchParams.has("kiosk");
       const fmt: LookupFormat = kiosk ? "kiosk" : ((ext ?? "html") as LookupFormat);
@@ -452,9 +454,17 @@ export default {
         async () => {
           // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
-          const { conditions, usage } = await lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName });
+          const [{ conditions, usage }, trend] = await Promise.all([
+            lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName }),
+            named && fmt === "html"
+              ? loadPlaceTrend(env, named).catch((e) => {
+                  console.error(`[place-daily] trend for ${named.slug}: ${reason(e)}`);
+                  return null;
+                })
+              : null,
+          ]);
           // A reading built while an upstream was down is served, never cached.
-          const res = await renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName);
+          const res = await renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName, trend);
           return { res, usage, store: !conditions.degraded };
         },
         (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
@@ -468,6 +478,7 @@ export default {
       persona: Persona,
       canonicalPath: string,
       placeName?: string,
+      trend: PlaceTrend | null = null,
     ): Response | Promise<Response> {
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
@@ -503,6 +514,7 @@ export default {
           lang,
           alertsOn(env) ? env.VAPID_PUBLIC_KEY : undefined,
           arbitrary,
+          trend,
         ),
         "text/html; charset=utf-8",
       );
@@ -535,7 +547,15 @@ export default {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       const label = slugLabel(place);
-      return serveConditions(place.lat, place.lon, ext, parsePersona(url.searchParams.get("as")), `/c/${slug}`, label);
+      return serveConditions(
+        place.lat,
+        place.lon,
+        ext,
+        parsePersona(url.searchParams.get("as")),
+        `/c/${slug}`,
+        label,
+        place,
+      );
     }
 
     // Embeddable conditions widget (the "build on it" surface): a compact card

@@ -14,6 +14,8 @@ import { breadcrumb, SITE, ld, relTime } from "../ui/shell";
 import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
+import { historyPanel } from "../ui/history";
+import type { PlaceTrend } from "../placedaily";
 import {
   alertsBox,
   autoLane,
@@ -144,6 +146,8 @@ export function renderConditionsPage(
   alertsKey?: string,
   /** An arbitrary point (not a named place): endless and thin, so kept out of search indexes. */
   noindex = false,
+  /** A named place's last 30 days (placedaily.ts), when kept. */
+  trend: PlaceTrend | null = null,
 ): string {
   const risk = ambientRisk(c, persona);
   const { meaning } = ambientSummary(risk, (en) => t(en, lang));
@@ -188,6 +192,7 @@ export function renderConditionsPage(
     hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), lang) +
       warningBand(c, lang) +
       readings +
+      (trend ? band(historyPanel(trend, lang)) : "") +
       secondary([alertsCol, stationsPanel(c, lang), nearbyPanel(canonical, lang)]) +
       reference,
   );

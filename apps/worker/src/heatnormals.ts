@@ -1,5 +1,5 @@
 import normals from "../data/heat-normals.json";
-import { t } from "./i18n";
+import { LOCALE, t } from "./i18n";
 import type { Lang } from "./i18n";
 import type { TodayMax } from "./openmeteo";
 
@@ -147,8 +147,6 @@ export function compareWithNormal(
     source: "era5",
   };
 }
-
-const LOCALE: Record<Lang, string> = { en: "en-IN", hi: "hi-IN", kn: "kn-IN" };
 
 /** "early May" / "mid May" / "late May" (1-10, 11-20, 21+), in the page's language. */
 export function periodText(date: string, lang: Lang): string {
