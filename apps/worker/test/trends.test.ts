@@ -44,7 +44,13 @@ test("trends page: the period in one line, then days at each level, the raised h
   assert.ok(html.indexOf('id="t-fog"') < html.indexOf('id="t-calm"'), "the calm ones last");
   assert.match(s, /Lowest: 400 m on 24 Oct\./);
   assert.match(s, /These stayed low on every one of the 30 days\./);
-  assert.equal((html.match(/<svg class="tchart"/g) ?? []).length, 9, "a chart for every hazard");
+  assert.equal((html.match(/<svg class="tchart"/g) ?? []).length, 8, "a chart for every hazard");
+});
+
+test("trends page: modelled dust is left out, from the charts, the table and the description", () => {
+  const html = renderTrendsPage(DELHI, trend(30, { dust_max: Array<number | null>(30).fill(900) }), 30, "en");
+  assert.doesNotMatch(html, /id="t-dust"/);
+  assert.doesNotMatch(text(html), /Dust|dust/);
 });
 
 test("trends page: the period switch links 7, 30 and 90 days; 30 is the page itself", () => {
@@ -88,6 +94,7 @@ test("spanOf and sliceTrend: 30 unless 7 or 90; the last days of the record", ()
   const s = sliceTrend(trend(30), 7);
   assert.equal(s.days.length, 7);
   assert.equal(s.air.length, 7);
+  assert.equal(s.dust_max.length, 7, "every series, shown or not");
   assert.equal(s.days.at(-1), "2026-11-20");
 });
 
