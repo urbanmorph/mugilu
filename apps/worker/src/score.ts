@@ -129,6 +129,9 @@ export function heatLevelOf(h: { apparent_c?: number; wet_bulb_c?: number; wbgt_
 export const coldLevelOf = (apparent: number) => atOrBelow(apparent, THRESHOLDS.cold);
 export const windLevelOf = (gust: number) => atOrAbove(gust, THRESHOLDS.wind);
 export const fogLevelOf = (meters: number) => below(meters, THRESHOLDS.fog);
+export const uvLevelOf = (index: number) => atOrAbove(index, THRESHOLDS.uv);
+/** Smoke from the count of fires within 100 km alone (a day's record keeps no fire power). */
+export const smokeCountLevelOf = (fires: number) => atOrAbove(fires, THRESHOLDS.smokeCount);
 
 /** The methodology table (caution / high / severe), built from THRESHOLDS so the
  *  published numbers can never drift from the ones the code applies. Hazard labels
@@ -175,7 +178,7 @@ function thermalRisk(c: Conditions): [string, number] | null {
 function uvLevel(c: Conditions): number | null {
   const u = c.uv?.index;
   // Persona amplification escalates UV for children / outdoor workers.
-  return u == null ? null : atOrAbove(u, THRESHOLDS.uv);
+  return u == null ? null : uvLevelOf(u);
 }
 
 function dustLevel(c: Conditions): number | null {

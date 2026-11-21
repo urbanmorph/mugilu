@@ -1,5 +1,5 @@
 import { esc } from "../html";
-import { lp, quoted, t, type Lang } from "../i18n";
+import { andList, lp, quoted, t, type Lang } from "../i18n";
 import { AQI_BAND_LABEL } from "../aqi";
 import { allSlugPlaces } from "../slugs";
 import { langPrefixJs, placeHref } from "../links";
@@ -195,8 +195,6 @@ const asOf = (iso: string, lang: Lang) => esc(t("as of X", lang)).replace("X", r
 const squares = (n: number, lang: Lang) =>
   n === 1 ? t("1 square", lang) : t("X squares", lang).replace("X", String(n));
 const sentence = (en: string, n: number, lang: Lang) => esc(t(en, lang)).replace("X", esc(squares(n, lang)));
-const andList = (parts: string[], lang: Lang) =>
-  parts.length < 2 ? parts.join("") : `${parts.slice(0, -1).join(", ")} ${t("and", lang)} ${parts[parts.length - 1]}`;
 
 /** How much newer one stamp is than the other, said once they are an hour or more apart. */
 function gapLine(m: IndiaMap, lang: Lang): string {

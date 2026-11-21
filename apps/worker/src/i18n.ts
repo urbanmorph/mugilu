@@ -1899,7 +1899,61 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "air reading": { hi: "वायु के आँकड़े:", kn: "ವಾಯು ಗುಣಮಟ್ಟ ಮಾಹಿತಿ" },
   // the weather taken from the 4-hourly grid when the live call failed (draft, pending native review)
   "weather reading": { hi: "मौसम के आँकड़े:", kn: "ಹವಾಮಾನ ಮಾಹಿತಿ" },
+  // The place page's "Last 30 days" (ui/history.ts). {n} {d} {s} {m} {level} are slots.
+  "Last 30 days": { hi: "पिछले 30 दिन", kn: "ಕಳೆದ 30 ದಿನಗಳು" },
+  "Air, the worst AQI of each day, for {n} days": {
+    hi: "वायु, हर दिन का सबसे खराब AQI, {n} दिनों का",
+    kn: "ವಾಯು, ಪ್ರತಿ ದಿನದ ಅತಿ ಕೆಟ್ಟ AQI, {n} ದಿನಗಳದ್ದು",
+  },
+  "Air was very poor or severe on {n} of {d} days.": {
+    hi: "{d} में से {n} दिन वायु बहुत खराब या गंभीर रही।",
+    kn: "{d} ದಿನಗಳಲ್ಲಿ {n} ದಿನ ವಾಯು ತುಂಬಾ ಕೆಟ್ಟ ಅಥವಾ ತೀವ್ರ ಮಟ್ಟದಲ್ಲಿತ್ತು.",
+  },
+  "Air was poor on {n} of {d} days, never worse.": {
+    hi: "{d} में से {n} दिन वायु खराब रही, इससे बुरी कभी नहीं।",
+    kn: "{d} ದಿನಗಳಲ್ಲಿ {n} ದಿನ ವಾಯು ಕೆಟ್ಟ ಮಟ್ಟದಲ್ಲಿತ್ತು, ಅದಕ್ಕಿಂತ ಹೆಚ್ಚು ಎಂದೂ ಇಲ್ಲ.",
+  },
+  "Air was moderate on {n} of {d} days, never worse.": {
+    hi: "{d} में से {n} दिन वायु मध्यम रही, इससे बुरी कभी नहीं।",
+    kn: "{d} ದಿನಗಳಲ್ಲಿ {n} ದಿನ ವಾಯು ಮಧ್ಯಮ ಮಟ್ಟದಲ್ಲಿತ್ತು, ಅದಕ್ಕಿಂತ ಹೆಚ್ಚು ಎಂದೂ ಇಲ್ಲ.",
+  },
+  "Air was good or satisfactory on every one of {d} days.": {
+    hi: "सभी {d} दिन वायु अच्छी या संतोषजनक रही।",
+    kn: "ಎಲ್ಲಾ {d} ದಿನಗಳೂ ವಾಯು ಉತ್ತಮ ಅಥವಾ ತೃಪ್ತಿಕರ ಮಟ್ಟದಲ್ಲಿತ್ತು.",
+  },
+  "Each bar is a day: the worst AQI of the one station within 25 km.": {
+    hi: "हर पट्टी एक दिन है: 25 km के भीतर के एकमात्र स्टेशन का सबसे खराब AQI।",
+    kn: "ಪ್ರತಿ ಪಟ್ಟಿ ಒಂದು ದಿನ: 25 km ಒಳಗಿನ ಏಕೈಕ ನಿಲ್ದಾಣದ ಅತಿ ಕೆಟ್ಟ AQI.",
+  },
+  "Each bar is a day: the worst AQI of the middle station of {s} within 25 km.": {
+    hi: "हर पट्टी एक दिन है: 25 km के भीतर के {s} स्टेशनों में बीच वाले स्टेशन का सबसे खराब AQI।",
+    kn: "ಪ್ರತಿ ಪಟ್ಟಿ ಒಂದು ದಿನ: 25 km ಒಳಗಿನ {s} ನಿಲ್ದಾಣಗಳಲ್ಲಿ ಮಧ್ಯದ ನಿಲ್ದಾಣದ ಅತಿ ಕೆಟ್ಟ AQI.",
+  },
+  "Measured.": { hi: "मापा गया।", kn: "ಅಳೆದದ್ದು." },
+  "No reading on 1 day.": { hi: "1 दिन कोई रीडिंग नहीं।", kn: "1 ದಿನ ಯಾವುದೇ ಮಾಪನ ಇಲ್ಲ." },
+  "No reading on {m} days.": { hi: "{m} दिन कोई रीडिंग नहीं।", kn: "{m} ದಿನ ಯಾವುದೇ ಮಾಪನ ಇಲ್ಲ." },
+  "No air station within 25 km.": {
+    hi: "25 km के भीतर कोई वायु स्टेशन नहीं।",
+    kn: "25 km ಒಳಗೆ ಯಾವುದೇ ವಾಯು ನಿಲ್ದಾಣವಿಲ್ಲ.",
+  },
+  "The other hazards": { hi: "अन्य खतरे", kn: "ಇತರ ಅಪಾಯಗಳು" },
+  "raised on {n} of {d} days, up to {level}.": {
+    hi: "{d} में से {n} दिन बढ़ा हुआ, अधिकतम {level}।",
+    kn: "{d} ದಿನಗಳಲ್ಲಿ {n} ದಿನ ಏರಿಕೆ, ಗರಿಷ್ಠ {level}.",
+  },
+  "low on every day.": { hi: "हर दिन कम।", kn: "ಪ್ರತಿ ದಿನ ಕಡಿಮೆ." },
+  "Weather and dust modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.": {
+    hi: "मौसम और धूल Open-Meteo का अनुमान; आग उपग्रह से देखी गई (NASA FIRMS), 100 km के भीतर।",
+    kn: "ಹವಾಮಾನ ಮತ್ತು ಧೂಳು Open-Meteo ಅಂದಾಜು; ಬೆಂಕಿ ಉಪಗ್ರಹದಿಂದ ಕಂಡದ್ದು (NASA FIRMS), 100 km ಒಳಗೆ.",
+  },
 };
+/** "A, B and C" in the page's language. */
+export const andList = (parts: string[], lang: Lang) =>
+  parts.length < 2 ? parts.join("") : `${parts.slice(0, -1).join(", ")} ${t("and", lang)} ${parts[parts.length - 1]}`;
+
+/** The locale of each language, for dates and numbers. */
+export const LOCALE: Record<Lang, string> = { en: "en-IN", hi: "hi-IN", kn: "kn-IN" };
+
 export function t(en: string, lang: Lang): string {
   if (lang === "en") return en;
   const e = TR[en];
