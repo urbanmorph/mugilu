@@ -1,6 +1,6 @@
 import { esc, trusted } from "../html";
 import { lp, t, type Lang } from "../i18n";
-import type { PlaceTrend } from "../placedaily";
+import { SERIES, type PlaceTrend } from "../placedaily";
 import { RISK_BANDS } from "../score";
 import type { SlugPlace } from "../slugs";
 import { breadcrumb, ld, SITE } from "../ui/shell";
@@ -167,7 +167,7 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
       query: span === 30 ? "" : `?days=${span}`,
       lang,
       desc: fill(
-        "{place}, India: air, heat, cold, rain, wind, fog, dust, smoke and UV, a day at a time over the last {n} days.",
+        "{place}, India: air, heat, cold, rain, wind, fog, smoke and UV, a day at a time over the last {n} days.",
         lang,
         {
           place: name,
@@ -270,6 +270,6 @@ export const spanOf = (q: string | null): TrendSpan => (q === "7" ? 7 : q === "9
 export function sliceTrend(tr: PlaceTrend, span: TrendSpan): PlaceTrend {
   const from = Math.max(0, tr.days.length - span);
   const out = { ...tr, days: tr.days.slice(from) } as PlaceTrend;
-  for (const h of HAZARD_DEFS) out[h.series] = tr[h.series].slice(from);
+  for (const k of SERIES) out[k] = tr[k].slice(from);
   return out;
 }

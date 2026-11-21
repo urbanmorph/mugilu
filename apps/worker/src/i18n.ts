@@ -1950,9 +1950,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "{n} days": { hi: "{n} दिन", kn: "{n} ದಿನಗಳು" },
   "{place} now": { hi: "{place} अभी", kn: "{place} ಈಗ" },
   Trends: { hi: "रुझान", kn: "ಪ್ರವೃತ್ತಿಗಳು" },
-  "{place}, India: air, heat, cold, rain, wind, fog, dust, smoke and UV, a day at a time over the last {n} days.": {
-    hi: "{place}, भारत: वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धूल, धुआं और UV, पिछले {n} दिन, एक-एक दिन।",
-    kn: "{place}, ಭಾರತ: ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಧೂಳು, ಹೊಗೆ ಮತ್ತು UV, ಕಳೆದ {n} ದಿನಗಳು, ದಿನಕ್ಕೊಂದರಂತೆ.",
+  "{place}, India: air, heat, cold, rain, wind, fog, smoke and UV, a day at a time over the last {n} days.": {
+    hi: "{place}, भारत: वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धुआं और UV, पिछले {n} दिन, एक-एक दिन।",
+    kn: "{place}, ಭಾರತ: ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಹೊಗೆ ಮತ್ತು UV, ಕಳೆದ {n} ದಿನಗಳು, ದಿನಕ್ಕೊಂದರಂತೆ.",
   },
   "No record for this place yet. It fills in each night.": {
     hi: "इस स्थान का अभी कोई रिकॉर्ड नहीं। यह हर रात भरता है।",
@@ -1998,7 +1998,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Rain over the day": { hi: "दिन भर की बारिश", kn: "ದಿನವಿಡೀ ಮಳೆ" },
   "The day's strongest gust": { hi: "दिन का सबसे तेज़ झोंका", kn: "ದಿನದ ಅತಿ ಬಲವಾದ ಗಾಳಿ ರಭಸ" },
   "The day's lowest visibility": { hi: "दिन की सबसे कम दृश्यता", kn: "ದಿನದ ಕನಿಷ್ಠ ಗೋಚರತೆ" },
-  "The day's highest dust": { hi: "दिन की सबसे अधिक धूल", kn: "ದಿನದ ಗರಿಷ್ಠ ಧೂಳು" },
   "Fires seen by satellite within 100 km": { hi: "100 km के भीतर उपग्रह से देखी गई आग", kn: "100 km ಒಳಗೆ ಉಪಗ್ರಹದಿಂದ ಕಂಡ ಬೆಂಕಿ" },
   "The day's highest UV index": { hi: "दिन का सबसे अधिक UV सूचकांक", kn: "ದಿನದ ಗರಿಷ್ಠ UV ಸೂಚ್ಯಂಕ" },
   Measured: { hi: "मापा गया", kn: "ಅಳೆದದ್ದು" },
@@ -2063,9 +2062,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "किसी स्थान के अपने 30 दिन देखने के लिए उसे नक्शे या सूची में चुनें।",
     kn: "ಒಂದು ಸ್ಥಳದ ತನ್ನದೇ 30 ದಿನಗಳನ್ನು ನೋಡಲು ಅದನ್ನು ನಕ್ಷೆಯಲ್ಲಿ ಅಥವಾ ಪಟ್ಟಿಯಲ್ಲಿ ಆರಿಸಿ.",
   },
-  "Weather and dust modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.": {
-    hi: "मौसम और धूल Open-Meteo का अनुमान; आग उपग्रह से देखी गई (NASA FIRMS), 100 km के भीतर।",
-    kn: "ಹವಾಮಾನ ಮತ್ತು ಧೂಳು Open-Meteo ಅಂದಾಜು; ಬೆಂಕಿ ಉಪಗ್ರಹದಿಂದ ಕಂಡದ್ದು (NASA FIRMS), 100 km ಒಳಗೆ.",
+  "Weather modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.": {
+    hi: "मौसम Open-Meteo का अनुमान; आग उपग्रह से देखी गई (NASA FIRMS), 100 km के भीतर।",
+    kn: "ಹವಾಮಾನ Open-Meteo ಅಂದಾಜು; ಬೆಂಕಿ ಉಪಗ್ರಹದಿಂದ ಕಂಡದ್ದು (NASA FIRMS), 100 km ಒಳಗೆ.",
   },
 };
 /** "A, B and C" in the page's language. */

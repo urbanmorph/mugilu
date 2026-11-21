@@ -74,7 +74,12 @@ test("historyPanel: each other hazard in a line, the raised first; the calm ones
   const fog = html.indexOf("Fog: raised on 1 of 30 days, up to severe.");
   const heat = html.indexOf("Heat: raised on 2 of 30 days, up to high.");
   assert.ok(fog > 0 && heat > fog, "the worst level first");
-  assert.match(html, /Cold, Rain, Wind, Dust, Smoke and UV: low on every day\./);
+  assert.match(html, /Cold, Rain, Wind, Smoke and UV: low on every day\./);
+});
+
+test("historyPanel: modelled dust is not part of the record, however high it ran", () => {
+  const html = text(historyPanel(trend({ dust_max: flat(900) }), "en"));
+  assert.doesNotMatch(html, /Dust|dust/);
 });
 
 test("historyPanel: a hazard with no data is left out of the lines", () => {

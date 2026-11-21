@@ -5,7 +5,6 @@ import type { IndiaTrend, PlaceTrend, Series } from "../placedaily";
 import {
   airLevelOf,
   coldLevelOf,
-  dustLevelOf,
   fogLevelOf,
   heatLevelOf,
   rainLevelOf,
@@ -24,7 +23,8 @@ import { TREND_DAYS } from "../placedaily";
 
 /** A hazard as the trend shows it: the series that measures it, its level, what a bar is, where
  *  it comes from, the level edges to draw and how to say a value. Air first; the rest in the
- *  order of the place page's readings. */
+ *  order of the place page's readings. Modelled dust is left out: over the plains it runs far
+ *  above what the stations show and would lead a record built on measured air. */
 export interface HazardDef {
   key: string;
   name: string;
@@ -124,18 +124,6 @@ export const HAZARD_DEFS: HazardDef[] = [
     source: "Open-Meteo",
     lines: edges(T.fog, (v) => `${v} m`),
     say: (v) => `${Math.round(v).toLocaleString("en-IN")} m`,
-  },
-  {
-    key: "dust",
-    name: "Dust",
-    icon: "dust",
-    series: "dust_max",
-    level: dustLevelOf,
-    what: "The day's highest dust",
-    kind: "Modelled",
-    source: "Open-Meteo (CAMS)",
-    lines: edges(T.dust, (v) => String(v)),
-    say: (v) => `${Math.round(v)} µg/m³`,
   },
   {
     key: "smoke",
@@ -349,7 +337,7 @@ export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: str
     );
   const otherCol =
     `<p class="t-kicker">${esc(t("The other hazards", lang))}</p><ul class="tlist">${lines.join("")}</ul>` +
-    `<p class="t-meta">${esc(t("Weather and dust modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.", lang))}</p>` +
+    `<p class="t-meta">${esc(t("Weather modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.", lang))}</p>` +
     (trendsHref ? `<p>${linkButton(trendsHref, t("Every hazard, day by day", lang), false, "clock")}</p>` : "");
 
   return panel(`<div class="tsplit"><div>${parts.join("")}</div><div>${otherCol}</div></div>`, {
