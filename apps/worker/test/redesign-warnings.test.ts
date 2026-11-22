@@ -73,7 +73,7 @@ test("cycloneIn (the one source, as on /warnings): IMD's category and the storm'
 test("/warnings: the signage shell, the warning wash at high, the time it is from", () => {
   const html = renderWarningsPage(SNAP);
   assert.match(html, /<body class="mg" data-tint="Warning" data-level="high">/);
-  assert.match(html, /<h1 class="t-title">Active warnings<\/h1>/);
+  assert.match(html, /<h1 class="t-title">Official weather warnings across India now<\/h1>/);
   assert.match(html, /The latest 5 official NDMA \/ IMD alerts across India\./);
   assert.match(html, /<span class="k">As of<\/span><span class="v">17:35 IST · 18 Nov · via SACHET<\/span>/);
   assert.equal(
@@ -130,7 +130,7 @@ test("/warnings: groups newest first, the office with the newest alert first", (
 
 test("/warnings (kn): the heading and the empty line are localised, links carry /kn", () => {
   const html = renderWarningsPage(null, "kn");
-  assert.match(html, /ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳು/);
+  assert.match(html, /ಭಾರತದಲ್ಲಿ ಈಗಿನ ಅಧಿಕೃತ ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು/);
   assert.doesNotMatch(html, /No active national alerts/);
   assert.match(html, /<p class="back"><a href="\/kn">/);
 });

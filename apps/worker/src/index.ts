@@ -394,11 +394,15 @@ export default {
           if (!snap) return new Response("no warnings snapshot yet", { status: 503 });
           return cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
         }
-        const res =
-          url.pathname === "/warnings.md"
-            ? cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8", REFRESH_AFTER_SECONDS)
-            : cachedResponse(renderWarningsPage(snap, lang), "text/html; charset=utf-8");
-        return { res, store: snap !== null };
+        if (url.pathname === "/warnings.md")
+          return {
+            res: cachedResponse(renderWarningsMarkdown(snap), "text/markdown; charset=utf-8", REFRESH_AFTER_SECONDS),
+            store: snap !== null,
+          };
+        // The page also names the places under the warnings in force, from the home map's areas.
+        const { map, stored } = await loadMap(env);
+        const res = cachedResponse(renderWarningsPage(snap, lang, map), "text/html; charset=utf-8");
+        return { res, store: snap !== null && stored };
       });
     }
 

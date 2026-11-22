@@ -183,7 +183,7 @@ test("display builder (kn): tiles + form + button carry the prefix / localise", 
 
 test("warnings (kn): heading + empty state localised", () => {
   const html = renderWarningsPage(null, "kn");
-  assert.match(html, /ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳು/); // heading
+  assert.match(html, /ಭಾರತದಲ್ಲಿ ಈಗಿನ ಅಧಿಕೃತ ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು/); // heading
   assert.doesNotMatch(html, /No active national alerts/); // English empty-state gone
 });
 
