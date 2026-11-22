@@ -171,7 +171,8 @@ const FOOT_GROUPS: { id: string; title: string; links: [href: string, label: str
 export function siteFooter(path: string, lang: Lang, extra = "", query = ""): string {
   const groups = FOOT_GROUPS.map(
     (g) =>
-      `<nav class="fgroup" aria-labelledby="${g.id}"><h2 id="${g.id}">${esc(t(g.title, lang))}</h2>` +
+      // A label, not a heading: the page's headings describe the page, not the site.
+      `<nav class="fgroup" aria-labelledby="${g.id}"><p class="fhead" id="${g.id}">${esc(t(g.title, lang))}</p>` +
       g.links
         .map(
           ([h, en, ext]) => `<a href="${ext ? h : lp(h, lang)}"${current(!ext && h === path)}>${esc(t(en, lang))}</a>`,

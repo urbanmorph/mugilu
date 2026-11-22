@@ -90,7 +90,10 @@ test("historyPanel: a hazard with no data is left out of the lines", () => {
 test("historyPanel: no air station near, the other hazards still show", () => {
   const html = historyPanel(trend({ air: flat(null), stations: 0 }), "en");
   assert.doesNotMatch(html, /tchart/);
-  assert.match(text(html), /No air station within 25 km/);
+  assert.match(
+    text(html),
+    /This record has no air quality\. It uses only the stations within 25 km, and none is that close\./,
+  );
   assert.match(text(html), /low on every day/);
 });
 
