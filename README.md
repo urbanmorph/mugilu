@@ -13,7 +13,7 @@
 
 ![The mugilu homepage: the place search, an official cyclone warning, and the India now map opened on the warned areas](docs/screenshots/home-desktop.png)
 
-ಮುಗಿಲು (*mugilu*) is Kannada for *cloud* or *sky*. It is the third tool in a small commons, alongside [bharatlas](https://bharatlas.com) (open geo data for India) and [mdshare](https://mdshare.live). Live at [mugilu.live](https://mugilu.live).
+ಮುಗಿಲು (_mugilu_) is Kannada for _cloud_ or _sky_. It is the third tool in a small commons, alongside [bharatlas](https://bharatlas.com) (open geo data for India) and [mdshare](https://mdshare.live). Live at [mugilu.live](https://mugilu.live).
 
 > [!IMPORTANT]
 > mugilu is informational and educational only. It is **not for medical, emergency or safety-critical decisions**, and there is no warranty or accuracy guarantee. For official hazard warnings, NDMA and IMD are the authoritative channels.
@@ -55,8 +55,8 @@ Readings are current, not a forecast. They recompute on a cycle of about 15 minu
 
 ## Screenshots
 
-| A city page ([/c/delhi](https://mugilu.live/c/delhi)) | Homepage on a phone |
-| --- | --- |
+| A city page ([/c/delhi](https://mugilu.live/c/delhi))                                                                                                                                                                | Homepage on a phone                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![The Delhi page: an Ambient read of severe air, the persona switch, the AQI with each pollutant against its CPCB limit, and the heat with wet-bulb, WBGT and today against normal](docs/screenshots/city-delhi.png) | <img src="docs/screenshots/home-mobile.png" alt="The mugilu homepage on a 390 px wide phone screen: the Menu button, the place search and an official warning" width="300"> |
 
 ## Use it on the web or as an API
@@ -95,20 +95,20 @@ A trimmed response (the full layers are `air`, `heat`, `heat_vs_normal`, `rain`,
 
 ### Routes
 
-| Route | Returns |
-| --- | --- |
-| `/c/{lat},{lon}` (+ `.json` `.md` `.png`) | Conditions at a point: HTML, JSON, Markdown, or a timestamped image |
-| `/c/{slug}` | A named place, for example `/c/bengaluru` |
-| `?as=` (`asthma`, `elderly`, `child`, `outdoor`, `heart`) | Weight the Ambient read for a vulnerability |
-| `/hi/…`, `/kn/…` | The same pages in Hindi or Kannada |
-| `/display`, `/c/{place}?kiosk` | Set up a wall screen; the self-refreshing display |
-| `/warnings`, `/places` | Active warnings across India; every district and city, marked when under an official warning |
-| `/near`, `/suggest` | Nearest air stations; place search (native scripts work) |
-| `/index.json`, `/warnings.json` | National air leaderboard; active NDMA/IMD warnings |
-| `/embed/{lat},{lon}` | Embeddable card, one line of HTML |
-| `/mcp`, `/openapi.json`, `/llms.txt` | MCP server; OpenAPI 3.1 spec; LLM manifest |
-| `/methodology`, `/terms` | Every threshold used; terms and per-source credits |
-| `?ref=your-app` | Self-identify on any API or embed call (aggregate attribution) |
+| Route                                                     | Returns                                                                                      |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `/c/{lat},{lon}` (+ `.json` `.md` `.png`)                 | Conditions at a point: HTML, JSON, Markdown, or a timestamped image                          |
+| `/c/{slug}`                                               | A named place, for example `/c/bengaluru`                                                    |
+| `?as=` (`asthma`, `elderly`, `child`, `outdoor`, `heart`) | Weight the Ambient read for a vulnerability                                                  |
+| `/hi/…`, `/kn/…`                                          | The same pages in Hindi or Kannada                                                           |
+| `/display`, `/c/{place}?kiosk`                            | Set up a wall screen; the self-refreshing display                                            |
+| `/warnings`, `/places`                                    | Active warnings across India; every district and city, marked when under an official warning |
+| `/near`, `/suggest`                                       | Nearest air stations; place search (native scripts work)                                     |
+| `/index.json`, `/warnings.json`                           | National air leaderboard; active NDMA/IMD warnings                                           |
+| `/embed/{lat},{lon}`                                      | Embeddable card, one line of HTML                                                            |
+| `/mcp`, `/openapi.json`, `/llms.txt`                      | MCP server; OpenAPI 3.1 spec; LLM manifest                                                   |
+| `/methodology`, `/terms`                                  | Every threshold used; terms and per-source credits                                           |
+| `?ref=your-app`                                           | Self-identify on any API or embed call (aggregate attribution)                               |
 
 ### Refresh rate
 
@@ -124,7 +124,7 @@ https://mugilu.live/mcp
 
 It is published in the official [MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.sathya-sankaran/mugilu) as `io.github.sathya-sankaran/mugilu` (version 1.0.2; the entry is in [`server.json`](./server.json)) and is listed on Glama.
 
-- **Claude or Cursor:** add `https://mugilu.live/mcp` as a custom connector, then ask, for example, *"is it safe for my asthmatic kid to play outside in Indiranagar right now?"*
+- **Claude or Cursor:** add `https://mugilu.live/mcp` as a custom connector, then ask, for example, _"is it safe for my asthmatic kid to play outside in Indiranagar right now?"_
 - **Claude Code:** `claude mcp add --transport http mugilu https://mugilu.live/mcp`
 - **MCP Inspector:** list the tools from the command line:
 
@@ -136,13 +136,13 @@ It is published in the official [MCP Registry](https://registry.modelcontextprot
 
 All tools are read-only and cover India only.
 
-| Tool | What it does | Inputs |
-| --- | --- | --- |
-| `conditions_at` | What the sky is doing at a place right now (not a forecast): air quality (CPCB AQI, pollutants, AQLI years of life lost), heat (feels-like, wet-bulb, WBGT), cold, rain, wind, fog and visibility, dust, fire smoke, UV, and any official NDMA warning over that spot, plus an Ambient read naming the single worst hazard and the readings in order of risk (`ambient.order`). Where it stands out, today's modelled daily high against the 1991-2020 normal. | `place` (name or `"lat,lon"`, required); `persona` (`everyone`, `asthma`, `elderly`, `child`, `outdoor`, `heart`) |
-| `search_place` | Resolves an Indian place name to candidates (name, detail, coordinate). Covers cities, districts and air-monitoring stations. Use it to disambiguate before `conditions_at`. | `query` (required) |
-| `nearest_stations` | The nearest real (measured) air-quality stations to a place, with distance and current AQI. Shows how close hard measurement is. | `place` (required); `n` (1 to 20, default 5) |
-| `active_warnings` | Official NDMA/IMD hazard warnings active across India, optionally filtered by a region or state name (matched against the headline). | `region` (optional) |
-| `national_now` | The national picture right now: the worst-air, hottest and dustiest spots in India. | `kind` (`all`, `air`, `heat`, `dust`; default `all`) |
+| Tool               | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Inputs                                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `conditions_at`    | What the sky is doing at a place right now (not a forecast): air quality (CPCB AQI, pollutants, AQLI years of life lost), heat (feels-like, wet-bulb, WBGT), cold, rain, wind, fog and visibility, dust, fire smoke, UV, and any official NDMA warning over that spot, plus an Ambient read naming the single worst hazard and the readings in order of risk (`ambient.order`). Where it stands out, today's modelled daily high against the 1991-2020 normal. | `place` (name or `"lat,lon"`, required); `persona` (`everyone`, `asthma`, `elderly`, `child`, `outdoor`, `heart`) |
+| `search_place`     | Resolves an Indian place name to candidates (name, detail, coordinate). Covers cities, districts and air-monitoring stations. Use it to disambiguate before `conditions_at`.                                                                                                                                                                                                                                                                                   | `query` (required)                                                                                                |
+| `nearest_stations` | The nearest real (measured) air-quality stations to a place, with distance and current AQI. Shows how close hard measurement is.                                                                                                                                                                                                                                                                                                                               | `place` (required); `n` (1 to 20, default 5)                                                                      |
+| `active_warnings`  | Official NDMA/IMD hazard warnings active across India, optionally filtered by a region or state name (matched against the headline).                                                                                                                                                                                                                                                                                                                           | `region` (optional)                                                                                               |
+| `national_now`     | The national picture right now: the worst-air, hottest and dustiest spots in India.                                                                                                                                                                                                                                                                                                                                                                            | `kind` (`all`, `air`, `heat`, `dust`; default `all`)                                                              |
 
 Every response carries `attribution` and `disclaimer` fields; please show them to the user.
 
@@ -152,16 +152,16 @@ mugilu does not resolve sub-city wards, hospitals, forests, rivers, highways or 
 
 mugilu's code is MIT. The data is **not** relicensed: each source keeps its own licence and terms. Credits ride with every response; see the per-page attribution and [/terms](https://mugilu.live/terms). This table follows [`apps/worker/src/sources.ts`](./apps/worker/src/sources.ts), the single source of truth.
 
-| Layer | Source |
-| --- | --- |
-| Air (measured) | CPCB (Central Pollution Control Board, Govt. of India), Airnet ([CSTEP](https://cstep.in)), Aurassure and Google AirView+, via the OAQ broker ([oaq.notf.in](https://oaq.notf.in)) |
-| Modelled air (no station within 50 km), heat, rain, UV, dust, wind | [Open-Meteo](https://open-meteo.com) (CC-BY 4.0) |
-| Heat compared with normal | 1991-2020 normals of ERA5 reanalysis (Copernicus Climate Change Service) via Open-Meteo |
-| Official warnings | NDMA / IMD (SACHET) |
-| Fire and crop-burn smoke | NASA FIRMS (VIIRS) |
-| Cyclone tracks | JTWC (US Navy and Air Force; public domain) |
-| Geography and place names | Place search from OpenStreetMap contributors (ODbL) and GeoNames (CC-BY 4.0, via the Open-Meteo geocoder); admin boundaries from [bharatlas](https://bharatlas.com) |
-| Health impact (years of life lost) | The [AQLI](https://aqli.epic.uchicago.edu/) methodology (U Chicago EPIC) |
+| Layer                                                              | Source                                                                                                                                                                             |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Air (measured)                                                     | CPCB (Central Pollution Control Board, Govt. of India), Airnet ([CSTEP](https://cstep.in)), Aurassure and Google AirView+, via the OAQ broker ([oaq.notf.in](https://oaq.notf.in)) |
+| Modelled air (no station within 50 km), heat, rain, UV, dust, wind | [Open-Meteo](https://open-meteo.com) (CC-BY 4.0)                                                                                                                                   |
+| Heat compared with normal                                          | 1991-2020 normals of ERA5 reanalysis (Copernicus Climate Change Service) via Open-Meteo                                                                                            |
+| Official warnings                                                  | NDMA / IMD (SACHET)                                                                                                                                                                |
+| Fire and crop-burn smoke                                           | NASA FIRMS (VIIRS)                                                                                                                                                                 |
+| Cyclone tracks                                                     | JTWC (US Navy and Air Force; public domain)                                                                                                                                        |
+| Geography and place names                                          | Place search from OpenStreetMap contributors (ODbL) and GeoNames (CC-BY 4.0, via the Open-Meteo geocoder); admin boundaries from [bharatlas](https://bharatlas.com)                |
+| Health impact (years of life lost)                                 | The [AQLI](https://aqli.epic.uchicago.edu/) methodology (U Chicago EPIC)                                                                                                           |
 
 The heat normals are built offline on a 1° grid by [`apps/worker/scripts/build-heat-normals.ts`](./apps/worker/scripts/build-heat-normals.ts) and shipped in `apps/worker/data/heat-normals.json`, covering 388 of the 389 1° cells over India. The full methodology, with every threshold, is at [/methodology](https://mugilu.live/methodology).
 
@@ -259,6 +259,10 @@ How mugilu follows the People's Digital Goods & Infrastructure principles is tra
 ## Licence
 
 Code: [MIT](./LICENSE). Data is **not** relicensed: each upstream source's licence and attribution apply (see [Data sources and attribution](#data-sources-and-attribution)).
+
+## Ownership, privacy and conduct
+
+mugilu is owned by Sathya and built by [Urban Morph](https://urbanmorph.com); the code is copyright Sathya under the MIT licence. The privacy policy, the laws mugilu follows and how to report wrong or illegal content are on [/terms](https://mugilu.live/terms). Contributors follow the [Code of Conduct](./CODE_OF_CONDUCT.md); security issues go by [SECURITY.md](./SECURITY.md).
 
 ---
 
