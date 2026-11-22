@@ -262,7 +262,7 @@ Code: [MIT](./LICENSE). Data is **not** relicensed: each upstream source's licen
 
 ## Ownership, privacy and conduct
 
-mugilu is owned by Sathya and built by [Urban Morph](https://urbanmorph.com); the code is copyright Sathya under the MIT licence. The privacy policy, the laws mugilu follows and how to report wrong or illegal content are on [/terms](https://mugilu.live/terms). Contributors follow the [Code of Conduct](./CODE_OF_CONDUCT.md); security issues go by [SECURITY.md](./SECURITY.md).
+mugilu is co-owned by Sathya Sankaran and [Urban Morph](https://urbanmorph.com). The code is under the [MIT licence](./LICENSE). The privacy policy, the laws mugilu follows and how to report wrong or illegal content are on [/terms](https://mugilu.live/terms). Contributors follow the [Code of Conduct](./CODE_OF_CONDUCT.md); security issues go by [SECURITY.md](./SECURITY.md).
 
 ---
 

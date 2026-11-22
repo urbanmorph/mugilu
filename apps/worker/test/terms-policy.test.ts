@@ -15,7 +15,7 @@ const text = (h: string) =>
 
 test("/terms: ownership, said plainly", () => {
   const s = text(renderTerms("en"));
-  assert.match(s, /mugilu is owned by Sathya and built by Urban Morph\./);
+  assert.match(s, /mugilu is co-owned by Sathya Sankaran and Urban Morph\./);
   assert.match(renderTerms("en"), /id="owner"/);
 });
 

@@ -147,9 +147,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "अपने अलर्ट का डेटा मिटाने के लिए अलर्ट बंद करें। सहेजी गई जगहें मिटाने के लिए उन्हें अपने ब्राउज़र में हटाएँ। निजता से जुड़े किसी और सवाल के लिए हमसे संपर्क करें: {contact}।",
       kn: "ನಿಮ್ಮ ಎಚ್ಚರಿಕೆ ಮಾಹಿತಿಯನ್ನು ಅಳಿಸಲು ಎಚ್ಚರಿಕೆಯನ್ನು ಆಫ್ ಮಾಡಿ. ಉಳಿಸಿದ ಸ್ಥಳಗಳನ್ನು ಅಳಿಸಲು ಅವುಗಳನ್ನು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆಗೆದುಹಾಕಿ. ಗೌಪ್ಯತೆಯ ಬೇರೆ ಯಾವುದೇ ಪ್ರಶ್ನೆಗೆ ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ: {contact}.",
     },
-  "mugilu is owned by Sathya and built by Urban Morph. The code is copyright Sathya, under the MIT licence.": {
-    hi: "mugilu के स्वामी Sathya हैं और इसे Urban Morph ने बनाया है। कोड का कॉपीराइट Sathya के पास है, MIT लाइसेंस के तहत।",
-    kn: "mugilu ನ ಮಾಲೀಕರು Sathya, ಇದನ್ನು Urban Morph ನಿರ್ಮಿಸಿದೆ. ಕೋಡ್‌ನ ಹಕ್ಕುಸ್ವಾಮ್ಯ Sathya ಅವರದು, MIT ಪರವಾನಗಿಯಡಿ.",
+  "mugilu is co-owned by Sathya Sankaran and Urban Morph.": {
+    hi: "mugilu के सह-स्वामी Sathya Sankaran और Urban Morph हैं।",
+    kn: "mugilu ನ ಸಹ-ಮಾಲೀಕರು Sathya Sankaran ಮತ್ತು Urban Morph.",
   },
   "mugilu is built to follow India's Information Technology Act, 2000 and Digital Personal Data Protection Act, 2023: it keeps no personal data except the opt-in alert address above. For the Rights of Persons with Disabilities Act, 2016, the pages aim for WCAG 2.1 AA.":
     {
