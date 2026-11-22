@@ -76,3 +76,13 @@ test("place directory (hi): the find box still matches the Latin name", () => {
 
   assert.match(LIST_FILTER_JS, /getAttribute\('data-k'\)/);
 });
+
+test("place page title: the short name people search, the state only where two districts share it", () => {
+  const title = (place: string, slug: string) =>
+    renderConditionsPage(almora({ place }), "everyone", `https://mugilu.live/c/${slug}`, "en").match(
+      /<title>([^<]*)<\/title>/,
+    )![1];
+  assert.match(title("East Delhi, Delhi", "east"), /^East Delhi AQI today/);
+  assert.match(title("New Delhi, Delhi", "new-delhi"), /^New Delhi AQI today/);
+  assert.match(title("Aurangabad, Bihar", "aurangabad-bihar"), /^Aurangabad, Bihar AQI today/);
+});

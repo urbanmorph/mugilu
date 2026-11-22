@@ -322,10 +322,18 @@ export async function collectWarnAreas(env: Env, o: CollectOpts = {}): Promise<A
 
 const isActive = (m: Meta, now: number) => m.expires != null && +m.expires > now && +(m.rings ?? 0) > 0;
 
-/** The stored areas of the alerts in force at `now`. */
-export async function loadWarnAreas(env: Env, now = Date.now()): Promise<WarnArea[]> {
+/** The stored areas of the alerts in force at `now`, and every stored alert's end (ISO), in
+ *  force or not, with an area or not: the national feed lists ended alerts too, and this is
+ *  how its readers tell them apart. One listing serves both. */
+export async function loadWarnAreas(
+  env: Env,
+  now = Date.now(),
+): Promise<{ areas: WarnArea[]; ends: Record<string, string> }> {
   const stored = await listStored(env);
+  const ends: Record<string, string> = {};
+  for (const [id, m] of stored)
+    if (Number.isFinite(+(m.expires ?? NaN))) ends[id] = new Date(+m.expires!).toISOString();
   const ids = [...stored].filter(([, m]) => isActive(m, now)).map(([id]) => id);
   const areas = await Promise.all(ids.map((id) => env.OAQ_R2.get(keyOf(id)).then((r) => r?.json<WarnArea>())));
-  return areas.filter((a): a is WarnArea => !!a?.rings?.length);
+  return { areas: areas.filter((a): a is WarnArea => !!a?.rings?.length), ends };
 }

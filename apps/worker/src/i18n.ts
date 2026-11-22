@@ -1563,10 +1563,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "mugilu खुले आकाश के लिए कन्नड़ शब्द है।",
     kn: "mugilu ಎಂಬುದು ಮುಕ್ತ ಆಕಾಶಕ್ಕೆ ಇರುವ ಕನ್ನಡ ಪದ (ಮುಗಿಲು).",
   },
-  "mugilu mirrors the SACHET feed and keeps an archive of every alert.": {
-    hi: "mugilu SACHET फ़ीड को ज्यों-का-त्यों दिखाता है और हर चेतावनी का रिकॉर्ड रखता है।",
-    kn: "mugilu SACHET ಫೀಡ್‌ನ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಯಥಾವತ್ತಾಗಿ ತೋರಿಸುತ್ತದೆ ಮತ್ತು ಪ್ರತಿಯೊಂದು ಎಚ್ಚರಿಕೆಯ ಆರ್ಕೈವ್ ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ.",
-  },
+  "mugilu shows the SACHET alerts still in force, each until the time its own alert gives, and keeps an archive of every alert.":
+    {
+      hi: "mugilu SACHET की वही चेतावनियाँ दिखाता है जो अभी लागू हैं, हर एक उसकी अपनी चेतावनी में दिए समय तक, और हर चेतावनी का रिकॉर्ड रखता है।",
+      kn: "mugilu SACHET ನ ಈಗ ಜಾರಿಯಲ್ಲಿರುವ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ, ಪ್ರತಿಯೊಂದನ್ನೂ ಅದರಲ್ಲೇ ನೀಡಿರುವ ಸಮಯದವರೆಗೆ, ಮತ್ತು ಪ್ರತಿಯೊಂದು ಎಚ್ಚರಿಕೆಯ ಆರ್ಕೈವ್ ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ.",
+    },
   "mugilu names the single worst hazard over your exact location and says plainly what to do, weighted for who you are: asthma, older adults, children, outdoor workers, or a heart condition. It is informational, not medical or safety advice; for official warnings, consult NDMA and IMD.":
     {
       hi: "mugilu आपकी सटीक जगह पर सबसे बुरे खतरे का नाम बताता है और साफ़ शब्दों में बताता है कि क्या करें, इस हिसाब से कि आप कौन हैं: अस्थमा वाले लोग, बुजुर्ग, बच्चे, बाहर काम करने वाले, या हृदय रोग वाले लोग। यह केवल जानकारी है, चिकित्सा या सुरक्षा सलाह नहीं; आधिकारिक चेतावनियों के लिए NDMA और IMD से परामर्श करें।",

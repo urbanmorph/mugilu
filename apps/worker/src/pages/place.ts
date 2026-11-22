@@ -4,7 +4,7 @@ import { placeLabel } from "../readings";
 import { esc } from "../html";
 import { AQI_BAND_LABEL } from "../aqi";
 import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } from "../score";
-import { localName, nativeNames, placeBySlug, siblingPlaces, slugFromPath, slugify } from "../slugs";
+import { localName, nativeNames, placeBySlug, siblingPlaces, slugFromPath, titleName } from "../slugs";
 import { hubOf, stateName } from "../states";
 import { aroundLinks } from "../sister";
 import { lp, t, type Lang } from "../i18n";
@@ -269,7 +269,8 @@ export function renderConditionsPage(
   // Title and description in the words people search ("Delhi AQI today"), from the facts.
   // The short name, as people search it ("almora aqi"); the state stays where two districts
   // share the name (their slug carries it).
-  const titlePlace = named && named === slugify(latin) ? latin : placeName;
+  const namedPlace = named ? placeBySlug(named) : undefined;
+  const titlePlace = namedPlace ? titleName(namedPlace) : placeName;
   // The native name leads; the Latin one follows it, so both searches match.
   const title = placeTitle(fs, native ?? titlePlace, titlePlace, lang);
   // With no air reading the facts say little, so the description names what the page covers.

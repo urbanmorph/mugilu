@@ -157,7 +157,7 @@ export function openApiSpec(siteUrl: string): object {
     { name: "id", in: "path", required: true, schema: { type: "string" }, example: "301" },
   ];
   const str = { type: "string" };
-  // As stored in data/warnings.json (sachet.ts WarningsSnapshot, FeedAlert).
+  // data/warnings.json (sachet.ts WarningsSnapshot, FeedAlert), the ended alerts left out (inForce).
   const warnings = {
     type: "object",
     required: ["generated_at", "count", "alerts"],
@@ -175,6 +175,11 @@ export function openApiSpec(siteUrl: string): object {
             issuer: { ...str, description: "The issuing office." },
             link: { ...str, description: "The full CAP record on SACHET." },
             sent: { ...str, description: "When it was issued (RFC 822, as the feed gives it)." },
+            expires: {
+              type: "string",
+              format: "date-time",
+              description: "When it ends, from its CAP record; absent until that record has been read.",
+            },
           },
         },
       },
@@ -270,7 +275,10 @@ export function openApiSpec(siteUrl: string): object {
         get: {
           operationId: "activeWarnings",
           summary: "Active official NDMA/IMD warnings across India.",
-          responses: ok("The current warnings snapshot.", warnings),
+          responses: ok(
+            "The alerts in force now: SACHET's feed, without the alerts that have ended. count is the alerts listed.",
+            warnings,
+          ),
         },
       },
       "/warnings.md": {

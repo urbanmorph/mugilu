@@ -152,7 +152,7 @@ function sourcesPanel(lang: Lang): string {
   return panel(
     `<p>${T("IMD, other national agencies and the state disaster management authorities issue these warnings.")} ` +
       `${T("NDMA publishes them on SACHET, in the Common Alerting Protocol (CAP).")} ` +
-      `${T("mugilu mirrors the SACHET feed and keeps an archive of every alert.")}</p>`,
+      `${T("mugilu shows the SACHET alerts still in force, each until the time its own alert gives, and keeps an archive of every alert.")}</p>`,
     { title: t("Where the warnings come from", lang), icon: "list", id: "source" },
   );
 }
@@ -185,7 +185,9 @@ export function renderWarningsPage(
     .map((a) => {
       const { office, time, cap } = alertParts(a, lang);
       const [type, label, , icon] = typeOf(a.headline || "");
-      return { a, office, type, label, icon, meta: [time && esc(time), cap].filter(Boolean).join(" · ") };
+      const until = a.expires && t("until X", lang).replace("X", istTime(a.expires));
+      const meta = [time && esc(time), until && esc(until), cap].filter(Boolean).join(" · ");
+      return { a, office, type, label, icon, meta };
     });
   type Read = (typeof alerts)[number];
   const pinned = new Map<string, Read>();

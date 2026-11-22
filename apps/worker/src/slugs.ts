@@ -58,6 +58,12 @@ const CITY_SEEDS: SlugPlace[] = [
   { slug: "ludhiana", name: "Ludhiana", state: "Punjab", lat: 30.901, lon: 75.857 },
 ];
 
+// LGD names Delhi's districts by direction alone ("East", "South West"); Delhi, its press and
+// its people say "East Delhi". The slugs stay as they were ("east").
+const DELHI_DIRECTION = /^(north|south|east|west|central)( (east|west))?$/i;
+const districtName = (d: Centroid): string =>
+  d.state === "Delhi" && DELHI_DIRECTION.test(d.name.trim()) ? `${d.name.trim()} Delhi` : d.name;
+
 // Build the slug -> place map: city seeds first (they win), then districts fill
 // the long tail. A name shared by several districts (e.g. "Aurangabad" in both
 // Maharashtra and Bihar) is disambiguated by appending the state.
@@ -75,7 +81,7 @@ const SLUGS = new Map<string, SlugPlace>();
   }
   const place = (slug: string, d: Centroid): SlugPlace => ({
     slug,
-    name: d.name,
+    name: districtName(d),
     state: d.state,
     lat: d.lat,
     lon: d.lon,
@@ -122,12 +128,19 @@ export function slugLabel(p: Pick<SlugPlace, "name" | "state">): string {
 
 /** The name a page title uses: the short name, as people search it ("almora aqi"), with the
  *  state only where two districts share the name (their slug carries it). */
-export const titleName = (p: SlugPlace): string => (p.slug === slugify(p.name) ? p.name : slugLabel(p));
+export const titleName = (p: SlugPlace): string =>
+  p.state && p.slug === `${slugify(p.name)}-${slugify(p.state)}` ? slugLabel(p) : p.name;
 
 // Districts whose LGD name (and so its slug, already in the sitemap and Search Console)
 // differs from how people write it. Keyed by the slugified query, so case, spaces
 // and hyphens ("North 24-Parganas") all match; the slugs themselves never change.
 const SLUG_ALIASES: Record<string, string> = {
+  ...Object.fromEntries(
+    ["north", "north-east", "north-west", "east", "central", "west", "south", "south-east", "south-west"].map((s) => [
+      `${s}-delhi`,
+      s,
+    ]),
+  ),
   "north-24-parganas": "24-paraganas-north",
   "north-24-paraganas": "24-paraganas-north",
   "24-parganas-north": "24-paraganas-north",
@@ -178,13 +191,24 @@ function groupByState(): { state: string; places: SlugPlace[] }[] {
 }
 
 /** The named place whose centre is nearest a point, and how far it is. */
-export function nearestPlace(lat: number, lon: number): { place: SlugPlace; km: number } | undefined {
-  let best: { place: SlugPlace; km: number } | undefined;
-  for (const p of SLUGS.values()) {
-    const km = haversineKm(lat, lon, p.lat, p.lon);
-    if (!best || km < best.km) best = { place: p, km };
-  }
-  return best;
+/** Within this distance of a big city's centre, a point is in the city. */
+export const METRO_KM = 15;
+
+/** The named place whose record a point borrows (READING_SENTENCES_SPEC.md section 9), and how
+ *  far its centre is: the big city the point is inside (within METRO_KM of its centre), else
+ *  the named place whose centre is closest. A district inside a city (Bengaluru Urban, East
+ *  Delhi) can be nearer, but the city's record is the one its people read. */
+export function recordNear(lat: number, lon: number): { place: SlugPlace; km: number } | undefined {
+  const nearest = (from: Iterable<SlugPlace>) => {
+    let best: { place: SlugPlace; km: number } | undefined;
+    for (const p of from) {
+      const km = haversineKm(lat, lon, p.lat, p.lon);
+      if (!best || km < best.km) best = { place: p, km };
+    }
+    return best;
+  };
+  const city = nearest(CITY_SEEDS);
+  return city && city.km <= METRO_KM ? city : nearest(SLUGS.values());
 }
 
 /** A handful of other named places nearest to `slug`, in the same state. Rendered

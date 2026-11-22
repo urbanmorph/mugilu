@@ -226,12 +226,18 @@ test("loadWarnAreas: only the alerts in force, with their areas", async () => {
   const noPolygon = CAP_IMD.replace(/<cap:parameter>[\s\S]*?<\/cap:parameter>/, "");
   stubSachet({ "1": CAP_IMD, "2": capWith("2026-11-19T10:00:00+05:30"), "5": noPolygon });
   await collectWarnAreas(env, { now: NOW });
-  const active = await loadWarnAreas(env, NOW);
+  const { areas, ends } = await loadWarnAreas(env, NOW);
   assert.deepEqual(
-    active.map((a) => a.identifier),
+    areas.map((a) => a.identifier),
     ["1"],
   );
-  assert.deepEqual(await loadWarnAreas(env, Date.parse("2026-11-19T07:00:00Z")), []);
+  assert.deepEqual((await loadWarnAreas(env, Date.parse("2026-11-19T07:00:00Z"))).areas, []);
+  // Every alert's end, with an area or not, in force or not: the feed's list reads it.
+  assert.deepEqual(ends, {
+    "1": "2026-11-19T06:44:00.000Z",
+    "2": "2026-11-19T04:30:00.000Z",
+    "5": "2026-11-19T06:44:00.000Z",
+  });
 });
 
 // ── The archive: where and when every alert applied, kept for good ──────────────────

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { historyPanel, nearestRecordLine } from "../src/ui/history";
-import { nearestPlace, placeBySlug } from "../src/slugs";
+import { METRO_KM, recordNear, placeBySlug, slugForName, titleName } from "../src/slugs";
 import { BORROW_MAX_KM } from "../src/placedaily";
 import type { PlaceTrend } from "../src/placedaily";
 
@@ -31,8 +31,8 @@ const text = (html: string) =>
     .replace(/&#39;/g, "'")
     .replace(/\s+/g, " ");
 
-test("nearestPlace: the named place whose centre is closest, and how far", () => {
-  const n = nearestPlace(ALMORA.lat + 0.1, ALMORA.lon)!;
+test("recordNear: the named place whose centre is closest, and how far", () => {
+  const n = recordNear(ALMORA.lat + 0.1, ALMORA.lon)!;
   assert.equal(n.place.slug, "almora");
   assert.ok(n.km > 10 && n.km < 12, String(n.km));
   assert.equal(BORROW_MAX_KM, 25, "the record's own air radius");
@@ -59,4 +59,26 @@ test("too far to borrow: one line to the nearest place with a record", () => {
   assert.match(text(html), /The nearest place with a daily record is Almora, 38 km away\./);
   assert.match(html, /href="\/c\/almora"/);
   assert.match(nearestRecordLine({ place: ALMORA, name: "Almora", km: 38 }, "kn"), /href="\/kn\/c\/almora"/);
+});
+
+test("recordNear: a point inside a big city borrows the city's record, not a nearer district's", () => {
+  const at = (slug: string) => recordNear(placeBySlug(slug)!.lat, placeBySlug(slug)!.lon)!;
+  // Each district centre below is nearer itself than the city, but sits inside the city.
+  assert.equal(at("bengaluru-urban").place.slug, "bengaluru");
+  assert.equal(at("mumbai-suburban").place.slug, "mumbai");
+  assert.equal(at("east").place.slug, "delhi");
+  assert.ok(at("east").km > 8 && at("east").km < 10, "the distance is to the city's centre");
+  // Beyond METRO_KM of a city's centre, the nearest place's own record, as before.
+  assert.equal(METRO_KM, 15);
+  assert.equal(at("south-west").place.slug, "south-west", "Delhi's centre is 24 km away");
+  assert.equal(at("cuttack").place.slug, "cuttack", "Bhubaneswar is 22 km away");
+});
+
+test("Delhi's districts are named as Delhi writes them, under their old slugs", () => {
+  assert.equal(placeBySlug("east")!.name, "East Delhi");
+  assert.equal(placeBySlug("south-west")!.name, "South West Delhi");
+  assert.equal(placeBySlug("new-delhi")!.name, "New Delhi");
+  assert.equal(titleName(placeBySlug("east")!), "East Delhi", "the state is in the name already");
+  assert.equal(slugForName("East Delhi"), "east");
+  assert.equal(slugForName("north-east delhi"), "north-east");
 });
