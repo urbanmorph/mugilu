@@ -43,6 +43,6 @@ test("/terms (hi, kn): the new sections are translated", () => {
     const s = text(renderTerms(lang));
     for (const en of [/Built by/, /kept as totals/, /any age/, /no user posts/, /We answer within/])
       assert.doesNotMatch(s, en, `${lang}: ${en}`);
-    assert.match(s, /Sathya/);
+    assert.match(s, /Sathya Sankaran/);
   }
 });
