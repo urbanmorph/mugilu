@@ -1,6 +1,8 @@
 import { MOBILE } from "../ui/standard";
 import { esc } from "../html";
 import { allSlugPlaces, localName, slugPlacesByState } from "../slugs";
+import { hubOf, stateName } from "../states";
+import { fill } from "../ui/history";
 import { lp, quoted, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { activeWarnings, px, py, type IndiaMap, type MapWarning } from "../indiamap";
@@ -150,15 +152,18 @@ export function renderPlaces(
     .map((g) =>
       fold(
         g.state,
-        `<ul class="plist">${g.places
-          .map((p) => {
-            const w = isWarned.has(p.slug);
-            const name = localName(p, lang);
-            // A native name keeps its Latin one for the find box (mgMatch reads data-k).
-            const k = name !== p.name ? ` data-k="${esc(p.name)}"` : "";
-            return `<li${k}><a href="${lp(`/c/${p.slug}`, lang)}">${w ? `${ico("warn")}<b>${esc(name)}</b>` : esc(name)}</a></li>`;
-          })
-          .join("")}</ul>`,
+        (hubOf(g.state)
+          ? `<p class="t-meta"><a href="${lp(`/state/${hubOf(g.state)!.slug}`, lang)}">${esc(fill("{state} now", lang, { state: stateName(g.state, lang) }))} →</a></p>`
+          : "") +
+          `<ul class="plist">${g.places
+            .map((p) => {
+              const w = isWarned.has(p.slug);
+              const name = localName(p, lang);
+              // A native name keeps its Latin one for the find box (mgMatch reads data-k).
+              const k = name !== p.name ? ` data-k="${esc(p.name)}"` : "";
+              return `<li${k}><a href="${lp(`/c/${p.slug}`, lang)}">${w ? `${ico("warn")}<b>${esc(name)}</b>` : esc(name)}</a></li>`;
+            })
+            .join("")}</ul>`,
         { open: true, id: stateAnchor(g.state), count: g.places.length },
       ),
     )

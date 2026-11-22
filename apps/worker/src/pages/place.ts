@@ -5,6 +5,7 @@ import { esc } from "../html";
 import { AQI_BAND_LABEL } from "../aqi";
 import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } from "../score";
 import { localName, nativeNames, placeBySlug, siblingPlaces, slugFromPath, slugify } from "../slugs";
+import { hubOf, stateName } from "../states";
 import { aroundLinks } from "../sister";
 import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
@@ -14,7 +15,7 @@ import { breadcrumb, SITE, ld, relTime } from "../ui/shell";
 import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
-import { historyPanel } from "../ui/history";
+import { fill, historyPanel } from "../ui/history";
 import type { PlaceTrend } from "../placedaily";
 import { facts, type Fact } from "../facts";
 import {
@@ -125,7 +126,12 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
   if (sibs.length)
     parts.push(
       `<p><b>${esc(t("Nearby:", lang))}</b></p>` +
-        placeTiles(sibs.map((s) => placeTile(lp(`/c/${s.slug}`, lang), s.name))),
+        placeTiles(sibs.map((s) => placeTile(lp(`/c/${s.slug}`, lang), localName(s, lang)))),
+    );
+  const hub = hubOf(placeBySlug(slug)?.state);
+  if (hub)
+    parts.push(
+      `<p><a href="${lp(`/state/${hub.slug}`, lang)}">${esc(fill("{state} now", lang, { state: stateName(hub.name, lang) }))} →</a></p>`,
     );
   const around = aroundLinks(slug);
   if (around && (around.wards || around.species)) {
@@ -286,7 +292,17 @@ export function renderConditionsPage(
               { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${canonical}.md` },
             ],
           },
-          breadcrumb([native ?? placeName, canonical]),
+          breadcrumb(
+            ...(hubOf(sp?.state)
+              ? [
+                  [stateName(sp!.state!, lang), `${SITE}${lp(`/state/${hubOf(sp?.state)!.slug}`, lang)}`] as [
+                    string,
+                    string,
+                  ],
+                ]
+              : []),
+            [native ?? placeName, canonical],
+          ),
         ],
       })
     : undefined;

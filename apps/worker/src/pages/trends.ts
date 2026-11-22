@@ -2,7 +2,7 @@ import { esc, trusted } from "../html";
 import { lp, t, type Lang } from "../i18n";
 import { SERIES, type PlaceTrend } from "../placedaily";
 import { RISK_BANDS } from "../score";
-import { titleName, type SlugPlace } from "../slugs";
+import { localName, titleName, type SlugPlace } from "../slugs";
 import { DESCRIPTION_MAX } from "../phrases";
 import { breadcrumb, ld, SITE } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
@@ -148,7 +148,9 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
   const name = place.name;
   const base = `/c/${place.slug}/trends`;
   // The words people search ("almora aqi last 30 days"), the same name rule as the place page.
-  const title = fill("{place} AQI and weather: last {n} days", lang, { place: titleName(place), n: span });
+  // On hi/kn pages the native name leads, and the Latin one follows in the title tag.
+  const native = localName(place, lang) !== place.name ? localName(place, lang) : undefined;
+  const title = fill("{place} AQI and weather: last {n} days", lang, { place: native ?? titleName(place), n: span });
   const period = segLinks(
     "per",
     t("Period", lang),
@@ -196,7 +198,7 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
       { place: name, n: span },
     );
   const shell = (body: string) =>
-    pageShell(`${title} | mugilu`, wrap(body), {
+    pageShell(`${title}${native ? ` | ${titleName(place)}` : ""} | mugilu`, wrap(body), {
       path: base,
       query: span === 30 ? "" : `?days=${span}`,
       lang,

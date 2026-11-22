@@ -87,7 +87,11 @@ test("/warnings: one place in one state is said in the singular", () => {
 test("/warnings: the places under a warning, by state, the state with the most first; each links its page", () => {
   const html = page(SNAP);
   assert.match(html, /<h2 class="bar"[^>]*>[^]*?<span>Places under a warning now, by state<\/span><\/h2>/);
-  const states = [...html.matchAll(/<h3 class="wgrp">([^<]+)<span class="n">(\d+)<\/span><\/h3>/g)];
+  const states = [
+    ...html.matchAll(
+      /<h3 class="wgrp">(?:<a href="\/state\/[a-z-]+">)?([^<]+)(?:<\/a>)?<span class="n">(\d+)<\/span><\/h3>/g,
+    ),
+  ];
   assert.deepEqual(states.map((m) => m[1]).sort(), ["Karnataka", "Uttarakhand"]);
   assert.ok(+states[0][2] >= +states[1][2], "the state with more places first");
   assert.match(html, /href="\/c\/almora"/);
@@ -119,7 +123,10 @@ test("/warnings: a named cyclone whose alert has no area marks the places it nam
     "The SEVERE CYCLONIC STORM AKVAN with maximum wind speed of 90-100 gusting to 110 Kmph lays centred at 1130 IST of 18.11.26 near latitude 13.1N and longitude 85.4E, 540 Km southeast of Narsapur, Andhra Pradesh. Cyclone Warning for Alluri Sitharama Raju, Anakapalli, Srikakulam, Visakhapatnam, Vizianagaram.";
   const snap = { ...SNAP, alerts: [alert("9", akvan, "IMD Visakhapatnam")] } as unknown as WarningsSnapshot;
   const html = page(snap, "en", map([]));
-  assert.match(html, /<h3 class="wgrp">Andhra Pradesh<span class="n">5<\/span><\/h3>/);
+  assert.match(
+    html,
+    /<h3 class="wgrp"><a href="\/state\/andhra-pradesh">Andhra Pradesh<\/a><span class="n">5<\/span><\/h3>/,
+  );
   assert.match(html, /href="\/c\/srikakulam"/);
 });
 

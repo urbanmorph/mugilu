@@ -83,9 +83,9 @@ test("trends page: the title says AQI and weather; the description is the period
   );
   assert.ok(desc.length <= 160, desc);
   const hi = renderTrendsPage(DELHI, trend(30, { air }), 30, "hi");
-  assert.match(hi, /<title>Delhi AQI और मौसम: पिछले 30 दिन/);
+  assert.match(hi, /<title>दिल्ली AQI और मौसम: पिछले 30 दिन \| Delhi \| mugilu<\/title>/);
   const kn = renderTrendsPage(DELHI, trend(30, { air }), 30, "kn");
-  assert.match(kn, /<title>Delhi AQI ಮತ್ತು ಹವಾಮಾನ: ಕಳೆದ 30 ದಿನಗಳು/);
+  assert.match(kn, /<title>ದೆಹಲಿ AQI ಮತ್ತು ಹವಾಮಾನ: ಕಳೆದ 30 ದಿನಗಳು \| Delhi \| mugilu<\/title>/);
 });
 
 test("trends page: a name two districts share keeps its state in the title", () => {

@@ -10,6 +10,7 @@ import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import type { IndiaMap } from "../indiamap";
 import { allSlugPlaces, localName, type SlugPlace } from "../slugs";
+import { hubOf, stateName } from "../states";
 import { fill } from "../ui/history";
 import { DESCRIPTION_MAX } from "../phrases";
 import { warnedSlugs } from "./places";
@@ -272,7 +273,7 @@ export function renderWarningsPage(
           byState
             .map(
               ([st, ps]) =>
-                `<section><h3 class="wgrp">${esc(st)}<span class="n">${ps.length}</span></h3>${placeTiles(
+                `<section><h3 class="wgrp">${hubOf(st) ? `<a href="${lp(`/state/${hubOf(st)!.slug}`, lang)}">${esc(stateName(st, lang))}</a>` : esc(stateName(st, lang))}<span class="n">${ps.length}</span></h3>${placeTiles(
                   ps.map((p) => placeTile(lp(`/c/${p.slug}`, lang), localName(p, lang), true, lang)),
                 )}</section>`,
             )
