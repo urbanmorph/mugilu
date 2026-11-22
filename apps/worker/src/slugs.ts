@@ -1,6 +1,8 @@
 import centroids from "../data/centroids.json";
+import placeNames from "../data/place-names.json";
 import { haversineKm } from "./near";
 import type { Centroid } from "./types";
+import type { Lang } from "./i18n";
 
 // Named place URLs for SEO + humans: /c/lucknow resolves to a district's centroid
 // and serves the same conditions as /c/{lat},{lon}, but with a keyword URL that
@@ -101,6 +103,17 @@ export function slugFromPath(path: string): { slug: string; ext?: "json" | "md" 
 export function placeBySlug(slug: string): SlugPlace | undefined {
   return SLUGS.get(slug.toLowerCase());
 }
+
+// Each place's name in Hindi and Kannada, where it is the state's own language (and the major
+// cities in both): scripts/build-place-names.ts, from Wikidata by LGD code. Elsewhere, Latin.
+const NAMES = placeNames as Record<string, { hi?: string; kn?: string }>;
+
+/** A place's name in the page's language: its native-script name when there is one, else Latin. */
+export const localName = (p: Pick<SlugPlace, "slug" | "name">, lang: Lang): string =>
+  (lang === "en" ? undefined : NAMES[p.slug]?.[lang]) ?? p.name;
+
+/** A place's native-script names (for schema.org alternateName). */
+export const nativeNames = (slug: string): string[] => Object.values(NAMES[slug] ?? {});
 
 /** How a named place reads: "New Delhi, Delhi", but "Delhi" once when the state has its name. */
 export function slugLabel(p: Pick<SlugPlace, "name" | "state">): string {

@@ -9,3 +9,6 @@ dist
 .DS_Store
 supporting-docs/
 ops/
+
+# Build-script caches (scripts/build-place-names.ts)
+apps/worker/.cache/

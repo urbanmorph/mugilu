@@ -4,7 +4,7 @@ import { placeLabel } from "../readings";
 import { esc } from "../html";
 import { AQI_BAND_LABEL } from "../aqi";
 import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } from "../score";
-import { siblingPlaces, slugFromPath, slugify } from "../slugs";
+import { localName, nativeNames, placeBySlug, siblingPlaces, slugFromPath, slugify } from "../slugs";
 import { aroundLinks } from "../sister";
 import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
@@ -74,7 +74,7 @@ function whoSwitch(base: string, current: Persona, lang: Lang): string {
 
 /** The hero band: the place and when its readings are from, the Ambient plate, the persona
  *  switch. On wide screens the plate stands beside the title and the switch. */
-function hero(c: Conditions, plate: string, who: string, answer: string, lang: Lang): string {
+function hero(c: Conditions, plate: string, who: string, answer: string, lang: Lang, native?: string): string {
   const times = [stamp(t("updated", lang), relTime(c.as_of))];
   if (airLag(c)) times.push(stamp(t("air reading", lang), relTime(c.air_as_of!)));
   if (c.weather_as_of) times.push(stamp(t("weather reading", lang), relTime(c.weather_as_of)));
@@ -94,8 +94,9 @@ function hero(c: Conditions, plate: string, who: string, answer: string, lang: L
   return (
     `<section class="band phero"><div class="ptitle stack">` +
     `<p class="t-meta">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>` +
-    `<h1 class="t-title loc" data-ll="${c.location.lat},${c.location.lon}">${esc(placeLabel(c))}` +
-    `<span class="h1sub">${esc(say("h.sub", lang))}</span></h1>` +
+    `<h1 class="t-title loc" data-ll="${c.location.lat},${c.location.lon}">${esc(native ?? placeLabel(c))}` +
+    // With a native name, the Latin name and state sit under it.
+    `<span class="h1sub">${native ? `<span lang="en">${esc(placeLabel(c))}</span> · ` : ""}${esc(say("h.sub", lang))}</span></h1>` +
     `${stamps(times)}${answer ? `<p class="t-lead answer">${esc(answer)}</p>` : ""}${offline}</div>` +
     `${plate}<div class="pwho">${who}</div></section>`
   );
@@ -200,7 +201,12 @@ export function renderConditionsPage(
   const screen = lp(withPersona(`/c/${slug}?kiosk`, risk.persona), lang);
   // The facts behind every sentence on the page; the place as a sentence names it.
   const fs = facts(c);
-  const short = placeName.split(", ")[0];
+  const latin = placeName.split(", ")[0];
+  // A named place on a Hindi or Kannada page goes by its native-script name, where it has one.
+  const named = canonical ? slugFromPath(new URL(canonical).pathname)?.slug : undefined;
+  const sp = named ? placeBySlug(named) : undefined;
+  const native = sp && localName(sp, lang) !== sp.name ? localName(sp, lang) : undefined;
+  const short = native ?? latin;
 
   // GRAP sits in the Air reading; with no air reading here it still shows, on its own.
   const readings =
@@ -234,7 +240,7 @@ export function renderConditionsPage(
     ),
   );
   const body = wrap(
-    hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), answerLine(fs, short, lang), lang) +
+    hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), answerLine(fs, short, lang), lang, native) +
       warningBand(c, lang) +
       readings +
       band(warningsPanel(fs, short, lang)) +
@@ -247,9 +253,9 @@ export function renderConditionsPage(
   // Title and description in the words people search ("Delhi AQI today"), from the facts.
   // The short name, as people search it ("almora aqi"); the state stays where two districts
   // share the name (their slug carries it).
-  const named = canonical ? slugFromPath(new URL(canonical).pathname)?.slug : undefined;
-  const titlePlace = named && named === slugify(short) ? short : placeName;
-  const title = placeTitle(fs, titlePlace, titlePlace, lang);
+  const titlePlace = named && named === slugify(latin) ? latin : placeName;
+  // The native name leads; the Latin one follows it, so both searches match.
+  const title = placeTitle(fs, native ?? titlePlace, titlePlace, lang);
   // With no air reading the facts say little, so the description names what the page covers.
   const desc = fs.some((f) => f.key === "air")
     ? placeDescription(fs, short, c.as_of, lang)
@@ -272,6 +278,7 @@ export function renderConditionsPage(
             spatialCoverage: {
               "@type": "Place",
               name: c.place ?? undefined,
+              ...(named && nativeNames(named).length ? { alternateName: nativeNames(named) } : {}),
               geo: { "@type": "GeoCoordinates", latitude: c.location.lat, longitude: c.location.lon },
             },
             distribution: [
@@ -279,7 +286,7 @@ export function renderConditionsPage(
               { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${canonical}.md` },
             ],
           },
-          breadcrumb([placeName, canonical]),
+          breadcrumb([native ?? placeName, canonical]),
         ],
       })
     : undefined;

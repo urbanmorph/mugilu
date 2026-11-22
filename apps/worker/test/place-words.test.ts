@@ -128,7 +128,7 @@ test("place page: in Hindi and Kannada the new words are translated", () => {
   assert.match(hi, /बेंगलुरु|Bengaluru Rural में अभी वायु गुणवत्ता बहुत खराब है, AQI 351।/);
   assert.match(hi, /हवा की गति/);
   const kn = text(page(conditions(), "kn"));
-  assert.match(kn, /Bengaluru Rural ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ವಾಯು ಗುಣಮಟ್ಟ ತುಂಬಾ ಕೆಟ್ಟದಾಗಿದೆ, AQI 351\./);
+  assert.match(kn, /ಬೆಂಗಳೂರು ಗ್ರಾಮಾಂತರ ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ವಾಯು ಗುಣಮಟ್ಟ ತುಂಬಾ ಕೆಟ್ಟದಾಗಿದೆ, AQI 351\./); // its Kannada name
   for (const s of [hi, kn])
     for (const en of [
       /Air quality and weather now/,

@@ -1,6 +1,6 @@
 import { MOBILE } from "../ui/standard";
 import { esc } from "../html";
-import { allSlugPlaces, slugPlacesByState } from "../slugs";
+import { allSlugPlaces, localName, slugPlacesByState } from "../slugs";
 import { lp, quoted, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { activeWarnings, px, py, type IndiaMap, type MapWarning } from "../indiamap";
@@ -128,7 +128,7 @@ export function renderPlaces(
               placeTiles(
                 allSlugPlaces()
                   .filter((p) => isWarned.has(p.slug))
-                  .map((p) => placeTile(lp(`/c/${p.slug}`, lang), p.name, true, lang)),
+                  .map((p) => placeTile(lp(`/c/${p.slug}`, lang), localName(p, lang), true, lang)),
               ) +
               allWarningsLink(lang),
           ),
@@ -153,7 +153,10 @@ export function renderPlaces(
         `<ul class="plist">${g.places
           .map((p) => {
             const w = isWarned.has(p.slug);
-            return `<li><a href="${lp(`/c/${p.slug}`, lang)}">${w ? `${ico("warn")}<b>${esc(p.name)}</b>` : esc(p.name)}</a></li>`;
+            const name = localName(p, lang);
+            // A native name keeps its Latin one for the find box (mgMatch reads data-k).
+            const k = name !== p.name ? ` data-k="${esc(p.name)}"` : "";
+            return `<li${k}><a href="${lp(`/c/${p.slug}`, lang)}">${w ? `${ico("warn")}<b>${esc(name)}</b>` : esc(name)}</a></li>`;
           })
           .join("")}</ul>`,
         { open: true, id: stateAnchor(g.state), count: g.places.length },

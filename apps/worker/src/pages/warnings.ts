@@ -9,7 +9,7 @@ import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import type { IndiaMap } from "../indiamap";
-import { allSlugPlaces, type SlugPlace } from "../slugs";
+import { allSlugPlaces, localName, type SlugPlace } from "../slugs";
 import { fill } from "../ui/history";
 import { DESCRIPTION_MAX } from "../phrases";
 import { warnedSlugs } from "./places";
@@ -273,7 +273,7 @@ export function renderWarningsPage(
             .map(
               ([st, ps]) =>
                 `<section><h3 class="wgrp">${esc(st)}<span class="n">${ps.length}</span></h3>${placeTiles(
-                  ps.map((p) => placeTile(lp(`/c/${p.slug}`, lang), p.name, true, lang)),
+                  ps.map((p) => placeTile(lp(`/c/${p.slug}`, lang), localName(p, lang), true, lang)),
                 )}</section>`,
             )
             .join(""),
