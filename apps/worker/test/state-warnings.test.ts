@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { renderWarningsPage } from "../src/pages/warnings";
 import { alertPlaces } from "../src/pages/places";
 import { mapWarnings, type IndiaMap } from "../src/indiamap";
-import { stateBySlug } from "../src/states";
+import { stateBySlug, officeStates } from "../src/states";
 import { placeLastmods } from "../src/lastmod";
 import { sitemapPaths } from "../src/meta";
 import type { WarningsSnapshot } from "../src/sachet";
@@ -105,4 +105,25 @@ test("/warnings links each state to its warnings page; the sitemap lists them, d
     {},
   );
   assert.equal(dates["/state/karnataka/warnings"], "2026-12-02");
+});
+
+test("officeStates: an IMD centre's city names its state; a state body by its own name; national bodies none", () => {
+  assert.deepEqual(officeStates("IMD Bhubaneswar"), ["Odisha"]);
+  assert.deepEqual(officeStates("IMD Agartala"), ["Tripura"]);
+  assert.deepEqual(officeStates("IMD Kolkata"), ["West Bengal"]);
+  assert.deepEqual(officeStates("IMD Visakhapatnam"), ["Andhra Pradesh"]);
+  assert.deepEqual(officeStates("IMD Chandigarh"), ["Chandigarh", "Haryana", "Punjab"]);
+  assert.deepEqual(officeStates("Andhra Pradesh SDMA"), ["Andhra Pradesh"]);
+  assert.deepEqual(officeStates("Karnataka SDMA"), ["Karnataka"]);
+  assert.deepEqual(officeStates("CWC"), []);
+  assert.deepEqual(officeStates("FSI"), []);
+});
+
+test("state warnings: an IMD centre's alerts reach its state's page with no mapped area", () => {
+  const snap = {
+    ...SNAP,
+    alerts: [alert("9", "Heavy rain likely over Khordha.", "IMD Bhubaneswar")],
+  } as WarningsSnapshot;
+  assert.match(text(renderWarningsPage(snap, "en", MAP, NOW, stateBySlug("odisha")!)), /over Khordha/);
+  assert.doesNotMatch(text(renderWarningsPage(snap, "en", MAP, NOW, KA)), /over Khordha/);
 });

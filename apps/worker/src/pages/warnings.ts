@@ -10,7 +10,7 @@ import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import type { IndiaMap } from "../indiamap";
 import { allSlugPlaces, localName, type SlugPlace } from "../slugs";
-import { hubOf, stateName, type State } from "../states";
+import { hubOf, officeStates, stateName, type State } from "../states";
 import { fill } from "../ui/history";
 import { DESCRIPTION_MAX } from "../phrases";
 import { alertPlaces } from "./places";
@@ -98,7 +98,6 @@ mgEmpty(document.querySelectorAll('.wsec'),'[data-type]')}
 f.addEventListener('change',go);q.addEventListener('input',go)})();`;
 
 const when = (a: Alert) => Date.parse(a.sent) || 0;
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
 
 /** An official alert's issuing office, its IST time and a link to the original (CAP), read one
  *  way for home, /warnings and /places. The link only when the feed's link is a web address. */
@@ -140,7 +139,7 @@ function coloursPanel(lang: Lang): string {
   const T = (s: string) => esc(t(s, lang));
   return panel(
     stack(
-      `<dl class="qa-list">${COLOURS.map(([c, m]) => `<dt>${T(c)}</dt><dd>${T(m)}</dd>`).join("")}</dl>` +
+      `<dl class="qa-list">${COLOURS.map(([c, m]) => `<div><dt>${T(c)}</dt><dd>${T(m)}</dd></div>`).join("")}</dl>` +
         `<p>${T('IMD says a red warning does not mean a "red alert". It means "take action".')}</p>` +
         `<p>${T("A colour is for one area and one time. Open a place to see the warnings over it and their colour.")} <a href="${lp("/places", lang)}">${T("Every place, by state")}</a></p>`,
     ),
@@ -177,7 +176,7 @@ export function renderWarningsPage(
   const inState = (a: Alert) =>
     !st ||
     (byAlert.get(a.identifier) ?? []).some((slug) => ours.has(slug)) ||
-    norm(issuerName(a.issuer || "")).includes(norm(st.name));
+    officeStates(issuerName(a.issuer || "")).includes(st.name);
   // Newest first; a storm IMD names is pinned once (its newest warning), above the lists.
   // Each alert read once: its office, its kind, and the line under it (time, CAP link).
   const alerts = [...(snap?.alerts ?? [])]

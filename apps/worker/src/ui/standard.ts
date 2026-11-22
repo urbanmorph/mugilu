@@ -520,8 +520,8 @@ const READ_CSS = `
 .mg .ptitle h1{overflow-wrap:anywhere}
 .mg .ptitle .h1sub{display:block;margin-top:var(--sp1);font-size:var(--t-lg);font-weight:600;font-stretch:100%;line-height:1.2;letter-spacing:0;text-transform:none}
 .mg .ptitle .answer{max-width:62ch}
-.mg .qa-list{display:grid;gap:var(--sp3)}
-.mg .qa-list dd{margin:var(--sp1) 0 0;max-width:68ch}
+.mg .qa-list{display:grid;gap:var(--sp3) var(--sp5);grid-template-columns:repeat(auto-fill,minmax(min(100%,max(40ch,30%)),1fr))}
+.mg .qa-list dd{margin:var(--sp1) 0 0}
 .mg .qa-list dt{font-weight:600}
 @media (min-width:1000px){
 .mg .phero{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"t p" "w p";column-gap:var(--sp5);align-items:start}

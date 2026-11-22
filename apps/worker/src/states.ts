@@ -77,3 +77,55 @@ export const hubOf = (name: string | undefined): State | undefined => {
   const st = stateOf(name);
   return st && st.places.length > 1 ? st : undefined;
 };
+
+// IMD's centres by the city they sit in, and the states each one warns for (imd.gov.in: the
+// Meteorological Centres and Regional Meteorological Centres). SACHET names an alert's office
+// as "IMD Bhubaneswar", never "Odisha", so a state's page finds its own centre's alerts here.
+const IMD_CENTRES: Record<string, string[]> = {
+  agartala: ["Tripura"],
+  ahmedabad: ["Gujarat", "Dadra,Nagar Haveli,Daman & Diu"],
+  aizawl: ["Mizoram"],
+  amaravati: ["Andhra Pradesh"],
+  bengaluru: ["Karnataka"],
+  bhopal: ["Madhya Pradesh"],
+  bhubaneswar: ["Odisha"],
+  chandigarh: ["Chandigarh", "Haryana", "Punjab"],
+  chennai: ["Tamil Nadu", "Puducherry"],
+  dehradun: ["Uttarakhand"],
+  delhi: ["Delhi"],
+  gangtok: ["Sikkim"],
+  goa: ["Goa"],
+  guwahati: ["Assam"],
+  hyderabad: ["Telangana"],
+  imphal: ["Manipur"],
+  itanagar: ["Arunachal Pradesh"],
+  jaipur: ["Rajasthan"],
+  kohima: ["Nagaland"],
+  kolkata: ["West Bengal"],
+  leh: ["Ladakh"],
+  lucknow: ["Uttar Pradesh"],
+  mumbai: ["Maharashtra"],
+  nagpur: ["Maharashtra"],
+  panaji: ["Goa"],
+  patna: ["Bihar"],
+  "port blair": ["Andaman & Nicobar"],
+  raipur: ["Chhattisgarh"],
+  ranchi: ["Jharkhand"],
+  shillong: ["Meghalaya"],
+  shimla: ["Himachal Pradesh"],
+  srinagar: ["Jammu & Kashmir"],
+  thiruvananthapuram: ["Kerala", "Lakshadweep"],
+  visakhapatnam: ["Andhra Pradesh"],
+};
+
+/** The states an issuing office warns for, A to Z: an IMD centre by its city, a state body
+ *  (an SDMA, a state relief department) by the state's name in it; none for national bodies. */
+export const officeStates = (office: string): string[] => {
+  const o = office.toLowerCase();
+  const letters = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+  const named = allStates()
+    .filter((s) => letters(o).includes(letters(s.name)))
+    .map((s) => s.name);
+  const centre = Object.entries(IMD_CENTRES).flatMap(([city, sts]) => (new RegExp(`\\b${city}\\b`).test(o) ? sts : []));
+  return [...new Set([...named, ...centre])].sort();
+};
