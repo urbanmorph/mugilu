@@ -107,6 +107,10 @@ export function slugLabel(p: Pick<SlugPlace, "name" | "state">): string {
   return p.state && p.state !== p.name ? `${p.name}, ${p.state}` : p.name;
 }
 
+/** The name a page title uses: the short name, as people search it ("almora aqi"), with the
+ *  state only where two districts share the name (their slug carries it). */
+export const titleName = (p: SlugPlace): string => (p.slug === slugify(p.name) ? p.name : slugLabel(p));
+
 // Districts whose LGD name (and so its slug, already in the sitemap and Search Console)
 // differs from how people write it. Keyed by the slugified query, so case, spaces
 // and hyphens ("North 24-Parganas") all match; the slugs themselves never change.

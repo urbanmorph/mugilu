@@ -73,6 +73,17 @@ test("sitemap: lists the named /c/{slug} place pages (keyword URLs)", () => {
   assert.doesNotMatch(xml, /c\/12\.97,77\.59/); // coordinate URLs are no longer the sitemap surface
 });
 
+test("sitemap: every place's 30-day trend page, with its language versions; never the 7 or 90 views", () => {
+  const xml = sitemapXml("https://mugilu.live");
+  assert.match(
+    xml,
+    /<loc>https:\/\/mugilu\.live\/c\/almora\/trends<\/loc><lastmod>[\d-]+<\/lastmod><xhtml:link rel="alternate" hreflang="en" href="https:\/\/mugilu\.live\/c\/almora\/trends"\/><xhtml:link rel="alternate" hreflang="hi" href="https:\/\/mugilu\.live\/hi\/c\/almora\/trends"\/>/,
+  );
+  const places = (xml.match(/\/c\/[a-z0-9-]+<\/loc>/g) ?? []).length;
+  assert.equal((xml.match(/\/trends<\/loc>/g) ?? []).length, places);
+  assert.doesNotMatch(xml, /days=/);
+});
+
 test("slugLabel: a place whose state has the same name is said once (Delhi, not Delhi, Delhi)", () => {
   assert.equal(slugLabel({ name: "Delhi", state: "Delhi" } as never), "Delhi");
   assert.equal(slugLabel({ name: "Chandigarh", state: "Chandigarh" } as never), "Chandigarh");

@@ -319,6 +319,8 @@ export function sitemapPaths(): string[] {
     "/places",
     "/warnings",
     ...allSlugPlaces().map((p) => `/c/${p.slug}`),
+    // Each place's 30-day record (the 7- and 90-day views are its query variants).
+    ...allSlugPlaces().map((p) => `/c/${p.slug}/trends`),
   ];
 }
 
@@ -328,8 +330,8 @@ export const localizedUrl = (siteUrl: string, p: string, l: string) =>
 
 export function sitemapXml(siteUrl: string): string {
   const today = new Date().toISOString().slice(0, 10);
-  // Bumped 11 Nov 2026: place titles now carry the AQI ("Delhi AQI today: 344 Very Poor").
-  const STATIC = "2026-11-11";
+  // Bumped 22 Nov 2026: place pages say their readings in sentences, with warnings and questions.
+  const STATIC = "2026-11-22";
   const live = new Set(["/", "/warnings"]);
   const paths = sitemapPaths();
   const loc = (p: string, l: string) => localizedUrl(siteUrl, p, l);
