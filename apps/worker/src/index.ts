@@ -60,6 +60,7 @@ import { loadGazetteer } from "./gazetteer";
 import { loadGrid, loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
+import { loadLastmods, updateHeads } from "./lastmod";
 import type { Conditions, NormalizedStation } from "./types";
 import { reason } from "./logs";
 import { archiveHealth } from "./archives";
@@ -269,7 +270,12 @@ export default {
       return cached(STATIC_EDGE_TTL, () => cachedResponse(mcpJson(SITE_URL), "application/json; charset=utf-8"));
     }
     if (url.pathname === "/sitemap.xml") {
-      return cached(STATIC_EDGE_TTL, () => cachedResponse(sitemapXml(SITE_URL), "application/xml; charset=utf-8"));
+      return cached(STATIC_EDGE_TTL, async () =>
+        cachedResponse(
+          sitemapXml(SITE_URL, await loadLastmods(env).catch(() => ({}))),
+          "application/xml; charset=utf-8",
+        ),
+      );
     }
     // OpenAPI spec for the REST API (also serves as ChatGPT Custom-GPT Actions).
     if (url.pathname === "/openapi.json") {
@@ -863,7 +869,16 @@ export default {
           .then(() => collectPlaceDaily(env)),
       );
       // The map is composed once from what the four just wrote (each logs its own failure).
-      ctx.waitUntil(Promise.all([refreshed, cyclones, fires, warned]).then(() => storeMap(env)));
+      // Then each place's headline, for the sitemap's lastmod (lastmod.ts).
+      ctx.waitUntil(
+        Promise.all([refreshed, cyclones, fires, warned])
+          .then(() => storeMap(env))
+          .then(() => updateHeads(env))
+          .then(
+            (r) => console.log(`[lastmod] ${r}`),
+            (e) => console.error(`[lastmod] failed: ${reason(e)}`),
+          ),
+      );
     }
     // National conditions grid every 4h, ~6 collects/day fits Open-Meteo's free quota.
     if (event.cron === "5 */4 * * *") {
