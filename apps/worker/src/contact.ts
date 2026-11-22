@@ -1,7 +1,7 @@
 // mugilu's public contact for privacy requests and reports of wrong, harmful or illegal content
-// (/terms, CODE_OF_CONDUCT.md, SECURITY.md). Empty until the owner sets one: the GitHub issues
+// (/terms, CODE_OF_CONDUCT.md, SECURITY.md). When empty, the GitHub issues
 // page stands in, so every report still has a route.
-export const CONTACT_EMAIL = "";
+export const CONTACT_EMAIL = "sathya@urbanmorph.com";
 export const ISSUES_URL = "https://github.com/urbanmorph/mugilu/issues";
 
 /** The contact as a link: the email when there is one, else the issues page. */

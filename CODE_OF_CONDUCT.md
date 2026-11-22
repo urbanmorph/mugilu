@@ -7,7 +7,7 @@ mugilu follows the [Contributor Covenant v2.1](https://www.contributor-covenant.
 Report harassment, abuse or any breach of this code to the project owner:
 
 - Open a [GitHub issue](https://github.com/urbanmorph/mugilu/issues) for anything that can be public.
-- For anything private, use GitHub's [private vulnerability reporting](https://github.com/urbanmorph/mugilu/security/advisories/new) form, which only the maintainers see.
+- For anything private, email [sathya@urbanmorph.com](mailto:sathya@urbanmorph.com) or use GitHub's [private vulnerability reporting](https://github.com/urbanmorph/mugilu/security/advisories/new) form, which only the maintainers see.
 
 We answer every report within 7 days and keep the reporter's identity private. GitHub's own tools also let anyone block a user or report abuse to GitHub.
 
