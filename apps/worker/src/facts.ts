@@ -1,4 +1,5 @@
 import { STATION_MAX_KM } from "./conditions";
+import { heatVsNormalToday } from "./heatnormals";
 import {
   airLevelOf,
   coldLevelOf,
@@ -68,7 +69,7 @@ function warnLevel(ws: Warning[]): Level {
 const ORDER: Fact["key"][] = ["warnings", "air", "temp", "rain", "wind", "fog", "smoke", "uv", "dust"];
 
 /** The facts for a place, the most important first (highest level; ties in ORDER). */
-export function facts(c: Conditions): Fact[] {
+export function facts(c: Conditions, now = new Date()): Fact[] {
   const out: Fact[] = [];
   const a = c.air;
   if (a && a.aqi != null)
@@ -91,7 +92,8 @@ export function facts(c: Conditions): Fact[] {
   if (h?.temp_c != null && h.apparent_c != null) {
     const heat = heatLevelOf(h);
     const cold = coldLevelOf(h.apparent_c);
-    const n = c.heat_vs_normal;
+    // Only today's high: a cached reading can outlive IST midnight.
+    const n = heatVsNormalToday(c.heat_vs_normal, now) ? c.heat_vs_normal : null;
     out.push({
       key: "temp",
       hazard: cold > heat ? "cold" : "heat",

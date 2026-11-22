@@ -185,6 +185,7 @@ body{margin:0}
 .mg .rrow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:var(--sp1) var(--sp3);align-items:start;padding:var(--sp4) 0;border-top:2px solid var(--ink)}
 .mg .rrow .ico{width:36px;height:36px;margin-top:4px}
 .mg .rrow .lab{font-size:var(--t-sm);font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.mg .rrow .say{margin-top:var(--sp1);max-width:52ch}
 .mg .rrow .val{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--sp2)}
 .mg .rrow .num{font-size:var(--t-2xl);font-weight:800;font-stretch:80%;line-height:1;font-variant-numeric:tabular-nums}
 .mg .rrow .qa{font-size:var(--t-sm);color:var(--muted)}
@@ -516,6 +517,11 @@ const READ_CSS = `
 .mg .uvs i.now{outline:2px solid var(--ink);outline-offset:1px}
 .mg .phero{display:grid;gap:var(--sp4)}
 .mg .ptitle h1{overflow-wrap:anywhere}
+.mg .ptitle .h1sub{display:block;margin-top:var(--sp1);font-size:var(--t-lg);font-weight:600;font-stretch:100%;line-height:1.2;letter-spacing:0;text-transform:none}
+.mg .ptitle .answer{max-width:62ch}
+.mg .qa-list{display:grid;gap:var(--sp3)}
+.mg .qa-list dd{margin:var(--sp1) 0 0;max-width:68ch}
+.mg .qa-list dt{font-weight:600}
 @media (min-width:1000px){
 .mg .phero{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"t p" "w p";column-gap:var(--sp5);align-items:start}
 .mg .phero>.ptitle{grid-area:t}

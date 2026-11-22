@@ -6,7 +6,7 @@ import { istClock } from "./ist";
 import { issuerName, warningLabel } from "./pages/warnings";
 import type { ProviderId } from "./types";
 import { LEVEL_WORD } from "./ui/components";
-import { RISK_BANDS } from "./score";
+import { ADVICE, PERSONA_ACTION, RISK_BANDS } from "./score";
 
 // The phrasebook (supporting-docs/READING_SENTENCES_SPEC.md): every sentence mugilu writes
 // about a reading, in English, Hindi and Kannada, from the facts in facts.ts.
@@ -161,8 +161,94 @@ export const PHRASES = {
     hi: "बारिश नहीं। हवा {s} km/h। कोई IMD चेतावनी नहीं।",
     kn: "ಮಳೆ ಇಲ್ಲ. ಗಾಳಿ {s} km/h. IMD ಎಚ್ಚರಿಕೆ ಇಲ್ಲ.",
   },
+  "title.noair": {
+    en: "{place}: weather and IMD warnings now",
+    hi: "{place}: मौसम और चेतावनी अभी",
+    kn: "{place}: ಹವಾಮಾನ ಮತ್ತು ಎಚ್ಚರಿಕೆ ಈಗ",
+  },
   "desc.updated": { en: "Updated {at}.", hi: "{at} पर अपडेट।", kn: "{at} ಕ್ಕೆ ನವೀಕರಿಸಲಾಗಿದೆ." },
+  // Headings and labels on the place page.
+  "h.sub": { en: "Air quality and weather now", hi: "आज की हवा और मौसम", kn: "ಈಗಿನ ವಾಯು ಗುಣಮಟ್ಟ ಮತ್ತು ಹವಾಮಾನ" },
+  "h.warn": {
+    en: "Official warnings for {place}",
+    hi: "{place} के लिए आधिकारिक चेतावनियाँ (अलर्ट)",
+    kn: "{place}: ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು (ಅಲರ್ಟ್)",
+  },
+  "h.qa": {
+    en: "Questions about the air and weather in {place}",
+    hi: "{place} की हवा और मौसम पर सवाल",
+    kn: "{place}: ವಾಯು ಮತ್ತು ಹವಾಮಾನ ಕುರಿತು ಪ್ರಶ್ನೆಗಳು",
+  },
+  "warn.source": {
+    en: "Warnings come from the national SACHET feed. A new warning shows at the top of this page.",
+    hi: "चेतावनियाँ राष्ट्रीय SACHET फ़ीड से आती हैं। नई चेतावनी इस पेज पर सबसे ऊपर दिखती है।",
+    kn: "ಎಚ್ಚರಿಕೆಗಳು ರಾಷ್ಟ್ರೀಯ SACHET ಫೀಡ್‌ನಿಂದ ಬರುತ್ತವೆ. ಹೊಸ ಎಚ್ಚರಿಕೆ ಈ ಪುಟದ ಮೇಲ್ಭಾಗದಲ್ಲಿ ಕಾಣುತ್ತದೆ.",
+  },
+  "warn.all": { en: "All warnings in India now", hi: "भारत की सभी चेतावनियाँ अभी", kn: "ಭಾರತದ ಎಲ್ಲಾ ಎಚ್ಚರಿಕೆಗಳು ಈಗ" },
+  // Questions people ask. The place takes no ending in any language.
+  "q.aqi": {
+    en: "What is the AQI in {place} now?",
+    hi: "{place} में अभी AQI कितना है?",
+    kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಈಗ AQI ಎಷ್ಟು?",
+  },
+  "q.warn": {
+    en: "Is there a weather warning for {place} today?",
+    hi: "क्या आज {place} के लिए मौसम की कोई चेतावनी है?",
+    kn: "ಇಂದು {place} ಪ್ರದೇಶಕ್ಕೆ ಹವಾಮಾನ ಎಚ್ಚರಿಕೆ ಇದೆಯೇ?",
+  },
+  "q.temp": {
+    en: "How hot or cold is it in {place} now?",
+    hi: "{place} में अभी कितनी गर्मी या ठंड है?",
+    kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ಎಷ್ಟು ಬಿಸಿ ಅಥವಾ ಚಳಿ ಇದೆ?",
+  },
+  "q.rain": {
+    en: "Will it rain in {place} today?",
+    hi: "क्या आज {place} में बारिश होगी?",
+    kn: "ಇಂದು {place} ಪ್ರದೇಶದಲ್ಲಿ ಮಳೆ ಬರುತ್ತದೆಯೇ?",
+  },
+  "q.child": {
+    en: "Can children play outside in {place} now?",
+    hi: "क्या बच्चे अभी {place} में बाहर खेल सकते हैं?",
+    kn: "ಈಗ {place} ಪ್ರದೇಶದಲ್ಲಿ ಮಕ್ಕಳು ಹೊರಗೆ ಆಡಬಹುದೇ?",
+  },
+  "a.yes": { en: "Yes.", hi: "हाँ।", kn: "ಹೌದು." },
+  "a.no": { en: "No.", hi: "नहीं।", kn: "ಇಲ್ಲ." },
+  nowcast: {
+    en: "mugilu shows the conditions now. It does not forecast. For a forecast, see IMD.",
+    hi: "mugilu अभी के हालात दिखाता है, पूर्वानुमान नहीं। पूर्वानुमान के लिए IMD देखें।",
+    kn: "mugilu ಈಗಿನ ಸ್ಥಿತಿಯನ್ನು ತೋರಿಸುತ್ತದೆ, ಮುನ್ಸೂಚನೆಯನ್ನಲ್ಲ. ಮುನ್ಸೂಚನೆಗೆ IMD ನೋಡಿ.",
+  },
+  "child.calm": {
+    en: "The air quality is {band}. Outdoor play can go on as usual.",
+    hi: "वायु गुणवत्ता {band} है। बाहर खेलना हमेशा की तरह चल सकता है।",
+    kn: "ವಾಯು ಗುಣಮಟ್ಟ {band}. ಹೊರಗಿನ ಆಟ ಎಂದಿನಂತೆ ನಡೆಯಬಹುದು.",
+  },
 } satisfies Record<string, ByLang>;
+
+/** Each reading's heading on the place page: the words people search. Keyed as readRows
+ *  keys its rows. */
+export const READING_HEADING: Record<string, ByLang> = {
+  air: { en: "Air quality (AQI)", hi: "वायु गुणवत्ता (AQI)", kn: "ವಾಯು ಗುಣಮಟ್ಟ (AQI)" },
+  heat: { en: "Temperature and feels-like", hi: "तापमान", kn: "ತಾಪಮಾನ" },
+  sun: { en: "UV index", hi: "UV सूचकांक", kn: "UV ಸೂಚ್ಯಂಕ" },
+  dust: { en: "Dust", hi: "धूल", kn: "ಧೂಳು" },
+  wind: { en: "Wind speed", hi: "हवा की गति", kn: "ಗಾಳಿಯ ವೇಗ" },
+  fog: { en: "Fog and visibility", hi: "कोहरा और दृश्यता", kn: "ಮಂಜು ಮತ್ತು ಗೋಚರತೆ" },
+  smoke: { en: "Smoke from fires", hi: "आग का धुआं", kn: "ಬೆಂಕಿಯ ಹೊಗೆ" },
+  rain: { en: "Rain now", hi: "अभी बारिश", kn: "ಈಗ ಮಳೆ" },
+};
+
+/** The fact behind each reading row (readRows' keys to facts.ts keys). */
+export const ROW_FACT: Record<string, Fact["key"]> = {
+  air: "air",
+  heat: "temp",
+  sun: "uv",
+  dust: "dust",
+  wind: "wind",
+  fog: "fog",
+  smoke: "smoke",
+  rain: "rain",
+};
 
 /** Title variants, longest first: the first that fits the limit wins. */
 export const TITLES: Variants = {
@@ -350,8 +436,8 @@ export function answerLine(fs: Fact[], place: string, lang: Lang): string {
 /** The Google title: the place and its AQI, then as much as fits. hi/kn add the Latin name. */
 export function placeTitle(fs: Fact[], place: string, latin: string, lang: Lang): string {
   const air = get(fs, "air");
-  const tail = lang === "en" ? " | mugilu" : ` | ${latin} | mugilu`;
-  if (!air) return `${place}${tail}`;
+  const tail = lang === "en" || latin === place ? " | mugilu" : ` | ${latin} | mugilu`;
+  if (!air) return say("title.noair", lang, { place }) + tail;
   const v = { place, aqi: air.aqi, band: bandLabel(air.band, lang) };
   const fits = TITLES[lang].map((s) => put(s, v)).find((s) => s.length <= TITLE_MAX);
   return (fits ?? put(TITLES[lang].at(-1)!, v)) + tail;
@@ -402,4 +488,40 @@ export function steProblems(text: string): string[] {
     if (/^\w+ing\b/.test(s) && !/^(During|Morning|Evening|Nothing)\b/.test(s)) bad.push(`-ing opener: ${s}`);
   }
   return bad;
+}
+
+// ── Questions ───────────────────────────────────────────────────────────────────────
+const firstSentence = (s: string) => s.split(/(?<=[.।])\s+/)[0];
+
+/** The questions people ask about a place, each answered from the facts. The persona answer
+ *  uses the site's own advice (score.ts, exposure steps only) and says it is not medical advice. */
+export function questions(fs: Fact[], place: string, lang: Lang): [q: string, a: string][] {
+  const out: [string, string][] = [];
+  const air = get(fs, "air");
+  const temp = get(fs, "temp");
+  const rain = get(fs, "rain");
+  const warns = get(fs, "warnings");
+  if (air) out.push([say("q.aqi", lang, { place }), factText(air, lang)]);
+  if (warns)
+    out.push([
+      say("q.warn", lang, { place }),
+      `${say(warns.here.length ? "a.yes" : "a.no", lang)} ${warningsText(warns, place, lang)} ${say("warn.source", lang)}`,
+    ]);
+  if (temp) out.push([say("q.temp", lang, { place }), factText(temp, lang)]);
+  out.push([
+    say("q.rain", lang, { place }),
+    [rain ? factText(rain, lang) : "", say("nowcast", lang)].filter(Boolean).join(" "),
+  ]);
+  if (air) {
+    // The site's persona rule (score.ts ambientMeaning): when the child's own trigger is raised,
+    // keep the hazard's first sentence and add the child's exposure step.
+    const advice = air.level ? ADVICE.Air[RISK_BANDS[air.level]] : undefined;
+    const step = PERSONA_ACTION.child.Air;
+    const answer =
+      advice && step
+        ? `${firstSentence(t(advice, lang))} ${t(step, lang)}`
+        : say("child.calm", lang, { band: BAND_PRED[air.band][lang] });
+    out.push([say("q.child", lang, { place }), `${answer} ${t("Informational only, not medical advice.", lang)}`]);
+  }
+  return out;
 }

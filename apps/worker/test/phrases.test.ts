@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { facts, STATION_MAX_KM, type Fact } from "../src/facts";
+import { facts as factsAt, STATION_MAX_KM, type Fact } from "../src/facts";
 import { answerLine, factText, PHRASES, placeDescription, placeTitle, steProblems, warningsText } from "../src/phrases";
 import type { Conditions } from "../src/types";
 import { LANGS } from "../src/i18n";
@@ -9,6 +9,8 @@ import { LANGS } from "../src/i18n";
 // conditions, each with how mugilu knows it, said by one phrasebook in every language.
 
 const AT = "2026-11-22T04:16:05.966Z";
+/** The facts on the reading's own day, so today's high still counts. */
+const facts = (c: Conditions) => factsAt(c, new Date(AT));
 function cond(o: Partial<Conditions> = {}): Conditions {
   return {
     location: { lat: 13.2272, lon: 77.5741 },
