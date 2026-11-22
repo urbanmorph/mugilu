@@ -1,6 +1,7 @@
 import { t, type Lang } from "../i18n";
 import { cardBody, cards, pairs, pull, warnBox } from "../ui/components";
 import { P, plain, splitInto, textPage } from "./text";
+import { contactLink } from "../contact";
 
 // The live paragraphs, as keys (pages/text.ts splits them at sentence ends to fill the boxes).
 const WARRANTY =
@@ -9,6 +10,18 @@ const LICENCE =
   "The mugilu code is MIT (see the {repo}). The data is not relicensed: each upstream source keeps its own licence and attribution. mugilu is non-commercial, for individuals, and is not affiliated with any data provider.";
 const PRIVACY =
   "No accounts, no sign-up, no ad networks. Usage counts are first-party and aggregate (rounded coordinates, no IP, no per-person data). For visitor numbers and page performance, mugilu uses Cloudflare Web Analytics, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting. Your saved places live only in your own browser.";
+const RETENTION = "Usage counts are kept as totals. The detailed events are deleted after 3 months.";
+const ANY_AGE = "mugilu has no accounts and asks for no personal data, so people of any age can use it safely.";
+const DELETE =
+  "To delete your alert data, turn the alert off. To delete your saved places, clear them in your browser. For any other privacy question, contact us: {contact}.";
+const OWNER =
+  "mugilu is owned by Sathya and built by Urban Morph. The code is copyright Sathya, under the MIT licence.";
+const LAWS =
+  "mugilu is built to follow India's Information Technology Act, 2000 and Digital Personal Data Protection Act, 2023: it keeps no personal data except the opt-in alert address above. For the Rights of Persons with Disabilities Act, 2016, the pages aim for WCAG 2.1 AA.";
+const CONTENT =
+  "mugilu has no user posts, comments or uploads. It shows official warnings as their issuers wrote them, and readings from the sources above.";
+const REPORT =
+  "To report wrong, harmful or illegal content, contact us: {contact}. We answer within 7 days, and we remove at once anything that breaks the law.";
 const ALERTS =
   "If you turn on alerts for a place, mugilu keeps that place (to about 1 km) and your browser's push address, only to send you official warnings for it, and deletes them when you turn alerts off.";
 
@@ -143,7 +156,27 @@ export function renderTerms(lang: Lang = "en"): string {
             ),
           ),
       },
-      { id: "privacy", title: t("Privacy", lang), icon: "lock", body: privacy + P(commons) },
+      {
+        id: "privacy",
+        title: t("Privacy", lang),
+        icon: "lock",
+        body:
+          privacy +
+          pairs([
+            [t("Retention", lang), t(RETENTION, lang)],
+            [t("Any age", lang), t(ANY_AGE, lang)],
+            [t("Your choices", lang), t(DELETE, lang).replace("{contact}", contactLink())],
+          ]) +
+          P(t(LAWS, lang)) +
+          P(commons),
+      },
+      { id: "owner", title: t("Owner", lang), icon: "doc", body: P(t(OWNER, lang)) },
+      {
+        id: "content",
+        title: t("Content and reports", lang),
+        icon: "warn",
+        body: P(t(CONTENT, lang)) + P(t(REPORT, lang).replace("{contact}", contactLink())),
+      },
     ],
   });
 }

@@ -92,10 +92,11 @@ test("text pages: every split paragraph fills its boxes in every language (no fa
     assert.equal(count(m, /<p class="pull">/g), 2, `methodology ${lang}`);
     assert.equal(count(m, /<div class="card( quiet)?">/g), 2 + 3 + 3 + 2, `methodology cards ${lang}`);
     assert.match(m, /<p class="t-meta lead2">/, `methodology lead2 ${lang}`);
-    // Terms: the warranty in three parts, privacy in five labelled rows.
+    // Terms: the warranty in three parts, privacy in eight labelled rows (five, then retention,
+    // any age and your choices).
     const tm = renderTerms(lang);
     assert.match(tm, /<div class="warnbox"><p class="head">.*?<\/p><p>.*?<\/p><p>.*?<\/p><\/div>/, `terms ${lang}`);
-    assert.equal(count(tm, /<dt>/g), 5, `terms privacy ${lang}`);
+    assert.equal(count(tm, /<dt>/g), 8, `terms privacy ${lang}`);
   }
 });
 

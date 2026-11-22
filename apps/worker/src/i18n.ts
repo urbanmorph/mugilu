@@ -128,6 +128,44 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "अभी पूरे भारत में सक्रिय NDMA / IMD चेतावनियाँ, SACHET फ़ीड से ली गईं। HTML, JSON और Markdown में उपलब्ध।",
       kn: "ಈಗ ಭಾರತದಾದ್ಯಂತ ಸಕ್ರಿಯವಾಗಿರುವ NDMA / IMD ಎಚ್ಚರಿಕೆಗಳು, SACHET ಫೀಡ್‌ನಿಂದ ಪಡೆದವು. HTML, JSON ಮತ್ತು Markdown ರೂಪದಲ್ಲಿ ಲಭ್ಯ.",
     },
+  // /terms: the policies the Digital Public Goods Standard asks for (owner, privacy, laws, content).
+  Retention: { hi: "कितने समय तक", kn: "ಎಷ್ಟು ಕಾಲ" },
+  "Any age": { hi: "हर उम्र", kn: "ಎಲ್ಲ ವಯಸ್ಸು" },
+  "Your choices": { hi: "आपके विकल्प", kn: "ನಿಮ್ಮ ಆಯ್ಕೆಗಳು" },
+  Owner: { hi: "स्वामी", kn: "ಮಾಲೀಕರು" },
+  "Content and reports": { hi: "सामग्री और शिकायत", kn: "ವಿಷಯ ಮತ್ತು ದೂರು" },
+  "Usage counts are kept as totals. The detailed events are deleted after 3 months.": {
+    hi: "उपयोग की गिनती केवल कुल संख्या के रूप में रखी जाती है। विस्तृत घटनाएँ 3 महीने बाद मिटा दी जाती हैं।",
+    kn: "ಬಳಕೆಯ ಎಣಿಕೆಯನ್ನು ಒಟ್ಟು ಸಂಖ್ಯೆಯಾಗಿ ಮಾತ್ರ ಇಡಲಾಗುತ್ತದೆ. ವಿವರವಾದ ಘಟನೆಗಳನ್ನು 3 ತಿಂಗಳ ನಂತರ ಅಳಿಸಲಾಗುತ್ತದೆ.",
+  },
+  "mugilu has no accounts and asks for no personal data, so people of any age can use it safely.": {
+    hi: "mugilu में कोई खाता नहीं है और यह कोई निजी जानकारी नहीं मांगता, इसलिए हर उम्र के लोग इसे सुरक्षित रूप से इस्तेमाल कर सकते हैं।",
+    kn: "mugilu ನಲ್ಲಿ ಖಾತೆ ಇಲ್ಲ ಮತ್ತು ಅದು ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಮಾಹಿತಿ ಕೇಳುವುದಿಲ್ಲ, ಆದ್ದರಿಂದ ಎಲ್ಲ ವಯಸ್ಸಿನವರೂ ಇದನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಬಳಸಬಹುದು.",
+  },
+  "To delete your alert data, turn the alert off. To delete your saved places, clear them in your browser. For any other privacy question, contact us: {contact}.":
+    {
+      hi: "अपने अलर्ट का डेटा मिटाने के लिए अलर्ट बंद करें। सहेजी गई जगहें मिटाने के लिए उन्हें अपने ब्राउज़र में हटाएँ। निजता से जुड़े किसी और सवाल के लिए हमसे संपर्क करें: {contact}।",
+      kn: "ನಿಮ್ಮ ಎಚ್ಚರಿಕೆ ಮಾಹಿತಿಯನ್ನು ಅಳಿಸಲು ಎಚ್ಚರಿಕೆಯನ್ನು ಆಫ್ ಮಾಡಿ. ಉಳಿಸಿದ ಸ್ಥಳಗಳನ್ನು ಅಳಿಸಲು ಅವುಗಳನ್ನು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆಗೆದುಹಾಕಿ. ಗೌಪ್ಯತೆಯ ಬೇರೆ ಯಾವುದೇ ಪ್ರಶ್ನೆಗೆ ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ: {contact}.",
+    },
+  "mugilu is owned by Sathya and built by Urban Morph. The code is copyright Sathya, under the MIT licence.": {
+    hi: "mugilu के स्वामी Sathya हैं और इसे Urban Morph ने बनाया है। कोड का कॉपीराइट Sathya के पास है, MIT लाइसेंस के तहत।",
+    kn: "mugilu ನ ಮಾಲೀಕರು Sathya, ಇದನ್ನು Urban Morph ನಿರ್ಮಿಸಿದೆ. ಕೋಡ್‌ನ ಹಕ್ಕುಸ್ವಾಮ್ಯ Sathya ಅವರದು, MIT ಪರವಾನಗಿಯಡಿ.",
+  },
+  "mugilu is built to follow India's Information Technology Act, 2000 and Digital Personal Data Protection Act, 2023: it keeps no personal data except the opt-in alert address above. For the Rights of Persons with Disabilities Act, 2016, the pages aim for WCAG 2.1 AA.":
+    {
+      hi: "mugilu भारत के सूचना प्रौद्योगिकी अधिनियम, 2000 और डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम, 2023 का पालन करने के लिए बनाया गया है: यह ऊपर बताए गए वैकल्पिक अलर्ट पते के अलावा कोई निजी डेटा नहीं रखता। दिव्यांगजन अधिकार अधिनियम, 2016 के लिए पेज WCAG 2.1 AA का लक्ष्य रखते हैं।",
+      kn: "mugilu ಅನ್ನು ಭಾರತದ ಮಾಹಿತಿ ತಂತ್ರಜ್ಞಾನ ಕಾಯ್ದೆ, 2000 ಮತ್ತು ಡಿಜಿಟಲ್ ವೈಯಕ್ತಿಕ ದತ್ತಾಂಶ ಸಂರಕ್ಷಣಾ ಕಾಯ್ದೆ, 2023 ಪಾಲಿಸುವಂತೆ ನಿರ್ಮಿಸಲಾಗಿದೆ: ಮೇಲೆ ಹೇಳಿದ ಐಚ್ಛಿಕ ಎಚ್ಚರಿಕೆ ವಿಳಾಸ ಬಿಟ್ಟು ಯಾವುದೇ ವೈಯಕ್ತಿಕ ದತ್ತಾಂಶ ಇಡುವುದಿಲ್ಲ. ವಿಕಲಚೇತನರ ಹಕ್ಕುಗಳ ಕಾಯ್ದೆ, 2016 ಕ್ಕಾಗಿ ಪುಟಗಳು WCAG 2.1 AA ಗುರಿ ಹೊಂದಿವೆ.",
+    },
+  "mugilu has no user posts, comments or uploads. It shows official warnings as their issuers wrote them, and readings from the sources above.":
+    {
+      hi: "mugilu पर उपयोगकर्ताओं की कोई पोस्ट, टिप्पणी या अपलोड नहीं है। यह आधिकारिक चेतावनियाँ वैसे ही दिखाता है जैसे जारी करने वालों ने लिखीं, और ऊपर दिए स्रोतों के आँकड़े।",
+      kn: "mugilu ನಲ್ಲಿ ಬಳಕೆದಾರರ ಪೋಸ್ಟ್, ಕಾಮೆಂಟ್ ಅಥವಾ ಅಪ್‌ಲೋಡ್ ಇಲ್ಲ. ಇದು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳನ್ನು ನೀಡಿದವರು ಬರೆದಂತೆಯೇ ತೋರಿಸುತ್ತದೆ, ಮತ್ತು ಮೇಲಿನ ಮೂಲಗಳ ಮಾಹಿತಿಯನ್ನು.",
+    },
+  "To report wrong, harmful or illegal content, contact us: {contact}. We answer within 7 days, and we remove at once anything that breaks the law.":
+    {
+      hi: "गलत, हानिकारक या गैरकानूनी सामग्री की शिकायत के लिए हमसे संपर्क करें: {contact}। हम 7 दिनों के भीतर जवाब देते हैं, और कानून तोड़ने वाली कोई भी चीज़ तुरंत हटाते हैं।",
+      kn: "ತಪ್ಪು, ಹಾನಿಕಾರಕ ಅಥವಾ ಕಾನೂನುಬಾಹಿರ ವಿಷಯದ ಬಗ್ಗೆ ದೂರು ನೀಡಲು ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ: {contact}. ನಾವು 7 ದಿನಗಳ ಒಳಗೆ ಉತ್ತರಿಸುತ್ತೇವೆ, ಮತ್ತು ಕಾನೂನು ಮುರಿಯುವ ಯಾವುದನ್ನಾದರೂ ತಕ್ಷಣ ತೆಗೆದುಹಾಕುತ್ತೇವೆ.",
+    },
   // State hubs (/state/{slug}): the state's places now, the worst first.
   "{state} air quality, weather and warnings now": {
     hi: "{state} में अभी वायु गुणवत्ता, मौसम और चेतावनी",
