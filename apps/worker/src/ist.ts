@@ -35,6 +35,12 @@ export function istTime(w: When): string {
   return isNaN(d.getTime()) ? "" : `${IST_HM.format(d)} IST · ${IST_DM.format(d)}`;
 }
 
+/** The clock time alone: "08:45 IST" (for a sentence that already says the day). */
+export function istClock(w: When): string {
+  const d = toDate(w);
+  return isNaN(d.getTime()) ? "" : `${IST_HM.format(d)} IST`;
+}
+
 /** An IST stamp for images and Markdown: "25 Oct, 12:29 IST" (or "25 Oct 2026, 12:29 IST"). */
 export function istStamp(w: When, withYear = false): string {
   const d = toDate(w);
