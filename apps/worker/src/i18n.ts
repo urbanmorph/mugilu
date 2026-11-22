@@ -128,6 +128,73 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "अभी पूरे भारत में सक्रिय NDMA / IMD चेतावनियाँ, SACHET फ़ीड से ली गईं। HTML, JSON और Markdown में उपलब्ध।",
       kn: "ಈಗ ಭಾರತದಾದ್ಯಂತ ಸಕ್ರಿಯವಾಗಿರುವ NDMA / IMD ಎಚ್ಚರಿಕೆಗಳು, SACHET ಫೀಡ್‌ನಿಂದ ಪಡೆದವು. HTML, JSON ಮತ್ತು Markdown ರೂಪದಲ್ಲಿ ಲಭ್ಯ.",
     },
+  // /warnings in the searched words, its one-line summary, and IMD's colour code.
+  "Weather warnings in India today: IMD and NDMA alerts by state": {
+    hi: "भारत में आज मौसम की चेतावनी: राज्यवार IMD और NDMA अलर्ट",
+    kn: "ಭಾರತದಲ್ಲಿ ಇಂದಿನ ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು: ರಾಜ್ಯವಾರು IMD ಮತ್ತು NDMA ಅಲರ್ಟ್",
+  },
+  "Official weather warnings across India now": {
+    hi: "भारत में अभी आधिकारिक मौसम चेतावनियाँ",
+    kn: "ಭಾರತದಲ್ಲಿ ಈಗಿನ ಅಧಿಕೃತ ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು",
+  },
+  "The warnings in force now cover 1 place in 1 state.": {
+    hi: "अभी लागू चेतावनियाँ 1 राज्य की 1 जगह पर हैं।",
+    kn: "ಈಗ ಜಾರಿಯಲ್ಲಿರುವ ಎಚ್ಚರಿಕೆಗಳು 1 ರಾಜ್ಯದ 1 ಸ್ಥಳಕ್ಕೆ ಅನ್ವಯಿಸುತ್ತವೆ.",
+  },
+  "The warnings in force now cover {p} places in 1 state.": {
+    hi: "अभी लागू चेतावनियाँ 1 राज्य की {p} जगहों पर हैं।",
+    kn: "ಈಗ ಜಾರಿಯಲ್ಲಿರುವ ಎಚ್ಚರಿಕೆಗಳು 1 ರಾಜ್ಯದ {p} ಸ್ಥಳಗಳಿಗೆ ಅನ್ವಯಿಸುತ್ತವೆ.",
+  },
+  "The warnings in force now cover {p} places in {s} states.": {
+    hi: "अभी लागू चेतावनियाँ {s} राज्यों की {p} जगहों पर हैं।",
+    kn: "ಈಗ ಜಾರಿಯಲ್ಲಿರುವ ಎಚ್ಚರಿಕೆಗಳು {s} ರಾಜ್ಯಗಳ {p} ಸ್ಥಳಗಳಿಗೆ ಅನ್ವಯಿಸುತ್ತವೆ.",
+  },
+  "Most common type: {kind}.": { hi: "सबसे आम प्रकार: {kind}।", kn: "ಹೆಚ್ಚಾಗಿ ಕಂಡ ಪ್ರಕಾರ: {kind}." },
+  "Places under a warning now, by state": {
+    hi: "अभी चेतावनी वाली जगहें, राज्यवार",
+    kn: "ಈಗ ಎಚ್ಚರಿಕೆಯಲ್ಲಿರುವ ಸ್ಥಳಗಳು, ರಾಜ್ಯವಾರು",
+  },
+  "Yellow, orange and red: what they mean": {
+    hi: "येलो, ऑरेंज और रेड अलर्ट: इनका मतलब",
+    kn: "ಯೆಲ್ಲೋ, ಆರೆಂಜ್ ಮತ್ತು ರೆಡ್ ಅಲರ್ಟ್: ಇವುಗಳ ಅರ್ಥ",
+  },
+  Green: { hi: "हरा (ग्रीन)", kn: "ಹಸಿರು (ಗ್ರೀನ್)" },
+  Yellow: { hi: "पीला (येलो)", kn: "ಹಳದಿ (ಯೆಲ್ಲೋ)" },
+  Orange: { hi: "नारंगी (ऑरेंज)", kn: "ಕಿತ್ತಳೆ (ಆರೆಂಜ್)" },
+  Red: { hi: "लाल (रेड)", kn: "ಕೆಂಪು (ರೆಡ್)" },
+  "No warning. No action is needed.": {
+    hi: "कोई चेतावनी नहीं। कुछ करने की ज़रूरत नहीं।",
+    kn: "ಯಾವುದೇ ಎಚ್ಚರಿಕೆ ಇಲ್ಲ. ಯಾವುದೇ ಕ್ರಮ ಬೇಕಿಲ್ಲ.",
+  },
+  "Be updated. The weather can turn bad. Watch for updates.": {
+    hi: "अपडेट रहें। मौसम खराब हो सकता है। नई जानकारी देखते रहें।",
+    kn: "ಮಾಹಿತಿ ಪಡೆಯುತ್ತಿರಿ. ಹವಾಮಾನ ಕೆಡಬಹುದು. ಹೊಸ ಮಾಹಿತಿಯನ್ನು ಗಮನಿಸಿ.",
+  },
+  "Be prepared. Bad weather is expected. Be ready to act.": {
+    hi: "तैयार रहें। खराब मौसम की संभावना है। कदम उठाने को तैयार रहें।",
+    kn: "ಸಿದ್ಧರಾಗಿರಿ. ಕೆಟ್ಟ ಹವಾಮಾನ ನಿರೀಕ್ಷಿತ. ಕ್ರಮಕ್ಕೆ ಸಿದ್ಧರಾಗಿರಿ.",
+  },
+  "Take action. Dangerous weather is expected. Follow official advice.": {
+    hi: "कार्रवाई करें। खतरनाक मौसम की संभावना है। आधिकारिक सलाह मानें।",
+    kn: "ಕ್ರಮ ಕೈಗೊಳ್ಳಿ. ಅಪಾಯಕಾರಿ ಹವಾಮಾನ ನಿರೀಕ್ಷಿತ. ಅಧಿಕೃತ ಸಲಹೆಯನ್ನು ಪಾಲಿಸಿ.",
+  },
+  'IMD says a red warning does not mean a "red alert". It means "take action".': {
+    hi: 'IMD के अनुसार रेड चेतावनी का मतलब "रेड अलर्ट" नहीं है। इसका मतलब है "कार्रवाई करें"।',
+    kn: 'IMD ಪ್ರಕಾರ ರೆಡ್ ಎಚ್ಚರಿಕೆ ಎಂದರೆ "ರೆಡ್ ಅಲರ್ಟ್" ಅಲ್ಲ. ಅದರ ಅರ್ಥ "ಕ್ರಮ ಕೈಗೊಳ್ಳಿ".',
+  },
+  "A colour is for one area and one time. Open a place to see the warnings over it and their colour.": {
+    hi: "हर रंग एक क्षेत्र और एक समय के लिए होता है। किसी जगह की चेतावनियाँ और उनका रंग देखने के लिए वह जगह खोलें।",
+    kn: "ಪ್ರತಿ ಬಣ್ಣ ಒಂದು ಪ್ರದೇಶ ಮತ್ತು ಒಂದು ಸಮಯಕ್ಕೆ. ಒಂದು ಸ್ಥಳದ ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ಅವುಗಳ ಬಣ್ಣ ನೋಡಲು ಆ ಸ್ಥಳವನ್ನು ತೆರೆಯಿರಿ.",
+  },
+  "Where the warnings come from": { hi: "चेतावनियाँ कहाँ से आती हैं", kn: "ಎಚ್ಚರಿಕೆಗಳು ಎಲ್ಲಿಂದ ಬರುತ್ತವೆ" },
+  "IMD, other national agencies and the state disaster management authorities issue these warnings.": {
+    hi: "ये चेतावनियाँ IMD, अन्य राष्ट्रीय एजेंसियाँ और राज्य आपदा प्रबंधन प्राधिकरण जारी करते हैं।",
+    kn: "ಈ ಎಚ್ಚರಿಕೆಗಳನ್ನು IMD, ಇತರ ರಾಷ್ಟ್ರೀಯ ಸಂಸ್ಥೆಗಳು ಮತ್ತು ರಾಜ್ಯ ವಿಪತ್ತು ನಿರ್ವಹಣಾ ಪ್ರಾಧಿಕಾರಗಳು ನೀಡುತ್ತವೆ.",
+  },
+  "NDMA publishes them on SACHET, in the Common Alerting Protocol (CAP).": {
+    hi: "NDMA इन्हें SACHET पर कॉमन अलर्टिंग प्रोटोकॉल (CAP) में प्रकाशित करता है।",
+    kn: "NDMA ಇವುಗಳನ್ನು SACHET ನಲ್ಲಿ ಕಾಮನ್ ಅಲರ್ಟಿಂಗ್ ಪ್ರೋಟೋಕಾಲ್ (CAP) ರೂಪದಲ್ಲಿ ಪ್ರಕಟಿಸುತ್ತದೆ.",
+  },
   "Turn any wall display or kiosk into a live, self-refreshing read of India's sky. Pick a place, open it on the screen, full-screen it. It updates itself.":
     {
       hi: "किसी भी दीवार की स्क्रीन या कियोस्क को भारत के आसमान की लाइव जानकारी में बदलें, जो अपने आप ताज़ा होती रहती है। कोई जगह चुनें, उसे स्क्रीन पर खोलें और पूरी स्क्रीन पर फैलाएँ। यह खुद अपडेट होती है।",
