@@ -164,7 +164,12 @@ const IST_DATE = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" });
  *  edge- or upstream-cached reading can outlive IST midnight, and yesterday's high
  *  must not be shown as today's. */
 export function heatVsNormalShown(h: HeatVsNormal | null | undefined, now = new Date()): h is HeatVsNormal {
-  return !!h?.notable && h.date === IST_DATE.format(now);
+  return !!h?.notable && heatVsNormalToday(h, now);
+}
+
+/** Whether the high is for today in India (notable or not): a sentence may say it. */
+export function heatVsNormalToday(h: HeatVsNormal | null | undefined, now = new Date()): h is HeatVsNormal {
+  return !!h && h.date === IST_DATE.format(now);
 }
 
 /** "Today's modelled high of 41°C is 5°C above normal for late May here." */

@@ -4,7 +4,7 @@ import { placeLabel } from "../readings";
 import { esc } from "../html";
 import { AQI_BAND_LABEL } from "../aqi";
 import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } from "../score";
-import { siblingPlaces, slugFromPath } from "../slugs";
+import { siblingPlaces, slugFromPath, slugify } from "../slugs";
 import { aroundLinks } from "../sister";
 import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
@@ -16,6 +16,18 @@ import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import { historyPanel } from "../ui/history";
 import type { PlaceTrend } from "../placedaily";
+import { facts, type Fact } from "../facts";
+import {
+  answerLine,
+  factText,
+  placeDescription,
+  placeTitle,
+  questions,
+  READING_HEADING,
+  ROW_FACT,
+  say,
+  warningsText,
+} from "../phrases";
 import {
   alertsBox,
   autoLane,
@@ -42,7 +54,6 @@ import {
   readRowHtml,
   readRows,
   readTint,
-  searchTitle,
   stationPath,
   warningBand,
 } from "./read";
@@ -63,7 +74,7 @@ function whoSwitch(base: string, current: Persona, lang: Lang): string {
 
 /** The hero band: the place and when its readings are from, the Ambient plate, the persona
  *  switch. On wide screens the plate stands beside the title and the switch. */
-function hero(c: Conditions, plate: string, who: string, lang: Lang): string {
+function hero(c: Conditions, plate: string, who: string, answer: string, lang: Lang): string {
   const times = [stamp(t("updated", lang), relTime(c.as_of))];
   if (airLag(c)) times.push(stamp(t("air reading", lang), relTime(c.air_as_of!)));
   if (c.weather_as_of) times.push(stamp(t("weather reading", lang), relTime(c.weather_as_of)));
@@ -83,8 +94,9 @@ function hero(c: Conditions, plate: string, who: string, lang: Lang): string {
   return (
     `<section class="band phero"><div class="ptitle stack">` +
     `<p class="t-meta">${c.location.lat}°N&nbsp;&nbsp;${c.location.lon}°E</p>` +
-    `<h1 class="t-title loc" data-ll="${c.location.lat},${c.location.lon}">${esc(placeLabel(c))}</h1>` +
-    `<p class="t-meta">${esc(t("the sky at this point", lang))}</p>${stamps(times)}${offline}</div>` +
+    `<h1 class="t-title loc" data-ll="${c.location.lat},${c.location.lon}">${esc(placeLabel(c))}` +
+    `<span class="h1sub">${esc(say("h.sub", lang))}</span></h1>` +
+    `${stamps(times)}${answer ? `<p class="t-lead answer">${esc(answer)}</p>` : ""}${offline}</div>` +
     `${plate}<div class="pwho">${who}</div></section>`
   );
 }
@@ -131,6 +143,37 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
   return parts.length ? panel(stack(parts.join("")), { tag: "nav", label: t("Nearby places", lang) }) : "";
 }
 
+/** The official warnings over the place, always shown: "none now" is worth saying. */
+function warningsPanel(fs: Fact[], place: string, lang: Lang): string {
+  const w = fs.find((f): f is Extract<Fact, { key: "warnings" }> => f.key === "warnings");
+  if (!w) return "";
+  return panel(
+    `<p>${esc(warningsText(w, place, lang))} ${esc(say("warn.source", lang))}</p>` +
+      `<p><a href="${esc(lp("/warnings", lang))}">${esc(say("warn.all", lang))}</a></p>`,
+    { title: say("h.warn", lang, { place }), icon: "warn", tag: "section", id: "warn" },
+  );
+}
+
+/** The questions people ask about the place, answered from the same facts. */
+function questionsPanel(fs: Fact[], place: string, lang: Lang): string {
+  const qa = questions(fs, place, lang);
+  if (!qa.length) return "";
+  return panel(
+    `<dl class="qa-list">${qa.map(([q, a]) => `<div><dt>${esc(q)}</dt><dd>${esc(a)}</dd></div>`).join("")}</dl>`,
+    { title: say("h.qa", lang, { place }), icon: "list", tag: "section", id: "qa" },
+  );
+}
+
+/** A reading row's heading and sentence: the fact behind it, said in this language. The heat
+ *  row leaves out today's high against normal when the row already draws it. */
+function rowWords(key: string, normalDrawn: boolean, fs: Fact[], lang: Lang) {
+  const heading = READING_HEADING[key]?.[lang];
+  let fact = fs.find((f) => f.key === ROW_FACT[key]);
+  if (!heading || !fact) return undefined;
+  if (fact.key === "temp" && normalDrawn) fact = { ...fact, normal: undefined };
+  return { heading, text: factText(fact, lang) };
+}
+
 /** The lane of equal columns for the secondary band (one, two or three of them). */
 function secondary(cols: string[]): string {
   const items = cols.filter(Boolean);
@@ -150,18 +193,20 @@ export function renderConditionsPage(
   trend: PlaceTrend | null = null,
 ): string {
   const risk = ambientRisk(c, persona);
-  const { meaning } = ambientSummary(risk, (en) => t(en, lang));
   const slug = `${c.location.lat},${c.location.lon}`;
   const placeName = placeLabel(c);
   const path = canonical ? new URL(canonical).pathname : `/c/${slug}`;
   const base = lp(path, lang);
   const screen = lp(withPersona(`/c/${slug}?kiosk`, risk.persona), lang);
+  // The facts behind every sentence on the page; the place as a sentence names it.
+  const fs = facts(c);
+  const short = placeName.split(", ")[0];
 
   // GRAP sits in the Air reading; with no air reading here it still shows, on its own.
   const readings =
     band(
       `<div class="flow">${readRows(c, risk, lang)
-        .map((r) => readRowHtml(r, lang))
+        .map((r) => readRowHtml(r, lang, rowWords(r.key, !!r.normal, fs, lang)))
         .join("")}</div>`,
     ) + (c.grap && !c.air ? band(grapLine(c.grap, lang)) : "");
   // Phones read the button, then alerts, then the stations (the board); desktop moves the
@@ -189,17 +234,26 @@ export function renderConditionsPage(
     ),
   );
   const body = wrap(
-    hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), lang) +
+    hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), answerLine(fs, short, lang), lang) +
       warningBand(c, lang) +
       readings +
+      band(warningsPanel(fs, short, lang)) +
       (trend ? band(historyPanel(trend, lang, lp(`${path}/trends`, lang))) : "") +
       secondary([alertsCol, stationsPanel(c, lang), nearbyPanel(canonical, lang)]) +
+      band(questionsPanel(fs, short, lang)) +
       reference,
   );
 
-  // Title and description in the words people search ("Delhi AQI today"), with the number.
-  const { title, lead } = searchTitle(c, placeName, lang);
-  const desc = `${lead ?? `${placeName}:`} ${meaning} ${t(`The ${HAZARDS} over this spot, with the single worst hazard named for you.`, lang)}`;
+  // Title and description in the words people search ("Delhi AQI today"), from the facts.
+  // The short name, as people search it ("almora aqi"); the state stays where two districts
+  // share the name (their slug carries it).
+  const named = canonical ? slugFromPath(new URL(canonical).pathname)?.slug : undefined;
+  const titlePlace = named && named === slugify(short) ? short : placeName;
+  const title = placeTitle(fs, titlePlace, titlePlace, lang);
+  // With no air reading the facts say little, so the description names what the page covers.
+  const desc = fs.some((f) => f.key === "air")
+    ? placeDescription(fs, short, c.as_of, lang)
+    : `${placeName}: ${t(`The ${HAZARDS} over this spot, with the single worst hazard named for you.`, lang)}`;
   // schema.org Dataset: credits mugilu and the licence, points at the machine-readable siblings.
   const dataset = canonical
     ? ld({

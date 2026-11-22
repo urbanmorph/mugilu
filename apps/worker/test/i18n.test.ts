@@ -276,18 +276,14 @@ test("SEO: og:locale per language + alternates", () => {
   assert.match(renderAbout("en"), /<meta property="og:locale" content="en_IN">/);
 });
 
-test("SEO: /c conditions description localized (place verbatim); en byte-identical", () => {
+test("SEO: /c conditions description localized (place verbatim); no English framing in kn", () => {
   const U = "https://mugilu.live/c/28.61,77.21";
   const kn = renderConditionsPage(cond(), "everyone", U, "kn");
-  // framing localized, and no English framing leaks into the kn description
-  assert.match(kn, /<meta name="description" content="[^"]*ಈ ಸ್ಥಳದ ಮೇಲಿನ ವಾಯು/);
-  assert.doesNotMatch(kn, /over this spot, with the single worst hazard named for you/);
-  // English keeps the exact original framing
-  const en = renderConditionsPage(cond(), "everyone", U, "en");
-  assert.match(
-    en,
-    /The air, heat, cold, rain, wind, fog, dust, smoke, UV and official warnings over this spot, with the single worst hazard named for you\./,
-  );
+  const desc = (html: string) => html.match(/<meta name="description" content="([^"]*)"/)![1];
+  // the facts in Kannada, with the update time; no English framing leaks in
+  assert.match(desc(kn), /ಪ್ರದೇಶದಲ್ಲಿ AQI .*ನವೀಕರಿಸಲಾಗಿದೆ\.$/);
+  assert.doesNotMatch(desc(kn), /measured|modelled|Updated/);
+  assert.match(desc(renderConditionsPage(cond(), "everyone", U, "en")), / AQI \d+ \(.*Updated \d\d:\d\d IST\.$/);
 });
 
 test("prose pages (hi): Devanagari renders, proper nouns Latin, links + slots resolved", () => {

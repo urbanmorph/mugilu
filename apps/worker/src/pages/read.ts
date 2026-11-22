@@ -226,12 +226,8 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
     const bandWord = t(AQI_BAND_LABEL[band] ?? "n/a", lang);
     const bars = pollutantBars(c.air.pollutants, lang);
     const worst = worstPollutant(c.air.pollutants, keyReading.pollutants);
+    // Where the reading comes from is said in the row's sentence (phrases.ts), not here.
     const more = bars ? [bars] : [];
-    more.push(
-      `<p class="t-meta">${
-        c.air.station ? `${esc(t("measured", lang))} · ${c.air.station.distance_km} km` : esc(t("modelled", lang))
-      }</p>`,
-    );
     if (c.air.yll != null)
       more.push(`<p class="t-meta">~${c.air.yll.toFixed(1)} ${esc(t("years of life lost", lang))}</p>`);
     if (c.grap) more.push(grapLine(c.grap, lang));
@@ -405,12 +401,16 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
 }
 
 /** A reading as the place page's row: pictogram, label, figure and word, its level, detail. */
-export function readRowHtml(r: ReadRow, lang: Lang): string {
+/** `words`, on the place page: the label becomes a heading in the words people search, and
+ *  the value is said in a sentence under the figure (phrases.ts). */
+export function readRowHtml(r: ReadRow, lang: Lang, words?: { heading: string; text: string }): string {
   const tag = r.mine ? ` <span class="fy">${esc(t("for you", lang))}</span>` : "";
+  const lab = words ? `<h2 class="lab">${esc(words.heading)}${tag}</h2>` : `<p class="lab">${esc(r.label)}${tag}</p>`;
   return (
     `<div class="rrow${r.driver ? " on" : ""}" data-k="${r.key}">${ico(r.icon)}` +
-    `<div><p class="lab">${esc(r.label)}${tag}</p><p class="val"><span class="num">${esc(r.num)}</span>` +
-    `${r.unit ? `<span class="qa">${esc(r.unit)}</span>` : ""}${r.qual ? ` <b class="ql">${esc(r.qual)}</b>` : ""}</p></div>` +
+    `<div>${lab}<p class="val"><span class="num">${esc(r.num)}</span>` +
+    `${r.unit ? `<span class="qa">${esc(r.unit)}</span>` : ""}${r.qual ? ` <b class="ql">${esc(r.qual)}</b>` : ""}</p>` +
+    `${words?.text ? `<p class="t-meta say">${esc(words.text)}</p>` : ""}</div>` +
     `${r.chip}${r.more.length ? `<div class="more stack">${r.more.join("")}</div>` : ""}</div>`
   );
 }

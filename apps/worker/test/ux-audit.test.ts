@@ -103,7 +103,11 @@ test("3. warnings: an honest count, grouped by issuer with a readable name, newe
 test("4. the 'for you' tag never breaks inside, and wraps under the label instead of squeezing it", () => {
   const html = withCss(renderConditionsPage(c(), "child"));
   assert.match(html, /\.mg \.fy\{[^}]*white-space:nowrap/);
-  assert.match(html, /<p class="lab">[^<]*<span class="fy">for you<\/span><\/p>/, "inside the label line, which wraps");
+  assert.match(
+    html,
+    /<h2 class="lab">[^<]*<span class="fy">for you<\/span><\/h2>/,
+    "inside the label line, which wraps",
+  );
 });
 
 test("5. Kannada and Hindi /c pages carry no English 'Nearby:' or 'all places'", () => {
