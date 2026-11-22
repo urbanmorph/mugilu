@@ -1,6 +1,7 @@
 import { AQI_BAND_LABEL } from "./aqi";
 import { facts, type Fact, type Provenance } from "./facts";
 import { placeLabel } from "./readings";
+import { localName, placeBySlug, slugForName } from "./slugs";
 import type { Conditions } from "./types";
 import { periodText } from "./heatnormals";
 import { t, type Lang } from "./i18n";
@@ -442,7 +443,10 @@ export function conditionsText(
   lang: Lang,
 ): { lang: Lang; answer: string; readings: Partial<Record<Fact["key"], string>> } {
   const fs = facts(c);
-  const place = placeLabel(c).split(", ")[0];
+  // A named place by the name the page gives it: its native-script name on hi/kn, where it has one.
+  const latin = placeLabel(c).split(", ")[0];
+  const sp = placeBySlug(slugForName(latin) ?? "");
+  const place = sp ? localName(sp, lang) : latin;
   const readings = Object.fromEntries(
     fs.map((f) => [f.key, f.key === "warnings" ? warningsText(f, place, lang) : factText(f, lang)]),
   );

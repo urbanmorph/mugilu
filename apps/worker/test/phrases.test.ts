@@ -286,4 +286,5 @@ test("conditionsText: the answer line and each reading's sentence, the same word
   const kn = conditionsText(c, "kn");
   assert.equal(kn.lang, "kn");
   assert.notEqual(kn.answer, en.answer);
+  assert.match(kn.answer, /ಬೆಂಗಳೂರು/, "the native name, as the Kannada page says it");
 });

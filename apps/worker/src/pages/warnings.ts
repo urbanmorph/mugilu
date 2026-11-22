@@ -13,7 +13,7 @@ import { allSlugPlaces, localName, type SlugPlace } from "../slugs";
 import { hubOf, stateName, type State } from "../states";
 import { fill } from "../ui/history";
 import { DESCRIPTION_MAX } from "../phrases";
-import { alertPlaces, warnedSlugs } from "./places";
+import { alertPlaces } from "./places";
 import {
   backLink,
   band,
@@ -170,11 +170,13 @@ export function renderWarningsPage(
 ): string {
   const T = (s: string) => esc(t(s, lang));
   const sn = st && stateName(st.name, lang);
-  const byAlert = st ? alertPlaces(map, snap, now) : undefined;
+  // The places under each warning in force, worked out once: the state's alerts and the
+  // places by state both read it.
+  const byAlert = alertPlaces(map, snap, now);
   const ours = new Set(st?.places.map((p) => p.slug));
   const inState = (a: Alert) =>
     !st ||
-    (byAlert!.get(a.identifier) ?? []).some((slug) => ours.has(slug)) ||
+    (byAlert.get(a.identifier) ?? []).some((slug) => ours.has(slug)) ||
     norm(issuerName(a.issuer || "")).includes(norm(st.name));
   // Newest first; a storm IMD names is pinned once (its newest warning), above the lists.
   // Each alert read once: its office, its kind, and the line under it (time, CAP link).
@@ -262,7 +264,7 @@ export function renderWarningsPage(
   );
 
   // The warnings in one line: how many, where (from their areas), and the most common type.
-  const byState = (alerts.length && map ? warnedByState(new Set(warnedSlugs(map, snap, now))) : []).filter(
+  const byState = (alerts.length && map ? warnedByState(new Set([...byAlert.values()].flat())) : []).filter(
     ([name]) => !st || name === st.name,
   );
   const nPlaces = byState.reduce((n, [, ps]) => n + ps.length, 0);
