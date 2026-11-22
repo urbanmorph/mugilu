@@ -1,6 +1,7 @@
 import { aqiBand, AQI_BAND_LABEL } from "../aqi";
 import { esc } from "../html";
-import { andList, LOCALE, t, type Lang } from "../i18n";
+import { andList, LOCALE, lp, t, type Lang } from "../i18n";
+import type { SlugPlace } from "../slugs";
 import type { IndiaTrend, PlaceTrend, Series } from "../placedaily";
 import {
   airLevelOf,
@@ -282,7 +283,27 @@ export function airLead(levels: number[], lang: Lang): string {
 }
 
 /** The "Last 30 days" panel, or "" when there is nothing to show. */
-export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: string): string {
+/** The named place whose record a point borrows (or the nearest one, too far to borrow), by
+ *  the name the page gives it, and its distance from the point. */
+export interface Borrow {
+  place: SlugPlace;
+  name: string;
+  km: number;
+}
+const kmText = (x: number) => (x < 10 ? x.toFixed(1) : String(Math.round(x)));
+
+/** Too far to borrow: one line to the nearest place with a daily record. */
+export function nearestRecordLine(b: Borrow, lang: Lang): string {
+  const line = fill("The nearest place with a daily record is {place}, {km} km away.", lang, {
+    place: b.name,
+    km: kmText(b.km),
+  });
+  return `<p class="t-meta"><a href="${lp(`/c/${b.place.slug}`, lang)}">${esc(line)}</a></p>`;
+}
+
+/** A place's last 30 days. `from`: a point's page showing the nearest place's record, which
+ *  every sentence names (never "here"), with links to that place's page. */
+export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: string, from?: Borrow): string {
   if (!tr) return "";
   const n = tr.days.length;
   const others = OTHERS.map((h) => {
@@ -294,6 +315,16 @@ export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: str
   if (!airVals.length && !others.length) return "";
 
   const parts: string[] = [];
+  if (from)
+    parts.push(
+      `<p class="t-lead">${esc(
+        fill("This is the record for {place}, {km} km from this point.", lang, {
+          place: from.name,
+          km: kmText(from.km),
+        }),
+      )} ${esc(fill("Air uses the stations within {r} km of the centre of {place}.", lang, { r: AIR_KM, place: from.name }))} ` +
+        `<a href="${lp(`/c/${from.place.slug}`, lang)}">${esc(from.name)} →</a></p>`,
+    );
   if (airVals.length) {
     const missing = n - airVals.length;
     const source =
@@ -344,7 +375,7 @@ export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: str
     (trendsHref ? `<p>${linkButton(trendsHref, t("Every hazard, day by day", lang), false, "clock")}</p>` : "");
 
   return panel(`<div class="tsplit"><div>${parts.join("")}</div><div>${otherCol}</div></div>`, {
-    title: t("Last 30 days", lang),
+    title: from ? fill("Last 30 days in {place}", lang, { place: from.name }) : t("Last 30 days", lang),
     icon: "clock",
     tag: "section",
     id: "last30",

@@ -18,7 +18,7 @@ test("renderAbout: origin story + dual nature (people + infrastructure), credite
   const html = renderAbout();
   assert.match(html, /^<!doctype html>/i);
   assert.match(html, /open sky of India/i);
-  // the origin story: Sathya consolidating scattered work into infrastructure
+  // the origin story: Sathya Sankaran consolidating scattered work into infrastructure
   assert.match(html, /Sathya Sankaran/);
   assert.match(html, /infrastructure/i);
   assert.match(html, /Build on it/i);

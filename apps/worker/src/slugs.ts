@@ -177,6 +177,16 @@ function groupByState(): { state: string; places: SlugPlace[] }[] {
     .sort((a, b) => a.state.localeCompare(b.state));
 }
 
+/** The named place whose centre is nearest a point, and how far it is. */
+export function nearestPlace(lat: number, lon: number): { place: SlugPlace; km: number } | undefined {
+  let best: { place: SlugPlace; km: number } | undefined;
+  for (const p of SLUGS.values()) {
+    const km = haversineKm(lat, lon, p.lat, p.lon);
+    if (!best || km < best.km) best = { place: p, km };
+  }
+  return best;
+}
+
 /** A handful of other named places nearest to `slug`, in the same state. Rendered
  *  as cross-links on each conditions page so the named-place pages form a connected
  *  graph a crawler can walk, instead of ~800 orphans reachable only via the sitemap. */
