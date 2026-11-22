@@ -52,7 +52,7 @@ export function pickStation(stations: NormalizedStation[], lat: number, lon: num
 
 // Beyond this, a ground station is too far to represent the query point, so we
 // prefer Open-Meteo's modelled PM (gap-fill) over a distant monitor.
-const STATION_MAX_KM = 50;
+export const STATION_MAX_KM = 50;
 
 /** Air from a ground station (measured), with its provider as the source. */
 function measuredAir(s: NearStation): AirConditions {

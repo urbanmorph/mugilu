@@ -65,6 +65,11 @@ const OTHER: [string, string, RegExp, IconName] = ["other", "Other", /$^/, "warn
 const typeOf = (headline: string) => WARNING_TYPES.find(([, , re]) => re.test(headline)) ?? OTHER;
 
 /** The kind of hazard a warning is about, from its headline ("other" when none matches). */
+/** The kind of hazard a warning is about, as its plain label ("Rain, snow"; "Other" when none matches). */
+export function warningLabel(headline: string): string {
+  return typeOf(headline)[1];
+}
+
 export function warningType(headline: string): string {
   return typeOf(headline)[0];
 }
