@@ -8,11 +8,11 @@ import { SOURCE_CREDIT } from "../sources";
 import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
-import type { MapWarning } from "../indiamap";
+import type { IndiaMap } from "../indiamap";
 import { allSlugPlaces, type SlugPlace } from "../slugs";
 import { fill } from "../ui/history";
 import { DESCRIPTION_MAX } from "../phrases";
-import { placesUnder } from "./places";
+import { warnedSlugs } from "./places";
 import {
   backLink,
   band,
@@ -106,9 +106,9 @@ export function alertParts(a: Alert, lang: Lang): { office: string; time: string
   return { office, time, cap };
 }
 
-/** The places under the warnings in force, by state: the state with the most places first. */
-function warnedByState(areas: MapWarning[]): [state: string, places: SlugPlace[]][] {
-  const under = new Set(placesUnder(areas));
+/** The places under an official warning now (as /places marks them), by state: the state with
+ *  the most places first. */
+function warnedByState(under: Set<string>): [state: string, places: SlugPlace[]][] {
   const by = new Map<string, SlugPlace[]>();
   for (const p of allSlugPlaces().filter((p) => under.has(p.slug))) {
     const st = p.state ?? p.name;
@@ -155,8 +155,9 @@ function sourcesPanel(lang: Lang): string {
 export function renderWarningsPage(
   snap: WarningsSnapshot | null,
   lang: Lang = "en",
-  /** The warnings in force, with their areas (the home map's): the places under them. */
-  areas?: MapWarning[],
+  /** The home map, whose warning areas say which places are under a warning now. */
+  map?: IndiaMap,
+  now?: number,
 ): string {
   const T = (s: string) => esc(t(s, lang));
   // Newest first; a storm IMD names is pinned once (its newest warning), above the lists.
@@ -244,7 +245,7 @@ export function renderWarningsPage(
   );
 
   // The warnings in one line: how many, where (from their areas), and the most common type.
-  const byState = alerts.length && areas ? warnedByState(areas) : [];
+  const byState = alerts.length && map ? warnedByState(new Set(warnedSlugs(map, snap, now))) : [];
   const nPlaces = byState.reduce((n, [, ps]) => n + ps.length, 0);
   const top = [...types].sort((a, b) => b[1] - a[1])[0];
   const summary = alerts.length

@@ -37,7 +37,7 @@ import { collectWarnings, renderWarningsMarkdown } from "./sachet";
 import { collectWarnAreas } from "./warnareas";
 import { collectFires } from "./firms";
 import { collectCyclones } from "./cyclones";
-import { activeWarnings, loadMap, writeMap } from "./indiamap";
+import { loadMap, writeMap } from "./indiamap";
 import { assetResponse } from "./ui/assets";
 import { composeHighlights } from "./highlights";
 import {
@@ -401,7 +401,7 @@ export default {
           };
         // The page also names the places under the warnings in force, from the home map's areas.
         const { map, stored } = await loadMap(env);
-        const res = cachedResponse(renderWarningsPage(snap, lang, activeWarnings(map)), "text/html; charset=utf-8");
+        const res = cachedResponse(renderWarningsPage(snap, lang, map), "text/html; charset=utf-8");
         return { res, store: snap !== null && stored };
       });
     }

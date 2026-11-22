@@ -67,6 +67,15 @@ export function placesUnder(ws: MapWarning[]): string[] {
     .map((p) => p.slug);
 }
 
+/** The places under an official warning now: each place whose point is inside the area of a
+ *  warning in force, and, for a named cyclone whose alert has no area, the places it names. */
+export function warnedSlugs(map: IndiaMap | undefined, warnings: WarningsSnapshot | null | undefined, now?: number) {
+  const areas = activeWarnings(map, now);
+  const official = officialCyclone(warnings);
+  const unmapped = official && !areas.some((w) => w.id === official.alert.identifier);
+  return [...new Set([...placesUnder(areas), ...(unmapped ? warnedPlaces(official.areas) : [])])];
+}
+
 // The page's behaviour: find a place (filters the lists), the state picker and the map's state
 // click (open that state's list and go to it), and on phones the lists start folded except a
 // state with a warned place.
@@ -90,8 +99,7 @@ export function renderPlaces(
   const total = groups.reduce((n, g) => n + g.places.length, 0);
   const official = officialCyclone(data.warnings);
   const areas = activeWarnings(data.map, data.now);
-  const unmapped = official && !areas.some((w) => w.id === official.alert.identifier);
-  const isWarned = new Set([...placesUnder(areas), ...(unmapped ? warnedPlaces(official.areas) : [])]);
+  const isWarned = new Set(warnedSlugs(data.map, data.warnings, data.now));
   const warned = [...isWarned];
 
   const head = band(

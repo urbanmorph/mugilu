@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderWarningsPage } from "../src/pages/warnings";
-import { mapWarnings } from "../src/indiamap";
+import { mapWarnings, type IndiaMap } from "../src/indiamap";
 import type { WarningsSnapshot } from "../src/sachet";
 import type { WarnArea } from "../src/warnareas";
 
@@ -46,6 +46,10 @@ const square = (id: string, lon: number, lat: number, d: number): WarnArea => ({
   ],
 });
 const AREAS = mapWarnings([square("1", 79.504, 29.6908, 0.08), square("2", 77.59, 12.97, 0.15)]);
+const map = (warnings = AREAS) => ({ warnings }) as IndiaMap;
+const NOW = Date.parse("2026-11-22T09:00:00+05:30");
+const page = (snap: WarningsSnapshot | null, lang: "en" | "hi" | "kn" = "en", m = map()) =>
+  renderWarningsPage(snap, lang, m, NOW);
 const text = (html: string) =>
   html
     .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, "")
@@ -55,7 +59,7 @@ const text = (html: string) =>
     .replace(/\s+/g, " ");
 
 test("/warnings: a fixed title and heading in the searched words, in three languages", () => {
-  const en = renderWarningsPage(SNAP, "en", AREAS);
+  const en = page(SNAP);
   assert.equal(
     en.match(/<title>([^<]*)<\/title>/)![1],
     "Weather warnings in India today: IMD and NDMA alerts by state | mugilu",
@@ -66,29 +70,29 @@ test("/warnings: a fixed title and heading in the searched words, in three langu
 });
 
 test("/warnings: the warnings in one line: how many, where, and the most common type", () => {
-  const s = text(renderWarningsPage(SNAP, "en", AREAS));
+  const s = text(page(SNAP));
   assert.match(s, /The latest 3 official NDMA \/ IMD alerts across India\./);
   assert.match(s, /The warnings in force now cover \d+ places in 2 states\./);
   assert.match(s, /Most common type: Thunderstorm, lightning\./);
-  const desc = renderWarningsPage(SNAP, "en", AREAS).match(/<meta name="description" content="([^"]*)"/)![1];
+  const desc = page(SNAP).match(/<meta name="description" content="([^"]*)"/)![1];
   assert.match(desc, /^The latest 3 official NDMA \/ IMD alerts across India\. The warnings in force now cover/);
   assert.ok(desc.length <= 160, desc);
 });
 
 test("/warnings: one place in one state is said in the singular", () => {
-  const one = mapWarnings([square("1", 79.504, 29.6908, 0.08)]);
-  assert.match(text(renderWarningsPage(SNAP, "en", one)), /The warnings in force now cover 1 place in 1 state\./);
+  const one = map(mapWarnings([square("1", 79.504, 29.6908, 0.08)]));
+  assert.match(text(page(SNAP, "en", one)), /The warnings in force now cover 1 place in 1 state\./);
 });
 
 test("/warnings: the places under a warning, by state, the state with the most first; each links its page", () => {
-  const html = renderWarningsPage(SNAP, "en", AREAS);
+  const html = page(SNAP);
   assert.match(html, /<h2 class="bar"[^>]*>[^]*?<span>Places under a warning now, by state<\/span><\/h2>/);
   const states = [...html.matchAll(/<h3 class="wgrp">([^<]+)<span class="n">(\d+)<\/span><\/h3>/g)];
   assert.deepEqual(states.map((m) => m[1]).sort(), ["Karnataka", "Uttarakhand"]);
   assert.ok(+states[0][2] >= +states[1][2], "the state with more places first");
   assert.match(html, /href="\/c\/almora"/);
   assert.doesNotMatch(html, /href="\/c\/nainital"/);
-  assert.match(renderWarningsPage(SNAP, "hi", AREAS), /href="\/hi\/c\/almora"/);
+  assert.match(page(SNAP, "hi"), /href="\/hi\/c\/almora"/);
 });
 
 test("/warnings: what yellow, orange and red mean, also when there is no warning", () => {
@@ -108,6 +112,15 @@ test("/warnings: what yellow, orange and red mean, also when there is no warning
   for (const s of [hi, kn])
     for (const en of [/what they mean/, /Be prepared/, /Take action/, /Where the warnings come from/])
       assert.doesNotMatch(s, en);
+});
+
+test("/warnings: a named cyclone whose alert has no area marks the places it names, as /places does", () => {
+  const akvan =
+    "The SEVERE CYCLONIC STORM AKVAN with maximum wind speed of 90-100 gusting to 110 Kmph lays centred at 1130 IST of 18.11.26 near latitude 13.1N and longitude 85.4E, 540 Km southeast of Narsapur, Andhra Pradesh. Cyclone Warning for Alluri Sitharama Raju, Anakapalli, Srikakulam, Visakhapatnam, Vizianagaram.";
+  const snap = { ...SNAP, alerts: [alert("9", akvan, "IMD Visakhapatnam")] } as unknown as WarningsSnapshot;
+  const html = page(snap, "en", map([]));
+  assert.match(html, /<h3 class="wgrp">Andhra Pradesh<span class="n">5<\/span><\/h3>/);
+  assert.match(html, /href="\/c\/srikakulam"/);
 });
 
 test("/warnings: no map areas leaves out the places line and the by-state panel", () => {
