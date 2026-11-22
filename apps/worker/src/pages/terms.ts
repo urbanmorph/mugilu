@@ -1,6 +1,6 @@
 import { t, type Lang } from "../i18n";
 import { cardBody, cards, pairs, pull, warnBox } from "../ui/components";
-import { P, plain, splitInto, textPage } from "./text";
+import { P, builtBy, plain, splitInto, textPage } from "./text";
 import { contactLink } from "../contact";
 
 // The live paragraphs, as keys (pages/text.ts splits them at sentence ends to fill the boxes).
@@ -14,7 +14,6 @@ const RETENTION = "Usage counts are kept as totals. The detailed events are dele
 const ANY_AGE = "mugilu has no accounts and asks for no personal data, so people of any age can use it safely.";
 const DELETE =
   "To delete your alert data, turn the alert off. To delete your saved places, clear them in your browser. For any other privacy question, contact us: {contact}.";
-const OWNER = "mugilu is co-owned by Sathya Sankaran and Urban Morph.";
 const LAWS =
   "mugilu is built to follow India's Information Technology Act, 2000 and Digital Personal Data Protection Act, 2023: it keeps no personal data except the opt-in alert address above. For the Rights of Persons with Disabilities Act, 2016, the pages aim for WCAG 2.1 AA.";
 const CONTENT =
@@ -169,7 +168,7 @@ export function renderTerms(lang: Lang = "en"): string {
           P(t(LAWS, lang)) +
           P(commons),
       },
-      { id: "owner", title: t("Owner", lang), icon: "doc", body: P(t(OWNER, lang)) },
+      { id: "owner", title: t("Owner", lang), icon: "doc", body: P(builtBy(lang)) },
       {
         id: "content",
         title: t("Content and reports", lang),

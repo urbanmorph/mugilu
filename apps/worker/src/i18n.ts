@@ -147,10 +147,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "अपने अलर्ट का डेटा मिटाने के लिए अलर्ट बंद करें। सहेजी गई जगहें मिटाने के लिए उन्हें अपने ब्राउज़र में हटाएँ। निजता से जुड़े किसी और सवाल के लिए हमसे संपर्क करें: {contact}।",
       kn: "ನಿಮ್ಮ ಎಚ್ಚರಿಕೆ ಮಾಹಿತಿಯನ್ನು ಅಳಿಸಲು ಎಚ್ಚರಿಕೆಯನ್ನು ಆಫ್ ಮಾಡಿ. ಉಳಿಸಿದ ಸ್ಥಳಗಳನ್ನು ಅಳಿಸಲು ಅವುಗಳನ್ನು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆಗೆದುಹಾಕಿ. ಗೌಪ್ಯತೆಯ ಬೇರೆ ಯಾವುದೇ ಪ್ರಶ್ನೆಗೆ ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ: {contact}.",
     },
-  "mugilu is co-owned by Sathya Sankaran and Urban Morph.": {
-    hi: "mugilu के सह-स्वामी Sathya Sankaran और Urban Morph हैं।",
-    kn: "mugilu ನ ಸಹ-ಮಾಲೀಕರು Sathya Sankaran ಮತ್ತು Urban Morph.",
-  },
   "mugilu is built to follow India's Information Technology Act, 2000 and Digital Personal Data Protection Act, 2023: it keeps no personal data except the opt-in alert address above. For the Rights of Persons with Disabilities Act, 2016, the pages aim for WCAG 2.1 AA.":
     {
       hi: "mugilu भारत के सूचना प्रौद्योगिकी अधिनियम, 2000 और डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम, 2023 का पालन करने के लिए बनाया गया है: यह ऊपर बताए गए वैकल्पिक अलर्ट पते के अलावा कोई निजी डेटा नहीं रखता। दिव्यांगजन अधिकार अधिनियम, 2016 के लिए पेज WCAG 2.1 AA का लक्ष्य रखते हैं।",

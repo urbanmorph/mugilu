@@ -15,7 +15,7 @@ const text = (h: string) =>
 
 test("/terms: ownership, said plainly", () => {
   const s = text(renderTerms("en"));
-  assert.match(s, /mugilu is co-owned by Sathya Sankaran and Urban Morph\./);
+  assert.match(s, /Built by urbanmorph ?, led by Sathya Sankaran ?\./, "as /about says it");
   assert.match(renderTerms("en"), /id="owner"/);
 });
 
@@ -41,7 +41,7 @@ test("/terms: the laws, and how to report wrong, harmful or illegal content, wit
 test("/terms (hi, kn): the new sections are translated", () => {
   for (const lang of ["hi", "kn"] as const) {
     const s = text(renderTerms(lang));
-    for (const en of [/owned by/, /kept as totals/, /any age/, /no user posts/, /We answer within/])
+    for (const en of [/Built by/, /kept as totals/, /any age/, /no user posts/, /We answer within/])
       assert.doesNotMatch(s, en, `${lang}: ${en}`);
     assert.match(s, /Sathya/);
   }

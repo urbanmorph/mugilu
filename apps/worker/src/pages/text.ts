@@ -39,6 +39,14 @@ export function sentences(text: string): string[] {
  *  translation of `key` (translations carry no markup). */
 export const marked = (key: string, lang: Lang, en: string = key): string => (lang === "en" ? en : t(key, lang));
 
+/** Who makes mugilu, said one way on /about and /terms (the owner section). */
+export const builtBy = (lang: Lang): string =>
+  marked(
+    "Built by urbanmorph, led by Sathya Sankaran.",
+    lang,
+    `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`,
+  );
+
 /** The sentences of a live paragraph in the page's language: English from its markup
  *  version, others from the translation of `key`. Null when they do not split into `n`. */
 export function splitAs(

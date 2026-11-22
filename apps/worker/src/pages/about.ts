@@ -4,7 +4,7 @@ import { t, type Lang } from "../i18n";
 import { HAZARDS } from "../hazards";
 import { ld, UM_ICON } from "../ui/shell";
 import { cardBody, cards, faq, pull } from "../ui/components";
-import { P, lineBreakAfterComma, marked, splitInto, textPage } from "./text";
+import { P, builtBy, lineBreakAfterComma, marked, splitInto, textPage } from "./text";
 
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
@@ -122,13 +122,8 @@ export function renderAbout(lang: Lang = "en"): string {
     { cols: 2 },
   );
 
-  const builtBy = marked(
-    "Built by urbanmorph, led by Sathya Sankaran.",
-    lang,
-    `Built by <a href="https://urbanmorph.com">urbanmorph</a>, led by <a href="https://www.sathyasankaran.com">Sathya Sankaran</a>.`,
-  );
   const credit =
-    `<div class="credit"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"><div>${P(builtBy)}` +
+    `<div class="credit"><img src="${UM_ICON}" alt="Urban Morph" width="54" height="60"><div>${P(builtBy(lang))}` +
     `<p class="links"><a href="https://github.com/urbanmorph/mugilu">${t("Source on GitHub, drop a star if it's useful", lang)}</a></p></div></div>`;
 
   return textPage({
