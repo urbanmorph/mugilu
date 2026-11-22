@@ -197,3 +197,8 @@ test("desktop header: Install app appears in the free space before the languages
   assert.match(desk, /\.mg \.sh \.langs\{order:2\}/);
   assert.match(desk, /\.mg \.sh #install-app:not\(\[hidden\]\)~\.langs\{margin-left:var\(--sp4\)\}/);
 });
+
+test("no footer style still aims at a heading: the group names are labels (.fhead)", () => {
+  assert.doesNotMatch(STANDARD_CSS, /fgroup[^{]*\bh2\b/);
+  assert.match(STANDARD_CSS, /\.mg \.fgrid>\.fgroup:nth-child\(3\) \.fhead\{grid-column:1\/-1\}/);
+});

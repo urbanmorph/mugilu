@@ -434,7 +434,7 @@ body{margin:0}
 }
 @media (max-width:999.98px){
 .mg .fgrid>.fgroup:nth-child(3){grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--sp4)}
-.mg .fgrid>.fgroup:nth-child(3) h2{grid-column:1/-1}
+.mg .fgrid>.fgroup:nth-child(3) .fhead{grid-column:1/-1}
 .mg .tbl{font-size:var(--t-sm)}
 .mg .tbl th,.mg .tbl td{padding:var(--sp2)}
 .mg .sh.mjs .nav{display:none}
