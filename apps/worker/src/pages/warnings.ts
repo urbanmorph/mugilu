@@ -27,6 +27,7 @@ import {
   panel,
   placeTile,
   placeTiles,
+  stack,
   stamp,
   stamps,
   type IconName,
@@ -135,9 +136,11 @@ const COLOURS: [colour: string, meaning: string][] = [
 function coloursPanel(lang: Lang): string {
   const T = (s: string) => esc(t(s, lang));
   return panel(
-    `<dl class="qa-list">${COLOURS.map(([c, m]) => `<dt>${T(c)}</dt><dd>${T(m)}</dd>`).join("")}</dl>` +
-      `<p>${T('IMD says a red warning does not mean a "red alert". It means "take action".')}</p>` +
-      `<p>${T("A colour is for one area and one time. Open a place to see the warnings over it and their colour.")} <a href="${lp("/places", lang)}">${T("Every place, by state")}</a></p>`,
+    stack(
+      `<dl class="qa-list">${COLOURS.map(([c, m]) => `<dt>${T(c)}</dt><dd>${T(m)}</dd>`).join("")}</dl>` +
+        `<p>${T('IMD says a red warning does not mean a "red alert". It means "take action".')}</p>` +
+        `<p>${T("A colour is for one area and one time. Open a place to see the warnings over it and their colour.")} <a href="${lp("/places", lang)}">${T("Every place, by state")}</a></p>`,
+    ),
     { title: t("Yellow, orange and red: what they mean", lang), icon: "warn", id: "colours" },
   );
 }
