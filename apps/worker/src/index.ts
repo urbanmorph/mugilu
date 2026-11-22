@@ -1,5 +1,5 @@
 import { collectAirDaily } from "./airdaily";
-import { collectPlaceDaily, loadIndiaTrend, loadPlaceTrend, type PlaceTrend } from "./placedaily";
+import { BORROW_MAX_KM, collectPlaceDaily, loadIndiaTrend, loadPlaceTrend, type PlaceTrend } from "./placedaily";
 import { refreshLatest } from "./refresh";
 import { refreshHierarchy } from "./hierarchy";
 import { getSignature } from "./handshake";
@@ -54,7 +54,7 @@ import {
 } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
-import { placeBySlug, slugForName, slugFromPath, slugLabel, type SlugPlace } from "./slugs";
+import { nearestPlace, placeBySlug, slugForName, slugFromPath, slugLabel, type SlugPlace } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
 import { loadGrid, loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
@@ -508,17 +508,21 @@ export default {
         async () => {
           // A named slug owns its label (so /c/bengaluru reads "Bengaluru", not the
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
+          // A point with no record of its own shows the nearest named place's, within
+          // BORROW_MAX_KM of its centre (READING_SENTENCES_SPEC.md section 9).
+          const near = !named && fmt === "html" ? nearestPlace(lat, lon) : undefined;
+          const recordOf = named ?? (near && near.km <= BORROW_MAX_KM ? near.place : undefined);
           const [{ conditions, usage }, trend] = await Promise.all([
             lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName }),
-            named && fmt === "html"
-              ? loadPlaceTrend(env, named).catch((e) => {
-                  console.error(`[place-daily] trend for ${named.slug}: ${reason(e)}`);
+            recordOf && fmt === "html"
+              ? loadPlaceTrend(env, recordOf).catch((e) => {
+                  console.error(`[place-daily] trend for ${recordOf.slug}: ${reason(e)}`);
                   return null;
                 })
               : null,
           ]);
           // A reading built while an upstream was down is served, never cached.
-          const res = await renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName, trend);
+          const res = await renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName, trend, near);
           return { res, usage, store: !conditions.degraded };
         },
         (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
@@ -533,6 +537,7 @@ export default {
       canonicalPath: string,
       placeName?: string,
       trend: PlaceTrend | null = null,
+      near?: { place: SlugPlace; km: number },
     ): Response | Promise<Response> {
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
@@ -574,6 +579,7 @@ export default {
           alertsOn(env) ? env.VAPID_PUBLIC_KEY : undefined,
           arbitrary,
           trend,
+          near,
         ),
         "text/html; charset=utf-8",
       );

@@ -2081,6 +2081,20 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "weather reading": { hi: "मौसम के आँकड़े:", kn: "ಹವಾಮಾನ ಮಾಹಿತಿ" },
   // The place page's "Last 30 days" (ui/history.ts). {n} {d} {s} {m} {level} are slots.
   "Last 30 days": { hi: "पिछले 30 दिन", kn: "ಕಳೆದ 30 ದಿನಗಳು" },
+  // A point's page borrowing the nearest place's record (READING_SENTENCES_SPEC.md section 9).
+  "Last 30 days in {place}": { hi: "{place}: पिछले 30 दिन", kn: "{place}: ಕಳೆದ 30 ದಿನಗಳು" },
+  "This is the record for {place}, {km} km from this point.": {
+    hi: "यह {place} का रिकॉर्ड है, जो इस बिंदु से {km} km दूर है।",
+    kn: "ಈ ದಾಖಲೆ {place} ಸ್ಥಳದ್ದು. ಆ ಸ್ಥಳ ಈ ಬಿಂದುವಿನಿಂದ {km} km ದೂರದಲ್ಲಿದೆ.",
+  },
+  "Air uses the stations within {r} km of the centre of {place}.": {
+    hi: "हवा के आँकड़े {place} के केंद्र से {r} km के भीतर के स्टेशनों से हैं।",
+    kn: "ವಾಯು ದಾಖಲೆ {place} ಸ್ಥಳದ ಕೇಂದ್ರದಿಂದ {r} km ಒಳಗಿನ ನಿಲ್ದಾಣಗಳಿಂದ ಬರುತ್ತದೆ.",
+  },
+  "The nearest place with a daily record is {place}, {km} km away.": {
+    hi: "दैनिक रिकॉर्ड वाली सबसे पास की जगह {place} है, {km} km दूर।",
+    kn: "ದೈನಂದಿನ ದಾಖಲೆ ಇರುವ ಹತ್ತಿರದ ಸ್ಥಳ {place}. ಅದು {km} km ದೂರದಲ್ಲಿದೆ.",
+  },
   "Air, the worst AQI of each day, for {n} days": {
     hi: "वायु, हर दिन का सबसे खराब AQI, {n} दिनों का",
     kn: "ವಾಯು, ಪ್ರತಿ ದಿನದ ಅತಿ ಕೆಟ್ಟ AQI, {n} ದಿನಗಳದ್ದು",

@@ -15,7 +15,7 @@ import { breadcrumb, SITE, ld, relTime } from "../ui/shell";
 import { HOME_OG } from "../og-html";
 import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
-import { fill, historyPanel } from "../ui/history";
+import { fill, historyPanel, nearestRecordLine, type Borrow } from "../ui/history";
 import type { PlaceTrend } from "../placedaily";
 import { facts, type Fact } from "../facts";
 import {
@@ -198,6 +198,9 @@ export function renderConditionsPage(
   noindex = false,
   /** A named place's last 30 days (placedaily.ts), when kept. */
   trend: PlaceTrend | null = null,
+  /** A point's page: the nearest named place, whose record `trend` is (within BORROW_MAX_KM);
+   *  farther, only a line to it. */
+  from?: Omit<Borrow, "name">,
 ): string {
   const risk = ambientRisk(c, persona);
   const slug = `${c.location.lat},${c.location.lon}`;
@@ -214,6 +217,13 @@ export function renderConditionsPage(
   const native = sp && localName(sp, lang) !== sp.name ? localName(sp, lang) : undefined;
   const short = native ?? latin;
 
+  // The last 30 days: the place's own, or the nearest named place's, named in every sentence.
+  const borrow = from && { ...from, name: localName(from.place, lang) };
+  const history = trend
+    ? band(historyPanel(trend, lang, lp(`${borrow ? `/c/${borrow.place.slug}` : path}/trends`, lang), borrow))
+    : borrow
+      ? band(nearestRecordLine(borrow, lang))
+      : "";
   // GRAP sits in the Air reading; with no air reading here it still shows, on its own.
   const readings =
     band(
@@ -250,7 +260,7 @@ export function renderConditionsPage(
       warningBand(c, lang) +
       readings +
       band(warningsPanel(fs, short, lang)) +
-      (trend ? band(historyPanel(trend, lang, lp(`${path}/trends`, lang))) : "") +
+      history +
       secondary([alertsCol, stationsPanel(c, lang), nearbyPanel(canonical, lang)]) +
       band(questionsPanel(fs, short, lang)) +
       reference,

@@ -40,6 +40,9 @@ export type Span = (typeof SPANS)[number];
 export const TREND_DAYS = 30;
 const LONGEST = 90;
 export const AIR_KM = 25;
+/** How far a point may be from a place's centre to show that place's record (the record's own
+ *  air radius): a coordinate page borrows the nearest place's history within it. */
+export const BORROW_MAX_KM = AIR_KM;
 const FIRE_KM = 100;
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
