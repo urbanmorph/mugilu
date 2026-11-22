@@ -1,4 +1,5 @@
 import { allSlugPlaces } from "./slugs";
+import { allHubs } from "./states";
 import { sourcesMarkdown } from "./sources";
 import { TOOLS } from "./mcptools";
 import { HAZARDS } from "./hazards";
@@ -318,6 +319,7 @@ export function sitemapPaths(): string[] {
     "/terms",
     "/places",
     "/warnings",
+    ...allHubs().map((st) => `/state/${st.slug}`),
     ...allSlugPlaces().map((p) => `/c/${p.slug}`),
     // Each place's 30-day record (the 7- and 90-day views are its query variants).
     ...allSlugPlaces().map((p) => `/c/${p.slug}/trends`),

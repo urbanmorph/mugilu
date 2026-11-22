@@ -128,6 +128,50 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "अभी पूरे भारत में सक्रिय NDMA / IMD चेतावनियाँ, SACHET फ़ीड से ली गईं। HTML, JSON और Markdown में उपलब्ध।",
       kn: "ಈಗ ಭಾರತದಾದ್ಯಂತ ಸಕ್ರಿಯವಾಗಿರುವ NDMA / IMD ಎಚ್ಚರಿಕೆಗಳು, SACHET ಫೀಡ್‌ನಿಂದ ಪಡೆದವು. HTML, JSON ಮತ್ತು Markdown ರೂಪದಲ್ಲಿ ಲಭ್ಯ.",
     },
+  // State hubs (/state/{slug}): the state's places now, the worst first.
+  "{state} air quality, weather and warnings now": {
+    hi: "{state} में अभी वायु गुणवत्ता, मौसम और चेतावनी",
+    kn: "{state} ಈಗ: ವಾಯು ಗುಣಮಟ್ಟ, ಹವಾಮಾನ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
+  },
+  "{state} now: air, heat, rain and official warnings": {
+    hi: "{state} अभी: हवा, गर्मी, बारिश और आधिकारिक चेतावनी",
+    kn: "{state} ಈಗ: ವಾಯು, ಬಿಸಿಲು, ಮಳೆ ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು",
+  },
+  "Worst air now: {place}, AQI {aqi} ({band}).": {
+    hi: "अभी सबसे खराब हवा: {place}, AQI {aqi} ({band})।",
+    kn: "ಈಗ ಅತಿ ಕೆಟ್ಟ ಗಾಳಿ: {place}, AQI {aqi} ({band}).",
+  },
+  "Feels hottest: {place}, {c}°C.": { hi: "सबसे गर्म: {place}, {c}°C।", kn: "ಅತಿ ಬಿಸಿ: {place}, {c}°C." },
+  "Feels coldest: {place}, {c}°C.": { hi: "सबसे ठंडा: {place}, {c}°C।", kn: "ಅತಿ ಚಳಿ: {place}, {c}°C." },
+  "Rain now in 1 place.": { hi: "अभी 1 जगह पर बारिश।", kn: "ಈಗ 1 ಸ್ಥಳದಲ್ಲಿ ಮಳೆ." },
+  "Rain now in {n} places.": { hi: "अभी {n} जगहों पर बारिश।", kn: "ಈಗ {n} ಸ್ಥಳಗಳಲ್ಲಿ ಮಳೆ." },
+  "No rain now.": { hi: "अभी कहीं बारिश नहीं।", kn: "ಈಗ ಎಲ್ಲೂ ಮಳೆ ಇಲ್ಲ." },
+  "1 place under an official warning.": { hi: "1 जगह आधिकारिक चेतावनी में।", kn: "1 ಸ್ಥಳ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಯಲ್ಲಿದೆ." },
+  "{n} places under an official warning.": {
+    hi: "{n} जगहें आधिकारिक चेतावनी में।",
+    kn: "{n} ಸ್ಥಳಗಳು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಯಲ್ಲಿವೆ.",
+  },
+  "No official warning covers a place here now.": {
+    hi: "अभी यहाँ किसी जगह पर आधिकारिक चेतावनी नहीं।",
+    kn: "ಈಗ ಇಲ್ಲಿನ ಯಾವುದೇ ಸ್ಥಳಕ್ಕೆ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಇಲ್ಲ.",
+  },
+  "Worst air now": { hi: "अभी सबसे खराब हवा", kn: "ಈಗ ಅತಿ ಕೆಟ್ಟ ಗಾಳಿ" },
+  "Feels hottest now": { hi: "अभी सबसे गर्म", kn: "ಈಗ ಅತಿ ಬಿಸಿ" },
+  "Feels coldest now": { hi: "अभी सबसे ठंडा", kn: "ಈಗ ಅತಿ ಚಳಿ" },
+  "Raining now": { hi: "अभी बारिश", kn: "ಈಗ ಮಳೆ" },
+  "Every place in {state}": { hi: "{state}: हर जगह", kn: "{state}: ಪ್ರತಿಯೊಂದು ಸ್ಥಳ" },
+  Place: { hi: "जगह", kn: "ಸ್ಥಳ" },
+  Now: { hi: "अभी", kn: "ಈಗ" },
+  "No air station is within {km} km of a place here.": {
+    hi: "यहाँ किसी जगह के {km} किमी के भीतर कोई वायु स्टेशन नहीं है।",
+    kn: "ಇಲ್ಲಿನ ಯಾವುದೇ ಸ್ಥಳದ {km} ಕಿ.ಮೀ ಒಳಗೆ ವಾಯು ನಿಲ್ದಾಣ ಇಲ್ಲ.",
+  },
+  "Air: each place's nearest air station within {km} km, as on its own page. Weather: the model at each district's centre.":
+    {
+      hi: "हवा: हर जगह का {km} किमी के भीतर सबसे पास का वायु स्टेशन, जैसा उसके अपने पेज पर। मौसम: हर ज़िले के केंद्र पर मॉडल।",
+      kn: "ವಾಯು: ಪ್ರತಿ ಸ್ಥಳದ {km} ಕಿ.ಮೀ ಒಳಗಿನ ಹತ್ತಿರದ ವಾಯು ನಿಲ್ದಾಣ, ಅದರ ಸ್ವಂತ ಪುಟದಲ್ಲಿರುವಂತೆ. ಹವಾಮಾನ: ಪ್ರತಿ ಜಿಲ್ಲೆಯ ಕೇಂದ್ರದಲ್ಲಿ ಮಾದರಿ.",
+    },
+  "{state} now": { hi: "{state} अभी", kn: "{state} ಈಗ" },
   // /warnings in the searched words, its one-line summary, and IMD's colour code.
   "Weather warnings in India today: IMD and NDMA alerts by state": {
     hi: "भारत में आज मौसम की चेतावनी: राज्यवार IMD और NDMA अलर्ट",

@@ -26,6 +26,8 @@ import { renderPlaces } from "./pages/places";
 import { renderNotFound } from "./pages/notfound";
 import { renderEmbed } from "./pages/embed";
 import { renderWarningsPage } from "./pages/warnings";
+import { renderStatePage, stateNow } from "./pages/state";
+import { hubOf, stateBySlug } from "./states";
 import { renderMethodology } from "./pages/methodology";
 import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec, mcpJson } from "./meta";
@@ -55,7 +57,7 @@ import type { Persona } from "./score";
 import { placeBySlug, slugForName, slugFromPath, slugLabel, type SlugPlace } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
-import { loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
+import { loadGrid, loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import type { Conditions, NormalizedStation } from "./types";
@@ -220,6 +222,29 @@ export default {
     // way to browse), so they aren't discoverable only through the sitemap.
     // With the map of India (the squares as a backdrop) and the places under an
     // official cyclone warning marked, so it follows the live snapshots.
+    // A state's hub: its places now, the worst first (pages/state.ts).
+    const stateMatch = url.pathname.match(/^\/state\/([a-z0-9-]+)$/);
+    if (stateMatch) {
+      const st = hubOf(stateBySlug(stateMatch[1])?.name);
+      if (!st)
+        return new Response(renderNotFound(lang), {
+          status: 404,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      return cached(LIVE_EDGE_TTL, async () => {
+        const [grid, snap, { map, stored }, warnings] = await Promise.all([
+          loadGrid(env).catch(() => null),
+          loadSnapshot(env).catch(() => null),
+          loadMap(env),
+          loadWarningsSnapshot(env).catch(() => null),
+        ]);
+        const now = stateNow(st, { grid, stations: snap?.stations, airAt: snap?.generated_at, map, warnings });
+        const res = cachedResponse(renderStatePage(st, now, lang), "text/html; charset=utf-8");
+        // A missing input is passing: serve it, but do not keep it for the TTL.
+        return { res, store: !!grid && !!snap && stored && warnings !== null };
+      });
+    }
+
     if (url.pathname === "/places") {
       return cached(LIVE_EDGE_TTL, async () => {
         const [{ map, stored }, warnings] = await Promise.all([
