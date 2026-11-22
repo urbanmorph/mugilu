@@ -2,7 +2,8 @@ import { esc, trusted } from "../html";
 import { lp, t, type Lang } from "../i18n";
 import { SERIES, type PlaceTrend } from "../placedaily";
 import { RISK_BANDS } from "../score";
-import type { SlugPlace } from "../slugs";
+import { titleName, type SlugPlace } from "../slugs";
+import { DESCRIPTION_MAX } from "../phrases";
 import { breadcrumb, ld, SITE } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
 import {
@@ -146,7 +147,8 @@ function calmPanel(calm: Read[], tr: PlaceTrend, lang: Lang): string {
 export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: TrendSpan, lang: Lang): string {
   const name = place.name;
   const base = `/c/${place.slug}/trends`;
-  const title = fill("{place}: the last {n} days", lang, { place: name, n: span });
+  // The words people search ("almora aqi last 30 days"), the same name rule as the place page.
+  const title = fill("{place} AQI and weather: last {n} days", lang, { place: titleName(place), n: span });
   const period = segLinks(
     "per",
     t("Period", lang),
@@ -161,34 +163,6 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
     "t-meta back",
   );
   const reads = tr ? HAZARD_DEFS.map((h) => read(h, tr)).filter((r) => r.d > 0) : [];
-  const shell = (body: string) =>
-    pageShell(title, wrap(body), {
-      path: base,
-      query: span === 30 ? "" : `?days=${span}`,
-      lang,
-      desc: fill(
-        "{place}, India: air, heat, cold, rain, wind, fog, smoke and UV, a day at a time over the last {n} days.",
-        lang,
-        {
-          place: name,
-          n: span,
-        },
-      ),
-      canonical: `${SITE}${base}${span === 30 ? "" : `?days=${span}`}`,
-      jsonLd: ld({
-        "@context": "https://schema.org",
-        "@graph": [breadcrumb([name, `${SITE}/c/${place.slug}`], [title, `${SITE}${base}`])],
-      }),
-    });
-  const head = (lead: string) =>
-    pageHead(title, {
-      kicker: { icon: "clock", text: t("Trends", lang) },
-      extra: `<p class="t-lead">${esc(lead)}</p>`,
-    });
-
-  if (!tr || !reads.length)
-    return shell(band(head(t("No record for this place yet. It fills in each night.", lang)) + period) + band(back));
-
   // The order of risk: the hazards that reached the highest levels most often first.
   reads.sort(
     (a, b) =>
@@ -209,6 +183,41 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
       ? airLead(top.vals.filter((v): v is number => v != null).map(top.h.level), lang)
       : `${t(top.h.name, lang)}: ${s!.line}`
     : "";
+  // The snippet says what this period was like, so each page's is its own; the hazard list
+  // when the record is calm or the sentence will not fit.
+  const opener = fill("{place}, last {n} days:", lang, { place: titleName(place), n: span });
+  const desc =
+    [`${opener} ${sentence} ${s ? s.peak : ""}`.trim(), `${opener} ${sentence}`].find(
+      (d) => top && d.length <= DESCRIPTION_MAX,
+    ) ??
+    fill(
+      "{place}, India: air, heat, cold, rain, wind, fog, smoke and UV, a day at a time over the last {n} days.",
+      lang,
+      { place: name, n: span },
+    );
+  const shell = (body: string) =>
+    pageShell(`${title} | mugilu`, wrap(body), {
+      path: base,
+      query: span === 30 ? "" : `?days=${span}`,
+      lang,
+      desc,
+      // No record yet: the page has nothing of its own, so it stays out of the index.
+      noindex: !reads.length,
+      canonical: `${SITE}${base}${span === 30 ? "" : `?days=${span}`}`,
+      jsonLd: ld({
+        "@context": "https://schema.org",
+        "@graph": [breadcrumb([name, `${SITE}/c/${place.slug}`], [title, `${SITE}${base}`])],
+      }),
+    });
+  const head = (lead: string) =>
+    pageHead(title, {
+      kicker: { icon: "clock", text: t("Trends", lang) },
+      extra: `<p class="t-lead">${esc(lead)}</p>`,
+    });
+
+  if (!tr || !reads.length)
+    return shell(band(head(t("No record for this place yet. It fills in each night.", lang)) + period) + band(back));
+
   const finding = plate({
     fill: topLevel,
     shape: LEVEL_SHAPE[topLevel],
