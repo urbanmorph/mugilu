@@ -1,7 +1,7 @@
 // Backfill archive/warn-areas/<id>.json.gz for every alert in archive/sachet/ (since 27 Jun
 // 2026), newest first, so the history read knows when and where each warning applied.
 //
-//   CLOUDFLARE_API_TOKEN=... npx tsx scripts/backfill-warn-archive.ts [--state DIR] [--limit N] [--times-only]
+//   CLOUDFLARE_API_TOKEN=... npx tsx scripts/backfill-warn-archive.ts [--state DIR] [--limit N] [--times-only] [--rate R]
 //
 // --times-only archives each alert from its CAP record alone (its times, level, issuer, headline
 // and district names) with `rings_pending: true`, for when SACHET's polygon files are out of
@@ -16,6 +16,9 @@
 // - SACHET blocks a client that asks too fast (HTTP 403 after about 2,600 requests at 3.4/s on
 //   19 Nov). Its calls are paced (1.2/s to start); a 403 or 429 pauses every worker for 15
 //   minutes, slows the pace by 30% and retries the same alert. Six blocks in a row stop the run.
+// - Twenty network errors in a row (no answer at all) stop the run with exit code 3, so a loop
+//   can start a fresh process: `until npx tsx ...; do sleep 60; done` (any failed exit restarts).
+// - --rate R starts SACHET's pace at R requests a second (a restart otherwise resets it).
 // - Logs: one line per 50 alerts with the rate and time left, unbuffered.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
@@ -79,10 +82,16 @@ async function listKeys(prefix: string): Promise<string[]> {
 
 // ── SACHET, paced, backing off when it refuses ─────────────────────────────────────────
 class Blocked extends Error {}
-let sachetRate = TIMES_ONLY ? 1.0 : 1.2;
+let sachetRate = Number(arg("--rate") ?? (TIMES_ONLY ? 1.0 : 1.2));
 let sachetNext = 0;
 let pauseUntil = 0;
 let blocksInARow = 0;
+/** Network errors in a row (no answer at all): the process's connections can go bad after the
+ * Mac's network drops, and every later request then fails. It stops with NET_EXIT so a wrapper
+ * loop starts a fresh process; the failed alerts are retried by that next run. */
+let netInARow = 0;
+const NET_STOP = 20;
+const NET_EXIT = 3;
 const UA = "mugilu-archive/1.0 (+https://mugilu.live)";
 async function sachetPaced(): Promise<void> {
   for (;;) {
@@ -170,7 +179,7 @@ async function main(): Promise<void> {
   let ok = 0;
   let bad = 0;
   const worker = async () => {
-    while (next < ids.length && blocksInARow < 6) {
+    while (next < ids.length && blocksInARow < 6 && netInARow < NET_STOP) {
       const id = ids[next++];
       try {
         const a = await build(id);
@@ -182,6 +191,7 @@ async function main(): Promise<void> {
         if (!put.ok) throw new Error(`put: HTTP ${put.status}`);
         appendFileSync(a.rings_pending ? TIMES : DONE, `${id}\n`);
         ok++;
+        netInARow = 0;
       } catch (e) {
         if (e instanceof Blocked) {
           // Refused: wait, slow down, and try this alert again (it is not a failure).
@@ -196,8 +206,11 @@ async function main(): Promise<void> {
           ids.push(id);
           continue;
         }
-        appendFileSync(FAILED, `${id}\t${new Date().toISOString()}\t${e instanceof Error ? e.message : String(e)}\n`);
+        const why = e instanceof Error ? e.message : String(e);
+        appendFileSync(FAILED, `${id}\t${new Date().toISOString()}\t${why}\n`);
         bad++;
+        // A network error (no answer at all) counts toward the stop; any other answer resets it.
+        netInARow = /HTTP 599|fetch failed/.test(why) ? netInARow + 1 : 0;
       }
       const n = ok + bad;
       if (n % 50 === 0 || n === ids.length) {
@@ -208,6 +221,11 @@ async function main(): Promise<void> {
     }
   };
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  if (netInARow >= NET_STOP) {
+    log(`stopped: ${NET_STOP} network errors in a row; ${ok} archived, ${bad} failed. Rerun to continue.`);
+    process.exitCode = NET_EXIT;
+    return;
+  }
   log(
     blocksInARow >= 6
       ? `stopped: SACHET refused six times in a row; ${ok} archived, ${bad} failed. Rerun later to continue.`

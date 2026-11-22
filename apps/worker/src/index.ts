@@ -35,7 +35,7 @@ import { geocodeList } from "./geocode";
 import { INDEXNOW_KEY, INDEXNOW_PATH, runIndexNow } from "./indexnow";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
-import { collectWarnings, renderWarningsMarkdown } from "./sachet";
+import { collectWarnings, inForce, renderWarningsMarkdown } from "./sachet";
 import { collectWarnAreas } from "./warnareas";
 import { collectFires } from "./firms";
 import { collectCyclones } from "./cyclones";
@@ -54,7 +54,7 @@ import {
 } from "./metrics";
 import { parsePersona } from "./score";
 import type { Persona } from "./score";
-import { nearestPlace, placeBySlug, slugForName, slugFromPath, slugLabel, type SlugPlace } from "./slugs";
+import { placeBySlug, recordNear, slugForName, slugFromPath, slugLabel, type SlugPlace } from "./slugs";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
 import { loadGrid, loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from "./snapshot";
@@ -241,7 +241,10 @@ export default {
             loadWarningsSnapshot(env).catch(() => null),
             loadMap(env),
           ]);
-          const res = cachedResponse(renderWarningsPage(snap, lang, map, undefined, st), "text/html; charset=utf-8");
+          const res = cachedResponse(
+            renderWarningsPage(inForce(snap, map), lang, map, undefined, st),
+            "text/html; charset=utf-8",
+          );
           return { res, store: snap !== null && stored };
         });
       return cached(LIVE_EDGE_TTL, async () => {
@@ -251,7 +254,13 @@ export default {
           loadMap(env),
           loadWarningsSnapshot(env).catch(() => null),
         ]);
-        const now = stateNow(st, { grid, stations: snap?.stations, airAt: snap?.generated_at, map, warnings });
+        const now = stateNow(st, {
+          grid,
+          stations: snap?.stations,
+          airAt: snap?.generated_at,
+          map,
+          warnings: inForce(warnings, map),
+        });
         const res = cachedResponse(renderStatePage(st, now, lang), "text/html; charset=utf-8");
         // A missing input is passing: serve it, but do not keep it for the TTL.
         return { res, store: !!grid && !!snap && stored && warnings !== null };
@@ -264,7 +273,10 @@ export default {
           loadMap(env),
           loadWarningsSnapshot(env).catch(() => null),
         ]);
-        const res = cachedResponse(renderPlaces(lang, { map, warnings }), "text/html; charset=utf-8");
+        const res = cachedResponse(
+          renderPlaces(lang, { map, warnings: inForce(warnings, map) }),
+          "text/html; charset=utf-8",
+        );
         // A missing stored map or warnings snapshot is passing: serve it, but do not keep it for the TTL.
         return { res, store: stored && warnings !== null };
       });
@@ -345,7 +357,7 @@ export default {
           renderHome(
             notfound,
             highlights,
-            { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map, warnings, india },
+            { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map, warnings: inForce(warnings, map), india },
             lang,
           ),
           "text/html; charset=utf-8",
@@ -432,7 +444,9 @@ export default {
       return cached(LIVE_EDGE_TTL, async () => {
         // A failed read is shown like a missing snapshot, and neither is stored: a
         // cached "no alerts" page could hide a live warning from everyone.
-        const snap = await loadWarningsSnapshot(env).catch(() => null);
+        // The feed lists ended alerts too: each one's end, from the map, leaves only those in force.
+        const [feed, { map, stored }] = await Promise.all([loadWarningsSnapshot(env).catch(() => null), loadMap(env)]);
+        const snap = inForce(feed, map);
         if (url.pathname === "/warnings.json") {
           if (!snap) return new Response("no warnings snapshot yet", { status: 503 });
           return cachedResponse(JSON.stringify(snap), "application/json; charset=utf-8", REFRESH_AFTER_SECONDS);
@@ -443,7 +457,6 @@ export default {
             store: snap !== null,
           };
         // The page also names the places under the warnings in force, from the home map's areas.
-        const { map, stored } = await loadMap(env);
         const res = cachedResponse(renderWarningsPage(snap, lang, map), "text/html; charset=utf-8");
         return { res, store: snap !== null && stored };
       });
@@ -510,7 +523,7 @@ export default {
           // ward the seed coordinate happens to fall in), drives title/h1/meta/SEO.
           // A point with no record of its own shows the nearest named place's, within
           // BORROW_MAX_KM of its centre (READING_SENTENCES_SPEC.md section 9).
-          const near = !named && fmt === "html" ? nearestPlace(lat, lon) : undefined;
+          const near = !named && fmt === "html" ? recordNear(lat, lon) : undefined;
           const recordOf = named ?? (near && near.km <= BORROW_MAX_KM ? near.place : undefined);
           const [{ conditions, usage }, trend] = await Promise.all([
             lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName }),

@@ -75,6 +75,9 @@ export interface IndiaMap {
   warnings?: MapWarning[];
   /** The national warnings feed's time. */
   warningsAsOf?: string;
+  /** Each feed alert's end (ISO), from its CAP file, in force or not: the feed lists ended
+   *  alerts too (sachet.ts inForce). */
+  ends?: Record<string, string>;
 }
 /** An official warning on the map: its level (0-3, the risk bands), until when, and its area as
  *  a relative SVG path in the map's pixels. */
@@ -381,7 +384,11 @@ export async function composeMap(env: Env, now = Date.now()): Promise<IndiaMap |
     gridAsOf: grid.generated_at,
     airAsOf: snap?.generated_at,
     airCounts: airCounts(stations),
-    ...(areas && { warnings: mapWarnings(areas), warningsAsOf: warned?.generated_at }),
+    ...(areas && {
+      warnings: mapWarnings(areas.areas),
+      warningsAsOf: warned?.generated_at,
+      ends: areas.ends,
+    }),
   };
 }
 

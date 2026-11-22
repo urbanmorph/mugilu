@@ -4,6 +4,7 @@ import type { Env } from "./index";
 import { WARNINGS_KEY, putJson } from "./snapshot";
 import { inRing, type Ring } from "./india";
 import { counted } from "./metrics";
+import type { IndiaMap } from "./indiamap";
 
 // NDMA SACHET: official disaster warnings (the IMD-replacement layer). The
 // location-wise endpoint does the point→alert spatial match for us, so /c
@@ -113,12 +114,31 @@ export interface FeedAlert {
   issuer: string;
   link: string; // → FetchXMLFile for the full CAP
   sent: string; // pubDate
+  /** When it ends (ISO), from its CAP file; set by inForce when known. */
+  expires?: string;
 }
 
 export interface WarningsSnapshot {
   generated_at: string;
   count: number;
   alerts: FeedAlert[];
+}
+
+/** The feed's alerts still in force at `now`: SACHET's feed is its last 100 alerts, ended or
+ *  not (often four days of them). Each alert's end is its CAP file's, carried by the hourly map
+ *  (map.ends); an alert whose end is not known yet stays, and with no ends at all (no map) the
+ *  feed is left as it is. Each kept alert carries its end. */
+export function inForce<S extends WarningsSnapshot | null | undefined>(
+  snap: S,
+  map: Pick<IndiaMap, "ends"> | undefined,
+  now = Date.now(),
+): S {
+  const ends = map?.ends;
+  if (!snap || !ends) return snap;
+  const alerts = snap.alerts
+    .filter((a) => !(Date.parse(ends[a.identifier] ?? "") <= now))
+    .map((a) => (ends[a.identifier] ? { ...a, expires: ends[a.identifier] } : a));
+  return { ...snap, count: alerts.length, alerts };
 }
 
 /** Inner text of the first <name>…</name> in an item, CDATA-stripped. */
@@ -226,6 +246,7 @@ export function renderWarningsMarkdown(snap: WarningsSnapshot | null): string {
     out.push(`- Category: ${a.category || "Alert"}`);
     if (a.issuer) out.push(`- Issuer: ${a.issuer}`);
     if (a.sent) out.push(`- Sent: ${a.sent}`);
+    if (a.expires) out.push(`- Until: ${a.expires}`);
     if (a.link) out.push(`- CAP: ${a.link}`);
     out.push("");
   }

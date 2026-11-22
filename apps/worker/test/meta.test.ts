@@ -160,5 +160,6 @@ test("OpenAPI: /warnings.json describes the snapshot and each alert, as the code
     "issuer",
     "link",
     "sent",
+    "expires",
   ]);
 });

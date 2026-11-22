@@ -13,6 +13,8 @@ import { composeHighlights } from "./highlights";
 import { resolveQuery } from "./resolve";
 import { loadGazetteer } from "./gazetteer";
 import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
+import { inForce } from "./sachet";
+import { loadMap } from "./indiamap";
 
 // The MCP tool surface (Phase 2). Each tool is a thin adapter over an existing
 // internal function, no new data logic. Read-only; all live/India-only.
@@ -181,7 +183,9 @@ async function nearestStations(args: Record<string, unknown>, env: Env): Promise
 
 async function activeWarnings(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const region = str(args.region).toLowerCase();
-  const snap = await loadWarningsSnapshot(env);
+  // The feed lists ended alerts too: only those in force are "active".
+  const [feed, { map }] = await Promise.all([loadWarningsSnapshot(env), loadMap(env)]);
+  const snap = inForce(feed, map);
   let alerts = snap?.alerts ?? [];
   if (region) alerts = alerts.filter((a) => `${a.headline} ${a.category} ${a.issuer}`.toLowerCase().includes(region));
   const text = listText(
