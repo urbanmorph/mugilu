@@ -26,7 +26,9 @@ test("nextHeads: the date moves only when the headline changes; a place seen fir
   const same = nextHeads(first.heads, { a: "moderate", b: "poor" }, "2026-11-23");
   assert.equal(same.changed, false);
   const moved = nextHeads(first.heads, { a: "moderate", b: "poor|warned" }, "2026-11-24");
-  assert.deepEqual(moved.heads.b, { s: "poor|warned", d: "2026-11-24" });
+  assert.deepEqual(moved.heads.b, { s: "poor|warned", d: "2026-11-24", w: "2026-11-24" }, "a warning came");
+  const band = nextHeads(moved.heads, { a: "moderate", b: "severe|warned" }, "2026-11-25");
+  assert.deepEqual(band.heads.b, { s: "severe|warned", d: "2026-11-25", w: "2026-11-24" }, "only the band moved");
   assert.deepEqual(moved.heads.a, { s: "moderate", d: "" });
 });
 

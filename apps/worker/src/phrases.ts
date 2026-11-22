@@ -1,5 +1,7 @@
 import { AQI_BAND_LABEL } from "./aqi";
-import type { Fact, Provenance } from "./facts";
+import { facts, type Fact, type Provenance } from "./facts";
+import { placeLabel } from "./readings";
+import type { Conditions } from "./types";
 import { periodText } from "./heatnormals";
 import { t, type Lang } from "./i18n";
 import { istClock } from "./ist";
@@ -431,6 +433,20 @@ export function answerLine(fs: Fact[], place: string, lang: Lang): string {
       ? say("answer.rain", lang, { t: tc, mm: num(rain.mm) })
       : say("answer.calm", lang, { t: tc });
   return [first, second].filter(Boolean).join(" ");
+}
+
+/** The sentences for the API and MCP (`text`, spec step 5): the answer line and each reading's
+ *  sentence, the words the page says, so an agent quoting mugilu quotes the page. */
+export function conditionsText(
+  c: Conditions,
+  lang: Lang,
+): { lang: Lang; answer: string; readings: Partial<Record<Fact["key"], string>> } {
+  const fs = facts(c);
+  const place = placeLabel(c).split(", ")[0];
+  const readings = Object.fromEntries(
+    fs.map((f) => [f.key, f.key === "warnings" ? warningsText(f, place, lang) : factText(f, lang)]),
+  );
+  return { lang, answer: answerLine(fs, place, lang), readings };
 }
 
 /** The Google title: the place and its AQI, then as much as fits. hi/kn add the Latin name. */

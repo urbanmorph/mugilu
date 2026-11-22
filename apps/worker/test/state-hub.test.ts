@@ -78,7 +78,7 @@ test("states: a hub for each state or UT with more than one place; names in thre
   assert.equal(stateOf("Jammu & Kashmir")?.slug, "jammu-kashmir");
   assert.equal(stateName("Karnataka", "kn"), "ಕರ್ನಾಟಕ");
   assert.equal(stateName("Uttar Pradesh", "hi"), "उत्तर प्रदेश");
-  const hubs = sitemapPaths().filter((p) => p.startsWith("/state/"));
+  const hubs = sitemapPaths().filter((p) => /^\/state\/[a-z-]+$/.test(p));
   assert.equal(hubs.length, allStates().filter((s) => s.places.length > 1).length);
   assert.equal(hubs.length, 34);
   assert.ok(!hubs.includes("/state/chandigarh"), "one place: its own page is the hub");

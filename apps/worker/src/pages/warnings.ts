@@ -10,10 +10,10 @@ import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import type { IndiaMap } from "../indiamap";
 import { allSlugPlaces, localName, type SlugPlace } from "../slugs";
-import { hubOf, stateName } from "../states";
+import { hubOf, stateName, type State } from "../states";
 import { fill } from "../ui/history";
 import { DESCRIPTION_MAX } from "../phrases";
-import { warnedSlugs } from "./places";
+import { alertPlaces, warnedSlugs } from "./places";
 import {
   backLink,
   band,
@@ -22,6 +22,7 @@ import {
   filterInput,
   fold,
   ico,
+  linkRow,
   LIST_FILTER_JS,
   notice,
   pageHead,
@@ -97,6 +98,7 @@ mgEmpty(document.querySelectorAll('.wsec'),'[data-type]')}
 f.addEventListener('change',go);q.addEventListener('input',go)})();`;
 
 const when = (a: Alert) => Date.parse(a.sent) || 0;
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
 
 /** An official alert's issuing office, its IST time and a link to the original (CAP), read one
  *  way for home, /warnings and /places. The link only when the feed's link is a web address. */
@@ -162,11 +164,22 @@ export function renderWarningsPage(
   /** The home map, whose warning areas say which places are under a warning now. */
   map?: IndiaMap,
   now?: number,
+  /** A state's page, /state/{slug}/warnings: only the alerts whose area covers a place in it,
+   *  or that its own office issued. */
+  st?: State,
 ): string {
   const T = (s: string) => esc(t(s, lang));
+  const sn = st && stateName(st.name, lang);
+  const byAlert = st ? alertPlaces(map, snap, now) : undefined;
+  const ours = new Set(st?.places.map((p) => p.slug));
+  const inState = (a: Alert) =>
+    !st ||
+    (byAlert!.get(a.identifier) ?? []).some((slug) => ours.has(slug)) ||
+    norm(issuerName(a.issuer || "")).includes(norm(st.name));
   // Newest first; a storm IMD names is pinned once (its newest warning), above the lists.
   // Each alert read once: its office, its kind, and the line under it (time, CAP link).
   const alerts = [...(snap?.alerts ?? [])]
+    .filter(inState)
     .sort((x, y) => when(y) - when(x))
     .map((a) => {
       const { office, time, cap } = alertParts(a, lang);
@@ -249,63 +262,114 @@ export function renderWarningsPage(
   );
 
   // The warnings in one line: how many, where (from their areas), and the most common type.
-  const byState = alerts.length && map ? warnedByState(new Set(warnedSlugs(map, snap, now))) : [];
+  const byState = (alerts.length && map ? warnedByState(new Set(warnedSlugs(map, snap, now))) : []).filter(
+    ([name]) => !st || name === st.name,
+  );
   const nPlaces = byState.reduce((n, [, ps]) => n + ps.length, 0);
   const top = [...types].sort((a, b) => b[1] - a[1])[0];
   const summary = alerts.length
     ? [
-        t("The latest {n} official NDMA / IMD alerts across India.", lang).replace("{n}", String(alerts.length)),
-        byState.length ? coverLine(nPlaces, byState.length, lang) : "",
+        st
+          ? alerts.length === 1
+            ? fill("1 official NDMA / IMD alert for {state} now.", lang, { state: sn! })
+            : fill("{n} official NDMA / IMD alerts for {state} now.", lang, { n: alerts.length, state: sn! })
+          : t("The latest {n} official NDMA / IMD alerts across India.", lang).replace("{n}", String(alerts.length)),
+        !byState.length
+          ? ""
+          : st
+            ? nPlaces === 1
+              ? t("1 place under an official warning.", lang)
+              : fill("{n} places under an official warning.", lang, { n: nPlaces })
+            : coverLine(nPlaces, byState.length, lang),
         fill("Most common type: {kind}.", lang, {
           kind: t([...WARNING_TYPES, OTHER].find(([k]) => k === top[0])![1], lang),
         }),
       ].filter(Boolean)
     : [];
-  const heading = t("Official weather warnings across India now", lang);
+  const india = t("Official weather warnings across India now", lang);
+  const heading = st ? fill("Official weather warnings in {state} now", lang, { state: sn! }) : india;
   const head = pageHead(heading, {
     extra:
       (summary.length ? `<p class="t-lead">${esc(summary.join(" "))}</p>` : "") +
       (snap ? stamps([stamp(t("As of", lang), `${esc(istTime(snap.generated_at))} · via SACHET`)]) : ""),
   });
-  const statesPanel = byState.length
+  const tile = (p: SlugPlace) => placeTile(lp(`/c/${p.slug}`, lang), localName(p, lang), true, lang);
+  const statePanel = byState.length
     ? band(
-        panel(
-          byState
-            .map(
-              ([st, ps]) =>
-                `<section><h3 class="wgrp">${hubOf(st) ? `<a href="${lp(`/state/${hubOf(st)!.slug}`, lang)}">${esc(stateName(st, lang))}</a>` : esc(stateName(st, lang))}<span class="n">${ps.length}</span></h3>${placeTiles(
-                  ps.map((p) => placeTile(lp(`/c/${p.slug}`, lang), localName(p, lang), true, lang)),
-                )}</section>`,
-            )
-            .join(""),
-          { title: t("Places under a warning now, by state", lang), icon: "pin", id: "states" },
-        ),
+        panel(placeTiles(byState[0][1].map(tile)), {
+          title: t("Under an official warning now", lang),
+          icon: "pin",
+          id: "states",
+          count: nPlaces,
+        }),
       )
     : "";
+  const statesPanel = st
+    ? statePanel
+    : byState.length
+      ? band(
+          panel(
+            byState
+              .map(
+                ([name, ps]) =>
+                  `<section><h3 class="wgrp">${hubOf(name) ? `<a href="${lp(`/state/${hubOf(name)!.slug}/warnings`, lang)}">${esc(stateName(name, lang))}</a>` : esc(stateName(name, lang))}<span class="n">${ps.length}</span></h3>${placeTiles(
+                    ps.map(tile),
+                  )}</section>`,
+              )
+              .join(""),
+            { title: t("Places under a warning now, by state", lang), icon: "pin", id: "states" },
+          ),
+        )
+      : "";
   const body = wrap(
     band(head) +
       (alerts.length
         ? (plates ? band(plates) : "") + statesPanel + band(filters) + band(lists)
-        : band(notice("empty", T("No active national alerts right now."), "list"))) +
+        : band(
+            notice(
+              "empty",
+              st
+                ? esc(fill("No official warning covers a place in {state} now.", lang, { state: sn! }))
+                : T("No active national alerts right now."),
+              "list",
+            ),
+          )) +
       band(coloursPanel(lang)) +
       band(sourcesPanel(lang)) +
-      band(backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`)),
+      band(
+        st
+          ? linkRow(
+              [
+                [lp(`/state/${st.slug}`, lang), `← ${sn}`],
+                [lp("/warnings", lang), india],
+              ],
+              "t-meta back",
+            )
+          : backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`),
+      ),
   );
   // The snippet is the warnings in one line, as long as it fits; else what the page holds.
   const desc =
     [summary.join(" "), summary.slice(0, 2).join(" ")].find((d) => d && d.length <= DESCRIPTION_MAX) ??
-    t(
-      "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
-      lang,
-    );
+    (st
+      ? fill("Official NDMA / IMD weather warnings for {state} now, mirrored from the SACHET feed.", lang, {
+          state: sn!,
+        })
+      : t(
+          "Active NDMA / IMD warnings across India right now, mirrored from the SACHET feed. Available as HTML, JSON and Markdown.",
+          lang,
+        ));
   // schema.org Dataset: the official feed as mugilu mirrors it, credited to NDMA/IMD.
-  const url = `${SITE}${lp("/warnings", lang)}`;
+  const path = st ? `/state/${st.slug}/warnings` : "/warnings";
+  const url = `${SITE}${lp(path, lang)}`;
   const dataset = ld({
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Dataset",
-        name: t("Active official warnings in India", lang),
+        name: st
+          ? fill("Active official warnings in {state}", lang, { state: sn! })
+          : t("Active official warnings in India", lang),
         description: desc,
         url,
         inLanguage: lang,
@@ -315,20 +379,29 @@ export function renderWarningsPage(
         isBasedOn: "https://sachet.ndma.gov.in",
         license: `${SITE}/terms`,
         temporalCoverage: snap?.generated_at,
-        spatialCoverage: { "@type": "Place", name: "India" },
+        spatialCoverage: { "@type": "Place", name: st?.name ?? "India" },
         distribution: [
           { "@type": "DataDownload", encodingFormat: "application/json", contentUrl: `${SITE}/warnings.json` },
           { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${SITE}/warnings.md` },
         ],
       },
-      breadcrumb([heading, url]),
+      st
+        ? breadcrumb(
+            [t("Every place, by state", lang), `${SITE}${lp("/places", lang)}`],
+            [sn!, `${SITE}${lp(`/state/${st.slug}`, lang)}`],
+            [heading, url],
+          )
+        : breadcrumb([heading, url]),
     ],
   });
-  return pageShell(`${t("Weather warnings in India today: IMD and NDMA alerts by state", lang)} | mugilu`, body, {
-    path: "/warnings",
+  const title = st
+    ? fill("{state} weather warnings today: IMD and state alerts", lang, { state: sn! })
+    : t("Weather warnings in India today: IMD and NDMA alerts by state", lang);
+  return pageShell(`${title} | mugilu`, body, {
+    path,
     desc,
     jsonLd: dataset,
-    canonical: `${SITE}/warnings`,
+    canonical: `${SITE}${path}`,
     ogImage: HOME_OG,
     lang,
     // Any official warning active washes the page in the warning hue at high; none, no wash.

@@ -171,6 +171,35 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "{state} में अभी वायु गुणवत्ता, मौसम और चेतावनी",
     kn: "{state} ಈಗ: ವಾಯು ಗುಣಮಟ್ಟ, ಹವಾಮಾನ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು",
   },
+  // A state's warnings page, /state/{slug}/warnings (pages/warnings.ts).
+  "{state} weather warnings today: IMD and state alerts": {
+    hi: "{state} में आज मौसम की चेतावनी: IMD और राज्य के अलर्ट",
+    kn: "{state}: ಇಂದಿನ ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು, IMD ಮತ್ತು ರಾಜ್ಯದ ಅಲರ್ಟ್",
+  },
+  "Official weather warnings in {state} now": {
+    hi: "{state} में अभी आधिकारिक मौसम चेतावनियाँ",
+    kn: "{state}: ಈಗಿನ ಅಧಿಕೃತ ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು",
+  },
+  "1 official NDMA / IMD alert for {state} now.": {
+    hi: "{state} के लिए अभी 1 आधिकारिक NDMA / IMD अलर्ट।",
+    kn: "{state}: ಈಗ 1 ಅಧಿಕೃತ NDMA / IMD ಎಚ್ಚರಿಕೆ.",
+  },
+  "{n} official NDMA / IMD alerts for {state} now.": {
+    hi: "{state} के लिए अभी {n} आधिकारिक NDMA / IMD अलर्ट।",
+    kn: "{state}: ಈಗ {n} ಅಧಿಕೃತ NDMA / IMD ಎಚ್ಚರಿಕೆಗಳು.",
+  },
+  "No official warning covers a place in {state} now.": {
+    hi: "अभी {state} की किसी जगह पर कोई आधिकारिक चेतावनी नहीं है।",
+    kn: "{state}: ಈಗ ಯಾವ ಸ್ಥಳಕ್ಕೂ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಇಲ್ಲ.",
+  },
+  "Official NDMA / IMD weather warnings for {state} now, mirrored from the SACHET feed.": {
+    hi: "{state} के लिए अभी की आधिकारिक NDMA / IMD मौसम चेतावनियाँ, SACHET फ़ीड से।",
+    kn: "{state}: ಈಗಿನ ಅಧಿಕೃತ NDMA / IMD ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು, SACHET ಫೀಡ್‌ನಿಂದ.",
+  },
+  "Active official warnings in {state}": {
+    hi: "{state} में सक्रिय आधिकारिक चेतावनियाँ",
+    kn: "{state}: ಸಕ್ರಿಯ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು",
+  },
   "{state} now: air, heat, rain and official warnings": {
     hi: "{state} अभी: हवा, गर्मी, बारिश और आधिकारिक चेतावनी",
     kn: "{state} ಈಗ: ವಾಯು, ಬಿಸಿಲು, ಮಳೆ ಮತ್ತು ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು",

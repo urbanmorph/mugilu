@@ -72,10 +72,22 @@ export function placesUnder(ws: MapWarning[]): string[] {
 /** The places under an official warning now: each place whose point is inside the area of a
  *  warning in force, and, for a named cyclone whose alert has no area, the places it names. */
 export function warnedSlugs(map: IndiaMap | undefined, warnings: WarningsSnapshot | null | undefined, now?: number) {
-  const areas = activeWarnings(map, now);
+  return [...new Set([...alertPlaces(map, warnings, now).values()].flat())];
+}
+
+/** The places under each official warning in force, by alert id: the places inside its area,
+ *  and, for a named cyclone whose alert has no area, the places it names. */
+export function alertPlaces(
+  map: IndiaMap | undefined,
+  warnings: WarningsSnapshot | null | undefined,
+  now?: number,
+): Map<string, string[]> {
+  const by = new Map<string, MapWarning[]>();
+  for (const w of activeWarnings(map, now)) by.set(w.id, [...(by.get(w.id) ?? []), w]);
+  const out = new Map([...by].map(([id, ws]) => [id, placesUnder(ws)]));
   const official = officialCyclone(warnings);
-  const unmapped = official && !areas.some((w) => w.id === official.alert.identifier);
-  return [...new Set([...placesUnder(areas), ...(unmapped ? warnedPlaces(official.areas) : [])])];
+  if (official && !out.has(official.alert.identifier)) out.set(official.alert.identifier, warnedPlaces(official.areas));
+  return out;
 }
 
 // The page's behaviour: find a place (filters the lists), the state picker and the map's state

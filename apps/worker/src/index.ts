@@ -61,6 +61,7 @@ import { loadGrid, loadRawSnapshot, loadSnapshot, loadWarningsSnapshot } from ".
 import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import { loadLastmods, updateHeads } from "./lastmod";
+import { conditionsText } from "./phrases";
 import type { Conditions, NormalizedStation } from "./types";
 import { reason } from "./logs";
 import { archiveHealth } from "./archives";
@@ -224,13 +225,24 @@ export default {
     // With the map of India (the squares as a backdrop) and the places under an
     // official cyclone warning marked, so it follows the live snapshots.
     // A state's hub: its places now, the worst first (pages/state.ts).
-    const stateMatch = url.pathname.match(/^\/state\/([a-z0-9-]+)$/);
+    // And its official warnings, /state/{slug}/warnings (pages/warnings.ts, scoped to the state).
+    const stateMatch = url.pathname.match(/^\/state\/([a-z0-9-]+)(\/warnings)?$/);
     if (stateMatch) {
       const st = hubOf(stateBySlug(stateMatch[1])?.name);
       if (!st)
         return new Response(renderNotFound(lang), {
           status: 404,
           headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      if (stateMatch[2])
+        return cached(LIVE_EDGE_TTL, async () => {
+          // As /warnings: a failed read is not stored, so a cached "none" never hides a warning.
+          const [snap, { map, stored }] = await Promise.all([
+            loadWarningsSnapshot(env).catch(() => null),
+            loadMap(env),
+          ]);
+          const res = cachedResponse(renderWarningsPage(snap, lang, map, undefined, st), "text/html; charset=utf-8");
+          return { res, store: snap !== null && stored };
         });
       return cached(LIVE_EDGE_TTL, async () => {
         const [grid, snap, { map, stored }, warnings] = await Promise.all([
@@ -535,7 +547,12 @@ export default {
       if (ext === "png") return renderConditionsOg(conditions, persona);
       if (ext === "json")
         return cachedResponse(
-          JSON.stringify(serializeConditionsV1(conditions, persona), null, 2),
+          // Plus the page's own sentences (`text`), in the request's language (/hi/c/….json).
+          JSON.stringify(
+            { ...serializeConditionsV1(conditions, persona), text: conditionsText(conditions, lang) },
+            null,
+            2,
+          ),
           "application/json; charset=utf-8",
           REFRESH_AFTER_SECONDS,
         );

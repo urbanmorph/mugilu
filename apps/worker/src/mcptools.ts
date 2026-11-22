@@ -4,6 +4,8 @@ import { renderConditionsMarkdown, serializeConditionsV1 } from "./conditions";
 import { conditionsData, lookupConditions } from "./lookup";
 import { bump, recordEvent, recordLookup, upstreamCounts, type Caller, type UsageFacts } from "./metrics";
 import { parsePersona } from "./score";
+import { conditionsText } from "./phrases";
+import { LANGS, type Lang } from "./i18n";
 import { buildSuggestions } from "./suggest";
 import { geocodeList } from "./geocode";
 import { findNearest } from "./near";
@@ -40,6 +42,12 @@ export const TOOLS = [
           type: "string",
           enum: PERSONA_ENUM,
           description: "Weight the read for who is affected (default everyone).",
+        },
+        lang: {
+          type: "string",
+          enum: [...LANGS],
+          description:
+            "The language of `text`, the sentences mugilu's page says about this place (default en). Quote them as they are.",
         },
       },
       required: ["place"],
@@ -114,6 +122,7 @@ async function conditionsAt(
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
   const persona = parsePersona(str(args.persona) || null);
+  const lang = (LANGS as readonly string[]).includes(str(args.lang)) ? (str(args.lang) as Lang) : "en";
   const data = conditionsData(env); // the lookup below needs them: read while we resolve
   const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
@@ -129,7 +138,7 @@ async function conditionsAt(
   onUsage(usage);
   return {
     content: [{ type: "text", text: renderConditionsMarkdown(conditions, persona) }],
-    structuredContent: serializeConditionsV1(conditions, persona),
+    structuredContent: { ...serializeConditionsV1(conditions, persona), text: conditionsText(conditions, lang) },
   };
 }
 

@@ -1,6 +1,7 @@
 import type { Env } from "./index";
 import { pickStation, STATION_MAX_KM } from "./conditions";
 import { allSlugPlaces, type SlugPlace } from "./slugs";
+import { allHubs } from "./states";
 import { trendKey } from "./placedaily";
 import { loadJson, loadSnapshot, loadWarningsSnapshot, putJson } from "./snapshot";
 import { loadMap } from "./indiamap";
@@ -15,15 +16,17 @@ import type { NormalizedStation } from "./types";
 // The hourly run keeps each place's headline in R2 (HEADS_KEY); the sitemap reads it.
 
 export const HEADS_KEY = "meta/place-heads.json";
-/** Each place's headline and the day it last changed ("" until a change is seen). */
-export type Heads = Record<string, { s: string; d: string }>;
+const WARNED = "|warned";
+/** Each place's headline, the day it last changed ("" until a change is seen), and the day a
+ *  warning over it last came or went (w), which dates its state's warnings page. */
+export type Heads = Record<string, { s: string; d: string; w?: string }>;
 
 /** A place's headline: its station's air band (none beyond STATION_MAX_KM) and whether an
  *  official warning covers it. */
 export function headOf(p: SlugPlace, stations: NormalizedStation[], warned: Set<string>): string {
   const s = stations.length ? pickStation(stations, p.lat, p.lon) : undefined;
   const band = s && s.distance_km <= STATION_MAX_KM ? s.band : "-";
-  return warned.has(p.slug) ? `${band}|warned` : band;
+  return warned.has(p.slug) ? band + WARNED : band;
 }
 
 /** The heads after this run: a changed headline takes today's date; a place seen for the first
@@ -37,7 +40,9 @@ export function nextHeads(
   let changed = !prev;
   for (const [slug, s] of Object.entries(now)) {
     const was = prev?.[slug];
-    heads[slug] = was ? (was.s === s ? was : { s, d: day }) : { s, d: "" };
+    const warnedMoved = was && was.s.endsWith(WARNED) !== s.endsWith(WARNED);
+    const w = warnedMoved ? day : was?.w;
+    heads[slug] = was ? (was.s === s ? was : { s, d: day, ...(w ? { w } : {}) }) : { s, d: "" };
     if (!was || was.s !== s) changed = true;
   }
   return { heads, changed };
@@ -65,7 +70,8 @@ export async function updateHeads(env: Env, now = Date.now()): Promise<string> {
 const trendStem = (p: SlugPlace) => trendKey(p).slice("trends/30/".length, -".json".length);
 
 /** The sitemap's dates by path: each place page from its heads, each trend page from its
- *  state's trend file. A path with no known date is left out (the fixed date stands). */
+ *  state's trend file, each state's warnings page from the last warning to come or go over one
+ *  of its places. A path with no known date is left out (the fixed date stands). */
 export function placeLastmods(heads: Heads | null, trends: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const p of allSlugPlaces()) {
@@ -73,6 +79,10 @@ export function placeLastmods(heads: Heads | null, trends: Record<string, string
     if (d) out[`/c/${p.slug}`] = d;
     const t = trends[trendStem(p)];
     if (t) out[`/c/${p.slug}/trends`] = t;
+  }
+  for (const st of allHubs()) {
+    const w = st.places.map((p) => heads?.[p.slug]?.w ?? "").reduce((a, b) => (b > a ? b : a), "");
+    if (w) out[`/state/${st.slug}/warnings`] = w;
   }
   return out;
 }

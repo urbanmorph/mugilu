@@ -197,7 +197,7 @@ export function openApiSpec(siteUrl: string): object {
           summary: "Sky conditions at a coordinate, right now (mugilu/conditions v1).",
           parameters: [coord, persona, ref],
           responses: ok(
-            "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), and an ambient read (summary, persona_action, persona_also, order, persona_layers).",
+            "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), an ambient read (summary, persona_action, persona_also, order, persona_layers), and text: the sentences mugilu's page says (answer, and one per reading), in the request's language (/hi/c/… or /kn/c/… for Hindi or Kannada).",
           ),
         },
       },
@@ -320,6 +320,7 @@ export function sitemapPaths(): string[] {
     "/places",
     "/warnings",
     ...allHubs().map((st) => `/state/${st.slug}`),
+    ...allHubs().map((st) => `/state/${st.slug}/warnings`),
     ...allSlugPlaces().map((p) => `/c/${p.slug}`),
     // Each place's 30-day record (the 7- and 90-day views are its query variants).
     ...allSlugPlaces().map((p) => `/c/${p.slug}/trends`),
