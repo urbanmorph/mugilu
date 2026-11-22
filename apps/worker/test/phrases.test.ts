@@ -1,7 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { facts as factsAt, STATION_MAX_KM, type Fact } from "../src/facts";
-import { answerLine, factText, PHRASES, placeDescription, placeTitle, steProblems, warningsText } from "../src/phrases";
+import {
+  answerLine,
+  conditionsText,
+  factText,
+  PHRASES,
+  placeDescription,
+  placeTitle,
+  steProblems,
+  warningsText,
+} from "../src/phrases";
 import type { Conditions } from "../src/types";
 import { LANGS } from "../src/i18n";
 
@@ -252,4 +261,30 @@ test("Hindi and Kannada sentences carry no English words beyond names, units and
       for (const s of [...fs.map((f) => factText(f, lang)), answerLine(fs, "X", lang)])
         assert.doesNotMatch(s.replace(allowed, ""), /[A-Za-z]{2,}/, `${lang}: ${s}`);
   }
+});
+
+// Spec step 5: the API and MCP carry the page's own sentences (`text`), so agents quote the
+// same words the page says, in the language asked for.
+test("conditionsText: the answer line and each reading's sentence, the same words as the page", () => {
+  const c = cond();
+  const en = conditionsText(c, "en");
+  assert.equal(en.lang, "en");
+  assert.equal(en.answer, answerLine(facts(c), "Bengaluru Rural", "en"));
+  assert.equal(en.readings.air, factText(fact(facts(c), "air"), "en"));
+  assert.match(en.readings.warnings, /Bengaluru Rural/);
+  assert.deepEqual(Object.keys(en.readings).sort(), [
+    "air",
+    "dust",
+    "fog",
+    "rain",
+    "smoke",
+    "temp",
+    "uv",
+    "warnings",
+    "wind",
+  ]);
+  const kn = conditionsText(c, "kn");
+  assert.equal(kn.lang, "kn");
+  assert.notEqual(kn.answer, en.answer);
+  assert.match(kn.answer, /ಬೆಂಗಳೂರು/, "the native name, as the Kannada page says it");
 });

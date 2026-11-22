@@ -239,9 +239,13 @@ export function renderHome(
     alternateName: "mugilu: the open sky of India",
     url: SITE,
     description: t(SITE_DESC, lang),
+    inLanguage: ["en", "hi", "kn"],
+    // Where else mugilu lives, so search engines join it into one entity (the DPG Registry
+    // listing joins this once approved).
+    sameAs: ["https://github.com/urbanmorph/mugilu"],
     publisher: {
       "@type": "Organization",
-      name: "urbanmorph",
+      name: "Urban Morph",
       url: "https://urbanmorph.com",
       logo: `${SITE}/apple-touch-icon.png`,
       sameAs: ["https://github.com/urbanmorph"],

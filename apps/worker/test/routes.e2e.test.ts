@@ -126,7 +126,10 @@ test("data surfaces keep their shapes", async () => {
     "ambient",
     "attribution",
     "disclaimer",
+    "text",
   ]);
+  // The page's own sentences (spec step 5), in the page's language.
+  assert.deepEqual(Object.keys(c.text as object), ["lang", "answer", "readings"]);
   const s = await json("/s/cpcb/6081.json");
   assert.deepEqual(Object.keys(s), ["generated_at", "units", "fresh_within_hours", "station"]);
   const wj = await json("/warnings.json");

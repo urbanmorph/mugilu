@@ -89,7 +89,7 @@ test("/warnings: the places under a warning, by state, the state with the most f
   assert.match(html, /<h2 class="bar"[^>]*>[^]*?<span>Places under a warning now, by state<\/span><\/h2>/);
   const states = [
     ...html.matchAll(
-      /<h3 class="wgrp">(?:<a href="\/state\/[a-z-]+">)?([^<]+)(?:<\/a>)?<span class="n">(\d+)<\/span><\/h3>/g,
+      /<h3 class="wgrp">(?:<a href="\/state\/[a-z-]+\/warnings">)?([^<]+)(?:<\/a>)?<span class="n">(\d+)<\/span><\/h3>/g,
     ),
   ];
   assert.deepEqual(states.map((m) => m[1]).sort(), ["Karnataka", "Uttarakhand"]);
@@ -125,7 +125,7 @@ test("/warnings: a named cyclone whose alert has no area marks the places it nam
   const html = page(snap, "en", map([]));
   assert.match(
     html,
-    /<h3 class="wgrp"><a href="\/state\/andhra-pradesh">Andhra Pradesh<\/a><span class="n">5<\/span><\/h3>/,
+    /<h3 class="wgrp"><a href="\/state\/andhra-pradesh\/warnings">Andhra Pradesh<\/a><span class="n">5<\/span><\/h3>/,
   );
   assert.match(html, /href="\/c\/srikakulam"/);
 });

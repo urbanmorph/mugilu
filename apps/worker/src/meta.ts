@@ -197,7 +197,7 @@ export function openApiSpec(siteUrl: string): object {
           summary: "Sky conditions at a coordinate, right now (mugilu/conditions v1).",
           parameters: [coord, persona, ref],
           responses: ok(
-            "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), and an ambient read (summary, persona_action, persona_also, order, persona_layers).",
+            "A versioned conditions object: air, heat, heat_vs_normal (today's high vs the 1991-2020 normal here), rain, uv, dust, wind, visibility, smoke, warnings (official warnings whose area covers the point), nearby_warnings (active within 40 km, not over it), an ambient read (summary, persona_action, persona_also, order, persona_layers), and text: the sentences mugilu's page says (answer, and one per reading), in the request's language (/hi/c/… or /kn/c/… for Hindi or Kannada).",
           ),
         },
       },
@@ -303,12 +303,12 @@ export function openApiSpec(siteUrl: string): object {
 }
 
 /** sitemap.xml: the stable, canonical pages (per-coordinate pages are infinite).
- *  lastmod tells crawlers when to recrawl. Only the home and warnings pages change
- *  their indexable TEXT daily, so they carry today's date; every other page (the
- *  explainers, the /places directory, and each /c/{slug}) carries a fixed date. A
- *  place page's live readings move constantly, but its indexable text does not, and
- *  stamping all ~800 with today's date every day just teaches crawlers to distrust
- *  our lastmod. Bump STATIC when a page's text (not its live numbers) changes. */
+ *  lastmod tells crawlers when to recrawl. The home and warnings pages change their
+ *  indexable text daily, so they carry today's date. A place page carries the day its
+ *  headline last changed and a trend page the day its record grew (`dates`, from
+ *  lastmod.ts); stamping all ~800 with today's date every day would teach crawlers to
+ *  distrust our lastmod. Everything else carries the fixed date: bump STATIC when a
+ *  page's text (not its live numbers) changes. */
 /** Every indexable page: the static pages, the /places directory and a named /c/{slug}
  *  page per district (the sitemap's list, and what IndexNow announces). */
 export function sitemapPaths(): string[] {
@@ -320,6 +320,7 @@ export function sitemapPaths(): string[] {
     "/places",
     "/warnings",
     ...allHubs().map((st) => `/state/${st.slug}`),
+    ...allHubs().map((st) => `/state/${st.slug}/warnings`),
     ...allSlugPlaces().map((p) => `/c/${p.slug}`),
     // Each place's 30-day record (the 7- and 90-day views are its query variants).
     ...allSlugPlaces().map((p) => `/c/${p.slug}/trends`),
@@ -330,11 +331,14 @@ export function sitemapPaths(): string[] {
 export const localizedUrl = (siteUrl: string, p: string, l: string) =>
   `${siteUrl}${l === "en" ? "" : "/" + l}${p === "/" ? "" : p}`;
 
-export function sitemapXml(siteUrl: string): string {
+export function sitemapXml(siteUrl: string, dates: Record<string, string> = {}): string {
   const today = new Date().toISOString().slice(0, 10);
   // Bumped 22 Nov 2026: place pages say their readings in sentences, with warnings and questions.
   const STATIC = "2026-11-22";
   const live = new Set(["/", "/warnings"]);
+  // A place or trend page's own date (lastmod.ts), never before the fixed date: a text change
+  // bumps every page at once.
+  const lastmod = (p: string) => (live.has(p) ? today : dates[p] && dates[p] > STATIC ? dates[p] : STATIC);
   const paths = sitemapPaths();
   const loc = (p: string, l: string) => localizedUrl(siteUrl, p, l);
   // hreflang alternates so search engines pair the three language versions (+ x-default).
@@ -342,7 +346,7 @@ export function sitemapXml(siteUrl: string): string {
     ["en", "hi", "kn"].map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${loc(p, l)}"/>`).join("") +
     `<xhtml:link rel="alternate" hreflang="x-default" href="${loc(p, "en")}"/>`;
   const urls = paths
-    .map((p) => `  <url><loc>${loc(p, "en")}</loc><lastmod>${live.has(p) ? today : STATIC}</lastmod>${alts(p)}</url>`)
+    .map((p) => `  <url><loc>${loc(p, "en")}</loc><lastmod>${lastmod(p)}</lastmod>${alts(p)}</url>`)
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">

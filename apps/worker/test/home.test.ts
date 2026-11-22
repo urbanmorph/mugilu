@@ -165,3 +165,11 @@ test("renderHome: the location button and rename prompt speak the page's languag
   assert.doesNotMatch(kn, /Locating|Location unavailable|Name this place/);
   assert.match(renderHome(), /"Finding your location…"/);
 });
+
+test("home: the site and its publisher as entities, linked to where else they live (sameAs)", () => {
+  const ld = JSON.parse(renderHome().match(/<script type="application\/ld\+json">([^<]*)<\/script>/)![1]);
+  assert.deepEqual(ld.sameAs, ["https://github.com/urbanmorph/mugilu"]);
+  assert.deepEqual(ld.inLanguage, ["en", "hi", "kn"]);
+  assert.equal(ld.publisher.name, "Urban Morph");
+  assert.deepEqual(ld.publisher.sameAs, ["https://github.com/urbanmorph"]);
+});

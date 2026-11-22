@@ -133,6 +133,7 @@ test("mcp tools/list: the five tools, with schemas + annotations", async () => {
   assert.deepEqual(names, ["active_warnings", "conditions_at", "national_now", "nearest_stations", "search_place"]);
   const c = j.result.tools.find((t: any) => t.name === "conditions_at");
   assert.deepEqual(c.inputSchema.required, ["place"]);
+  assert.deepEqual(c.inputSchema.properties.lang.enum, ["en", "hi", "kn"], "the sentences' language");
   assert.equal(c.annotations.readOnlyHint, true);
   assert.match(c.description, /not a forecast/i);
 });

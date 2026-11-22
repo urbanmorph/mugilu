@@ -173,7 +173,7 @@ export function renderStatePage(st: State, s: StateNow, lang: Lang = "en"): stri
       (s.warned.length
         ? tiles(s.warned, true)
         : `<p>${esc(t("No official warning covers a place here now.", lang))}</p>`) +
-        `<p><a href="${lp("/warnings", lang)}">${esc(t("Official weather warnings across India now", lang))} →</a></p>`,
+        `<p><a href="${lp(`/state/${st.slug}/warnings`, lang)}">${esc(fill("Official weather warnings in {state} now", lang, { state: sn }))} →</a></p>`,
     ),
     { title: t("Under an official warning now", lang), icon: "warn", id: "warn", strong: s.warned.length > 0 },
   );
