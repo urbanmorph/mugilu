@@ -226,12 +226,8 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
     const bandWord = t(AQI_BAND_LABEL[band] ?? "n/a", lang);
     const bars = pollutantBars(c.air.pollutants, lang);
     const worst = worstPollutant(c.air.pollutants, keyReading.pollutants);
+    // Where the reading comes from is said in the row's sentence (phrases.ts), not here.
     const more = bars ? [bars] : [];
-    more.push(
-      `<p class="t-meta">${
-        c.air.station ? `${esc(t("measured", lang))} · ${c.air.station.distance_km} km` : esc(t("modelled", lang))
-      }</p>`,
-    );
     if (c.air.yll != null)
       more.push(`<p class="t-meta">~${c.air.yll.toFixed(1)} ${esc(t("years of life lost", lang))}</p>`);
     if (c.grap) more.push(grapLine(c.grap, lang));

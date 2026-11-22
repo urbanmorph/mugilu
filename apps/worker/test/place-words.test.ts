@@ -92,7 +92,7 @@ test("place page: the search phrase sits in the headline, and a two-sentence ans
 test("place page: each reading has a heading in searched words and its value in a sentence", () => {
   const html = page();
   assert.match(html, /<h2 class="lab">Air quality \(AQI\)<\/h2>/);
-  assert.match(html, /<h2 class="lab">Temperature and feels-like<\/h2>/);
+  assert.match(html, /<h2 class="lab">Temperature<\/h2>/);
   assert.match(html, /<h2 class="lab">Wind speed<\/h2>/);
   assert.match(html, /<h2 class="lab">Fog and visibility<\/h2>/);
   assert.match(html, /<h2 class="lab">Rain now<\/h2>/);

@@ -229,7 +229,7 @@ export const PHRASES = {
  *  keys its rows. */
 export const READING_HEADING: Record<string, ByLang> = {
   air: { en: "Air quality (AQI)", hi: "वायु गुणवत्ता (AQI)", kn: "ವಾಯು ಗುಣಮಟ್ಟ (AQI)" },
-  heat: { en: "Temperature and feels-like", hi: "तापमान", kn: "ತಾಪಮಾನ" },
+  heat: { en: "Temperature", hi: "तापमान", kn: "ತಾಪಮಾನ" },
   sun: { en: "UV index", hi: "UV सूचकांक", kn: "UV ಸೂಚ್ಯಂಕ" },
   dust: { en: "Dust", hi: "धूल", kn: "ಧೂಳು" },
   wind: { en: "Wind speed", hi: "हवा की गति", kn: "ಗಾಳಿಯ ವೇಗ" },
