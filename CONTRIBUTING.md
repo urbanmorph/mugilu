@@ -17,6 +17,7 @@ pnpm typecheck   # tsc --noEmit
 ```
 
 ## Ground rules
+
 - Every page is plain HTML that reads without JavaScript. Client JS stays small and optional (the offline worker, install, auto-refresh, alerts).
 - No frameworks: pages are rendered by the worker from template strings (`src/pages/`, with shared parts in `src/ui/`).
 - Colours come only from `src/palette.ts`, and styles only from `src/ui/standard.ts`: no per-page CSS.
@@ -25,6 +26,11 @@ pnpm typecheck   # tsc --noEmit
 - Write the failing test first. Conventional commits encouraged (`feat:`, `fix:`, `docs:`, `chore:`).
 
 ## Before opening a PR
+
 - `pnpm typecheck` and `pnpm test` pass in `apps/worker`.
 - `pnpm dlx prettier@3 --check "src/**/*.ts" "test/**/*.ts"` is clean.
 - CI enforces all three; merging to `main` deploys automatically once they pass.
+
+## Licence of contributions
+
+mugilu's code is MIT ([LICENSE](./LICENSE)). By opening a pull request, you agree that your contribution is licensed under the same MIT licence (inbound = outbound), and that you have the right to submit it. Data files keep their sources' own licences ([README](./README.md#data-sources-and-attribution)).
