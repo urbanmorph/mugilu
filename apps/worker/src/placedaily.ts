@@ -31,7 +31,7 @@ export const PLACE_DAILY_PREFIX = "archive/place-daily/";
 /** The first day joined: the daily weather (archive/wx-daily) is filled back to here
  *  (scripts/backfill-wx-daily.ts). A day before its weather is filled would be joined without
  *  it for good, so move this earlier only after filling the weather further back. */
-export const PLACE_DAILY_START = "2026-09-21";
+export const PLACE_DAILY_START = "2026-08-22";
 export const INDIA_DAILY_PREFIX = "archive/india-daily/";
 export const INDIA_TREND_KEY = "trends/india.json";
 /** The spans kept per place: the place panel reads 30 days, the trend page 7, 30 or 90. */
