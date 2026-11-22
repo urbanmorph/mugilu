@@ -34,8 +34,8 @@ test("/terms: the laws, and how to report wrong, harmful or illegal content, wit
   assert.match(s, /mugilu has no user posts, comments or uploads\./);
   assert.match(s, /We answer within 7 days/);
   assert.match(html, /id="content"/);
-  // No contact email yet: the report route is a GitHub issue.
-  assert.match(html, /href="https:\/\/github\.com\/urbanmorph\/mugilu\/issues" lang="en"/);
+  // The report route is the project's contact email.
+  assert.match(html, /<a href="mailto:sathya@urbanmorph\.com" lang="en">sathya@urbanmorph\.com<\/a>/);
 });
 
 test("/terms (hi, kn): the new sections are translated", () => {
