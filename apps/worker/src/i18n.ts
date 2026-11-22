@@ -1492,6 +1492,8 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "हल्का गर्म",
     kn: "ಬೆಚ್ಚಗೆ",
   },
+  cool: { hi: "हल्की ठंडक", kn: "ತಂಪು" },
+  mild: { hi: "सुहावना", kn: "ಹಿತಕರ" },
   warnings: {
     hi: "चेतावनियाँ",
     kn: "ಎಚ್ಚರಿಕೆಗಳು",
@@ -1932,9 +1934,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Measured.": { hi: "मापा गया।", kn: "ಅಳೆದದ್ದು." },
   "No reading on 1 day.": { hi: "1 दिन कोई रीडिंग नहीं।", kn: "1 ದಿನ ಯಾವುದೇ ಮಾಪನ ಇಲ್ಲ." },
   "No reading on {m} days.": { hi: "{m} दिन कोई रीडिंग नहीं।", kn: "{m} ದಿನ ಯಾವುದೇ ಮಾಪನ ಇಲ್ಲ." },
-  "No air station within 25 km.": {
-    hi: "25 km के भीतर कोई वायु स्टेशन नहीं।",
-    kn: "25 km ಒಳಗೆ ಯಾವುದೇ ವಾಯು ನಿಲ್ದಾಣವಿಲ್ಲ.",
+  "This record has no air quality. It uses only the stations within {km} km, and none is that close.": {
+    hi: "इस रिकॉर्ड में वायु गुणवत्ता नहीं है। यह केवल {km} km के भीतर के स्टेशन लेता है, और इतने पास कोई स्टेशन नहीं है।",
+    kn: "ಈ ದಾಖಲೆಯಲ್ಲಿ ವಾಯು ಗುಣಮಟ್ಟ ಇಲ್ಲ. ಇದು {km} km ಒಳಗಿನ ನಿಲ್ದಾಣಗಳನ್ನು ಮಾತ್ರ ಬಳಸುತ್ತದೆ, ಅಷ್ಟು ಹತ್ತಿರ ಯಾವುದೇ ನಿಲ್ದಾಣವಿಲ್ಲ.",
   },
   "The other hazards": { hi: "अन्य खतरे", kn: "ಇತರ ಅಪಾಯಗಳು" },
   "raised on {n} of {d} days, up to {level}.": {

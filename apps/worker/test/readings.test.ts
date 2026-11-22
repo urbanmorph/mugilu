@@ -83,3 +83,22 @@ test("istStamp: one IST format for images and Markdown; a missing time is empty,
   assert.equal(istStamp("2026-10-25T07:00:00Z", true), "25 Oct 2026, 12:30 IST");
   assert.equal(istStamp(""), "");
 });
+
+// ── The word for the temperature: cool, mild, warm between the cold and heat levels ──
+import { heatPhrase } from "../src/pages/read";
+import { t as tr } from "../src/i18n";
+
+test("heatPhrase: a cool day is not called warm; the hazard words are unchanged", () => {
+  assert.equal(heatPhrase(9), "cold");
+  assert.equal(heatPhrase(15), "cool");
+  assert.equal(heatPhrase(19.9), "cool");
+  assert.equal(heatPhrase(20), "mild");
+  assert.equal(heatPhrase(23), "mild");
+  assert.equal(heatPhrase(28), "warm");
+  assert.equal(heatPhrase(34), "warm");
+  assert.equal(heatPhrase(36), "very hot");
+  for (const w of ["cool", "mild", "warm"]) {
+    assert.notEqual(tr(w, "hi"), w);
+    assert.notEqual(tr(w, "kn"), w);
+  }
+});

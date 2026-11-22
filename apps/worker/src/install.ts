@@ -78,7 +78,8 @@ export function installButton(lang: Lang, cls = { button: "install", dialog: "in
   return (
     `<button type="button" class="${cls.button}" id="install-app" hidden>${esc(t("Install app", lang))}</button>` +
     `<dialog class="${cls.dialog}" id="install-guide" aria-labelledby="install-guide-title">` +
-    `<h2 id="install-guide-title">${esc(t("Add mugilu to your Home Screen", lang))}</h2><ol>` +
+    // The sheet's title labels the dialog; not a heading, so it stays out of the page outline.
+    `<p class="ihead" id="install-guide-title">${esc(t("Add mugilu to your Home Screen", lang))}</p><ol>` +
     `<li>${esc(t("Tap the Share button (the square with an arrow) in Safari's toolbar.", lang))}</li>` +
     `<li>${esc(t("Scroll down and tap Add to Home Screen.", lang))}</li>` +
     `<li>${esc(t("Tap Add.", lang))}</li></ol>` +

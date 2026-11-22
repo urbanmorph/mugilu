@@ -15,7 +15,7 @@ import {
   windLevelOf,
 } from "../score";
 import { LEVEL_SHAPE, LEVEL_WORD, linkButton, panel, shape, type IconName } from "./components";
-import { TREND_DAYS } from "../placedaily";
+import { AIR_KM, TREND_DAYS } from "../placedaily";
 
 // The place page's "Last 30 days" (placedaily.ts keeps the record): the air a day at a time, a
 // bar a day filled by its level with the level edges drawn, so the level reads from position as
@@ -310,7 +310,10 @@ export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: str
         airChart(tr, lang),
     );
   } else {
-    parts.push(`<p class="t-lead">${esc(t("No air station within 25 km.", lang))}</p>`);
+    // The live reading may still be measured (up to 50 km) or modelled: say why this record has none.
+    parts.push(
+      `<p class="t-lead">${esc(fill("This record has no air quality. It uses only the stations within {km} km, and none is that close.", lang, { km: AIR_KM }))}</p>`,
+    );
   }
 
   // The raised hazards by their worst level, then how often; the calm ones share a line.

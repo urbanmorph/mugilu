@@ -84,7 +84,9 @@ test("langSwitch: the current language bold, the others path-only links in their
 test("siteFooter: three labelled link groups, one link a line, then language and theme, then the disclaimer", () => {
   const f = siteFooter("/terms", "en");
   const group = (id: string) =>
-    f.match(new RegExp(`<nav class="fgroup" aria-labelledby="${id}"><h2 id="${id}">([^<]*)</h2>(.*?)</nav>`))!;
+    f.match(
+      new RegExp(`<nav class="fgroup" aria-labelledby="${id}"><p class="fhead" id="${id}">([^<]*)</p>(.*?)</nav>`),
+    )!;
   const hrefs = (g: RegExpMatchArray) => [...g[2].matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(group("f-use")[1], "Use it");
   assert.deepEqual(hrefs(group("f-use")), ["/places", "/warnings", "/display"]);

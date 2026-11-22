@@ -96,8 +96,12 @@ export function heatPhrase(apparent: number, wetBulb?: number): string {
   if (hot) return ["very hot", "severe heat", "extreme heat"][hot - 1];
   const cold = coldLevelOf(apparent);
   if (cold) return ["cold", "very cold", "dangerous cold"][cold - 1];
-  return "warm";
+  // Between the cold and heat levels, a plain word for how it feels (not a hazard level).
+  return apparent < COMFORT_C[0] ? "cool" : apparent < COMFORT_C[1] ? "mild" : "warm";
 }
+
+/** °C feels-like where "cool" turns "mild", and "mild" turns "warm". Words, not levels. */
+const COMFORT_C = [20, 28] as const;
 
 /** Fire activity nearby per smoke level (1-3); index 0 is unused. */
 const SMOKE_PHRASE = ["", "some burning", "notable burning", "heavy burning"];

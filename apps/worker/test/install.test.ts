@@ -300,3 +300,28 @@ test("the app and browser chrome take the header bar's colour, from the palette"
   assert.equal(m.theme_color, NEUTRAL.light.bar);
   assert.equal(m.background_color, NEUTRAL.light.bg);
 });
+
+test("the install sheet and the footer add no headings: a place page's outline starts with the place", async () => {
+  const { renderConditionsPage } = await import("../src/pages/place");
+  const html = renderConditionsPage({
+    location: { lat: 29.69, lon: 79.5 },
+    place: "Almora, Uttarakhand",
+    as_of: "2026-11-22T04:16:05.966Z",
+    air: null,
+    heat: null,
+    rain: null,
+    uv: null,
+    dust: null,
+    wind: null,
+    visibility: null,
+    smoke: null,
+    attribution: "Sources: Open-Meteo",
+    disclaimer: "Informational only.",
+  });
+  const headings = [...html.matchAll(/<h([1-6])\b[^>]*>/g)].map((m) => m[1]);
+  assert.equal(headings[0], "1", "the first heading is the place");
+  assert.match(
+    html,
+    /<dialog[^>]*aria-labelledby="install-guide-title">[\s\S]*?<p class="ihead" id="install-guide-title">/,
+  );
+});
