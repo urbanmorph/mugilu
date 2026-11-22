@@ -49,11 +49,31 @@ test("place page: the title and description come from the facts, with the air's 
   const html = page();
   assert.equal(
     html.match(/<title>([^<]*)<\/title>/)![1],
-    "Bengaluru Rural, Karnataka AQI today: 351 Very Poor | mugilu",
+    "Bengaluru Rural AQI today: 351 Very Poor and weather | mugilu",
   );
   assert.match(
     html.match(/<meta name="description" content="([^"]*)"/)![1],
     /^Bengaluru Rural AQI 351 \(Very Poor\) at 08:45 IST, measured by Airnet \(CSTEP\) at Rajanukunte\./,
+  );
+});
+
+test("place page: the title uses the short name; a name two districts share keeps its state", () => {
+  const title = (html: string) => html.match(/<title>([^<]*)<\/title>/)![1];
+  const almora = conditions({
+    place: "Almora, Uttarakhand",
+    air: { ...conditions().air!, aqi: 111, band: "moderate" },
+  });
+  assert.equal(
+    title(renderConditionsPage(almora, "everyone", "https://mugilu.live/c/almora")),
+    "Almora AQI today: 111 Moderate, weather and IMD warnings | mugilu",
+  );
+  const aurangabad = conditions({
+    place: "Aurangabad, Bihar",
+    air: { ...conditions().air!, aqi: 111, band: "moderate" },
+  });
+  assert.match(
+    title(renderConditionsPage(aurangabad, "everyone", "https://mugilu.live/c/aurangabad-bihar")),
+    /^Aurangabad, Bihar AQI today: 111 Moderate/,
   );
 });
 

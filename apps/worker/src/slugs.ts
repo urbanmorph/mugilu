@@ -17,7 +17,7 @@ export interface SlugPlace {
   lon: number;
 }
 
-function slugify(s: string): string {
+export function slugify(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFKD")

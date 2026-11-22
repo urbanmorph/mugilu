@@ -4,7 +4,7 @@ import { placeLabel } from "../readings";
 import { esc } from "../html";
 import { AQI_BAND_LABEL } from "../aqi";
 import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } from "../score";
-import { siblingPlaces, slugFromPath } from "../slugs";
+import { siblingPlaces, slugFromPath, slugify } from "../slugs";
 import { aroundLinks } from "../sister";
 import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
@@ -245,7 +245,11 @@ export function renderConditionsPage(
   );
 
   // Title and description in the words people search ("Delhi AQI today"), from the facts.
-  const title = placeTitle(fs, placeName, placeName, lang);
+  // The short name, as people search it ("almora aqi"); the state stays where two districts
+  // share the name (their slug carries it).
+  const named = canonical ? slugFromPath(new URL(canonical).pathname)?.slug : undefined;
+  const titlePlace = named && named === slugify(short) ? short : placeName;
+  const title = placeTitle(fs, titlePlace, titlePlace, lang);
   // With no air reading the facts say little, so the description names what the page covers.
   const desc = fs.some((f) => f.key === "air")
     ? placeDescription(fs, short, c.as_of, lang)
