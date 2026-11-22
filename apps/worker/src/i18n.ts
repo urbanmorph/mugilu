@@ -2014,7 +2014,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   // A place's trend page, /c/{slug}/trends (pages/trends.ts), and the hazards' chart notes (ui/history.ts).
   "Every hazard, day by day": { hi: "हर खतरा, दिन-ब-दिन", kn: "ಪ್ರತಿ ಅಪಾಯ, ದಿನದಿಂದ ದಿನಕ್ಕೆ" },
   "{n} fires": { hi: "{n} आग", kn: "{n} ಬೆಂಕಿ" },
-  "{place}: the last {n} days": { hi: "{place}: पिछले {n} दिन", kn: "{place}: ಕಳೆದ {n} ದಿನಗಳು" },
+  "{place} AQI and weather: last {n} days": {
+    hi: "{place} AQI और मौसम: पिछले {n} दिन",
+    kn: "{place} AQI ಮತ್ತು ಹವಾಮಾನ: ಕಳೆದ {n} ದಿನಗಳು",
+  },
+  "{place}, last {n} days:": { hi: "{place}, पिछले {n} दिन:", kn: "{place}, ಕಳೆದ {n} ದಿನಗಳು:" },
   Period: { hi: "अवधि", kn: "ಅವಧಿ" },
   "{n} days": { hi: "{n} दिन", kn: "{n} ದಿನಗಳು" },
   "{place} now": { hi: "{place} अभी", kn: "{place} ಈಗ" },

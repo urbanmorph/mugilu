@@ -37,7 +37,7 @@ test("trends page: the period in one line, then days at each level, the raised h
   vis[2] = 400; // fog high once
   const html = renderTrendsPage(DELHI, trend(30, { air, vis_min_m: vis }), 30, "en");
   const s = text(html);
-  assert.match(s, /Delhi: the last 30 days/);
+  assert.match(s, /Delhi AQI and weather: last 30 days/);
   assert.match(s, /Air was very poor or severe on 30 of 30 days\. Highest: AQI 480 Severe on 26 Oct\./);
   assert.match(html, /class="plate severe/);
   assert.ok(html.indexOf('id="t-air"') < html.indexOf('id="t-fog"'), "air (severe every day) before fog");
@@ -61,11 +61,36 @@ test("trends page: the period switch links 7, 30 and 90 days; 30 is the page its
   assert.match(html, /<link rel="canonical" href="https:\/\/mugilu\.live\/hi\/c\/delhi\/trends\?days=7"/);
 });
 
-test("trends page: no record yet says so", () => {
+test("trends page: no record yet says so, and asks search engines not to index it", () => {
+  const html = renderTrendsPage(DELHI, null, 30, "en");
+  assert.match(text(html), /No record for this place yet\. It fills in each night\./);
+  assert.match(html, /<meta name="robots" content="noindex, follow">/);
+  assert.doesNotMatch(renderTrendsPage(DELHI, trend(30), 30, "en"), /noindex/);
+});
+
+// Search: people type "[city] aqi last 30 days" and "[city] pollution history" (supporting-docs/
+// reports/mugilu search discovery plan.md). The title says those words; the description says
+// what the period was like, so each page's snippet is its own.
+test("trends page: the title says AQI and weather; the description is the period in one line", () => {
+  const air = Array<number | null>(30).fill(350);
+  air[4] = 480;
+  const html = renderTrendsPage(DELHI, trend(30, { air }), 30, "en");
+  assert.equal(html.match(/<title>([^<]*)<\/title>/)![1], "Delhi AQI and weather: last 30 days | mugilu");
+  const desc = html.match(/<meta name="description" content="([^"]*)"/)![1];
   assert.match(
-    text(renderTrendsPage(DELHI, null, 30, "en")),
-    /No record for this place yet\. It fills in each night\./,
+    desc,
+    /^Delhi, last 30 days: Air was very poor or severe on 30 of 30 days\. Highest: AQI 480 Severe on 26 Oct\.$/,
   );
+  assert.ok(desc.length <= 160, desc);
+  const hi = renderTrendsPage(DELHI, trend(30, { air }), 30, "hi");
+  assert.match(hi, /<title>Delhi AQI और मौसम: पिछले 30 दिन/);
+  const kn = renderTrendsPage(DELHI, trend(30, { air }), 30, "kn");
+  assert.match(kn, /<title>Delhi AQI ಮತ್ತು ಹವಾಮಾನ: ಕಳೆದ 30 ದಿನಗಳು/);
+});
+
+test("trends page: a name two districts share keeps its state in the title", () => {
+  const aur = placeBySlug("aurangabad-bihar")!;
+  assert.match(renderTrendsPage(aur, trend(30), 30, "en"), /<title>Aurangabad, Bihar AQI and weather: last 30 days/);
 });
 
 test("trends page: in Hindi and Kannada no English sentence shows", () => {
@@ -107,9 +132,9 @@ test("/c/delhi/trends reads the 30- or 90-day file; an unknown place is 404; the
   await put(30);
   await put(90);
   const thirty = await (await w.get("/c/delhi/trends")).text();
-  assert.match(thirty, /Delhi: the last 30 days/);
+  assert.match(thirty, /Delhi AQI and weather: last 30 days/);
   const ninety = await (await w.get("/c/delhi/trends?days=90")).text();
-  assert.match(ninety, /Delhi: the last 90 days/);
+  assert.match(ninety, /Delhi AQI and weather: last 90 days/);
   assert.equal((await w.get("/c/nowhere-at-all/trends")).status, 404);
   const place = await (await w.get("/c/delhi")).text();
   assert.match(place, /href="\/c\/delhi\/trends"/);
