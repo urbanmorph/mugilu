@@ -13,6 +13,7 @@ import {
 } from "../src/warnhistory";
 import { pastWarningsText } from "../src/phrases";
 import { renderConditionsPage } from "../src/pages/place";
+import { renderWarningHistoryPage } from "../src/pages/warnhistory";
 import { placeBySlug } from "../src/slugs";
 import type { WarnArea } from "../src/warnareas";
 import type { Conditions } from "../src/types";
@@ -187,11 +188,59 @@ test("place page: the warnings panel tells the past under the present, with each
   const s = text(html);
   assert.match(s, /No IMD or NDMA warning covers Udupi now\./);
   assert.match(s, /Since 27 Jun, official warnings covered Udupi on 3 days: orange on 1, yellow on 2\./);
-  assert.match(html, /<details class="fold"><summary>Each warning since 27 Jun<span class="n">3<\/span>/);
+  // three alerts: all of them, and no link to a longer list
+  assert.match(s, /The last 3 warnings/);
+  assert.doesNotMatch(html, /\/c\/udupi\/warnings/);
   assert.match(s, /06:00 IST · 18 Nov · until 21:00 IST · 18 Nov/);
   assert.match(s, /Heavy rain likely over Udupi and Dakshina Kannada\./);
   // No record kept for the place yet: the panel is as it was.
   assert.doesNotMatch(text(page(null)), /Since 27 Jun|No official warning covered/);
   assert.match(text(page([])), /No official warning covered Udupi since 27 Jun\./);
-  assert.doesNotMatch(text(page(LIST, "hi")), /Each warning since/);
+  assert.doesNotMatch(text(page(LIST, "hi")), /The last|warnings since/);
+});
+
+const MANY: PastAlert[] = Array.from({ length: 8 }, (_, i) =>
+  pastAlert(
+    area(String(i), "Moderate", {
+      effective: `2026-11-${String(18 - i).padStart(2, "0")}T06:00:00+05:30`,
+      expires: `2026-11-${String(18 - i).padStart(2, "0")}T21:00:00+05:30`,
+      headline: `Alert number ${i}.`,
+    }),
+  ),
+);
+
+test("place page: only the last 5 warnings, then a link to the place's full list", () => {
+  const html = page(MANY);
+  const s = text(html);
+  assert.match(s, /The last 5 warnings/);
+  for (const i of [0, 4]) assert.match(s, new RegExp(`Alert number ${i}\\.`));
+  for (const i of [5, 7]) assert.doesNotMatch(s, new RegExp(`Alert number ${i}\\.`));
+  assert.match(html, /<a [^>]*href="\/c\/udupi\/warnings"[^>]*>[\s\S]*?All 8 alerts since 27 Jun/);
+  assert.match(page(MANY, "hi"), /href="\/hi\/c\/udupi\/warnings"/);
+  // each alert its own row, as on /warnings: its colour as a chip (fill, shape and word), its kind
+  assert.equal((html.match(/<li class="wrow">/g) ?? []).length, 5);
+  assert.match(
+    html,
+    /<li class="wrow"><svg[^>]*>.*?<\/svg><p class="kind row-c"><span class="chip moderate"><svg[^>]*>.*?<\/svg>yellow<\/span><span>Other<\/span><\/p>/,
+  );
+});
+
+test("the full list: every alert, kept out of search, back to the place", () => {
+  const html = renderWarningHistoryPage(UDUPI, MANY, "en");
+  const s = text(html);
+  for (const i of [0, 7]) assert.match(s, new RegExp(`Alert number ${i}\\.`));
+  assert.match(html, /<meta name="robots" content="noindex, follow">/);
+  assert.match(html, /<title>Udupi: each warning since 27 Jun \| mugilu<\/title>/);
+  assert.match(html, /href="\/c\/udupi"/);
+  assert.match(s, /Since 27 Jun, official warnings covered Udupi on 8 days/);
+  assert.doesNotMatch(text(renderWarningHistoryPage(UDUPI, MANY, "kn")), /each warning since|Since 27 Jun/);
+});
+
+test("GET /c/{slug}/warnings: the page for a named place; an unknown place is 404", async () => {
+  const w = testWorker();
+  await w.env.OAQ_R2.put(`${HISTORY_PREFIX}udupi.json`, JSON.stringify(MANY));
+  const res = await w.get("/c/udupi/warnings");
+  assert.equal(res.status, 200);
+  assert.match(await res.text(), /Alert number 7\./);
+  assert.equal((await w.get("/c/nowhere-xyz/warnings")).status, 404);
 });

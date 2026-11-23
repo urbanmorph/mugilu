@@ -7,7 +7,7 @@ import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } fr
 import { localName, nativeNames, placeBySlug, siblingPlaces, slugFromPath, titleName } from "../slugs";
 import { hubOf, stateName } from "../states";
 import { aroundLinks } from "../sister";
-import { langAttr, lp, t, type Lang } from "../i18n";
+import { lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
 import { HAZARDS } from "../hazards";
 import { ALERTS_JS } from "../alerts-ui";
@@ -24,20 +24,19 @@ import {
   placeDescription,
   placeTitle,
   questions,
-  READING_HEADING,
+  readingHeading,
   ROW_FACT,
-  colourWord,
   pastWarningsText,
   say,
   warningsText,
 } from "../phrases";
 import { HISTORY_FROM, type PastAlert } from "../warnhistory";
+import { RECENT_WARNINGS, pastAlertList } from "./warnhistory";
 import {
   alertsBox,
   autoLane,
   band,
   bandChip,
-  fold,
   lane,
   linkButton,
   linkRow,
@@ -156,30 +155,22 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
 
 /** The official warnings over the place, always shown: "none now" is worth saying. Under them,
  *  the place's past warnings since the archive began, when its history is kept. */
-function warningsPanel(fs: Fact[], place: string, lang: Lang, past: PastAlert[] | null): string {
+function warningsPanel(fs: Fact[], place: string, lang: Lang, past: PastAlert[] | null, allHref?: string): string {
   const w = fs.find((f): f is Extract<Fact, { key: "warnings" }> => f.key === "warnings");
   if (!w) return "";
-  const item = (a: PastAlert) =>
-    `<li><p class="t-meta">${[
-      istTime(a.from),
-      a.until && t("until X", lang).replace("X", istTime(a.until)),
-      colourWord(a.colour, lang),
-      a.office,
-    ]
-      .filter(Boolean)
-      .map(esc)
-      .join(" · ")}</p><p${langAttr(a.headline, lang)}>${esc(a.headline)}</p></li>`;
+  // The last few alerts here; the whole list (hundreds of nowcasts, worded alike for every
+  // district near by) on its own page, kept out of search.
+  const recent = past?.slice(0, RECENT_WARNINGS) ?? [];
   const history = past
-    ? `<p>${esc(pastWarningsText(past, place, lang))}</p>` +
-      (past.length
-        ? fold(
-            say("warn.past.each", lang, { since: istDay(HISTORY_FROM) }),
-            `<ul class="wlist">${past.map(item).join("")}</ul>`,
-            {
-              count: past.length,
-            },
-          )
-        : "")
+    ? `<div class="stack"><p>${esc(pastWarningsText(past, place, lang))}</p>` +
+      (recent.length
+        ? `<p class="t-kicker">${esc(say("warn.past.recent", lang, { n: recent.length }))}</p>` +
+          pastAlertList(recent, lang) +
+          (past.length > recent.length && allHref
+            ? `<p>${linkButton(allHref, say("warn.past.all", lang, { n: past.length, since: istDay(HISTORY_FROM) }), false, "list")}</p>`
+            : "")
+        : "") +
+      `</div>`
     : "";
   return panel(
     `<p>${esc(warningsText(w, place, lang))} ${esc(say("warn.source", lang))}</p>` +
@@ -201,8 +192,8 @@ function questionsPanel(fs: Fact[], place: string, lang: Lang): string {
 
 /** A reading row's heading and sentence: the fact behind it, said in this language. The heat
  *  row leaves out today's high against normal when the row already draws it. */
-function rowWords(key: string, normalDrawn: boolean, fs: Fact[], lang: Lang) {
-  const heading = READING_HEADING[key]?.[lang];
+function rowWords(key: string, normalDrawn: boolean, fs: Fact[], place: string, lang: Lang) {
+  const heading = readingHeading(key, place, lang);
   let fact = fs.find((f) => f.key === ROW_FACT[key]);
   if (!heading || !fact) return undefined;
   if (fact.key === "temp" && normalDrawn) fact = { ...fact, normal: undefined };
@@ -250,7 +241,7 @@ export function renderConditionsPage(
   // The last 30 days: the place's own, or the nearest named place's, named in every sentence.
   const borrow = from && { ...from, name: localName(from.place, lang) };
   const history = trend
-    ? band(historyPanel(trend, lang, lp(`${borrow ? `/c/${borrow.place.slug}` : path}/trends`, lang), borrow))
+    ? band(historyPanel(trend, lang, lp(`${borrow ? `/c/${borrow.place.slug}` : path}/trends`, lang), borrow, short))
     : borrow
       ? band(nearestRecordLine(borrow, lang))
       : "";
@@ -258,7 +249,7 @@ export function renderConditionsPage(
   const readings =
     band(
       `<div class="flow">${readRows(c, risk, lang)
-        .map((r) => readRowHtml(r, lang, rowWords(r.key, !!r.normal, fs, lang)))
+        .map((r) => readRowHtml(r, lang, rowWords(r.key, !!r.normal, fs, short, lang)))
         .join("")}</div>`,
     ) + (c.grap && !c.air ? band(grapLine(c.grap, lang)) : "");
   // Phones read the button, then alerts, then the stations (the board); desktop moves the
@@ -289,7 +280,7 @@ export function renderConditionsPage(
     hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), answerLine(fs, short, lang), lang, native) +
       warningBand(c, lang) +
       readings +
-      band(warningsPanel(fs, short, lang, past)) +
+      band(warningsPanel(fs, short, lang, past, named && lp(`/c/${named}/warnings`, lang))) +
       history +
       secondary([alertsCol, stationsPanel(c, lang), nearbyPanel(canonical, lang)]) +
       band(questionsPanel(fs, short, lang)) +

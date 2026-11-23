@@ -174,9 +174,9 @@ export const PHRASES = {
   // Headings and labels on the place page.
   "h.sub": { en: "Air quality and weather now", hi: "आज की हवा और मौसम", kn: "ಈಗಿನ ವಾಯು ಗುಣಮಟ್ಟ ಮತ್ತು ಹವಾಮಾನ" },
   "h.warn": {
-    en: "Official warnings for {place}",
-    hi: "{place} के लिए आधिकारिक चेतावनियाँ (अलर्ट)",
-    kn: "{place}: ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು (ಅಲರ್ಟ್)",
+    en: "IMD and NDMA warnings for {place}",
+    hi: "{place} के लिए IMD और NDMA चेतावनियाँ (अलर्ट)",
+    kn: "{place}: IMD ಮತ್ತು NDMA ಎಚ್ಚರಿಕೆಗಳು (ಅಲರ್ಟ್)",
   },
   "h.qa": {
     en: "Questions about the air and weather in {place}",
@@ -208,6 +208,21 @@ export const PHRASES = {
     en: "The last was {colour} warning on {date}: {type}, from {issuer}.",
     hi: "पिछली {colour} चेतावनी {date} को थी: {type}, {issuer} की ओर से।",
     kn: "ಕೊನೆಯದು {date} ರಂದು {colour} ಎಚ್ಚರಿಕೆ: {type}, {issuer} ನೀಡಿದ್ದು.",
+  },
+  "warn.past.recent": {
+    en: "The last {n} warnings",
+    hi: "पिछली {n} चेतावनियाँ",
+    kn: "ಕೊನೆಯ {n} ಎಚ್ಚರಿಕೆಗಳು",
+  },
+  "warn.past.all": {
+    en: "All {n} alerts since {since}",
+    hi: "{since} से सभी {n} अलर्ट",
+    kn: "{since} ರಿಂದ ಎಲ್ಲಾ {n} ಅಲರ್ಟ್‌ಗಳು",
+  },
+  "warn.page.title": {
+    en: "{place}: each warning since {since}",
+    hi: "{place}: {since} से हर चेतावनी",
+    kn: "{place}: {since} ರಿಂದ ಪ್ರತಿ ಎಚ್ಚರಿಕೆ",
   },
   "warn.past.each": { en: "Each warning since {since}", hi: "{since} से हर चेतावनी", kn: "{since} ರಿಂದ ಪ್ರತಿ ಎಚ್ಚರಿಕೆ" },
   "warn.all": { en: "All warnings in India now", hi: "भारत की सभी चेतावनियाँ अभी", kn: "ಭಾರತದ ಎಲ್ಲಾ ಎಚ್ಚರಿಕೆಗಳು ಈಗ" },
@@ -251,17 +266,27 @@ export const PHRASES = {
   },
 } satisfies Record<string, ByLang>;
 
-/** Each reading's heading on the place page: the words people search. Keyed as readRows
- *  keys its rows. */
+/** Each reading's heading on the place page: the words people search, with the place
+ *  ("Is it raining in Almora?"). Keyed as readRows keys its rows. */
 export const READING_HEADING: Record<string, ByLang> = {
-  air: { en: "Air quality (AQI)", hi: "वायु गुणवत्ता (AQI)", kn: "ವಾಯು ಗುಣಮಟ್ಟ (AQI)" },
-  heat: { en: "Temperature", hi: "तापमान", kn: "ತಾಪಮಾನ" },
-  sun: { en: "UV index", hi: "UV सूचकांक", kn: "UV ಸೂಚ್ಯಂಕ" },
-  dust: { en: "Dust", hi: "धूल", kn: "ಧೂಳು" },
-  wind: { en: "Wind speed", hi: "हवा की गति", kn: "ಗಾಳಿಯ ವೇಗ" },
-  fog: { en: "Fog and visibility", hi: "कोहरा और दृश्यता", kn: "ಮಂಜು ಮತ್ತು ಗೋಚರತೆ" },
-  smoke: { en: "Smoke from fires", hi: "आग का धुआं", kn: "ಬೆಂಕಿಯ ಹೊಗೆ" },
-  rain: { en: "Rain now", hi: "अभी बारिश", kn: "ಈಗ ಮಳೆ" },
+  air: { en: "{place} AQI now", hi: "{place} में AQI अभी", kn: "{place} ಪ್ರದೇಶದ AQI ಈಗ" },
+  heat: { en: "Temperature in {place} now", hi: "{place} में तापमान अभी", kn: "{place} ಪ್ರದೇಶದ ತಾಪಮಾನ ಈಗ" },
+  sun: { en: "UV index in {place} today", hi: "{place} में UV सूचकांक आज", kn: "{place} ಪ್ರದೇಶದ UV ಸೂಚ್ಯಂಕ ಇಂದು" },
+  dust: { en: "Dust in {place}", hi: "{place} में धूल", kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಧೂಳು" },
+  wind: { en: "Wind in {place} now", hi: "{place} में हवा अभी", kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ಗಾಳಿ" },
+  fog: { en: "Fog in {place} now", hi: "{place} में कोहरा अभी", kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ಮಂಜು" },
+  smoke: { en: "Smoke from fires near {place}", hi: "{place} के पास आग का धुआं", kn: "{place} ಬಳಿ ಬೆಂಕಿಯ ಹೊಗೆ" },
+  rain: {
+    en: "Is it raining in {place}?",
+    hi: "क्या {place} में बारिश हो रही है?",
+    kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ಮಳೆ ಇದೆಯೇ?",
+  },
+};
+
+/** A reading's heading for a place, or undefined for a row with none. */
+export const readingHeading = (key: string, place: string, lang: Lang): string | undefined => {
+  const h = READING_HEADING[key]?.[lang];
+  return h && put(h, { place });
 };
 
 /** The fact behind each reading row (readRows' keys to facts.ts keys). */

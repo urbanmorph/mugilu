@@ -110,6 +110,12 @@ test("historyPanel: nothing to show is no panel", () => {
   assert.equal(historyPanel(null, "en"), "");
 });
 
+test("historyPanel: the place's own record is titled in the words people search", () => {
+  assert.match(historyPanel(trend(), "en", undefined, undefined, "Almora"), /Almora AQI and weather, last 30 days/);
+  assert.match(historyPanel(trend(), "hi", undefined, undefined, "अल्मोड़ा"), /अल्मोड़ा AQI और मौसम, पिछले 30 दिन/);
+  assert.match(historyPanel(trend(), "en"), /Last 30 days/, "no name: as before");
+});
+
 test("historyPanel: in Hindi and Kannada, no English sentence reaches the reader", () => {
   const air = flat(150);
   air[0] = 420;

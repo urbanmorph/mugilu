@@ -2080,6 +2080,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   // The place page's "Last 30 days" (ui/history.ts). {n} {d} {s} {m} {level} are slots.
   "Last 30 days": { hi: "पिछले 30 दिन", kn: "ಕಳೆದ 30 ದಿನಗಳು" },
   // A point's page borrowing the nearest place's record (READING_SENTENCES_SPEC.md section 9).
+  "{place} AQI and weather, last 30 days": {
+    hi: "{place} AQI और मौसम, पिछले 30 दिन",
+    kn: "{place} ಪ್ರದೇಶದ AQI ಮತ್ತು ಹವಾಮಾನ, ಕಳೆದ 30 ದಿನಗಳು",
+  },
   "Last 30 days in {place}": { hi: "{place}: पिछले 30 दिन", kn: "{place}: ಕಳೆದ 30 ದಿನಗಳು" },
   "This is the record for {place}, {km} km from this point.": {
     hi: "यह {place} का रिकॉर्ड है, जो इस बिंदु से {km} km दूर है।",

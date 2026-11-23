@@ -76,6 +76,11 @@ export function warningLabel(headline: string): string {
   return typeOf(headline)[1];
 }
 
+/** The pictogram for a warning's kind, from its headline. */
+export function warningIcon(headline: string): IconName {
+  return typeOf(headline)[3];
+}
+
 export function warningType(headline: string): string {
   return typeOf(headline)[0];
 }

@@ -95,7 +95,7 @@ function chartOf(r: Read, tr: PlaceTrend, lang: Lang): string {
 }
 
 const source = (h: HazardDef, lang: Lang) =>
-  `<p class="t-meta row-c tsrc"><span class="kind">${esc(t(h.kind, lang))}</span><span>${esc(h.source)}</span></p>`;
+  `<p class="t-meta row-c tsrc"><span class="kindtag">${esc(t(h.kind, lang))}</span><span>${esc(h.source)}</span></p>`;
 
 function hazardPanel(r: Read, tr: PlaceTrend, lang: Lang): string {
   const s = summary(r, lang);
@@ -126,7 +126,7 @@ function calmPanel(calm: Read[], tr: PlaceTrend, lang: Lang): string {
     calm.map((r) => [
       esc(t(r.h.name, lang)),
       esc(summary(r, lang).peak),
-      `<span class="kind">${esc(t(r.h.kind, lang))}</span>`,
+      `<span class="kindtag">${esc(t(r.h.kind, lang))}</span>`,
     ]),
     t("Low on every day", lang),
   );

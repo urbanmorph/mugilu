@@ -491,7 +491,7 @@ const HISTORY_CSS = `
 .mg .tgrid{display:grid;gap:var(--sp4);align-items:start}
 @media (min-width:1000px){.mg .tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .mg .tsrc{gap:var(--sp2);flex-wrap:wrap}
-.mg .kind{font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:var(--t-xs);padding:2px var(--sp1);border:1px solid var(--line);border-radius:var(--r)}
+.mg .kindtag{font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:var(--t-xs);padding:2px var(--sp1);border:1px solid var(--line);border-radius:var(--r)}
 .mg .tdays summary{cursor:pointer;font-weight:600;min-height:var(--hit);display:flex;align-items:center}
 .mg .tkey{display:flex;flex-wrap:wrap;gap:var(--sp1) var(--sp4);margin:0;font-size:var(--t-sm)}
 .mg .tkey span{display:inline-flex;gap:6px;align-items:center}
@@ -527,8 +527,6 @@ const READ_CSS = `
 .mg .qa-list{display:grid;gap:var(--sp3) var(--sp5);grid-template-columns:repeat(auto-fill,minmax(min(100%,max(40ch,30%)),1fr))}
 .mg .qa-list dd{margin:var(--sp1) 0 0}
 .mg .qa-list dt{font-weight:600}
-.mg .wlist{display:grid;gap:var(--sp3)}
-.mg .wlist p+p{margin-top:var(--sp1)}
 @media (min-width:1000px){
 .mg .phero{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"t p" "w p";column-gap:var(--sp5);align-items:start}
 .mg .phero>.ptitle{grid-area:t}

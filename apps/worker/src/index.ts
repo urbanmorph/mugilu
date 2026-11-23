@@ -20,6 +20,7 @@ import { renderDisplayBuilder } from "./pages/display";
 import { renderStationPage } from "./pages/station";
 import { renderHome } from "./pages/home";
 import { renderTrendsPage, sliceTrend, spanOf } from "./pages/trends";
+import { renderWarningHistoryPage } from "./pages/warnhistory";
 import { renderAbout } from "./pages/about";
 import { renderTerms } from "./pages/terms";
 import { renderPlaces } from "./pages/places";
@@ -660,6 +661,25 @@ export default {
         },
         { days: span === 30 ? undefined : String(span) },
       );
+    }
+
+    // A named place's full list of past warnings (the place page shows the last few).
+    const warnMatch = url.pathname.match(/^\/c\/([a-z0-9-]+)\/warnings$/);
+    if (warnMatch) {
+      const place = placeBySlug(warnMatch[1]);
+      if (!place)
+        return new Response(renderNotFound(lang), {
+          status: 404,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      return cached(LIVE_EDGE_TTL, async () => {
+        const past = await loadHistory(env, place.slug).catch((e) => {
+          console.error(`[warn-history] ${place.slug}: ${reason(e)}`);
+          return null;
+        });
+        const res = cachedResponse(renderWarningHistoryPage(place, past ?? [], lang), "text/html; charset=utf-8");
+        return { res, store: past != null };
+      });
     }
 
     const slugMatch = slugFromPath(url.pathname);
