@@ -13,6 +13,7 @@ import {
   type WarnArea,
 } from "../src/warnareas";
 import { WARNINGS_KEY, putJson } from "../src/snapshot";
+import { HISTORY_PREFIX } from "../src/warnhistory";
 import type { FeedAlert, WarningsSnapshot } from "../src/sachet";
 import { testWorker } from "./helpers/worker";
 import type { Env } from "../src/index";
@@ -323,4 +324,21 @@ test("collectWarnAreas: an alert stored before the archive existed is fetched on
   calls = stubSachet({ "1": CAP_IMD });
   assert.equal((await collectWarnAreas(env, { now: NOW + 60_000 })).fetched, 0);
   assert.deepEqual(calls, []);
+});
+
+test("collectWarnAreas: each archived alert goes into the history of every place it covered; a rerun adds nothing", async () => {
+  const { env } = testWorker();
+  await seedFeed(env, ["1"]);
+  stubSachet({ "1": CAP_IMD });
+  await collectWarnAreas(env, { now: NOW });
+  const keys = [...(env.OAQ_R2 as unknown as { store: Map<string, unknown> }).store.keys()].filter((k) =>
+    k.startsWith(HISTORY_PREFIX),
+  );
+  assert.ok(keys.length > 0, "the places under the polygon have a history");
+  const one = JSON.parse(await (await env.OAQ_R2.get(keys[0]))!.text());
+  assert.deepEqual(
+    one.map((a: { id: string }) => a.id),
+    ["1"],
+  );
+  assert.equal(one[0].colour, "yellow");
 });

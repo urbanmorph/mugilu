@@ -4,7 +4,7 @@ import { t, type Lang } from "../i18n";
 import { HAZARDS } from "../hazards";
 import { ld, UM_ICON } from "../ui/shell";
 import { cardBody, cards, faq, pull } from "../ui/components";
-import { P, builtBy, lineBreakAfterComma, marked, splitInto, textPage } from "./text";
+import { P, TOOLS_URL, builtBy, lineBreakAfterComma, marked, splitInto, textPage } from "./text";
 
 // The hand-written source credits on /about (its FAQ and "where it comes from"): translated
 // prose, so not built from sources.ts SOURCES, but a test fails if either leaves one out.
@@ -41,7 +41,7 @@ const FAQS = [
 const FOR_PEOPLE =
   "Type a place. See what the sky is doing to you right now: air, heat (and how survivable it really is), rain, sun and dust, alongside any official warning over that spot. Then one plain line, the single worst thing for you, whether you have asthma, work outdoors, or are minding a child or an older parent. No sign-up, no jargon.";
 const FREE =
-  "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.";
+  "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good: one of a growing set of free, open tools, with bharatlas and mdshare.";
 const SATHYA =
   "Sathya Sankaran wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.";
 const REF =
@@ -69,7 +69,8 @@ export function renderAbout(lang: Lang = "en"): string {
 
   const freeEn = FREE.replace("non-commercial, for good", "<b>non-commercial, for good</b>")
     .replace("bharatlas", `<a href="https://bharatlas.com">bharatlas</a>`)
-    .replace("mdshare", `<a href="https://mdshare.live">mdshare</a>`);
+    .replace("mdshare", `<a href="https://mdshare.live">mdshare</a>`)
+    .replace("free, open tools", `<a href="${TOOLS_URL}">free, open tools</a>`);
   const freeBody = splitInto(freeEn, FREE, lang, 3, (s) => pull(s[0]) + P(`${s[1]} ${s[2]}`));
 
   const ref = marked(REF, lang, REF.replace("?ref=your-site.com", "<b>?ref=your-site.com</b>"));

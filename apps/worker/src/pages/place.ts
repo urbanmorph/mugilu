@@ -7,13 +7,13 @@ import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } fr
 import { localName, nativeNames, placeBySlug, siblingPlaces, slugFromPath, titleName } from "../slugs";
 import { hubOf, stateName } from "../states";
 import { aroundLinks } from "../sister";
-import { lp, t, type Lang } from "../i18n";
+import { langAttr, lp, t, type Lang } from "../i18n";
 import { OFFLINE_NOTE_ID } from "../sw";
 import { HAZARDS } from "../hazards";
 import { ALERTS_JS } from "../alerts-ui";
 import { breadcrumb, SITE, ld, relTime } from "../ui/shell";
 import { HOME_OG } from "../og-html";
-import { istTime } from "../ist";
+import { istDay, istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import { fill, historyPanel, nearestRecordLine, type Borrow } from "../ui/history";
 import type { PlaceTrend } from "../placedaily";
@@ -26,14 +26,18 @@ import {
   questions,
   READING_HEADING,
   ROW_FACT,
+  colourWord,
+  pastWarningsText,
   say,
   warningsText,
 } from "../phrases";
+import { HISTORY_FROM, type PastAlert } from "../warnhistory";
 import {
   alertsBox,
   autoLane,
   band,
   bandChip,
+  fold,
   lane,
   linkButton,
   linkRow,
@@ -150,12 +154,36 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
   return parts.length ? panel(stack(parts.join("")), { tag: "nav", label: t("Nearby places", lang) }) : "";
 }
 
-/** The official warnings over the place, always shown: "none now" is worth saying. */
-function warningsPanel(fs: Fact[], place: string, lang: Lang): string {
+/** The official warnings over the place, always shown: "none now" is worth saying. Under them,
+ *  the place's past warnings since the archive began, when its history is kept. */
+function warningsPanel(fs: Fact[], place: string, lang: Lang, past: PastAlert[] | null): string {
   const w = fs.find((f): f is Extract<Fact, { key: "warnings" }> => f.key === "warnings");
   if (!w) return "";
+  const item = (a: PastAlert) =>
+    `<li><p class="t-meta">${[
+      istTime(a.from),
+      a.until && t("until X", lang).replace("X", istTime(a.until)),
+      colourWord(a.colour, lang),
+      a.office,
+    ]
+      .filter(Boolean)
+      .map(esc)
+      .join(" · ")}</p><p${langAttr(a.headline, lang)}>${esc(a.headline)}</p></li>`;
+  const history = past
+    ? `<p>${esc(pastWarningsText(past, place, lang))}</p>` +
+      (past.length
+        ? fold(
+            say("warn.past.each", lang, { since: istDay(HISTORY_FROM) }),
+            `<ul class="wlist">${past.map(item).join("")}</ul>`,
+            {
+              count: past.length,
+            },
+          )
+        : "")
+    : "";
   return panel(
     `<p>${esc(warningsText(w, place, lang))} ${esc(say("warn.source", lang))}</p>` +
+      history +
       `<p><a href="${esc(lp("/warnings", lang))}">${esc(say("warn.all", lang))}</a></p>`,
     { title: say("h.warn", lang, { place }), icon: "warn", tag: "section", id: "warn" },
   );
@@ -201,6 +229,8 @@ export function renderConditionsPage(
   /** A point's page: the nearest named place, whose record `trend` is (within BORROW_MAX_KM);
    *  farther, only a line to it. */
   from?: Omit<Borrow, "name">,
+  /** A named place's past warnings (warnhistory.ts); null when none is kept for it. */
+  past: PastAlert[] | null = null,
 ): string {
   const risk = ambientRisk(c, persona);
   const slug = `${c.location.lat},${c.location.lon}`;
@@ -259,7 +289,7 @@ export function renderConditionsPage(
     hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), answerLine(fs, short, lang), lang, native) +
       warningBand(c, lang) +
       readings +
-      band(warningsPanel(fs, short, lang)) +
+      band(warningsPanel(fs, short, lang, past)) +
       history +
       secondary([alertsCol, stationsPanel(c, lang), nearbyPanel(canonical, lang)]) +
       band(questionsPanel(fs, short, lang)) +

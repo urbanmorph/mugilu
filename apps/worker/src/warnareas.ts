@@ -6,6 +6,7 @@ import { loadWarningsSnapshot } from "./snapshot";
 import { simplifyRing } from "./simplify-path";
 import { reason } from "./logs";
 import { gzip } from "./gzip";
+import { recordHistory } from "./warnhistory";
 
 // The official warnings' areas, for the home map's Warnings layer and the /places marks. The
 // national feed (sachet.ts) names each alert but not where it is; its CAP file (~3 KB) holds the
@@ -266,6 +267,8 @@ export async function collectWarnAreas(env: Env, o: CollectOpts = {}): Promise<A
     console.log(`[warn-areas] ${feed.length} in the feed, ${stored.size} stored, ${todo.length} to fetch`);
 
     let next = 0;
+    // What this run archived, for the places' histories once the fetches are done.
+    const archivedNow: WarnArea[] = [];
     const worker = async () => {
       while (next < todo.length && next < maxNew && Date.now() - start < budgetMs) {
         const a = todo[next++];
@@ -273,6 +276,7 @@ export async function collectWarnAreas(env: Env, o: CollectOpts = {}): Promise<A
           const { map: area, archive } = await fetchArea(a, now, timeoutMs);
           // The archive first: a run stopped between the two refetches it, never loses it.
           await archiveWarnArea(env, archive);
+          archivedNow.push(archive);
           await storeWarnArea(env, area, true);
           run.fetched++;
           console.log(
@@ -294,6 +298,13 @@ export async function collectWarnAreas(env: Env, o: CollectOpts = {}): Promise<A
     };
     await Promise.all(Array.from({ length: Math.max(1, concurrency) }, worker));
     run.pending = todo.length - next;
+    // Each place's history (warnhistory.ts), one write per place, after the fetches so two
+    // alerts over one place never race. A failure here is logged; the archive has the alert.
+    if (archivedNow.length)
+      await recordHistory(env, archivedNow).then(
+        (r) => console.log(`[warn-history] ${archivedNow.length} alerts, ${r.places} places updated`),
+        (e) => console.error(`[warn-history] failed: ${reason(e)}`),
+      );
 
     // Prune what is no longer needed. A record still in the feed is kept (as a stub) so it is
     // never fetched again; once its alert has left the feed (about a week) it goes.

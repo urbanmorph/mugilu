@@ -55,3 +55,16 @@ test("renderAbout: the AI-agents line points to /mcp instead of repeating its to
   assert.match(renderAbout("hi"), /Claude, Cursor या किसी भी MCP क्लाइंट/); // translated, not English fallback
   assert.match(renderAbout("kn"), /Claude, Cursor ಅಥವಾ ಯಾವುದೇ MCP ಕ್ಲೈಂಟ್/);
 });
+
+test("/about and /terms: one of a growing set of tools, linked to the list, never a count", async () => {
+  const { renderTerms } = await import("../src/pages/terms");
+  for (const lang of ["en", "hi", "kn"] as const) {
+    assert.match(renderTerms(lang), /href="https:\/\/urbanmorph\.com\/synthesys\/#tools"/, lang);
+    for (const html of [renderAbout(lang), renderTerms(lang)])
+      assert.doesNotMatch(html, /third in a small set|तीसरा|ಮೂರನೆಯದು/, lang);
+  }
+  assert.match(
+    renderAbout("en"),
+    /one of a growing set of <a href="https:\/\/urbanmorph\.com\/synthesys\/#tools">free, open tools<\/a>/,
+  );
+});

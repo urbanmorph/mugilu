@@ -33,6 +33,7 @@ import { lp, type Lang } from "./i18n";
 import { robotsTxt, llmsTxt, sitemapXml, openApiSpec, mcpJson } from "./meta";
 import { geocodeList } from "./geocode";
 import { INDEXNOW_KEY, INDEXNOW_PATH, runIndexNow } from "./indexnow";
+import { loadHistory, type PastAlert } from "./warnhistory";
 import { buildSuggestions } from "./suggest";
 import { collectConditions } from "./collect";
 import { collectWarnings, inForce, renderWarningsMarkdown } from "./sachet";
@@ -525,7 +526,7 @@ export default {
           // BORROW_MAX_KM of its centre (READING_SENTENCES_SPEC.md section 9).
           const near = !named && fmt === "html" ? recordNear(lat, lon) : undefined;
           const recordOf = named ?? (near && near.km <= BORROW_MAX_KM ? near.place : undefined);
-          const [{ conditions, usage }, trend] = await Promise.all([
+          const [{ conditions, usage }, trend, past] = await Promise.all([
             lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName }),
             recordOf && fmt === "html"
               ? loadPlaceTrend(env, recordOf).catch((e) => {
@@ -533,9 +534,26 @@ export default {
                   return null;
                 })
               : null,
+            // A named place's past warnings (warnhistory.ts); a failed read leaves them off.
+            named && fmt === "html"
+              ? loadHistory(env, named.slug).catch((e) => {
+                  console.error(`[warn-history] ${named.slug}: ${reason(e)}`);
+                  return null;
+                })
+              : null,
           ]);
           // A reading built while an upstream was down is served, never cached.
-          const res = await renderConditions(conditions, ext, kiosk, persona, canonicalPath, placeName, trend, near);
+          const res = await renderConditions(
+            conditions,
+            ext,
+            kiosk,
+            persona,
+            canonicalPath,
+            placeName,
+            trend,
+            near,
+            past,
+          );
           return { res, usage, store: !conditions.degraded };
         },
         (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
@@ -551,6 +569,7 @@ export default {
       placeName?: string,
       trend: PlaceTrend | null = null,
       near?: { place: SlugPlace; km: number },
+      past: PastAlert[] | null = null,
     ): Response | Promise<Response> {
       // Canonical: the slug for a named page; for a coordinate page that lands on a
       // named district, canonicalise to that slug so /c/26.84,80.90 doesn't compete
@@ -593,6 +612,7 @@ export default {
           arbitrary,
           trend,
           near,
+          past,
         ),
         "text/html; charset=utf-8",
       );

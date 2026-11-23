@@ -30,6 +30,17 @@ export function inRing(ring: Ring, lon: number, lat: number): boolean {
   return inside;
 }
 
+/** A test for "inside any of these rings", with each ring's box checked first (cheap) so the
+ *  ray cast runs only for rings near the point. Coordinates in any one plane (lon/lat, pixels). */
+export function inAnyRing(rings: Ring[]): (x: number, y: number) => boolean {
+  const boxes = rings.map((ring) => {
+    const xs = ring.map((p) => p[0]);
+    const ys = ring.map((p) => p[1]);
+    return { ring, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+  });
+  return (x, y) => boxes.some((b) => x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1 && inRing(b.ring, x, y));
+}
+
 /** The point, if it is a real coordinate in India; else null. The one gate every
  *  coordinate input goes through (parseLatLon, parseCoordQuery). */
 export function indianPoint(lat: number, lon: number): { lat: number; lon: number } | null {

@@ -1,6 +1,6 @@
 import { t, type Lang } from "../i18n";
 import { cardBody, cards, pairs, pull, warnBox } from "../ui/components";
-import { P, builtBy, plain, splitInto, textPage } from "./text";
+import { P, TOOLS_URL, builtBy, plain, splitInto, textPage } from "./text";
 import { contactLink } from "../contact";
 
 // The live paragraphs, as keys (pages/text.ts splits them at sentence ends to fill the boxes).
@@ -116,8 +116,9 @@ export function renderTerms(lang: Lang = "en"): string {
       ]),
     (whole) => P(`${whole} ${alerts}`),
   );
-  const commons = t("A digital commons by {um}, alongside {bl} and {md}.", lang)
+  const commons = t("A digital commons by {um}: one of its {tools}, with {bl} and {md}.", lang)
     .replace("{um}", a("https://urbanmorph.com", "urbanmorph"))
+    .replace("{tools}", a(TOOLS_URL, t("free, open tools", lang)))
     .replace("{bl}", a("https://bharatlas.com", "bharatlas"))
     .replace("{md}", a("https://mdshare.live", "mdshare"));
 

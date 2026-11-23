@@ -35,6 +35,12 @@ export function istTime(w: When): string {
   return isNaN(d.getTime()) ? "" : `${IST_HM.format(d)} IST · ${IST_DM.format(d)}`;
 }
 
+/** The day alone: "27 Jun". */
+export function istDay(w: When): string {
+  const d = toDate(w);
+  return isNaN(d.getTime()) ? "" : IST_DM.format(d);
+}
+
 /** The clock time alone: "08:45 IST" (for a sentence that already says the day). */
 export function istClock(w: When): string {
   const d = toDate(w);
