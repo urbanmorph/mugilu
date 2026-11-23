@@ -251,7 +251,10 @@ test("renderTerms(kn): prose localized, source names + brand Latin, links preser
   const en = renderTerms("en");
   assert.match(en, /<h1 class="t-title">Terms &amp; attribution<\/h1>/);
   assert.match(en, /<b>code is MIT<\/b>/);
-  assert.match(en, /A digital commons by <a href="https:\/\/urbanmorph\.com">urbanmorph<\/a>: one of its <a href="https:\/\/urbanmorph\.com\/synthesys\/#tools">free, open tools<\/a>/);
+  assert.match(
+    en,
+    /A digital commons by <a href="https:\/\/urbanmorph\.com">urbanmorph<\/a>: one of its <a href="https:\/\/urbanmorph\.com\/synthesys\/#tools">free, open tools<\/a>/,
+  );
 });
 
 test("SEO: titles + descriptions are value-forward and localized (en/kn)", () => {
