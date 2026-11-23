@@ -491,7 +491,7 @@ const HISTORY_CSS = `
 .mg .tgrid{display:grid;gap:var(--sp4);align-items:start}
 @media (min-width:1000px){.mg .tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .mg .tsrc{gap:var(--sp2);flex-wrap:wrap}
-.mg .kind{font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:var(--t-xs);padding:2px var(--sp1);border:1px solid var(--line);border-radius:var(--r)}
+.mg .kindtag{font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:var(--t-xs);padding:2px var(--sp1);border:1px solid var(--line);border-radius:var(--r)}
 .mg .tdays summary{cursor:pointer;font-weight:600;min-height:var(--hit);display:flex;align-items:center}
 .mg .tkey{display:flex;flex-wrap:wrap;gap:var(--sp1) var(--sp4);margin:0;font-size:var(--t-sm)}
 .mg .tkey span{display:inline-flex;gap:6px;align-items:center}
