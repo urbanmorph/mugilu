@@ -303,7 +303,14 @@ export function nearestRecordLine(b: Borrow, lang: Lang): string {
 
 /** A place's last 30 days. `from`: a point's page showing the nearest place's record, which
  *  every sentence names (never "here"), with links to that place's page. */
-export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: string, from?: Borrow): string {
+/** `own`: the place's name, for its own record's title in the words people search. */
+export function historyPanel(
+  tr: PlaceTrend | null,
+  lang: Lang,
+  trendsHref?: string,
+  from?: Borrow,
+  own?: string,
+): string {
   if (!tr) return "";
   const n = tr.days.length;
   const others = OTHERS.map((h) => {
@@ -375,7 +382,11 @@ export function historyPanel(tr: PlaceTrend | null, lang: Lang, trendsHref?: str
     (trendsHref ? `<p>${linkButton(trendsHref, t("Every hazard, day by day", lang), false, "clock")}</p>` : "");
 
   return panel(`<div class="tsplit"><div>${parts.join("")}</div><div>${otherCol}</div></div>`, {
-    title: from ? fill("Last 30 days in {place}", lang, { place: from.name }) : t("Last 30 days", lang),
+    title: from
+      ? fill("Last 30 days in {place}", lang, { place: from.name })
+      : own
+        ? fill("{place} AQI and weather, last 30 days", lang, { place: own })
+        : t("Last 30 days", lang),
     icon: "clock",
     tag: "section",
     id: "last30",

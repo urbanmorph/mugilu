@@ -91,11 +91,12 @@ test("place page: the search phrase sits in the headline, and a two-sentence ans
 
 test("place page: each reading has a heading in searched words and its value in a sentence", () => {
   const html = page();
-  assert.match(html, /<h2 class="lab">Air quality \(AQI\)<\/h2>/);
-  assert.match(html, /<h2 class="lab">Temperature<\/h2>/);
-  assert.match(html, /<h2 class="lab">Wind speed<\/h2>/);
-  assert.match(html, /<h2 class="lab">Fog and visibility<\/h2>/);
-  assert.match(html, /<h2 class="lab">Rain now<\/h2>/);
+  // each reading's heading: the words people search, with the place
+  assert.match(html, /<h2 class="lab">Temperature in Bengaluru Rural now<\/h2>/);
+  assert.match(html, /<h2 class="lab">Wind in Bengaluru Rural now<\/h2>/);
+  assert.match(html, /<h2 class="lab">Fog in Bengaluru Rural now<\/h2>/);
+  assert.match(html, /<h2 class="lab">Is it raining in Bengaluru Rural\?<\/h2>/);
+  assert.match(html, /<h2 class="lab">Bengaluru Rural AQI now<\/h2>/);
   const s = text(html);
   assert.match(s, /The Airnet \(CSTEP\) station Rajanukunte, 6\.8 km away, measured it at 08:45 IST\./);
   assert.match(s, /The wind speed is 9 km\/h, from the east\. Gusts reach 21 km\/h\./);
@@ -104,7 +105,7 @@ test("place page: each reading has a heading in searched words and its value in 
 
 test("place page: the official warnings always have their section, also when there is none", () => {
   const html = page();
-  assert.match(html, /<h2 class="bar" id="warn">[\s\S]*?Official warnings for Bengaluru Rural/);
+  assert.match(html, /<h2 class="bar" id="warn">[\s\S]*?IMD and NDMA warnings for Bengaluru Rural/);
   assert.match(text(html), /No IMD or NDMA warning covers Bengaluru Rural now\./);
 });
 
@@ -126,14 +127,16 @@ test("place page: questions people ask, answered from the facts; the persona one
 test("place page: in Hindi and Kannada the new words are translated", () => {
   const hi = text(page(conditions(), "hi"));
   assert.match(hi, /बेंगलुरु|Bengaluru Rural में अभी वायु गुणवत्ता बहुत खराब है, AQI 351।/);
-  assert.match(hi, /हवा की गति/);
+  assert.match(hi, /में हवा अभी/);
+  assert.match(hi, /क्या .+ में बारिश हो रही है\?/);
   const kn = text(page(conditions(), "kn"));
   assert.match(kn, /ಬೆಂಗಳೂರು ಗ್ರಾಮಾಂತರ ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ವಾಯು ಗುಣಮಟ್ಟ ತುಂಬಾ ಕೆಟ್ಟದಾಗಿದೆ, AQI 351\./); // its Kannada name
   for (const s of [hi, kn])
     for (const en of [
       /Air quality and weather now/,
-      /Official warnings for/,
-      /Wind speed/,
+      /warnings for/,
+      /Wind in/,
+      /Is it raining/,
       /What is the AQI/,
       /The air quality is/,
     ])
