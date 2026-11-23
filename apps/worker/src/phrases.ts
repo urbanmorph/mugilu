@@ -5,7 +5,8 @@ import { localName, placeBySlug, slugForName } from "./slugs";
 import type { Conditions } from "./types";
 import { periodText } from "./heatnormals";
 import { t, type Lang } from "./i18n";
-import { istClock } from "./ist";
+import { istClock, istDay } from "./ist";
+import { HISTORY_FROM, type Colour, type PastAlert } from "./warnhistory";
 import { issuerName, warningLabel } from "./pages/warnings";
 import type { ProviderId } from "./types";
 import { LEVEL_WORD } from "./ui/components";
@@ -187,6 +188,27 @@ export const PHRASES = {
     hi: "चेतावनियाँ राष्ट्रीय SACHET फ़ीड से आती हैं। नई चेतावनी इस पेज पर सबसे ऊपर दिखती है।",
     kn: "ಎಚ್ಚರಿಕೆಗಳು ರಾಷ್ಟ್ರೀಯ SACHET ಫೀಡ್‌ನಿಂದ ಬರುತ್ತವೆ. ಹೊಸ ಎಚ್ಚರಿಕೆ ಈ ಪುಟದ ಮೇಲ್ಭಾಗದಲ್ಲಿ ಕಾಣುತ್ತದೆ.",
   },
+  "warn.past.none": {
+    en: "No official warning covered {place} since {since}.",
+    hi: "{since} से {place} पर कोई आधिकारिक चेतावनी नहीं रही।",
+    kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಇರಲಿಲ್ಲ.",
+  },
+  "warn.past.one": {
+    en: "Since {since}, 1 official warning covered {place}: {split}.",
+    hi: "{since} से {place} पर 1 आधिकारिक चेतावनी रही: {split}।",
+    kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ 1 ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಬಂದಿದೆ: {split}.",
+  },
+  "warn.past.many": {
+    en: "Since {since}, {n} official warnings covered {place}: {split}.",
+    hi: "{since} से {place} पर {n} आधिकारिक चेतावनियाँ रहीं: {split}।",
+    kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ {n} ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಬಂದಿವೆ: {split}.",
+  },
+  "warn.past.last": {
+    en: "The last was {colour} warning on {date}: {type}, from {issuer}.",
+    hi: "पिछली {colour} चेतावनी {date} को थी: {type}, {issuer} की ओर से।",
+    kn: "ಕೊನೆಯದು {date} ರಂದು {colour} ಎಚ್ಚರಿಕೆ: {type}, {issuer} ನೀಡಿದ್ದು.",
+  },
+  "warn.past.each": { en: "Each warning since {since}", hi: "{since} से हर चेतावनी", kn: "{since} ರಿಂದ ಪ್ರತಿ ಎಚ್ಚರಿಕೆ" },
   "warn.all": { en: "All warnings in India now", hi: "भारत की सभी चेतावनियाँ अभी", kn: "ಭಾರತದ ಎಲ್ಲಾ ಎಚ್ಚರಿಕೆಗಳು ಈಗ" },
   // Questions people ask. The place takes no ending in any language.
   "q.aqi": {
@@ -311,7 +333,16 @@ const COLOUR: Record<string, ByLang> = {
   yellow: { en: "a yellow", hi: "येलो", kn: "ಯೆಲ್ಲೋ" },
   orange: { en: "an orange", hi: "ऑरेंज", kn: "ಆರೆಂಜ್" },
   red: { en: "a red", hi: "रेड", kn: "ರೆಡ್" },
+  green: { en: "a green", hi: "ग्रीन", kn: "ಗ್ರೀನ್" },
   "": { en: "a", hi: "एक", kn: "ಒಂದು" },
+};
+/** A warning colour alone, as a count or a list reads it ("2 yellow"). */
+export const colourWord = (c: Colour, lang: Lang): string => COLOUR_WORD[c][lang];
+const COLOUR_WORD: Record<Colour, ByLang> = {
+  red: { en: "red", hi: "रेड", kn: "ರೆಡ್" },
+  orange: { en: "orange", hi: "ऑरेंज", kn: "ಆರೆಂಜ್" },
+  yellow: { en: "yellow", hi: "येलो", kn: "ಯೆಲ್ಲೋ" },
+  green: { en: "green", hi: "ग्रीन", kn: "ಗ್ರೀನ್" },
 };
 
 // ── Filling ─────────────────────────────────────────────────────────────────────────
@@ -403,7 +434,7 @@ export function warningsText(f: Extract<Fact, { key: "warnings" }>, place: strin
           issuer: issuerName(w.issuer),
           colour: (COLOUR[w.color.toLowerCase()] ?? COLOUR[""])[lang],
           place,
-          type: lang === "en" ? t(warningLabel(w.headline), lang).toLowerCase() : t(warningLabel(w.headline), lang),
+          type: kindOf(w.headline, lang),
         }),
       )
     : [say("warn.none", lang, { place })];
@@ -414,6 +445,33 @@ export function warningsText(f: Extract<Fact, { key: "warnings" }>, place: strin
         : say("warn.near.many", lang, { place, n: f.nearby.length }),
     );
   return parts.join(" ");
+}
+
+/** A warning's kind from its headline, as a sentence reads it ("heavy rain"). */
+const kindOf = (headline: string, lang: Lang) =>
+  lang === "en" ? t(warningLabel(headline), lang).toLowerCase() : t(warningLabel(headline), lang);
+
+/** A place's past warnings (warnhistory.ts, newest first): how many since the archive began,
+ *  by colour, most severe first, and the last one. */
+export function pastWarningsText(list: PastAlert[], place: string, lang: Lang): string {
+  const since = istDay(HISTORY_FROM);
+  if (!list.length) return say("warn.past.none", lang, { place, since });
+  const split = (Object.keys(COLOUR_WORD) as Colour[])
+    .map((c) => [c, list.filter((a) => a.colour === c).length] as const)
+    .filter(([, n]) => n)
+    .map(([c, n]) => `${n} ${COLOUR_WORD[c][lang]}`)
+    .join(", ");
+  const last = list[0];
+  return (
+    say(list.length === 1 ? "warn.past.one" : "warn.past.many", lang, { place, since, n: list.length, split }) +
+    " " +
+    say("warn.past.last", lang, {
+      colour: COLOUR[last.colour][lang],
+      date: istDay(last.from),
+      type: kindOf(last.headline, lang),
+      issuer: last.office,
+    })
+  );
 }
 
 const get = <K extends Fact["key"]>(fs: Fact[], key: K) =>

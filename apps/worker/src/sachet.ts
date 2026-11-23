@@ -118,6 +118,13 @@ export interface FeedAlert {
   expires?: string;
 }
 
+/** The issuing office from a SACHET issuer field: "controlroom@ndma.gov.in (IMD
+ *  Chennai)" -> "IMD Chennai"; the control-room address is the same on every alert. */
+export function issuerName(issuer: string): string {
+  const named = issuer.match(/\(([^)]+)\)\s*$/)?.[1];
+  return (named ?? issuer.replace(/\S+@\S+/g, "")).trim() || "NDMA";
+}
+
 export interface WarningsSnapshot {
   generated_at: string;
   count: number;

@@ -6,7 +6,7 @@ import { fill } from "../ui/history";
 import { lp, quoted, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { activeWarnings, px, py, type IndiaMap, type MapWarning } from "../indiamap";
-import { inRing } from "../india";
+import { inAnyRing } from "../india";
 import { ringsOf } from "../simplify-path";
 import { cycloneTitle, officialCyclone, type WarningsSnapshot } from "../sachet";
 import { alertParts } from "./warnings";
@@ -53,19 +53,11 @@ export function warnedPlaces(areas: string[]): string[] {
 
 /** The places whose point is inside any of the warning areas (their rings in map pixels). */
 export function placesUnder(ws: MapWarning[]): string[] {
-  const rings = ws
-    .flatMap((w) => ringsOf(w.d))
-    .map((ring) => {
-      const xs = ring.map((p) => p[0]);
-      const ys = ring.map((p) => p[1]);
-      return { ring, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
-    });
+  const rings = ws.flatMap((w) => ringsOf(w.d));
   if (!rings.length) return [];
+  const inside = inAnyRing(rings);
   return allSlugPlaces()
-    .filter((p) => {
-      const [x, y] = [px(p.lon), py(p.lat)];
-      return rings.some((r) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1 && inRing(r.ring, x, y));
-    })
+    .filter((p) => inside(px(p.lon), py(p.lat)))
     .map((p) => p.slug);
 }
 

@@ -1,5 +1,5 @@
 import { DESKTOP } from "../ui/standard";
-import { cycloneIn, cycloneTitle, type WarningsSnapshot } from "../sachet";
+import { cycloneIn, cycloneTitle, issuerName, type WarningsSnapshot } from "../sachet";
 import { esc } from "../html";
 import { langAttr, lp, t, type Lang } from "../i18n";
 import { isHttpUrl } from "./read";
@@ -40,12 +40,7 @@ import {
 
 type Alert = WarningsSnapshot["alerts"][number];
 
-/** The issuing office from a SACHET issuer field: "controlroom@ndma.gov.in (IMD
- *  Chennai)" -> "IMD Chennai"; the control-room address is the same on every alert. */
-export function issuerName(issuer: string): string {
-  const named = issuer.match(/\(([^)]+)\)\s*$/)?.[1];
-  return (named ?? issuer.replace(/\S+@\S+/g, "")).trim() || "NDMA";
-}
+export { issuerName };
 
 // What a warning is about, read from its headline (every SACHET alert carries the same
 // category, "Met"). The first that matches wins: "thunderstorm and rain" is a storm, and an
