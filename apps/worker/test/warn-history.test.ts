@@ -4,6 +4,7 @@ import {
   HISTORY_PREFIX,
   colourOf,
   loadHistory,
+  warnedDays,
   mergeHistory,
   pastAlert,
   placesInArea,
@@ -92,34 +93,61 @@ test("recordHistory: each alert under every place it covered, one write per plac
   assert.ok(await env.OAQ_R2.get(`${HISTORY_PREFIX}udupi.json`));
   assert.equal((await recordHistory(env, [area("1", "Severe")])).places, 0);
   assert.equal(await loadHistory(env, "almora"), null);
-  // An alert already in force when the archive began is kept, but not told.
+  // An alert already in force when the archive began, and a green notice (a traffic advisory,
+  // not a warning), are kept but not told; a later write keeps them.
   await recordHistory(env, [area("0", "Moderate", { effective: "2026-06-21T06:00:00+05:30" })]);
+  await recordHistory(env, [area("g", "Minor", { effective: "2026-07-25T11:05:00+05:30" })]);
+  await recordHistory(env, [area("5", "Moderate", { effective: "2026-11-20T06:00:00+05:30" })]);
   assert.deepEqual(
     (await loadHistory(env, "udupi"))!.map((x) => x.id),
-    ["1"],
+    ["5", "1"],
   );
+  const kept = (await (await env.OAQ_R2.get(`${HISTORY_PREFIX}udupi.json`))!.json()) as PastAlert[];
+  assert.deepEqual(kept.map((x) => x.id).sort(), ["0", "1", "5", "g"]);
+});
+
+test("warnedDays: each IST day an alert was in force, at the worst colour that day; none after today", () => {
+  const at = (id: string, sev: string, from: string, until: string) =>
+    pastAlert(area(id, sev, { effective: from, expires: until }));
+  const days = warnedDays(
+    [
+      at("1", "Moderate", "2026-11-01T13:00:00+05:30", "2026-11-02T13:00:00+05:30"), // two days
+      at("2", "Moderate", "2026-11-01T15:00:00+05:30", "2026-11-01T18:00:00+05:30"), // same day: no new day
+      at("3", "Severe", "2026-11-02T09:00:00+05:30", "2026-11-02T12:00:00+05:30"), // 2 Nov turns orange
+      at("4", "Moderate", "2026-11-23T20:00:00+05:30", "2026-11-26T20:00:00+05:30"), // ends after today
+    ],
+    Date.parse("2026-11-23T22:00:00+05:30"),
+  );
+  assert.deepEqual(Object.fromEntries(days), {
+    "2026-11-01": "yellow",
+    "2026-11-02": "orange",
+    "2026-11-23": "yellow",
+  });
 });
 
 const LIST: PastAlert[] = [
   pastAlert(area("3", "Moderate", { effective: "2026-11-18T06:00:00+05:30" })),
-  pastAlert(area("2", "Severe", { effective: "2026-10-02T06:00:00+05:30" })),
-  pastAlert(area("1", "Moderate", { effective: "2026-08-12T06:00:00+05:30" })),
+  pastAlert(area("2", "Severe", { effective: "2026-10-02T06:00:00+05:30", expires: "2026-10-02T21:00:00+05:30" })),
+  pastAlert(area("1", "Moderate", { effective: "2026-08-12T06:00:00+05:30", expires: "2026-08-12T21:00:00+05:30" })),
 ];
 
-test("pastWarningsText: how many since the archive began, by colour, and the last one", () => {
+const NOW = Date.parse("2026-11-23T12:00:00+05:30");
+
+test("pastWarningsText: on how many days since the archive began, by worst colour, and the last one", () => {
   assert.equal(
-    pastWarningsText(LIST, "Udupi", "en"),
-    "Since 27 Jun, 3 official warnings covered Udupi: 1 orange, 2 yellow. The last was a yellow warning on 18 Nov: rain, snow, from IMD Bengaluru.",
+    pastWarningsText(LIST, "Udupi", "en", NOW),
+    "Since 27 Jun, official warnings covered Udupi on 3 days: orange on 1, yellow on 2. The last was a yellow warning on 18 Nov: rain, snow, from IMD Bengaluru.",
   );
   assert.equal(
-    pastWarningsText(LIST.slice(1, 2), "Udupi", "en"),
-    "Since 27 Jun, 1 official warning covered Udupi: 1 orange. The last was an orange warning on 2 Oct: rain, snow, from IMD Bengaluru.",
+    pastWarningsText(LIST.slice(1, 2), "Udupi", "en", NOW),
+    "Since 27 Jun, official warnings covered Udupi on 1 day: orange on 1. The last was an orange warning on 2 Oct: rain, snow, from IMD Bengaluru.",
   );
-  assert.equal(pastWarningsText([], "Udupi", "en"), "No official warning covered Udupi since 27 Jun.");
+  assert.equal(pastWarningsText([], "Udupi", "en", NOW), "No official warning covered Udupi since 27 Jun.");
   for (const lang of ["hi", "kn"] as const) {
-    const s = pastWarningsText(LIST, "उडुपी", lang);
+    const s = pastWarningsText(LIST, "उडुपी", lang, NOW);
     assert.match(s, /उडुपी/);
-    assert.doesNotMatch(s, /covered|Since|The last|heavy rain/);
+    assert.match(s, /3/);
+    assert.doesNotMatch(s, /covered|Since|The last|heavy rain| on \d/);
   }
 });
 
@@ -158,7 +186,7 @@ test("place page: the warnings panel tells the past under the present, with each
   const html = page(LIST);
   const s = text(html);
   assert.match(s, /No IMD or NDMA warning covers Udupi now\./);
-  assert.match(s, /Since 27 Jun, 3 official warnings covered Udupi: 1 orange, 2 yellow\./);
+  assert.match(s, /Since 27 Jun, official warnings covered Udupi on 3 days: orange on 1, yellow on 2\./);
   assert.match(html, /<details class="fold"><summary>Each warning since 27 Jun<span class="n">3<\/span>/);
   assert.match(s, /06:00 IST · 18 Nov · until 21:00 IST · 18 Nov/);
   assert.match(s, /Heavy rain likely over Udupi and Dakshina Kannada\./);

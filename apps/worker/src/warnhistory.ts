@@ -63,13 +63,39 @@ export function mergeHistory(prev: PastAlert[], add: PastAlert[]): PastAlert[] |
 
 const keyOf = (slug: string) => `${HISTORY_PREFIX}${slug}.json`;
 
+/** Everything kept for a place, as stored; null when nothing is. */
+const loadKept = (env: Env, slug: string) => loadJson<PastAlert[]>(env, keyOf(slug));
+
 /** A place's past warnings since HISTORY_FROM, newest first; null when none has been kept for
- *  it. The archive also holds alerts already in force when it began (from 21 Jun): their days
- *  are not complete, so they are left out of what a page tells. */
+ *  it. Kept but not told: alerts already in force when the archive began (from 21 Jun), whose
+ *  days are not complete; and green alerts, which on IMD's scale mean no warning (they are
+ *  notices, such as a state authority's traffic advisory). */
 export const loadHistory = async (env: Env, slug: string): Promise<PastAlert[] | null> => {
-  const all = await loadJson<PastAlert[]>(env, keyOf(slug));
-  return all && all.filter((a) => (Date.parse(a.from) || 0) >= Date.parse(HISTORY_FROM));
+  const all = await loadKept(env, slug);
+  return all && all.filter((a) => a.colour !== "green" && (Date.parse(a.from) || 0) >= Date.parse(HISTORY_FROM));
 };
+
+const RANK: Colour[] = ["green", "yellow", "orange", "red"];
+const IST_MS = 5.5 * 3_600_000;
+const istDate = (ms: number) => new Date(ms + IST_MS).toISOString().slice(0, 10);
+const nextDate = (d: string) => istDate(Date.parse(`${d}T00:00:00+05:30`) + 86_400_000);
+
+/** Each IST day (YYYY-MM-DD) one of the alerts was in force, up to today, at the worst colour
+ *  in force that day. Alerts come every few hours (IMD's 3-hour nowcasts), so days, not
+ *  alerts, say how often a place was warned. */
+export function warnedDays(list: PastAlert[], now = Date.now()): Map<string, Colour> {
+  const days = new Map<string, Colour>();
+  for (const a of list) {
+    const from = Date.parse(a.from);
+    if (!from || from > now) continue;
+    const end = istDate(Math.min(Math.max(Date.parse(a.until) || from, from), now));
+    for (let d = istDate(from); d <= end; d = nextDate(d)) {
+      const had = days.get(d);
+      if (!had || RANK.indexOf(a.colour) > RANK.indexOf(had)) days.set(d, a.colour);
+    }
+  }
+  return days;
+}
 
 /** Add archived alerts to the history of every place each covered: one read and at most one
  *  write per place. An alert with no area covers no place. Idempotent. */
@@ -79,7 +105,7 @@ export async function recordHistory(env: Env, areas: WarnArea[]): Promise<{ plac
     for (const slug of placesInArea(a.rings)) by.set(slug, [...(by.get(slug) ?? []), pastAlert(a)]);
   let places = 0;
   for (const [slug, add] of by) {
-    const next = mergeHistory((await loadHistory(env, slug)) ?? [], add);
+    const next = mergeHistory((await loadKept(env, slug)) ?? [], add);
     if (!next) continue;
     await putJson(env, keyOf(slug), JSON.stringify(next), "no-store");
     places++;

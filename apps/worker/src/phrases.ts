@@ -6,7 +6,7 @@ import type { Conditions } from "./types";
 import { periodText } from "./heatnormals";
 import { t, type Lang } from "./i18n";
 import { istClock, istDay } from "./ist";
-import { HISTORY_FROM, type Colour, type PastAlert } from "./warnhistory";
+import { HISTORY_FROM, warnedDays, type Colour, type PastAlert } from "./warnhistory";
 import { issuerName, warningLabel } from "./pages/warnings";
 import type { ProviderId } from "./types";
 import { LEVEL_WORD } from "./ui/components";
@@ -194,15 +194,16 @@ export const PHRASES = {
     kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ ಯಾವುದೇ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಇರಲಿಲ್ಲ.",
   },
   "warn.past.one": {
-    en: "Since {since}, 1 official warning covered {place}: {split}.",
-    hi: "{since} से {place} पर 1 आधिकारिक चेतावनी रही: {split}।",
-    kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ 1 ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಬಂದಿದೆ: {split}.",
+    en: "Since {since}, official warnings covered {place} on 1 day: {split}.",
+    hi: "{since} से {place} पर 1 दिन आधिकारिक चेतावनी रही: {split}।",
+    kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ 1 ದಿನ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಇತ್ತು: {split}.",
   },
   "warn.past.many": {
-    en: "Since {since}, {n} official warnings covered {place}: {split}.",
-    hi: "{since} से {place} पर {n} आधिकारिक चेतावनियाँ रहीं: {split}।",
-    kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ {n} ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಬಂದಿವೆ: {split}.",
+    en: "Since {since}, official warnings covered {place} on {n} days: {split}.",
+    hi: "{since} से {place} पर {n} दिन आधिकारिक चेतावनी रही: {split}।",
+    kn: "{since} ರಿಂದ {place} ಪ್ರದೇಶಕ್ಕೆ {n} ದಿನ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಇತ್ತು: {split}.",
   },
+  "warn.past.on": { en: "{colour} on {n}", hi: "{n} दिन {colour}", kn: "{n} ದಿನ {colour}" },
   "warn.past.last": {
     en: "The last was {colour} warning on {date}: {type}, from {issuer}.",
     hi: "पिछली {colour} चेतावनी {date} को थी: {type}, {issuer} की ओर से।",
@@ -453,17 +454,18 @@ const kindOf = (headline: string, lang: Lang) =>
 
 /** A place's past warnings (warnhistory.ts, newest first): how many since the archive began,
  *  by colour, most severe first, and the last one. */
-export function pastWarningsText(list: PastAlert[], place: string, lang: Lang): string {
+export function pastWarningsText(list: PastAlert[], place: string, lang: Lang, now = Date.now()): string {
   const since = istDay(HISTORY_FROM);
-  if (!list.length) return say("warn.past.none", lang, { place, since });
+  const days = [...warnedDays(list, now).values()];
+  if (!list.length || !days.length) return say("warn.past.none", lang, { place, since });
   const split = (Object.keys(COLOUR_WORD) as Colour[])
-    .map((c) => [c, list.filter((a) => a.colour === c).length] as const)
+    .map((c) => [c, days.filter((d) => d === c).length] as const)
     .filter(([, n]) => n)
-    .map(([c, n]) => `${n} ${COLOUR_WORD[c][lang]}`)
+    .map(([c, n]) => say("warn.past.on", lang, { colour: COLOUR_WORD[c][lang], n }))
     .join(", ");
   const last = list[0];
   return (
-    say(list.length === 1 ? "warn.past.one" : "warn.past.many", lang, { place, since, n: list.length, split }) +
+    say(days.length === 1 ? "warn.past.one" : "warn.past.many", lang, { place, since, n: days.length, split }) +
     " " +
     say("warn.past.last", lang, {
       colour: COLOUR[last.colour][lang],
