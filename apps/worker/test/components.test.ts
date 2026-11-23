@@ -465,3 +465,15 @@ test("panel: an end slot shares the black bar with the heading, outside the head
     '<div class="panel"><div class="bar"><h2>India now</h2><span>8 min ago</span></div><div class="in"><p>x</p></div></div>',
   );
 });
+
+test("the header stays at the top as the page scrolls; anchors and side rails clear it", async () => {
+  const { STANDARD_CSS } = await import("../src/ui/standard");
+  assert.match(STANDARD_CSS, /\.mg \.sh\{position:sticky;top:0;z-index:8\}/);
+  // A link to #qa lands below the header, not under it; so do the sticky rails beside the text.
+  // On html, outside .mg, the spacing tokens are not defined: a literal (--sp2's 8 px).
+  assert.match(STANDARD_CSS, /html\{scroll-padding-top:calc\(var\(--sh-h\) \+ \.5rem\)\}/);
+  assert.match(STANDARD_CSS, /\.mg \.aside\{position:sticky;top:calc\(var\(--sh-h\) \+ var\(--sp4\)\)/);
+  assert.match(STANDARD_CSS, /\.mg \.rail\{display:block;position:sticky;top:calc\(var\(--sh-h\) \+ var\(--sp4\)\)/);
+  // The open menu on a phone scrolls inside the screen.
+  assert.match(STANDARD_CSS, /\.mg \.sh\.mjs\.open\{max-height:100dvh;overflow-y:auto\}/);
+});

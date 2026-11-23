@@ -15,6 +15,8 @@ export const MOBILE = "(max-width:999.98px)";
 /** The components of design-standard.md section 4, and the layouts of section 3a. */
 const COMPONENTS_CSS = `
 body{margin:0}
+:root{--sh-h:calc(4rem + env(safe-area-inset-top,0px))}
+html{scroll-padding-top:calc(var(--sh-h) + .5rem)}
 .mg *,.mg *::before,.mg *::after{box-sizing:border-box}
 .mg{position:relative;padding:0 0 var(--sp6)}
 .mg p,.mg h1,.mg h2,.mg h3,.mg h4,.mg ul,.mg ol,.mg dl,.mg dd,.mg figure,.mg fieldset,.mg blockquote,.mg pre{margin:0}
@@ -57,6 +59,7 @@ body{margin:0}
 .mg .lane.l2:has(>#yp[hidden])>.col>.grow{display:none}
 .mg .flow>*{break-inside:avoid;margin:0 0 var(--sp4)}
 .mg .fill{background:var(--lv);color:var(--on)}
+.mg .sh{position:sticky;top:0;z-index:8}
 .mg .sh{background:var(--bar);color:var(--on-bar);border-bottom:1px solid var(--bar-rule)}
 .mg .sh .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp4);padding-top:var(--sp2);padding-bottom:0}
 .mg .sh a{color:var(--on-bar);text-decoration:none}
@@ -387,7 +390,7 @@ body{margin:0}
 .mg .lane.l57{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
 .mg .lane.l75{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
 .mg .lane.la{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start}
-.mg .aside{position:sticky;top:var(--sp4);max-height:calc(100vh - var(--sp6));overflow:auto}
+.mg .aside{position:sticky;top:calc(var(--sh-h) + var(--sp4));max-height:calc(100vh - var(--sh-h) - var(--sp6));overflow:auto}
 .mg .flow{columns:2;column-gap:var(--sp5)}
 .mg .flow>.span{column-span:all}
 .mg .sh .wrap{flex-wrap:nowrap;gap:var(--sp5);padding-top:var(--sp2);padding-bottom:var(--sp2)}
@@ -422,7 +425,7 @@ body{margin:0}
 .mg .hero .toc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .mg .hero .toc>.bar{grid-column:1/-1}
 .mg .tsec{grid-template-columns:200px minmax(0,1fr);gap:0 var(--sp6)}
-.mg .rail{display:block;position:sticky;top:var(--sp4);align-self:start}
+.mg .rail{display:block;position:sticky;top:calc(var(--sh-h) + var(--sp4));align-self:start}
 .mg .rail svg{display:block;width:40px;height:40px;margin:var(--sp3) 0 var(--sp2)}
 .mg .cards.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mg .cards.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -438,6 +441,7 @@ body{margin:0}
 .mg .tbl{font-size:var(--t-sm)}
 .mg .tbl th,.mg .tbl td{padding:var(--sp2)}
 .mg .sh.mjs .nav{display:none}
+.mg .sh.mjs.open{max-height:100dvh;overflow-y:auto}
 .mg .sh.mjs .mtog{display:inline-flex;margin-left:auto}
 .mg .sh.mjs .btn:not([hidden]):not(.mtog)~.mtog{margin-left:var(--sp2)}
 .mg .sh.mjs.open :is(.nav,.langs){display:flex;flex-basis:100%;overflow:visible;mask-image:none;font-size:var(--t-base)}
