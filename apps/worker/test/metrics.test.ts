@@ -19,6 +19,9 @@ import {
   type Caller,
   registrableHost,
   pruneReferrers,
+  mcpClient,
+  MCP_CLIENTS,
+  REF_KEY,
   REFERRER_CAP,
 } from "../src/metrics";
 import { testD1 } from "./d1";
@@ -272,50 +275,47 @@ test("recordReferrer: captures the referring host (no www), domain-level", async
   assert.deepEqual(ins!.args, ["embed|example.com", "example.com", "embed"]); // host only, no path/www
 });
 
-test("recordReferrer: ?ref= self-identifies server-to-server callers", async () => {
-  const { db, calls } = mockDB();
-  await recordReferrer(
-    { METRICS: db } as unknown as Env,
-    "api",
-    req(),
-    new URL("https://mugilu.live/c/1,2.json?ref=MyApp"),
-  );
-  const ins = calls.find((c) => /referrers/.test(c.sql));
-  assert.deepEqual(ins!.args, ["api|myapp", "myapp", "api"]);
+test("recordReferrer: ?ref= keeps a domain only; any other value counts under one key, its words dropped", async () => {
+  const METRICS = testD1();
+  const env = { METRICS } as unknown as Env;
+  for (const ref of ["MyApp", "india-loss-damage", "news.example.com", "sahil-shaikh-19.lovable.app"])
+    await recordReferrer(env, "api", req(), new URL(`https://mugilu.live/c/1,2.json?ref=${ref}`));
+  const rows = (await METRICS.prepare("SELECT host, n FROM referrers ORDER BY host").all()).results;
+  assert.deepEqual(rows, [
+    { host: "example.com", n: 1 },
+    { host: "lovable.app", n: 1 },
+    { host: REF_KEY, n: 2 },
+  ]);
 });
 
-test("recordReferrer: skips our own pages and empty referrers", async () => {
+test("recordReferrer: skips our own pages, empty referrers, and a developer's own machine", async () => {
   const { db, calls } = mockDB();
   const e = { METRICS: db } as unknown as Env;
-  await recordReferrer(
-    e,
-    "api",
-    req({ referer: "https://mugilu.live/about" }),
-    new URL("https://mugilu.live/c/1,2.json"),
-  );
-  await recordReferrer(e, "api", req(), new URL("https://mugilu.live/c/1,2.json"));
-  assert.equal(calls.length, 0); // nothing written for own-host or no-referrer
+  const url = new URL("https://mugilu.live/c/1,2.json");
+  await recordReferrer(e, "api", req({ referer: "https://mugilu.live/about" }), url);
+  await recordReferrer(e, "api", req(), url);
+  await recordReferrer(e, "api", req({ referer: "http://localhost:3000/" }), url);
+  await recordReferrer(e, "api", req({ referer: "http://192.168.1.20/" }), url);
+  await recordReferrer(e, "api", req(), new URL("https://mugilu.live/c/1,2.json?ref=mugilu.live"));
+  assert.equal(calls.length, 0);
 });
 
-test("registrableHost: subdomains collapse to the registrable domain; hosting platforms keep the app", () => {
-  const uuid = "0b6f2c1e-9d1a-4b8e-8c3f-1a2b3c4d5e6f";
-  // every Lovable preview and project host of one app is one adopter
+test("registrableHost: subdomains collapse to the registrable domain; a hosting platform's apps to the platform", () => {
+  // An app's subdomain on a platform is often its maker's name (sahil-shaikh-19.lovable.app): only the
+  // platform is kept. Lovable's project host is the same platform.
   for (const h of [
-    `id-preview--${uuid}.lovable.app`,
-    `id-preview-1a2b3c--${uuid}.lovable.app`,
-    `${uuid}.lovableproject.com`,
-    `${uuid}.lovable.app`,
+    "id-preview--0b6f2c1e.lovable.app",
+    "0b6f2c1e.lovableproject.com",
+    "sahil-shaikh-19.lovable.app",
+    "lovable.app",
   ])
-    assert.equal(registrableHost(h), `${uuid}.lovable.app`, h);
-  assert.equal(registrableHost("preview--air-app.lovable.app"), "air-app.lovable.app");
-  assert.equal(registrableHost("air-app.lovable.app"), "air-app.lovable.app");
-  // other platforms: one app per subdomain, never the platform as a whole
-  assert.equal(registrableHost("me.github.io"), "me.github.io");
-  assert.equal(registrableHost("feature-x.my-site.pages.dev"), "my-site.pages.dev");
-  assert.equal(registrableHost("app.vercel.app"), "app.vercel.app");
-  assert.equal(registrableHost("w.acct.workers.dev"), "acct.workers.dev");
+    assert.equal(registrableHost(h), "lovable.app", h);
+  assert.equal(registrableHost("me.github.io"), "github.io");
+  assert.equal(registrableHost("feature-x.my-site.pages.dev"), "pages.dev");
+  assert.equal(registrableHost("app.vercel.app"), "vercel.app");
+  assert.equal(registrableHost("w.acct.workers.dev"), "workers.dev");
   for (const p of ["netlify.app", "web.app", "firebaseapp.com", "onrender.com", "herokuapp.com"])
-    assert.equal(registrableHost(`deep.app1.${p}`), `app1.${p}`, p);
+    assert.equal(registrableHost(`deep.app1.${p}`), p, p);
   assert.equal(registrableHost("news.example.com"), "example.com");
   assert.equal(registrableHost("example.com"), "example.com");
   // two-level public suffixes keep the name in front of them
@@ -324,27 +324,106 @@ test("registrableHost: subdomains collapse to the registrable domain; hosting pl
   assert.equal(registrableHost("a.b.co.uk"), "b.co.uk");
   // non-domains stay as they are
   assert.equal(registrableHost("localhost"), "localhost");
-  assert.equal(registrableHost("claude-code"), "claude-code");
   assert.equal(registrableHost("192.168.1.20"), "192.168.1.20");
 });
 
-test("recordReferrer: preview hosts of one app land in one row", async () => {
+test("mcpClient: the shared list (ops, yellide, mugilu, 23 Nov 2026); a monitor whatever product it names", () => {
+  const cases: [unknown, string][] = [
+    ["claude-code", "claude-code"],
+    ["Claude Code", "claude-code"],
+    ["claude.ai", "claude-ai"],
+    ["Claude Desktop", "claude-ai"],
+    ["Cursor-VSCode", "cursor"],
+    ["codex-mcp-client", "codex"],
+    ["openai-mcp", "chatgpt"],
+    ["codeium", "windsurf"],
+    ["Visual Studio Code", "vscode"],
+    ["cline-vscode", "vscode"],
+    ["cline", "cline"],
+    ["gemini-cli", "gemini"],
+    ["zed", "zed"],
+    ["mcp-inspector", "inspector"],
+    ["mcpbeat", "monitor"],
+    ["glimind-probe", "monitor"],
+    ["mcptry-health-check", "monitor"],
+    ["hostedmcp-liveness", "monitor"],
+    ["posthog-mcp-registry-probe", "monitor"],
+    ["glama", "monitor"],
+    ["glama-mcp-inspector", "monitor"],
+    ["ziwei-seat", "other"],
+    ["", "other"],
+    [null, "other"],
+  ];
+  for (const [name, want] of cases) assert.equal(mcpClient(name), want, String(name));
+  assert.deepEqual(MCP_CLIENTS, [
+    "monitor",
+    "claude-code",
+    "claude-ai",
+    "cursor",
+    "codex",
+    "chatgpt",
+    "windsurf",
+    "vscode",
+    "gemini",
+    "cline",
+    "zed",
+    "inspector",
+    "other",
+  ]);
+  for (const p of MCP_CLIENTS) assert.equal(mcpClient(p), p, "a product maps to itself");
+});
+
+test("recordMcpClient: only the product is kept, never the name the client sent", async () => {
   const METRICS = testD1();
   const env = { METRICS } as unknown as Env;
-  const url = new URL("https://mugilu.live/embed/1,2");
-  for (const h of ["id-preview--aaa.lovable.app", "aaa.lovableproject.com", "id-preview--bbb.lovable.app"])
-    await recordReferrer(env, "embed", req({ referer: `https://${h}/` }), url);
-  const rows = (await METRICS.prepare("SELECT host, n FROM referrers").all()).results;
+  for (const name of ["glimind-probe", "Claude Code", "claude-code", "ziwei-seat"]) await recordMcpClient(env, name);
+  const rows = (await METRICS.prepare("SELECT key, host, n FROM referrers ORDER BY host").all()).results;
   assert.deepEqual(rows, [
-    { host: "aaa.lovable.app", n: 2 },
-    { host: "bbb.lovable.app", n: 1 },
+    { key: "mcp|claude-code", host: "claude-code", n: 2 },
+    { key: "mcp|monitor", host: "monitor", n: 1 },
+    { key: "mcp|other", host: "other", n: 1 },
   ]);
 });
 
-test("recordMcpClient: client names are kept whole", async () => {
-  const { db, calls } = mockDB();
-  await recordMcpClient({ METRICS: db } as unknown as Env, "claude-code");
-  assert.deepEqual(calls[0].args, ["mcp|claude-code", "claude-code", "mcp"]);
+test("pruneReferrers: folds rows kept before 23 Nov into products, platforms and the ?ref= key; a second fold changes nothing", async () => {
+  const METRICS = testD1();
+  const env = { METRICS } as unknown as Env;
+  const now = Math.floor(Date.parse("2026-11-24T00:00:00Z") / 1000);
+  const ins = (surface: string, host: string, n: number, last = now - 3600) =>
+    METRICS.prepare("INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,?,?)")
+      .bind(`${surface}|${host}`, host, surface, n, last)
+      .run();
+  await ins("mcp", "mcpbeat", 931);
+  await ins("mcp", "glimind-probe", 803, now - 60);
+  await ins("mcp", "claude-code", 411);
+  await ins("mcp", "claudecode", 2); // "Claude Code" as the old code kept it
+  await ins("mcp", "ziwei-seat", 5);
+  await ins("api", "id-preview--48a8cfbb.lovable.app", 94);
+  await ins("api", "48a8cfbb.lovableproject.com", 26);
+  await ins("api", "sahil-shaikh-19.lovable.app", 53);
+  await ins("api", "india-loss-damage", 88);
+  await ins("api", "example.com", 10);
+  await ins("embed", "globalkatta.com", 853);
+  await pruneReferrers(env, now);
+  const read = async () =>
+    (await METRICS.prepare("SELECT key, host, surface, n, last FROM referrers ORDER BY key").all()).results;
+  const rows = await read();
+  assert.deepEqual(
+    rows.map((r) => [r.key, r.n]),
+    [
+      ["api|example.com", 10],
+      ["api|lovable.app", 173],
+      [`api|${REF_KEY}`, 88],
+      ["embed|globalkatta.com", 853],
+      ["mcp|claude-code", 413],
+      ["mcp|monitor", 1734],
+      ["mcp|other", 5],
+    ],
+  );
+  assert.equal(rows.find((r) => r.key === "mcp|monitor")!.last, now - 60, "the latest last is kept");
+  for (const r of rows) if (r.surface === "mcp") assert.ok(MCP_CLIENTS.includes(r.host as string), String(r.host));
+  await pruneReferrers(env, now);
+  assert.deepEqual(await read(), rows);
 });
 
 test("pruneReferrers: drops long-idle one-offs and caps the table, keeping the biggest adopters", async () => {

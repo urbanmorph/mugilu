@@ -271,8 +271,9 @@ const TWO_LEVEL_SUFFIXES = new Set([
   "com.br",
 ]);
 
-// Hosting platforms where each app gets its own subdomain: the adopter is that app,
-// so one label below the platform is kept (my-app.vercel.app, not vercel.app).
+// Hosting platforms where each app gets its own subdomain. That subdomain is often its
+// maker's own name (sahil-shaikh-19.lovable.app), so only the platform is kept ("never
+// who", 18 Nov 2026). Lovable's project host is the same platform as lovable.app.
 const PLATFORM_SUFFIXES = new Set([
   "lovable.app",
   "lovableproject.com",
@@ -287,38 +288,78 @@ const PLATFORM_SUFFIXES = new Set([
   "herokuapp.com",
 ]);
 
-/** The adopter a host stands for, so the many preview / per-branch subdomains of one
- *  site count once: the registrable domain (news.example.com -> example.com), or on a
- *  hosting platform the app's own subdomain. Lovable's preview and project hosts of
- *  one app (id-preview--<id>.lovable.app, id-preview-<hash>--<id>.lovable.app,
- *  preview--<name>.lovable.app, <id>.lovableproject.com) all become <id>.lovable.app.
- *  Values that are not domain names (localhost, an IP, a ?ref= or MCP client name)
- *  stay as-is. */
+const isDomain = (h: string) => h.includes(".") && !/^[\d.]+$/.test(h);
+
+/** The adopter a host stands for, so every subdomain of one site counts once: the
+ *  registrable domain (news.example.com -> example.com), or on a hosting platform the
+ *  platform itself (my-app.vercel.app -> vercel.app). Values that are not domain
+ *  names (localhost, an IP) stay as-is. */
 export function registrableHost(host: string): string {
-  if (!host.includes(".") || /^[\d.]+$/.test(host)) return host;
+  if (!isDomain(host)) return host;
   const labels = host.split(".").filter(Boolean);
   const suffix = labels.slice(-2).join(".");
-  if (PLATFORM_SUFFIXES.has(suffix) && labels.length > 2) {
-    const app = labels[labels.length - 3].replace(/^(?:id-)?preview(?:-[a-z0-9]+)?--/, "");
-    return `${app}.${suffix === "lovableproject.com" ? "lovable.app" : suffix}`;
-  }
+  if (PLATFORM_SUFFIXES.has(suffix)) return suffix === "lovableproject.com" ? "lovable.app" : suffix;
   const keep = TWO_LEVEL_SUFFIXES.has(suffix) ? 3 : 2;
   return labels.slice(-keep).join(".");
 }
 
-/** The referring site, or a sanitised ?ref= value. Null if there's none, or it's
- *  one of our own pages (not external adoption). */
+/** The one key every ?ref= value that is not a domain counts under: an app's own name for
+ *  itself is a name, so it is dropped and only the call is counted. */
+export const REF_KEY = "ref";
+
+/** A ?ref= value as kept: its site's domain, else REF_KEY. */
+const refAdopter = (ref: string) => {
+  const h = sanitizeHost(ref);
+  return isDomain(h) ? registrableHost(h) : REF_KEY;
+};
+
+/** The adopter for an /embed or API hit: the referring site's domain, or the ?ref= value
+ *  as refAdopter keeps it. Null when there's none, it's one of our own pages, or it's a
+ *  developer's own machine (localhost, an IP): not a site. */
 function referrerHost(req: Request, url: URL): string | null {
   const ref = url.searchParams.get("ref");
-  const raw = ref ? null : req.headers.get("referer") || req.headers.get("origin");
-  let host: string;
-  try {
-    host = ref ? sanitizeHost(ref) : raw ? sanitizeHost(new URL(raw).hostname) : "";
-  } catch {
-    return null;
+  let site: string;
+  if (ref) site = refAdopter(ref);
+  else {
+    const raw = req.headers.get("referer") || req.headers.get("origin");
+    let host = "";
+    try {
+      host = raw ? sanitizeHost(new URL(raw).hostname) : "";
+    } catch {
+      return null;
+    }
+    if (!isDomain(host)) return null;
+    site = registrableHost(host);
   }
-  const site = host && registrableHost(host);
-  return !site || site === "mugilu.live" ? null : site;
+  return site === "mugilu.live" ? null : site;
+}
+
+// MCP client products, from initialize's clientInfo.name. One list for ops, yellide
+// (overlooked), mugilu, irrational and schemes, agreed 23 Nov 2026 (reference copy:
+// ops-dashboard worker/src/mcp-clients.js): keep the copies identical. The first match
+// wins: a probe, uptime check or directory is a monitor whatever product it names, and
+// cursor-vscode is cursor. Anything else is "other". Only the product is kept, never the
+// name a client sent ("never who", 18 Nov 2026). Each product maps to itself.
+const CLIENTS: [string, RegExp][] = [
+  ["monitor", /probe|health|check|liveness|monitor|uptime|beat|registry|directory|census|catalog|glama/],
+  ["claude-code", /claude[ -]?code/],
+  ["claude-ai", /claude/],
+  ["cursor", /cursor/],
+  ["codex", /codex/],
+  ["chatgpt", /chatgpt|openai/],
+  ["windsurf", /windsurf|codeium/],
+  ["vscode", /visual studio code|vscode|copilot/],
+  ["gemini", /gemini/],
+  ["cline", /\bcline\b/],
+  ["zed", /^zed\b/],
+  ["inspector", /inspector/],
+];
+export const MCP_CLIENTS = [...CLIENTS.map(([k]) => k), "other"];
+
+/** The MCP client product for a clientInfo.name: one of MCP_CLIENTS. */
+export function mcpClient(name: unknown): string {
+  const s = typeof name === "string" ? name.toLowerCase().slice(0, 100) : "";
+  return CLIENTS.find(([, re]) => re.test(s))?.[0] ?? "other";
 }
 
 /** Bump the per-surface, per-host adoption counter (best-effort, domain-level). */
@@ -343,8 +384,7 @@ export async function recordReferrer(env: Env, surface: string, req: Request, ur
 
 /** Record which MCP client connected (the adoption metric for the agent door). */
 export async function recordMcpClient(env: Env, name: string): Promise<void> {
-  const host = sanitizeHost(name);
-  if (host) await bumpReferrer(env, "mcp", host);
+  await bumpReferrer(env, "mcp", mcpClient(name));
 }
 
 /** Most referrer rows kept. Adoption is a long tail; past this the smallest go. */
@@ -353,10 +393,46 @@ export const REFERRER_CAP = 1000;
 const REFERRER_IDLE_DAYS = 180;
 const REFERRER_KEEP_N = 10;
 
-/** Bound the referrers table (daily): it gained a row per new host forever. Drops
- *  long-idle one-offs, then caps the table at the REFERRER_CAP biggest adopters. */
+/** A kept row's host as the rules of 23 Nov 2026 keep it: an MCP client's product; else a
+ *  domain (platforms collapsed), with any other value (an old ?ref= name) as REF_KEY. */
+const foldedHost = (surface: string, host: string) =>
+  surface === "mcp" ? mcpClient(host) : isDomain(host) ? registrableHost(host) : REF_KEY;
+
+/** Statements that rewrite rows kept under older rules (an MCP client's own name, an
+ *  app's platform subdomain, a ?ref= name) as foldedHost keeps them, adding up rows
+ *  that land on one key (the latest `last` wins). None once the table is clean. */
+async function foldStmts(db: D1Database): Promise<D1PreparedStatement[]> {
+  const rows =
+    (
+      await db.prepare("SELECT key, host, surface, n, last FROM referrers").all<{
+        key: string;
+        host: string;
+        surface: string;
+        n: number;
+        last: number;
+      }>()
+    ).results ?? [];
+  const moved = rows.filter((r) => foldedHost(r.surface, r.host) !== r.host);
+  return moved.flatMap((r) => {
+    const host = foldedHost(r.surface, r.host);
+    return [
+      db
+        .prepare(
+          "INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,?,?) " +
+            "ON CONFLICT(key) DO UPDATE SET n=n+excluded.n, last=MAX(last,excluded.last)",
+        )
+        .bind(`${r.surface}|${host}`, host, r.surface, r.n, r.last),
+      db.prepare("DELETE FROM referrers WHERE key = ?").bind(r.key),
+    ];
+  });
+}
+
+/** The daily tidy of the referrers table, in one batch: fold rows kept under older rules
+ *  (foldStmts), drop long-idle one-offs, then cap the table at the REFERRER_CAP biggest
+ *  adopters (it gained a row per new host forever). */
 export async function pruneReferrers(env: Env, now = Math.floor(Date.now() / 1000)): Promise<void> {
   await env.METRICS.batch([
+    ...(await foldStmts(env.METRICS)),
     env.METRICS.prepare("DELETE FROM referrers WHERE last < ? AND n < ?").bind(
       now - REFERRER_IDLE_DAYS * 86_400,
       REFERRER_KEEP_N,

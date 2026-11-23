@@ -128,7 +128,7 @@ const PAGES = [
 ];
 const LATIN_OK = new Set(
   (
-    "mugilu bharatlas mdshare yellide urbanmorph via km kmph mm mg min h ref your-app iframe " +
+    "mugilu bharatlas mdshare yellide urbanmorph via km kmph mm mg min h ref your-site com iframe " +
     // the persona values typed into a display link (?as=asthma)
     "asthma child outdoor heart elderly"
   ).split(" "),

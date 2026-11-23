@@ -126,7 +126,7 @@ export async function handleMcp(req: Request, env: Env, ctx: ExecutionContext): 
 }
 
 function initialize(params: Record<string, unknown>, env: Env, ctx: ExecutionContext) {
-  // Adoption metric: record which client connected (name only, like ?ref=).
+  // Adoption metric: which client product connected (never the name it sent; see mcpClient).
   const client = params.clientInfo as { name?: string; version?: string } | undefined;
   if (client?.name) ctx.waitUntil(recordMcpClient(env, client.name));
   // Echo the client's protocol version if we support it, else our latest.
