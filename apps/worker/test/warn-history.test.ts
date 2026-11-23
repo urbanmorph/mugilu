@@ -217,6 +217,12 @@ test("place page: only the last 5 warnings, then a link to the place's full list
   for (const i of [5, 7]) assert.doesNotMatch(s, new RegExp(`Alert number ${i}\\.`));
   assert.match(html, /<a [^>]*href="\/c\/udupi\/warnings"[^>]*>[\s\S]*?All 8 alerts since 27 Jun/);
   assert.match(page(MANY, "hi"), /href="\/hi\/c\/udupi\/warnings"/);
+  // each alert its own row, as on /warnings: its colour as a chip (fill, shape and word), its kind
+  assert.equal((html.match(/<li class="wrow">/g) ?? []).length, 5);
+  assert.match(
+    html,
+    /<li class="wrow"><svg[^>]*>.*?<\/svg><p class="kind row-c"><span class="chip moderate"><svg[^>]*>.*?<\/svg>yellow<\/span><span>Other<\/span><\/p>/,
+  );
 });
 
 test("the full list: every alert, kept out of search, back to the place", () => {

@@ -527,8 +527,6 @@ const READ_CSS = `
 .mg .qa-list{display:grid;gap:var(--sp3) var(--sp5);grid-template-columns:repeat(auto-fill,minmax(min(100%,max(40ch,30%)),1fr))}
 .mg .qa-list dd{margin:var(--sp1) 0 0}
 .mg .qa-list dt{font-weight:600}
-.mg .wlist{display:grid;gap:var(--sp3)}
-.mg .wlist p+p{margin-top:var(--sp1)}
 @media (min-width:1000px){
 .mg .phero{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"t p" "w p";column-gap:var(--sp5);align-items:start}
 .mg .phero>.ptitle{grid-area:t}
