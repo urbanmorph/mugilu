@@ -108,7 +108,7 @@ A trimmed response (the full layers are `air`, `heat`, `heat_vs_normal`, `rain`,
 | `/embed/{lat},{lon}`                                      | Embeddable card, one line of HTML                                                            |
 | `/mcp`, `/openapi.json`, `/llms.txt`                      | MCP server; OpenAPI 3.1 spec; LLM manifest                                                   |
 | `/methodology`, `/terms`                                  | Every threshold used; terms and per-source credits                                           |
-| `?ref=your-app`                                           | Self-identify on any API or embed call (aggregate attribution)                               |
+| `?ref=your-site.com`                                      | Count an API or embed call under your site's domain (only a domain is kept, never a name)    |
 
 ### Refresh rate
 

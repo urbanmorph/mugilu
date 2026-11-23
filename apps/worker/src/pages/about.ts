@@ -45,7 +45,7 @@ const FREE =
 const SATHYA =
   "Sathya Sankaran wanted to stop starting from scratch each time: to pull the whole sky together into one view, every hazard over any point in India, and then hand that out as infrastructure, so the next map, story or alert doesn't have to begin from nothing.";
 const REF =
-  "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.";
+  "Add ?ref=your-site.com to any API or embed URL to have the call counted under your site's domain; no one's name is kept. It's all free and keyless.";
 
 /** The About page: the origin story and the two sides (for people, and as infrastructure). */
 export function renderAbout(lang: Lang = "en"): string {
@@ -72,7 +72,7 @@ export function renderAbout(lang: Lang = "en"): string {
     .replace("mdshare", `<a href="https://mdshare.live">mdshare</a>`);
   const freeBody = splitInto(freeEn, FREE, lang, 3, (s) => pull(s[0]) + P(`${s[1]} ${s[2]}`));
 
-  const ref = marked(REF, lang, REF.replace("?ref=your-app", "<b>?ref=your-app</b>"));
+  const ref = marked(REF, lang, REF.replace("?ref=your-site.com", "<b>?ref=your-site.com</b>"));
   const openapi = t("OpenAPI spec", lang);
   const snapshot = t("snapshot image", lang);
   const build = cards(

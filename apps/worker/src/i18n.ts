@@ -823,10 +823,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "सक्रिय चेतावनियाँ",
     kn: "ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳು",
   },
-  "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level). It's all free and keyless.":
+  "Add ?ref=your-site.com to any API or embed URL to have the call counted under your site's domain; no one's name is kept. It's all free and keyless.":
     {
-      hi: "अपने ऐप (संचयी, डोमेन-स्तर) की पहचान करने के लिए किसी भी API या एम्बेड URL में ?ref=your-app जोड़ें। यह सब निःशुल्क है और इसमें किसी कुंजी की आवश्यकता नहीं है।",
-      kn: "ನಿಮ್ಮ ಆ್ಯಪ್ ಅನ್ನು ಗುರುತಿಸಲು ಯಾವುದೇ API ಅಥವಾ ಎಂಬೆಡ್ URLಗೆ ?ref=your-app ಸೇರಿಸಿ (ಒಟ್ಟು ಎಣಿಕೆ ಮಾತ್ರ, ಡೊಮೇನ್ ಮಟ್ಟದಲ್ಲಿ). ಇದೆಲ್ಲವೂ ಉಚಿತ, ಯಾವುದೇ ಕೀ ಬೇಕಿಲ್ಲ.",
+      hi: "किसी भी API या एम्बेड URL में ?ref=your-site.com जोड़ें, ताकि कॉल आपकी साइट के डोमेन के तहत गिनी जाए; किसी का नाम नहीं रखा जाता। यह सब निःशुल्क है और इसमें किसी कुंजी की आवश्यकता नहीं है।",
+      kn: "ಯಾವುದೇ API ಅಥವಾ ಎಂಬೆಡ್ URLಗೆ ?ref=your-site.com ಸೇರಿಸಿ: ಕರೆಯನ್ನು ನಿಮ್ಮ ಸೈಟ್‌ನ ಡೊಮೇನ್ ಅಡಿಯಲ್ಲಿ ಎಣಿಸಲಾಗುತ್ತದೆ; ಯಾರ ಹೆಸರನ್ನೂ ಇಟ್ಟುಕೊಳ್ಳುವುದಿಲ್ಲ. ಇದೆಲ್ಲವೂ ಉಚಿತ, ಯಾವುದೇ ಕೀ ಬೇಕಿಲ್ಲ.",
     },
   Air: {
     hi: "वायु",

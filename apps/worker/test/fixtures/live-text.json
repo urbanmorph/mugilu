@@ -21,7 +21,7 @@
     "For developers: a documented OpenAPI spec, and every reading as JSON or Markdown.",
     "Embed it: a live card in one line of HTML (/embed/{lat},{lon}), or a snapshot image.",
     "Put it on a screen: a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at /display.",
-    "Add ?ref=your-app to any API or embed URL to identify your app (aggregate, domain-level).",
+    "Add ?ref=your-site.com to any API or embed URL to have the call counted under your site's domain; no one's name is kept.",
     "It's all free and keyless.",
     "Where it comes from",
     "mugilu owns no sensors and runs no forecasts.",

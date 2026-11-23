@@ -78,7 +78,7 @@ export function llmsTxt(siteUrl: string): string {
 - [Every place](${siteUrl}/places): every district and city by state, each marked when it lies inside an area under an official warning
 - Per-station: ${siteUrl}/s/{provider}/{id}.json and .md
 - Station JSON (/near, /index.json, /s/...json) carries "units" (CO mg/m3, other pollutants ug/m3, CPCB AQI) and lists only stations that reported within "fresh_within_hours" (3); each station has its reading time "ts"
-- Attribution: add ?ref=your-app to any API or /embed URL to identify your app or site (aggregate, domain-level; helps us see who builds on mugilu)
+- Attribution: add ?ref=your-site.com to any API or /embed URL to have the call counted under your site's domain (only a domain is kept; any other value is counted without its words, and no one's name is kept)
 - [About](${siteUrl}/about)
 - [Methodology](${siteUrl}/methodology): the Ambient thresholds, glass-box
 - [Terms and attribution](${siteUrl}/terms)
