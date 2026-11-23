@@ -29,21 +29,84 @@ test("llms.txt + OpenAPI: one honest User-Agent request, and the MCP count by ap
   assert.ok(s.info.description.includes(ask));
 });
 
-test("robots.txt: opens the site to all, but declines the SEO-audit scrapers", () => {
-  const t = robotsTxt("https://mugilu.live");
-  // the wildcard group still welcomes people, search engines and AI agents...
-  assert.match(t, /User-agent: \*\nAllow: \//);
-  // ...and we did NOT fat-finger a site-wide block on the wildcard
-  assert.doesNotMatch(t, /User-agent: \*\nDisallow: \//);
-  // the sitemap is still advertised
-  assert.match(t, /Sitemap: https:\/\/mugilu\.live\/sitemap\.xml/);
-  // the four backlink/SEO crawlers share one Disallow-all group (search + AI crawlers
-  // like Googlebot/GPTBot/amazonbot are deliberately NOT here)
-  assert.match(
-    t,
-    /User-agent: SemrushBot\nUser-agent: AhrefsBot\nUser-agent: MJ12bot\nUser-agent: DotBot\nDisallow: \//,
+// One policy with yellide (overlooked, 23 Nov 2026): search and answers yes, model training and SEO
+// backlink databases no. The Cloudflare zone blocks the same crawlers for those that ignore it.
+const TRAINING = [
+  "GPTBot",
+  "ClaudeBot",
+  "CCBot",
+  "Google-Extended",
+  "Applebot-Extended",
+  "meta-externalagent",
+  "Amazonbot",
+  "Bytespider",
+];
+const BACKLINKS = ["AhrefsBot", "SemrushBot", "MJ12bot", "DataForSeoBot", "SerpstatBot"];
+const ANSWERS = [
+  "Googlebot",
+  "Bingbot",
+  "Applebot",
+  "OAI-SearchBot",
+  "ChatGPT-User",
+  "Claude-SearchBot",
+  "Claude-User",
+  "PerplexityBot",
+  "Perplexity-User",
+  "ExaSearchBot",
+  "PetalBot",
+];
+
+/** {user agent (lower case): [field, value][]}, a group per run of User-agent lines and the rules after them. */
+function robotsGroups(t: string): Record<string, [string, string][]> {
+  const out: Record<string, [string, string][]> = {};
+  let agents: string[] = [];
+  let rules: [string, string][] | null = null;
+  for (const raw of t.split("\n")) {
+    const line = raw.split("#")[0].trim();
+    const i = line.indexOf(":");
+    if (i < 0) continue;
+    const field = line.slice(0, i).trim().toLowerCase();
+    const value = line.slice(i + 1).trim();
+    if (field === "user-agent") {
+      if (rules) [agents, rules] = [[], null];
+      agents.push(value.toLowerCase());
+    } else if (["allow", "disallow", "content-signal"].includes(field)) {
+      if (!rules) {
+        rules = [];
+        for (const a of agents) out[a] = rules;
+      }
+      rules.push([field, value]);
+    }
+  }
+  return out;
+}
+
+/** Whether a path is closed by a group's Disallow lines (with * as any run, as Google and Bing read it). */
+const closed = (rules: [string, string][], path: string) =>
+  rules.some(
+    ([f, v]) =>
+      f === "disallow" && v && new RegExp("^" + v.replace(/[.?+^$()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")).test(path),
   );
-  assert.doesNotMatch(t, /User-agent: (Googlebot|GPTBot|amazonbot)/i);
+
+test("robots.txt: everyone reads the site, the API and MCP; a screen's copy and the embed card are not crawled", () => {
+  const t = robotsTxt("https://mugilu.live");
+  const g = robotsGroups(t);
+  for (const p of ["/", "/c/almora", "/c/almora.json", "/c/almora.md", "/mcp", "/warnings", "/llms.txt"])
+    assert.ok(!closed(g["*"], p), p);
+  // the kiosk view and the embed card are the place page again, for a screen or another site
+  for (const p of ["/c/almora?kiosk", "/c/almora?as=asthma&kiosk", "/embed/12.97,77.59"])
+    assert.ok(closed(g["*"], p), p);
+  assert.deepEqual(
+    g["*"].find(([f]) => f === "content-signal"),
+    ["content-signal", "search=yes, ai-input=yes, ai-train=no"],
+  );
+  assert.match(t, /Sitemap: https:\/\/mugilu\.live\/sitemap\.xml/);
+});
+
+test("robots.txt: training and backlink crawlers are closed out; search and answer crawlers are never named", () => {
+  const g = robotsGroups(robotsTxt("https://mugilu.live"));
+  for (const a of [...TRAINING, ...BACKLINKS]) assert.ok(closed(g[a.toLowerCase()], "/c/almora"), a);
+  for (const a of ANSWERS) assert.equal(g[a.toLowerCase()], undefined, a);
 });
 
 test("sitemap.xml: every URL carries a <lastmod> (crawl-freshness signal)", () => {
