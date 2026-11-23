@@ -30,7 +30,7 @@
     "Why it's free",
     "The sky over you is a commons.",
     "Knowing it shouldn't cost money or sit locked inside someone's app.",
-    "mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.",
+    "mugilu is non-commercial, for good: one of a growing set of free, open tools, with bharatlas and mdshare.",
     "Common questions",
     "Is it safe to go outside right now?",
     "mugilu names the single worst hazard over your exact location and says plainly what to do, weighted for who you are: asthma, older adults, children, outdoor workers, or a heart condition.",
@@ -123,7 +123,7 @@
     "For visitor numbers and page performance, mugilu uses Cloudflare Web Analytics, which is cookieless, collects no personal data, and does no cross-site tracking or fingerprinting.",
     "Your saved places live only in your own browser.",
     "If you turn on alerts for a place, mugilu keeps that place (to about 1 km) and your browser's push address, only to send you official warnings for it, and deletes them when you turn alerts off.",
-    "A digital commons by urbanmorph, alongside bharatlas and mdshare."
+    "A digital commons by urbanmorph: one of its free, open tools, with bharatlas and mdshare."
   ],
   "mcp": [
     "mugilu MCP server for AI assistants",

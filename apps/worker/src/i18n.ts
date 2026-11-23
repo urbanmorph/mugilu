@@ -617,10 +617,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "कोई खाता नहीं, कोई साइन-अप नहीं, कोई विज्ञापन नेटवर्क नहीं। उपयोग की गिनती हमारी अपनी है और केवल कुल संख्या में रखी जाती है (निर्देशांक पूर्णांकित, IP पता नहीं, प्रति-व्यक्ति डेटा नहीं)। आगंतुकों की संख्या और पृष्ठ प्रदर्शन के लिए, mugilu Cloudflare Web Analytics का उपयोग करता है, जो कुकी-रहित है, कोई व्यक्तिगत डेटा एकत्र नहीं करता, और कोई क्रॉस-साइट ट्रैकिंग या फिंगरप्रिंटिंग नहीं करता। आपके सहेजे हुए स्थान केवल आपके अपने ब्राउज़र में रहते हैं।",
       kn: "ಯಾವುದೇ ಖಾತೆಗಳಿಲ್ಲ, ನೋಂದಣಿ ಇಲ್ಲ, ಜಾಹೀರಾತು ಜಾಲಗಳಿಲ್ಲ. ಬಳಕೆಯ ಎಣಿಕೆಗಳು ಪ್ರಥಮ-ಪಕ್ಷದವು ಮತ್ತು ಒಟ್ಟಾರೆಯಾಗಿವೆ (ದುಂಡಾದ ನಿರ್ದೇಶಾಂಕಗಳು, IP ಇಲ್ಲ, ವ್ಯಕ್ತಿವಾರು ದತ್ತಾಂಶ ಇಲ್ಲ). ಭೇಟಿ ಸಂಖ್ಯೆಗಳು ಮತ್ತು ಪುಟದ ಕಾರ್ಯಕ್ಷಮತೆಗಾಗಿ, mugilu Cloudflare Web Analytics ಅನ್ನು ಬಳಸುತ್ತದೆ, ಇದು ಕುಕೀರಹಿತವಾಗಿದ್ದು, ಯಾವುದೇ ವೈಯಕ್ತಿಕ ದತ್ತಾಂಶವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಅಡ್ಡ-ಸೈಟ್ ಟ್ರ್ಯಾಕಿಂಗ್ ಅಥವಾ ಫಿಂಗರ್‌ಪ್ರಿಂಟಿಂಗ್ ಮಾಡುವುದಿಲ್ಲ. ನಿಮ್ಮ ಉಳಿಸಿದ ಸ್ಥಳಗಳು ನಿಮ್ಮ ಸ್ವಂತ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಮಾತ್ರ ಇರುತ್ತವೆ.",
     },
-  "A digital commons by {um}, alongside {bl} and {md}.": {
-    hi: "{um} द्वारा एक डिजिटल कॉमन्स, {bl} और {md} के साथ।",
-    kn: "{um} ರಿಂದ ಒಂದು ಡಿಜಿಟಲ್ ಕಾಮನ್ಸ್, {bl} ಮತ್ತು {md} ಜೊತೆಗೆ.",
+  "A digital commons by {um}: one of its {tools}, with {bl} and {md}.": {
+    hi: "{um} द्वारा एक डिजिटल कॉमन्स: {bl} और {md} की तरह, उसके {tools} में से एक।",
+    kn: "{um} ರಿಂದ ಒಂದು ಡಿಜಿಟಲ್ ಕಾಮನ್ಸ್: {bl} ಮತ್ತು {md} ನಂತೆ, ಅದರ {tools} ಒಂದು.",
   },
+  "free, open tools": { hi: "मुफ़्त, खुले उपकरणों", kn: "ಉಚಿತ, ಮುಕ್ತ ಸಾಧನಗಳಲ್ಲಿ" },
   // Source/build list DETAIL lines (/terms sources, /about "Build on it"): localised too,
   // with {slots} for inline links. Source names, acronyms, licence codes and format/path
   // tokens (JSON/Markdown/OpenAPI/MCP//mcp//display/llms.txt) stay Latin.
@@ -1297,10 +1298,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "भारत का खुला आकाश, एक बार में एक निर्देशांक।",
     kn: "ಭಾರತದ ಮುಕ್ತ ಆಕಾಶ, ನಿರ್ದೇಶಾಂಕ ಒಂದೊಂದಾಗಿ.",
   },
-  "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good, the third in a small set of public tools alongside bharatlas and mdshare.":
+  "The sky over you is a commons. Knowing it shouldn't cost money or sit locked inside someone's app. mugilu is non-commercial, for good: one of a growing set of free, open tools, with bharatlas and mdshare.":
     {
-      hi: "आपके ऊपर का आकाश सबका साझा है। इसके बारे में जानने के लिए न पैसे लगने चाहिए, न यह किसी के ऐप में बंद रहना चाहिए। mugilu गैर-वाणिज्यिक है, जनहित के लिए है, और bharatlas और mdshare के साथ सार्वजनिक उपकरणों के एक छोटे समूह में तीसरा है।",
-      kn: "ನಿಮ್ಮ ಮೇಲಿರುವ ಆಕಾಶ ಎಲ್ಲರ ಸಾಮಾನ್ಯ ಸಂಪತ್ತು. ಅದರ ಬಗ್ಗೆ ತಿಳಿಯಲು ಹಣ ಖರ್ಚಾಗಬಾರದು, ಅಥವಾ ಅದು ಯಾರದೋ ಆ್ಯಪ್‌ನೊಳಗೆ ಬಂಧಿಯಾಗಿರಬಾರದು. mugilu ವಾಣಿಜ್ಯೇತರ, ಸಾರ್ವಜನಿಕ ಹಿತಕ್ಕಾಗಿ ಇರುವುದು, bharatlas ಮತ್ತು mdshare ಜೊತೆಗಿನ ಸಾರ್ವಜನಿಕ ಸಾಧನಗಳ ಸಣ್ಣ ಸಮೂಹದಲ್ಲಿ ಮೂರನೆಯದು.",
+      hi: "आपके ऊपर का आकाश सबका साझा है। इसके बारे में जानने के लिए न पैसे लगने चाहिए, न यह किसी के ऐप में बंद रहना चाहिए। mugilu गैर-वाणिज्यिक है, जनहित के लिए है: bharatlas और mdshare की तरह, यह मुफ़्त, खुले उपकरणों के एक बढ़ते समूह का हिस्सा है।",
+      kn: "ನಿಮ್ಮ ಮೇಲಿರುವ ಆಕಾಶ ಎಲ್ಲರ ಸಾಮಾನ್ಯ ಸಂಪತ್ತು. ಅದರ ಬಗ್ಗೆ ತಿಳಿಯಲು ಹಣ ಖರ್ಚಾಗಬಾರದು, ಅಥವಾ ಅದು ಯಾರದೋ ಆ್ಯಪ್‌ನೊಳಗೆ ಬಂಧಿಯಾಗಿರಬಾರದು. mugilu ವಾಣಿಜ್ಯೇತರ, ಸಾರ್ವಜನಿಕ ಹಿತಕ್ಕಾಗಿ ಇರುವುದು: bharatlas ಮತ್ತು mdshare ನಂತೆ, ಇದು ಉಚಿತ, ಮುಕ್ತ ಸಾಧನಗಳ ಬೆಳೆಯುತ್ತಿರುವ ಸಮೂಹದ ಭಾಗ.",
     },
   "The sun is very strong. Spend less time in the sun at midday.": {
     hi: "धूप बहुत तेज़ है। दोपहर में धूप में कम समय बिताएँ।",
