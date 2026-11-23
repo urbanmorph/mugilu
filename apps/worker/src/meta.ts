@@ -8,24 +8,60 @@ import { HAZARDS } from "./hazards";
 // pages, so people, search engines, and LLM crawlers all find the same surface.
 // All built from the live route set, no stale OAQ leftovers.
 
-/** robots.txt: allow everyone (search engines + AI crawlers included) and point
- *  at the sitemap. The one exception is the SEO-audit crawlers below: they hammer
- *  every district page (roughly a third of all traffic) to build backlink indexes
- *  that do nothing for a public-good site, so they are asked to stay out. Search
- *  and AI-answer crawlers stay welcome; declining these does not affect indexing. */
+/** robots.txt, one policy with yellide (23 Nov 2026): open to people's search and to agents answering
+ *  their questions (search engines, AI search, assistants fetching a page for a person), and to the API
+ *  and MCP; closed to model-training crawlers and SEO backlink databases, which send no one here. The
+ *  Cloudflare zone blocks the same crawlers for those that ignore this file. The kiosk view and the
+ *  embed card are a place page again, for a screen or another site: not crawled. Search and answer
+ *  crawlers are never named, so the wildcard group is theirs. */
 export function robotsTxt(siteUrl: string): string {
   return [
-    "# mugilu is for people, apps, and AI agents alike. Crawl freely.",
-    "# The exception is the SEO-audit crawlers below: heavy load, no value to a",
-    "# public-good site, so they are asked to stay out. Search + AI crawlers welcome.",
-    "User-agent: SemrushBot",
-    "User-agent: AhrefsBot",
-    "User-agent: MJ12bot",
-    "User-agent: DotBot",
+    "# mugilu is for people and for agents answering their questions: search engines, AI search and assistants",
+    "# that fetch a page for a person, the API (/c/{place}.json, see /openapi.json) and the MCP server (/mcp) are",
+    "# welcome. Content signals (https://contentsignals.org): search yes, answers that use our pages yes, model",
+    "# training no.",
+    "User-agent: *",
+    "Content-Signal: search=yes, ai-input=yes, ai-train=no",
+    "Allow: /",
+    "# The kiosk view and the embed card repeat a place page, for a screen or another site.",
+    "Disallow: /*?kiosk",
+    "Disallow: /*&kiosk",
+    "Disallow: /embed/",
+    "",
+    "# AI training: no.",
+    ...[
+      "GPTBot",
+      "ClaudeBot",
+      "CCBot",
+      "Google-Extended",
+      "Applebot-Extended",
+      "meta-externalagent",
+      "Amazonbot",
+      "Bytespider",
+      "cohere-ai",
+      "cohere-training-data-crawler",
+      "Diffbot",
+      "ImagesiftBot",
+      "Omgilibot",
+      "Timpibot",
+      "Reflectionbot",
+      "RiverBot",
+    ].map((a) => `User-agent: ${a}`),
     "Disallow: /",
     "",
-    "User-agent: *",
-    "Allow: /",
+    "# SEO backlink databases: they send no one here.",
+    ...[
+      "AhrefsBot",
+      "SemrushBot",
+      "MJ12bot",
+      "DataForSeoBot",
+      "SERankingBacklinksBot",
+      "SerpstatBot",
+      "DotBot",
+      "BLEXBot",
+      "barkrowler",
+    ].map((a) => `User-agent: ${a}`),
+    "Disallow: /",
     "",
     `Sitemap: ${siteUrl}/sitemap.xml`,
     "",
