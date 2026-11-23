@@ -16,7 +16,7 @@ export const MOBILE = "(max-width:999.98px)";
 const COMPONENTS_CSS = `
 body{margin:0}
 :root{--sh-h:calc(4rem + env(safe-area-inset-top,0px))}
-html{scroll-padding-top:calc(var(--sh-h) + var(--sp2))}
+html{scroll-padding-top:calc(var(--sh-h) + .5rem)}
 .mg *,.mg *::before,.mg *::after{box-sizing:border-box}
 .mg{position:relative;padding:0 0 var(--sp6)}
 .mg p,.mg h1,.mg h2,.mg h3,.mg h4,.mg ul,.mg ol,.mg dl,.mg dd,.mg figure,.mg fieldset,.mg blockquote,.mg pre{margin:0}
