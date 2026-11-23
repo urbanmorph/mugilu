@@ -75,6 +75,9 @@ export function splitInto(
   return parts ? layout(parts) : whole(marked(key, lang, enMarkup));
 }
 
+/** urbanmorph's list of its free, open tools, mugilu among them (it keeps the list current). */
+export const TOOLS_URL = "https://urbanmorph.com/synthesys/#tools";
+
 /** A paragraph. */
 export function P(html: string): string {
   return `<p>${html}</p>`;
