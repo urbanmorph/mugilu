@@ -162,14 +162,15 @@ function warningsPanel(fs: Fact[], place: string, lang: Lang, past: PastAlert[] 
   // district near by) on its own page, kept out of search.
   const recent = past?.slice(0, RECENT_WARNINGS) ?? [];
   const history = past
-    ? `<p>${esc(pastWarningsText(past, place, lang))}</p>` +
+    ? `<div class="stack"><p>${esc(pastWarningsText(past, place, lang))}</p>` +
       (recent.length
         ? `<p class="t-kicker">${esc(say("warn.past.recent", lang, { n: recent.length }))}</p>` +
           pastAlertList(recent, lang) +
           (past.length > recent.length && allHref
             ? `<p>${linkButton(allHref, say("warn.past.all", lang, { n: past.length, since: istDay(HISTORY_FROM) }), false, "list")}</p>`
             : "")
-        : "")
+        : "") +
+      `</div>`
     : "";
   return panel(
     `<p>${esc(warningsText(w, place, lang))} ${esc(say("warn.source", lang))}</p>` +
