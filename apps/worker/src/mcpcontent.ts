@@ -41,7 +41,7 @@ const CONTENT: Record<string, string> = {
 mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. Every threshold below is public.
 
 ## One read, never an average
-Each hazard is scored 0-3 (low / moderate / high / severe). The worst one becomes the Ambient, named in plain words ("Severe smoke", "High heat"). The other readings follow in order of risk (ambient.order). We never average. Averaging hides the thing that matters.
+Each hazard is scored 0-3 (low / moderate / high / severe). The worst one becomes the Ambient, named in plain words ("Severe air", "High heat"). The other readings follow in order of risk (ambient.order). We never average. Averaging hides the thing that matters.
 
 ## For who you are (persona)
 Pick a vulnerability (asthma, elderly, child, outdoor, heart) and the hazards that group feels more keenly are bumped up one level (an asthmatic sees moderate air as "high"). The read then says how that group should take it ("The air is moderate. For asthma & lungs, treat it as high."), and ambient.persona_layers marks that group's readings. A second "also watch" line surfaces a secondary trigger.
@@ -85,7 +85,7 @@ A conditions response (the conditions_at structuredContent, or /c/{lat},{lon}.js
 - heat: { temp_c, humidity_pct, apparent_c (feels-like), wet_bulb_c, wbgt_c }
 - heat_vs_normal: { today_max_c, normal_max_c, anomaly_c, notable, date, period, baseline, source } (today's modelled high vs the 1991-2020 ERA5 normal for this time of year here; null where unknown. today_max_c is the model's estimate for the whole local day, so partly forecast early in the day; notable is the unrounded difference reaching 3 °C. Not a heatwave declaration, which only IMD makes)
 - rain, uv, dust, wind, visibility: modelled layers
-- smoke: { kind: observed, count (fires), frp_sum (MW), nearest_km, radius_km, window_h: 24, role: hazard|context } (NASA FIRMS; low-confidence and sub-1 MW detections not counted; role is context, not a hazard, where the air here is good or satisfactory)
+- smoke: { kind: observed, count (fires), frp_sum (MW), nearest_km, radius_km, window_h: 24, role: "context" } (NASA FIRMS; low-confidence and sub-1 MW detections not counted). Fires near a place are context and never scored: the air reading carries any smoke that reaches the ground.
 - warnings: official NDMA/IMD alerts at the point
 
 ## ambient (the interpreted read)

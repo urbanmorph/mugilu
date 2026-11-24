@@ -107,7 +107,7 @@ test("methodology: the thresholds as a table with level-filled headers, the 0-3 
     /<th scope="col" class="fill moderate"><svg class="shape"[^>]*><path d="[^"]*"\/><\/svg>Moderate<\/th>/,
   );
   assert.match(html, /<th scope="row">Fog \(visibility, m\)<\/th><td>&lt;1000<\/td>/);
-  assert.match(html, /<th scope="row">Smoke \(fires &lt;100 km\)<\/th>/);
+  assert.doesNotMatch(html, /<th scope="row">Smoke/, "fires are context, not a threshold");
   assert.match(
     html,
     /<div class="levels" aria-hidden="true">(<div class="fill (low|moderate|high|severe)">.*?<\/div>){4}<\/div>/,

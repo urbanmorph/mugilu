@@ -7,8 +7,7 @@ import {
   fogLevelOf,
   heatLevelOf,
   rainLevelOf,
-  smokeIsContext,
-  smokeLevelAt,
+  firesInCleanAir,
   uvLevelOf,
   windLevelOf,
 } from "./score";
@@ -145,8 +144,8 @@ export function facts(c: Conditions, now = new Date()): Fact[] {
       count: c.smoke.count,
       nearest_km: c.smoke.nearest_km,
       radius_km: c.smoke.radius_km,
-      level: lv(smokeLevelAt(c)),
-      clean: smokeIsContext(c) ? c.air!.band : undefined,
+      level: lv(null),
+      clean: firesInCleanAir(c) ? c.air!.band : undefined,
       source: { kind: "satellite", by: "NASA FIRMS", radius_km: c.smoke.radius_km, window_h: FIRMS_WINDOW_H },
     });
   if (c.uv?.index != null)

@@ -457,10 +457,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "Ambient रीडिंग कैसे काम करती है",
     kn: "Ambient ಓದುವಿಕೆ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
   },
-  "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO and the Australian BoM; the smoke thresholds are mugilu's own. Informational only, never medical or safety advice.":
+  "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO and the Australian BoM. Informational only, never medical or safety advice.":
     {
-      hi: "mugilu अभी आकाश आपके साथ जो सबसे बुरा कर रहा है, उसे नाम देता है, आप कौन हैं उसके अनुसार। यह एक पारदर्शी व्यवस्था है: नीचे दी गई सीमाएँ सार्वजनिक हैं और CPCB, IMD, WHO और Australian BoM से आती हैं; धुएँ की सीमाएँ mugilu की अपनी हैं। केवल जानकारी के लिए, कभी भी चिकित्सा या सुरक्षा सलाह नहीं।",
-      kn: "ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಮಾಡುತ್ತಿರುವ ಅತ್ಯಂತ ಕೆಟ್ಟ ಒಂದೇ ವಿಷಯವನ್ನು mugilu ಹೆಸರಿಸುತ್ತದೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ. ಇದು ಒಂದು ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ: ಕೆಳಗಿನ ಮಿತಿಗಳು ಸಾರ್ವಜನಿಕವಾಗಿವೆ ಮತ್ತು CPCB, IMD, WHO ಮತ್ತು Australian BoMನಿಂದ ಬಂದಿವೆ; ಹೊಗೆಯ ಮಿತಿಗಳು mugilu ನದೇ. ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ಎಂದಿಗೂ ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಯಲ್ಲ.",
+      hi: "mugilu अभी आकाश आपके साथ जो सबसे बुरा कर रहा है, उसे नाम देता है, आप कौन हैं उसके अनुसार। यह एक पारदर्शी व्यवस्था है: नीचे दी गई सीमाएँ सार्वजनिक हैं और CPCB, IMD, WHO और Australian BoM से आती हैं। केवल जानकारी के लिए, कभी भी चिकित्सा या सुरक्षा सलाह नहीं।",
+      kn: "ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಮಾಡುತ್ತಿರುವ ಅತ್ಯಂತ ಕೆಟ್ಟ ಒಂದೇ ವಿಷಯವನ್ನು mugilu ಹೆಸರಿಸುತ್ತದೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ. ಇದು ಒಂದು ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ: ಕೆಳಗಿನ ಮಿತಿಗಳು ಸಾರ್ವಜನಿಕವಾಗಿವೆ ಮತ್ತು CPCB, IMD, WHO ಮತ್ತು Australian BoMನಿಂದ ಬಂದಿವೆ. ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ಎಂದಿಗೂ ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಯಲ್ಲ.",
     },
   "One read, never an average": {
     hi: "एक ही रीडिंग, कभी औसत नहीं",
@@ -469,10 +469,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   // Methodology (2026-10): bands as the data names them, the order of risk, the persona
   // sentence and today against normal. Built from the reviewed text; new sentences are
   // drafts pending native review.
-  'Each hazard is scored 0 to 3 (low, moderate, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.':
+  'Each hazard is scored 0 to 3 (low, moderate, high, severe). We surface the worst one, named in plain words ("Severe air", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.':
     {
-      hi: 'प्रत्येक खतरे को 0 से 3 तक अंक दिए जाते हैं (कम, मध्यम, अधिक, गंभीर)। हम सबसे बुरे को सरल शब्दों में नाम देकर दिखाते हैं ("गंभीर धुआं", "अधिक गर्मी"), क्या करना है इस पर एक वाक्य के साथ। बाकी आँकड़े जोखिम के क्रम में आते हैं। औसत निकालने से जो मायने रखता है वह छिप जाएगा, इसलिए हम कभी औसत नहीं निकालते।',
-      kn: 'ಪ್ರತಿಯೊಂದು ಅಪಾಯಕ್ಕೂ 0 ರಿಂದ 3 ರವರೆಗೆ ಅಂಕ ನೀಡಲಾಗುತ್ತದೆ (ಕಡಿಮೆ · ಮಧ್ಯಮ · ಹೆಚ್ಚು · ತೀವ್ರ). ನಾವು ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ಸರಳ ಪದಗಳಲ್ಲಿ ಹೆಸರಿಸಿ ತೋರಿಸುತ್ತೇವೆ ("ತೀವ್ರ ಹೊಗೆ", "ಹೆಚ್ಚು ಬಿಸಿಲು"), ಏನು ಮಾಡಬೇಕು ಎಂಬುದರ ಬಗ್ಗೆ ಒಂದೇ ವಾಕ್ಯದೊಂದಿಗೆ. ಉಳಿದ ಮಾಹಿತಿಯು ಅಪಾಯದ ಕ್ರಮದಲ್ಲಿ ಬರುತ್ತದೆ. ಸರಾಸರಿ ಮಾಡಿದರೆ ಮುಖ್ಯವಾದ ವಿಷಯ ಮರೆಯಾಗುತ್ತದೆ, ಆದ್ದರಿಂದ ನಾವು ಎಂದಿಗೂ ಸರಾಸರಿ ಮಾಡುವುದಿಲ್ಲ.',
+      hi: 'प्रत्येक खतरे को 0 से 3 तक अंक दिए जाते हैं (कम, मध्यम, अधिक, गंभीर)। हम सबसे बुरे को सरल शब्दों में नाम देकर दिखाते हैं ("गंभीर वायु", "अधिक गर्मी"), क्या करना है इस पर एक वाक्य के साथ। बाकी आँकड़े जोखिम के क्रम में आते हैं। औसत निकालने से जो मायने रखता है वह छिप जाएगा, इसलिए हम कभी औसत नहीं निकालते।',
+      kn: 'ಪ್ರತಿಯೊಂದು ಅಪಾಯಕ್ಕೂ 0 ರಿಂದ 3 ರವರೆಗೆ ಅಂಕ ನೀಡಲಾಗುತ್ತದೆ (ಕಡಿಮೆ · ಮಧ್ಯಮ · ಹೆಚ್ಚು · ತೀವ್ರ). ನಾವು ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ಸರಳ ಪದಗಳಲ್ಲಿ ಹೆಸರಿಸಿ ತೋರಿಸುತ್ತೇವೆ ("ತೀವ್ರ ವಾಯು", "ಹೆಚ್ಚು ಬಿಸಿಲು"), ಏನು ಮಾಡಬೇಕು ಎಂಬುದರ ಬಗ್ಗೆ ಒಂದೇ ವಾಕ್ಯದೊಂದಿಗೆ. ಉಳಿದ ಮಾಹಿತಿಯು ಅಪಾಯದ ಕ್ರಮದಲ್ಲಿ ಬರುತ್ತದೆ. ಸರಾಸರಿ ಮಾಡಿದರೆ ಮುಖ್ಯವಾದ ವಿಷಯ ಮರೆಯಾಗುತ್ತದೆ, ಆದ್ದರಿಂದ ನಾವು ಎಂದಿಗೂ ಸರಾಸರಿ ಮಾಡುವುದಿಲ್ಲ.',
     },
   "For who you are": {
     hi: "आप कौन हैं, उसके अनुसार",
@@ -519,10 +519,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "कोहरा (दृश्यता, m)",
     kn: "ಮಂಜು (ಗೋಚರತೆ, m)",
   },
-  "Smoke (fires <100 km)": {
-    hi: "धुआं (100 km के भीतर आग)",
-    kn: "ಹೊಗೆ (100 km ಒಳಗಿನ ಬೆಂಕಿ)",
-  },
   "UV (index)": {
     hi: "UV (सूचकांक)",
     kn: "UV (ಸೂಚ್ಯಂಕ)",
@@ -531,10 +527,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "धूल (µg/m³)",
     kn: "ಧೂಳು (µg/m³)",
   },
-  "Heat takes the worst of feels-like, wet-bulb and WBGT, and the persona toggle bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); the smoke thresholds are mugilu's own, used only where the air is not good or satisfactory. The full logic is the open {score}, and every layer's source and licence is on {terms}.":
+  "Heat takes the worst of feels-like, wet-bulb and WBGT, and the persona toggle bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); fires seen by satellite are shown for context and never scored, because the air reading carries any smoke that reaches you. The full logic is the open {score}, and every layer's source and licence is on {terms}.":
     {
-      hi: "गर्मी, महसूस-तापमान, वेट-बल्ब और WBGT में से सबसे बुरा लेती है, और प्रोफ़ाइल टॉगल एक संवेदनशील खतरे को एक स्तर ऊपर कर देता है। ये सीमाएँ CPCB (वायु), IMD और Australian BoM (गर्मी / ठंड / हवा) और WHO (UV) से आती हैं; धुएँ की सीमाएँ mugilu की अपनी हैं, और तभी गिनी जाती हैं जब हवा अच्छी या संतोषजनक न हो। पूरा तर्क खुला {score} है, और हर परत का स्रोत और लाइसेंस {terms} पृष्ठ पर है।",
-      kn: "ಬಿಸಿಲು ಎಂಬುದು ಅನಿಸುವ ತಾಪಮಾನ, ವೆಟ್ ಬಲ್ಬ್ ಮತ್ತು WBGT ಇವುಗಳಲ್ಲಿ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ, ಮತ್ತು ಪರ್ಸೋನಾ ಟಾಗಲ್ ಆ ಗುಂಪಿಗೆ ಹೆಚ್ಚು ತಟ್ಟುವ ಅಪಾಯವನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸುತ್ತದೆ. ಈ ಮಟ್ಟಗಳು CPCB (ವಾಯು ಗುಣಮಟ್ಟ), IMD ಮತ್ತು Australian BoM (ಬಿಸಿಲು / ಚಳಿ / ಗಾಳಿ) ಮತ್ತು WHO (UV) ಇವುಗಳಿಂದ ಬರುತ್ತವೆ; ಹೊಗೆಯ ಮಿತಿಗಳು mugilu ನದೇ, ಮತ್ತು ವಾಯು ಗುಣಮಟ್ಟ ಉತ್ತಮ ಅಥವಾ ತೃಪ್ತಿಕರ ಇಲ್ಲದಿದ್ದಾಗ ಮಾತ್ರ ಎಣಿಕೆಯಾಗುತ್ತವೆ. ಸಂಪೂರ್ಣ ತರ್ಕವು ಮುಕ್ತ {score} ಆಗಿದೆ, ಮತ್ತು ಪ್ರತಿ ಪದರದ ಮೂಲ ಮತ್ತು ಪರವಾನಗಿ {terms} ಪುಟದಲ್ಲಿದೆ.",
+      hi: "गर्मी, महसूस-तापमान, वेट-बल्ब और WBGT में से सबसे बुरा लेती है, और प्रोफ़ाइल टॉगल एक संवेदनशील खतरे को एक स्तर ऊपर कर देता है। ये सीमाएँ CPCB (वायु), IMD और Australian BoM (गर्मी / ठंड / हवा) और WHO (UV) से आती हैं; उपग्रह से दिखी आग केवल संदर्भ के लिए दिखाई जाती है और कभी अंक नहीं पाती, क्योंकि आप तक पहुँचने वाला धुआँ वायु रीडिंग में दिखता है। पूरा तर्क खुला {score} है, और हर परत का स्रोत और लाइसेंस {terms} पृष्ठ पर है।",
+      kn: "ಬಿಸಿಲು ಎಂಬುದು ಅನಿಸುವ ತಾಪಮಾನ, ವೆಟ್ ಬಲ್ಬ್ ಮತ್ತು WBGT ಇವುಗಳಲ್ಲಿ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ, ಮತ್ತು ಪರ್ಸೋನಾ ಟಾಗಲ್ ಆ ಗುಂಪಿಗೆ ಹೆಚ್ಚು ತಟ್ಟುವ ಅಪಾಯವನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸುತ್ತದೆ. ಈ ಮಟ್ಟಗಳು CPCB (ವಾಯು ಗುಣಮಟ್ಟ), IMD ಮತ್ತು Australian BoM (ಬಿಸಿಲು / ಚಳಿ / ಗಾಳಿ) ಮತ್ತು WHO (UV) ಇವುಗಳಿಂದ ಬರುತ್ತವೆ; ಉಪಗ್ರಹ ಕಂಡ ಬೆಂಕಿಯನ್ನು ಸಂದರ್ಭಕ್ಕಾಗಿ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ, ಎಂದಿಗೂ ಅಂಕ ನೀಡಲಾಗುವುದಿಲ್ಲ, ಏಕೆಂದರೆ ನಿಮ್ಮನ್ನು ತಲುಪುವ ಹೊಗೆ ವಾಯು ಗುಣಮಟ್ಟದ ರೀಡಿಂಗ್‌ನಲ್ಲಿ ಕಾಣುತ್ತದೆ. ಸಂಪೂರ್ಣ ತರ್ಕವು ಮುಕ್ತ {score} ಆಗಿದೆ, ಮತ್ತು ಪ್ರತಿ ಪದರದ ಮೂಲ ಮತ್ತು ಪರವಾನಗಿ {terms} ಪುಟದಲ್ಲಿದೆ.",
     },
   "terms & attribution": {
     hi: "शर्तें और श्रेय",
@@ -708,10 +704,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "mugilu कैसे काम करता है: Ambient रीडिंग की व्याख्या",
     kn: "mugilu ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ: Ambient ಓದುವಿಕೆಯ ವಿವರಣೆ",
   },
-  "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.":
+  "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, UV and dust, and how the persona weighting works.":
     {
-      hi: "mugilu की Ambient रीडिंग की गणना कैसे होती है: वायु, गर्मी, ठंड, हवा, कोहरा, धुआं, UV और धूल के लिए सार्वजनिक, जाँचने-योग्य सीमाएँ, और प्रोफ़ाइल भार कैसे काम करता है।",
-      kn: "mugilu ನ Ambient ಓದುವಿಕೆಯನ್ನು ಹೇಗೆ ಲೆಕ್ಕಹಾಕಲಾಗುತ್ತದೆ: ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಗಾಳಿ, ಮಂಜು, ಹೊಗೆ, UV ಮತ್ತು ಧೂಳಿಗೆ ಸಾರ್ವಜನಿಕ, ಪರಿಶೀಲಿಸಬಹುದಾದ ಮಿತಿಗಳು, ಮತ್ತು ನೀವು ಆರಿಸುವ ಗುಂಪಿಗೆ ತಕ್ಕಂತೆ ಅಪಾಯದ ಹಂತ ಹೇಗೆ ಬದಲಾಗುತ್ತದೆ.",
+      hi: "mugilu की Ambient रीडिंग की गणना कैसे होती है: वायु, गर्मी, ठंड, हवा, कोहरा, UV और धूल के लिए सार्वजनिक, जाँचने-योग्य सीमाएँ, और प्रोफ़ाइल भार कैसे काम करता है।",
+      kn: "mugilu ನ Ambient ಓದುವಿಕೆಯನ್ನು ಹೇಗೆ ಲೆಕ್ಕಹಾಕಲಾಗುತ್ತದೆ: ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಗಾಳಿ, ಮಂಜು, UV ಮತ್ತು ಧೂಳಿಗೆ ಸಾರ್ವಜನಿಕ, ಪರಿಶೀಲಿಸಬಹುದಾದ ಮಿತಿಗಳು, ಮತ್ತು ನೀವು ಆರಿಸುವ ಗುಂಪಿಗೆ ತಕ್ಕಂತೆ ಅಪಾಯದ ಹಂತ ಹೇಗೆ ಬದಲಾಗುತ್ತದೆ.",
     },
   "mugilu: terms, sources and attribution": {
     hi: "mugilu: शर्तें, स्रोत और श्रेय",
@@ -943,10 +939,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "संतोषजनक",
     kn: "ತೃಪ್ತಿಕರ",
   },
-  "There are fires near here. If you are sensitive, watch the air.": {
-    hi: "पास में आग लगी हुई है। अगर आप संवेदनशील हैं, तो वायु गुणवत्ता पर नज़र रखें।",
-    kn: "ಹತ್ತಿರದಲ್ಲಿ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ. ಸೂಕ್ಷ್ಮ ವ್ಯಕ್ತಿಗಳು ವಾಯು ಗುಣಮಟ್ಟವನ್ನು ಗಮನಿಸಬೇಕು.",
-  },
   "For AI agents": {
     hi: "AI एजेंट्स के लिए",
     kn: "AI ಏಜೆಂಟ್‌ಗಳಿಗೆ",
@@ -988,10 +980,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "गर्मी अधिक है। कम मेहनत करें, पानी पिएँ और छाया में रहें।",
     kn: "ಬಿಸಿಲು ಹೆಚ್ಚಾಗಿದೆ. ಶ್ರಮದಾಯಕ ಕೆಲಸ ಕಡಿಮೆ ಮಾಡಿ, ಸಾಕಷ್ಟು ನೀರು ಕುಡಿಯಿರಿ, ನೆರಳಿನಲ್ಲಿರಿ.",
   },
-  "There is a lot of burning near here. Keep windows closed. Spend less time outdoors.": {
-    hi: "आस-पास कई जगह आग जल रही है। खिड़कियाँ बंद रखें और बाहर कम समय बिताएँ।",
-    kn: "ಹತ್ತಿರದಲ್ಲಿ ಹಲವು ಕಡೆ ಬೆಂಕಿ ಉರಿಯುತ್ತಿದೆ. ಕಿಟಕಿಗಳನ್ನು ಮುಚ್ಚಿಡಿ. ಹೊರಗೆ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ.",
-  },
   "There is heavy dust. Spend less time outdoors.": {
     hi: "बहुत ज़्यादा धूल है। बाहर कम समय बिताएँ।",
     kn: "ಗಾಳಿಯಲ್ಲಿ ಭಾರೀ ಧೂಳು ತುಂಬಿದೆ. ಹೊರಾಂಗಣದಲ್ಲಿ ಕಡಿಮೆ ಸಮಯ ಕಳೆಯಿರಿ.",
@@ -1017,10 +1005,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "केवल जानकारी के लिए, चिकित्सा, आपातकालीन या सुरक्षा-महत्वपूर्ण निर्णयों के लिए नहीं। आधिकारिक खतरे की चेतावनियों के लिए NDMA / IMD से परामर्श करें।",
       kn: "ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ, ತುರ್ತು ಅಥವಾ ಸುರಕ್ಷತಾ-ನಿರ್ಣಾಯಕ ನಿರ್ಧಾರಗಳಿಗೆ ಅಲ್ಲ. ಅಧಿಕೃತ ಅಪಾಯದ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA / IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ.",
     },
-  "There are large fires near here. The air can be dangerous. Stay indoors.": {
-    hi: "आस-पास बड़ी आग लगी है। वायु गुणवत्ता खतरनाक हो सकती है। घर के अंदर रहें।",
-    kn: "ಹತ್ತಿರದಲ್ಲಿ ತೀವ್ರವಾದ ಬೆಂಕಿ ಕಾಣಿಸಿಕೊಂಡಿದೆ. ವಾಯು ಗುಣಮಟ್ಟ ಅಪಾಯಕಾರಿಯಾಗಿರಬಹುದು. ಒಳಾಂಗಣದಲ್ಲಿರಿ.",
-  },
   "Is it safe to go outside right now?": {
     hi: "क्या अभी बाहर जाना सुरक्षित है?",
     kn: "ಹೊರಗೆ ಹೋಗುವುದು ಈಗ ಸುರಕ್ಷಿತವೇ?",
@@ -1895,18 +1879,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "100 km के भीतर आग",
     kn: "100 km ಒಳಗಿನ ಬೆಂಕಿ",
   },
-  "some burning": {
-    hi: "कहीं-कहीं आग",
-    kn: "ಸ್ವಲ್ಪ ಬೆಂಕಿ",
-  },
-  "notable burning": {
-    hi: "काफ़ी आग",
-    kn: "ಗಮನಾರ್ಹ ಬೆಂಕಿ",
-  },
-  "heavy burning": {
-    hi: "बहुत ज़्यादा आग",
-    kn: "ಭಾರೀ ಬೆಂಕಿ",
-  },
   "X mm of rain now": {
     hi: "अभी X mm बारिश",
     kn: "ಈಗ X mm ಮಳೆ",
@@ -2017,11 +1989,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "The sun is strong.": { hi: "धूप तेज़ है।", kn: "ಸೂರ್ಯನ ಬೆಳಕು ಪ್ರಖರವಾಗಿದೆ." },
   "The sun is very strong.": { hi: "धूप बहुत तेज़ है।", kn: "ಸೂರ್ಯನ ಬೆಳಕು ತುಂಬಾ ಪ್ರಖರವಾಗಿದೆ." },
   "There is a lot of dust.": { hi: "बहुत धूल है।", kn: "ಗಾಳಿಯಲ್ಲಿ ತುಂಬಾ ಧೂಳು ಇದೆ." },
-  "There are fires near here.": { hi: "पास में आग लगी हुई है।", kn: "ಹತ್ತಿರದಲ್ಲಿ ಬೆಂಕಿ ಹೊತ್ತಿಕೊಂಡಿದೆ." },
-  "There is a lot of burning near here.": {
-    hi: "आस-पास कई जगह आग जल रही है।",
-    kn: "ಹತ್ತಿರದಲ್ಲಿ ಹಲವು ಕಡೆ ಬೆಂಕಿ ಉರಿಯುತ್ತಿದೆ.",
-  },
   "Today against normal": { hi: "आज बनाम सामान्य", kn: "ಇಂದು, ಸಾಮಾನ್ಯಕ್ಕೆ ಹೋಲಿಸಿದರೆ" },
   "On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo. It shows only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.":
     {
@@ -2142,9 +2109,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "{n} days": { hi: "{n} दिन", kn: "{n} ದಿನಗಳು" },
   "{place} now": { hi: "{place} अभी", kn: "{place} ಈಗ" },
   Trends: { hi: "रुझान", kn: "ಪ್ರವೃತ್ತಿಗಳು" },
-  "{place}, India: air, heat, cold, rain, wind, fog, smoke and UV, a day at a time over the last {n} days.": {
-    hi: "{place}, भारत: वायु, गर्मी, ठंड, बारिश, हवा, कोहरा, धुआं और UV, पिछले {n} दिन, एक-एक दिन।",
-    kn: "{place}, ಭಾರತ: ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು, ಹೊಗೆ ಮತ್ತು UV, ಕಳೆದ {n} ದಿನಗಳು, ದಿನಕ್ಕೊಂದರಂತೆ.",
+  "{place}, India: air, heat, cold, rain, wind, fog and UV, a day at a time over the last {n} days.": {
+    hi: "{place}, भारत: वायु, गर्मी, ठंड, बारिश, हवा, कोहरा और UV, पिछले {n} दिन, एक-एक दिन।",
+    kn: "{place}, ಭಾರತ: ವಾಯು, ಬಿಸಿಲು, ಚಳಿ, ಮಳೆ, ಗಾಳಿ, ಮಂಜು ಮತ್ತು UV, ಕಳೆದ {n} ದಿನಗಳು, ದಿನಕ್ಕೊಂದರಂತೆ.",
   },
   "No record for this place yet. It fills in each night.": {
     hi: "इस स्थान का अभी कोई रिकॉर्ड नहीं। यह हर रात भरता है।",
@@ -2190,11 +2157,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Rain over the day": { hi: "दिन भर की बारिश", kn: "ದಿನವಿಡೀ ಮಳೆ" },
   "The day's strongest gust": { hi: "दिन का सबसे तेज़ झोंका", kn: "ದಿನದ ಅತಿ ಬಲವಾದ ಗಾಳಿ ರಭಸ" },
   "The day's lowest visibility": { hi: "दिन की सबसे कम दृश्यता", kn: "ದಿನದ ಕನಿಷ್ಠ ಗೋಚರತೆ" },
-  "Fires seen by satellite within 100 km": { hi: "100 km के भीतर उपग्रह से देखी गई आग", kn: "100 km ಒಳಗೆ ಉಪಗ್ರಹದಿಂದ ಕಂಡ ಬೆಂಕಿ" },
   "The day's highest UV index": { hi: "दिन का सबसे अधिक UV सूचकांक", kn: "ದಿನದ ಗರಿಷ್ಠ UV ಸೂಚ್ಯಂಕ" },
   Measured: { hi: "मापा गया", kn: "ಅಳೆದದ್ದು" },
   Modelled: { hi: "अनुमानित", kn: "ಅಂದಾಜು" },
-  "Seen by satellite": { hi: "उपग्रह से देखा गया", kn: "ಉಪಗ್ರಹದಿಂದ ಕಂಡದ್ದು" },
   "no data": { hi: "कोई डेटा नहीं", kn: "ದತ್ತಾಂಶ ಇಲ್ಲ" },
   Day: { hi: "दिन", kn: "ದಿನ" },
   Level: { hi: "स्तर", kn: "ಮಟ್ಟ" },
@@ -2254,9 +2219,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "किसी स्थान के अपने 30 दिन देखने के लिए उसे नक्शे या सूची में चुनें।",
     kn: "ಒಂದು ಸ್ಥಳದ ತನ್ನದೇ 30 ದಿನಗಳನ್ನು ನೋಡಲು ಅದನ್ನು ನಕ್ಷೆಯಲ್ಲಿ ಅಥವಾ ಪಟ್ಟಿಯಲ್ಲಿ ಆರಿಸಿ.",
   },
-  "Weather modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.": {
-    hi: "मौसम Open-Meteo का अनुमान; आग उपग्रह से देखी गई (NASA FIRMS), 100 km के भीतर।",
-    kn: "ಹವಾಮಾನ Open-Meteo ಅಂದಾಜು; ಬೆಂಕಿ ಉಪಗ್ರಹದಿಂದ ಕಂಡದ್ದು (NASA FIRMS), 100 km ಒಳಗೆ.",
+  "Weather modelled by Open-Meteo.": {
+    hi: "मौसम Open-Meteo का अनुमान।",
+    kn: "ಹವಾಮಾನ Open-Meteo ಅಂದಾಜು.",
   },
 };
 /** "A, B and C" in the page's language. */

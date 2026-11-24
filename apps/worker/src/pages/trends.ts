@@ -192,11 +192,10 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
     [`${opener} ${sentence} ${s ? s.peak : ""}`.trim(), `${opener} ${sentence}`].find(
       (d) => top && d.length <= DESCRIPTION_MAX,
     ) ??
-    fill(
-      "{place}, India: air, heat, cold, rain, wind, fog, smoke and UV, a day at a time over the last {n} days.",
-      lang,
-      { place: name, n: span },
-    );
+    fill("{place}, India: air, heat, cold, rain, wind, fog and UV, a day at a time over the last {n} days.", lang, {
+      place: name,
+      n: span,
+    });
   const shell = (body: string) =>
     pageShell(`${title}${native ? ` | ${titleName(place)}` : ""} | mugilu`, wrap(body), {
       path: base,

@@ -15,8 +15,6 @@ import {
   ambientSummary,
   headline,
   heatLevelOf,
-  smokeIsContext,
-  smokeLevelAt,
   type AmbientRisk,
   type Persona,
   type RiskBand,
@@ -95,7 +93,6 @@ export function heatPhrase(apparent: number, wetBulb?: number): string {
 const COMFORT_C = [20, 28] as const;
 
 /** Fire activity nearby per smoke level (1-3); index 0 is unused. */
-const SMOKE_PHRASE = ["", "some burning", "notable burning", "heavy burning"];
 
 export const DUST_PHRASE: Record<RiskBand, string> = {
   low: "light dust",
@@ -178,7 +175,7 @@ export interface ReadRow {
   num: string;
   /** What the figure is, e.g. "AQI", "feels like", "km/h gusts". */
   unit: string;
-  /** The live word for it, e.g. "warm", "calm", "notable burning". */
+  /** The live word for it, e.g. "warm", "calm", "breezy". */
   qual?: string;
   /** Its level: a band chip for air, a level chip for a scored hazard, none for rain. */
   chip: string;
@@ -370,10 +367,9 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       brief: km(m),
     });
   }
-  // Smoke is scored only where the air is not clean; in clean air the fires are context: the
-  // card keeps the facts, with no level (score.ts smokeLevelAt).
-  const smokeLvl = smokeLevelAt(c);
-  if (c.smoke && (smokeLvl != null || smokeIsContext(c))) {
+  // Fires seen nearby are context, never a hazard level: the air reading carries any smoke that
+  // reaches here (score.ts firesInCleanAir; supporting-docs/analysis/smoke_backtest/report.md).
+  if (c.smoke?.count) {
     const sub =
       c.smoke.nearest_km != null
         ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW of fire power", lang).replace("X", String(c.smoke.frp_sum))}`
@@ -383,14 +379,12 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       icon: "smoke",
       num: String(c.smoke.count),
       unit: t("fires within 100 km", lang),
-      qual: smokeLvl != null ? t(SMOKE_PHRASE[smokeLvl], lang) : undefined,
       more: [
         ...(c.smoke.nearest_km != null
           ? [
               gauge(c.smoke.nearest_km, 0, c.smoke.radius_km ?? 100, {
                 from: c.smoke.nearest_km,
                 marker: true,
-                level: smokeLvl ?? undefined,
               }),
             ]
           : []),

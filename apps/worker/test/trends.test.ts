@@ -44,7 +44,11 @@ test("trends page: the period in one line, then days at each level, the raised h
   assert.ok(html.indexOf('id="t-fog"') < html.indexOf('id="t-calm"'), "the calm ones last");
   assert.match(s, /Lowest: 400 m on 24 Oct\./);
   assert.match(s, /These stayed low on every one of the 30 days\./);
-  assert.equal((html.match(/<svg class="tchart"/g) ?? []).length, 8, "a chart for every hazard");
+  assert.equal(
+    (html.match(/<svg class="tchart"/g) ?? []).length,
+    7,
+    "a chart for every hazard (fires are context, not one)",
+  );
 });
 
 test("trends page: modelled dust is left out, from the charts, the table and the description", () => {

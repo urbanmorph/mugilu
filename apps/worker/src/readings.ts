@@ -5,7 +5,7 @@
 // gauge it is drawn on, against the thresholds the Ambient read uses.
 
 import type { Conditions } from "./types";
-import { THRESHOLDS, SENSITIVE, smokeLevelAt, coldLevelOf } from "./score";
+import { THRESHOLDS, SENSITIVE, coldLevelOf } from "./score";
 import type { AmbientRisk } from "./score";
 
 // The hazard each layer reads (the thermal layer is Heat or Cold, whichever it is now).
@@ -16,7 +16,6 @@ const LAYER_HAZARDS: Record<string, string[]> = {
   dust: ["Dust"],
   wind: ["Wind"],
   fog: ["Fog"],
-  smoke: ["Smoke"],
 };
 // What people check first when nothing stands out: the air they breathe, how hot
 // it is and how strong the sun (side by side), whether it will rain, then the rest.
@@ -154,13 +153,6 @@ export function briefs(c: Conditions, risk: AmbientRisk): Brief[] {
       label: "Visibility",
       value: km(m),
       gauge: { v: m, lo: 100, hi: 10000, ticks: [...THRESHOLDS.fog, 5000], log: true },
-    });
-  if (c.smoke && smokeLevelAt(c) != null)
-    out.push({
-      key: "smoke",
-      label: "Smoke",
-      value: `${c.smoke.count}`,
-      gauge: { v: c.smoke.count, lo: 0, hi: 100, ticks: THRESHOLDS.smokeCount },
     });
   if (c.dust?.dust_ug_m3 != null)
     out.push({

@@ -96,14 +96,14 @@ for (const lang of ["hi", "kn"] as Lang[]) {
 }
 
 test("the persona 'also watch' line is localised, not an English sentence looked up whole", () => {
-  assert.match(personaAlso(ambientRisk(c, "asthma"))!, /^For asthma & lungs, also watch: smoke is severe\.$/);
+  assert.match(personaAlso(ambientRisk(c, "asthma"))!, /^For asthma & lungs, also watch: air is high\.$/);
   const kn = renderConditionsPage(c, "asthma", undefined, "kn");
   assert.match(kn, /class="row-c also"/);
 });
 
 test("English pages keep their English wording", () => {
   const text = visible(renderConditionsPage(c, "asthma", undefined, "en"));
-  for (const re of [/also watch: smoke is severe/, /% humidity/, /km\/h steady/, /from W/, /MW of fire power/])
+  for (const re of [/also watch: air is high/, /% humidity/, /km\/h steady/, /from W/, /MW of fire power/])
     assert.match(text, re);
 });
 

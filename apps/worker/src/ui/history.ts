@@ -10,7 +10,6 @@ import {
   heatLevelOf,
   rainLevelOf,
   RISK_BANDS,
-  smokeCountLevelOf,
   THRESHOLDS,
   uvLevelOf,
   windLevelOf,
@@ -37,7 +36,7 @@ export interface HazardDef {
   /** What a bar's height means, when it is not the value itself. */
   note?: string;
   what: string;
-  kind: "Measured" | "Modelled" | "Seen by satellite";
+  kind: "Measured" | "Modelled";
   source: string;
   lines: (lang: Lang) => ChartLine[];
   say: (v: number, lang: Lang) => string;
@@ -125,18 +124,6 @@ export const HAZARD_DEFS: HazardDef[] = [
     source: "Open-Meteo",
     lines: edges(T.fog, (v) => `${v} m`),
     say: (v) => `${Math.round(v).toLocaleString("en-IN")} m`,
-  },
-  {
-    key: "smoke",
-    name: "Smoke",
-    icon: "smoke",
-    series: "fires",
-    level: smokeCountLevelOf,
-    what: "Fires seen by satellite within 100 km",
-    kind: "Seen by satellite",
-    source: "NASA FIRMS (VIIRS)",
-    lines: edges(T.smokeCount, (v) => String(v)),
-    say: (v, lang) => fill("{n} fires", lang, { n: v }),
   },
   {
     key: "uv",
@@ -378,7 +365,7 @@ export function historyPanel(
     );
   const otherCol =
     `<p class="t-kicker">${esc(t("The other hazards", lang))}</p><ul class="tlist">${lines.join("")}</ul>` +
-    `<p class="t-meta">${esc(t("Weather modelled by Open-Meteo; fires seen by satellite (NASA FIRMS), within 100 km.", lang))}</p>` +
+    `<p class="t-meta">${esc(t("Weather modelled by Open-Meteo.", lang))}</p>` +
     (trendsHref ? `<p>${linkButton(trendsHref, t("Every hazard, day by day", lang), false, "clock")}</p>` : "");
 
   return panel(`<div class="tsplit"><div>${parts.join("")}</div><div>${otherCol}</div></div>`, {

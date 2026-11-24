@@ -1,15 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fireRiskAt, type FireDetection } from "../src/firms";
-import { ambientRisk, smokeLevelAt, PERSONAS } from "../src/score";
+import { ambientRisk, firesInCleanAir, PERSONAS } from "../src/score";
 import { renderConditionsMarkdown, serializeConditionsV1 } from "../src/conditions";
 import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions } from "../src/types";
 
-// W21, step 1 (supporting-docs/reports/Fire smoke and life years.md): measured air sets the smoke
-// level; fires only explain it. No health agency rates smoke from fire counts in a radius. While
-// the air here is good or satisfactory, nearby fires are context, never a hazard; low-confidence
-// and very small detections (under 1 MW, the noise floor) are not counted.
+// W21 (supporting-docs/reports/Fire smoke and life years.md; supporting-docs/analysis/smoke_backtest):
+// no health agency rates smoke from fire counts in a radius, and in mugilu's own archive fire counts
+// and fire power near a place do not track ground PM2.5. Fires are context everywhere, never a level;
+// the air reading carries any smoke that arrives. Low-confidence and sub-1 MW detections are not counted.
 
 const fire = (km: number, frp: number, confidence = "n"): FireDetection =>
   ({
@@ -55,24 +55,24 @@ test("fireRiskAt: low-confidence and sub-1 MW detections are not counted", () =>
   assert.ok(Math.abs(r.nearest_km! - 50) < 0.5, "the nearest counted is the 3 MW fire at 50 km");
 });
 
-test("smokeLevelAt: good or satisfactory air means no smoke level, however many fires", () => {
-  for (const band of ["good", "satisfactory"]) {
-    assert.equal(smokeLevelAt(place(band, SMALL)), null, band);
-    assert.equal(smokeLevelAt(place(band, BIG)), null, band);
-  }
-  assert.equal(smokeLevelAt(place("moderate", SMALL)), 1, "raised air: the fires still say how bad");
-  assert.equal(smokeLevelAt(place("moderate", BIG)), 2);
-  assert.equal(smokeLevelAt(place(null, SMALL)), 1, "no air reading: as before");
-  assert.equal(smokeLevelAt(place("unknown", SMALL)), 1, "an unknown band does not clear the air");
+test("firesInCleanAir: fires seen while the air here is good or satisfactory", () => {
+  for (const band of ["good", "satisfactory"]) assert.equal(firesInCleanAir(place(band, SMALL)), true, band);
+  assert.equal(firesInCleanAir(place("moderate", BIG)), false);
+  assert.equal(firesInCleanAir(place("good", { ...SMALL!, count: 0 })), false, "no fires, nothing to say");
 });
 
-test("ambient: clean air with small fires never leads with smoke, for any persona", () => {
-  for (const p of ["everyone", ...PERSONAS] as const) {
-    const r = ambientRisk(place("good", SMALL), p);
-    assert.notEqual(r.driver, "Smoke", p);
-    assert.ok(!r.hazards.some((h) => h.hazard === "Smoke"), p);
-  }
-  assert.equal(ambientRisk(place("moderate", BIG)).driver, "Smoke", "Delhi's raised air and big fires still lead");
+test("ambient: fires never lead or score, in clean or polluted air, for any persona", () => {
+  for (const p of ["everyone", ...PERSONAS] as const)
+    for (const [band, smoke] of [
+      ["good", SMALL],
+      ["moderate", BIG],
+      ["poor", BIG],
+    ] as const) {
+      const r = ambientRisk(place(band, smoke), p);
+      assert.notEqual(r.driver, "Smoke", `${p} ${band}`);
+      assert.ok(!r.hazards.some((h) => h.hazard === "Smoke"), `${p} ${band}`);
+    }
+  assert.equal(ambientRisk(place("moderate", BIG)).driver, "Air", "Delhi's raised air leads, as air");
 });
 
 test("place page: with clean air the smoke card keeps the facts, with no level, and says the air is clean", () => {
@@ -92,9 +92,17 @@ test("place page: with clean air the smoke card keeps the facts, with no level, 
   }
 });
 
-test("API and MCP: smoke says its role; markdown keeps the fires as context", () => {
+test("place page: in polluted air the smoke card keeps the facts, with no level and no clean-air line", () => {
+  const html = renderConditionsPage(place("moderate", BIG));
+  const card =
+    html.match(/<div class="rrow[^"]*" data-k="smoke">[\s\S]*?(?=<div class="rrow|<\/div><\/section>)/)?.[0] ?? "";
+  assert.match(card, /A satellite saw 35 fires within 100 km/);
+  assert.doesNotMatch(card, /class="chip| lv-|not showing/);
+});
+
+test("API and MCP: smoke is always context; markdown keeps the fires", () => {
   assert.equal(serializeConditionsV1(place("good", SMALL), "everyone").smoke?.role, "context");
-  assert.equal(serializeConditionsV1(place("moderate", BIG), "everyone").smoke?.role, "hazard");
+  assert.equal(serializeConditionsV1(place("moderate", BIG), "everyone").smoke?.role, "context");
   const md = renderConditionsMarkdown(place("good", SMALL));
   assert.match(md, /## Smoke[\s\S]*Active fires within 100 km: \*\*3\*\*/);
   assert.match(md, /- Not scored as a hazard: the air here is good, so the smoke is not in it now/);

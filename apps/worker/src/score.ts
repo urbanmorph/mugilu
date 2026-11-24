@@ -1,4 +1,4 @@
-import type { Conditions, SmokeConditions, Warning } from "./types";
+import type { Conditions, Warning } from "./types";
 
 // The Ambient risk, mugilu's signature read. The WORST active hazard, never an
 // average (so it can't be diluted and isn't air-biased), with the dominant
@@ -34,11 +34,11 @@ const SCORE: Record<number, number> = { 0: 15, 1: 45, 2: 72, 3: 95 };
 // exposure" CPCB's health statements are written for; children feel dust too.
 export const SENSITIVE: Record<Persona, string[]> = {
   everyone: [],
-  asthma: ["Air", "Dust", "Smoke", "Cold"],
-  elderly: ["Heat", "Cold", "Air", "Smoke"],
-  child: ["UV", "Air", "Dust", "Heat", "Cold", "Smoke"],
-  outdoor: ["Heat", "Cold", "UV", "Air", "Dust", "Smoke"],
-  heart: ["Heat", "Cold", "Air", "Smoke"],
+  asthma: ["Air", "Dust", "Cold"],
+  elderly: ["Heat", "Cold", "Air"],
+  child: ["UV", "Air", "Dust", "Heat", "Cold"],
+  outdoor: ["Heat", "Cold", "UV", "Air", "Dust"],
+  heart: ["Heat", "Cold", "Air"],
 };
 
 export interface HazardRisk {
@@ -101,9 +101,6 @@ export const THRESHOLDS = {
   /** UV index. Real but mitigable (shade/sunscreen/timing) and chronic, not acute-fatal,
    *  so it caps at high: very-high 6-10 is a sun-care nudge, extreme 11+ is high. */
   uv: [6, 11],
-  /** Active fires within 100 km in 24h, or their summed fire power (MW). */
-  smokeCount: [3, 25, 60],
-  smokeFrp: [20, 120, 350],
   /** mm of rain in 24 hours; IMD's heavy, very heavy and extremely heavy. */
   rain24: [64.5, 115.6, 204.5],
 } as const;
@@ -130,8 +127,6 @@ export const coldLevelOf = (apparent: number) => atOrBelow(apparent, THRESHOLDS.
 export const windLevelOf = (gust: number) => atOrAbove(gust, THRESHOLDS.wind);
 export const fogLevelOf = (meters: number) => below(meters, THRESHOLDS.fog);
 export const uvLevelOf = (index: number) => atOrAbove(index, THRESHOLDS.uv);
-/** Smoke from the count of fires within 100 km alone (a day's record keeps no fire power). */
-export const smokeCountLevelOf = (fires: number) => atOrAbove(fires, THRESHOLDS.smokeCount);
 
 /** The methodology table (caution / high / severe), built from THRESHOLDS so the
  *  published numbers can never drift from the ones the code applies. Hazard labels
@@ -150,7 +145,6 @@ export const THRESHOLD_ROWS: { hazard: string; cells: [string, string, string] }
     { hazard: "Cold (feels-like)", cells: T.cold.map((x) => `≤${x}°`) as [string, string, string] },
     { hazard: "Wind (gusts, km/h)", cells: plain(T.wind) },
     { hazard: "Fog (visibility, m)", cells: plain(T.fog, "<") },
-    { hazard: "Smoke (fires <100 km)", cells: plain(T.smokeCount, "", "+") },
     { hazard: "UV (index)", cells: [`${T.uv[0]}–${T.uv[1] - 1}`, `${T.uv[1]}+`, "-"] },
     { hazard: "Dust (µg/m³)", cells: plain(T.dust) },
   ];
@@ -199,33 +193,15 @@ function fogLevel(c: Conditions): number | null {
   return v == null ? null : fogLevelOf(v);
 }
 
-// Fire/crop-burn smoke: active FIRMS detections (VIIRS) within 100km, last 24h.
-// Bands benchmarked against multi-season India archive data: local density at
-// populated points: peak-Nov Punjab belt 72-93, pre-monsoon-Apr central forest
-// ~90, max land-grid 147-385; shoulder/off-peak 25-60; metros single digits.
-// Severe is reserved for the genuine burning belt; below 3 fires is negligible.
-// Exported as the single source for both "worth showing" (null) and the band,
-// so the renderers don't re-encode these literals.
-function smokeLevel(s: SmokeConditions | null | undefined): number | null {
-  if (!s) return null;
-  const level = Math.max(atOrAbove(s.count, THRESHOLDS.smokeCount), atOrAbove(s.frp_sum, THRESHOLDS.smokeFrp));
-  return level || null;
-}
-
-/** Air bands in which nearby fires are context, not a hazard: their smoke is not in the air
- *  measured (or modelled) here. Every public smoke system lets measured PM2.5 set the level
- *  (supporting-docs/reports/Fire smoke and life years.md). */
+/** Air bands in which fires seen nearby are not showing in the air here. Smoke is never scored:
+ *  mugilu's own backtest (supporting-docs/analysis/smoke_backtest/report.md) found FIRMS fire
+ *  counts and fire power do not track ground PM2.5, and every public system lets measured PM2.5
+ *  set the level. Fires near a place are context; the air reading carries smoke that arrives. */
 const CLEAN_AIR = new Set(["good", "satisfactory"]);
 
-/** Whether the air here is clean enough that nearby fires are only context. */
-export const smokeIsContext = (c: Pick<Conditions, "air" | "smoke">): boolean =>
+/** Whether fires were seen nearby while the air here is good or satisfactory. */
+export const firesInCleanAir = (c: Pick<Conditions, "air" | "smoke">): boolean =>
   !!c.smoke?.count && CLEAN_AIR.has(c.air?.band ?? "");
-
-/** The smoke hazard's level at a place (0-3), or null: none in clean air (fires are context
- *  then), else from the fires nearby (count or total power, mugilu's own thresholds). */
-export function smokeLevelAt(c: Pick<Conditions, "air" | "smoke">): number | null {
-  return smokeIsContext(c) ? null : smokeLevel(c.smoke);
-}
 
 function warnLevel(c: Conditions): number | null {
   if (!c.warnings?.length) return null;
@@ -245,7 +221,6 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
     ["Dust", dustLevel(c)],
     ["Wind", windLevel(c)],
     ["Fog", fogLevel(c)],
-    ["Smoke", smokeLevelAt(c)],
     ["Warning", warnLevel(c)],
   ];
 
@@ -287,7 +262,6 @@ export const COND_NOUN: Record<string, string> = {
   Dust: "dust",
   Wind: "wind",
   Fog: "fog",
-  Smoke: "smoke",
   Warning: "alert",
   none: "sky",
 };
@@ -340,11 +314,6 @@ export const ADVICE: Record<string, Partial<Record<RiskBand, string>>> = {
     high: "There is dense fog. Drive slowly with low beams. Give yourself more time.",
     severe: "There is very dense fog. Do not drive if possible.",
   },
-  Smoke: {
-    moderate: "There are fires near here. If you are sensitive, watch the air.",
-    high: "There is a lot of burning near here. Keep windows closed. Spend less time outdoors.",
-    severe: "There are large fires near here. The air can be dangerous. Stay indoors.",
-  },
   Warning: {
     moderate: "An official advisory is active.",
     high: "An official warning is active. Be alert.",
@@ -378,14 +347,12 @@ export const PERSONA_ACTION: Record<Persona, Partial<Record<string, string>>> = 
   asthma: {
     Air: "Spend less time outdoors today. Do not exercise hard outside.",
     Dust: "Spend less time outdoors. Cover your nose and mouth when you go out.",
-    Smoke: "Keep windows closed. Spend less time outdoors.",
     Cold: "Cover your nose and mouth when you go out in the cold.",
   },
   elderly: {
     Heat: "A hot home is also a risk. Stay in a cool place and drink water regularly. Ask someone to check on you.",
     Cold: "Keep your home warm and wear layers indoors. Ask someone to check on you.",
     Air: "Spend less time outdoors today. Avoid hard physical activity there.",
-    Smoke: "Keep windows closed. Spend less time outdoors.",
   },
   child: {
     UV: "Use a hat, shade and sunscreen. Keep play short at midday.",
@@ -393,7 +360,6 @@ export const PERSONA_ACTION: Record<Persona, Partial<Record<string, string>>> = 
     Dust: "Today, keep outdoor play short.",
     Heat: "Give children more water and keep play in the shade. Never leave a child in a parked vehicle.",
     Cold: "Dress children in layers. Cover their head and hands.",
-    Smoke: "Keep children indoors with the windows closed.",
   },
   outdoor: {
     Heat: "Drink water often and take breaks in the shade. Do not do heavy work from 12 to 3 pm.",
@@ -401,13 +367,11 @@ export const PERSONA_ACTION: Record<Persona, Partial<Record<string, string>>> = 
     UV: "Cover your skin and wear a hat. Take breaks in the shade at midday.",
     Air: "Do lighter work, not heavy work. Take breaks indoors.",
     Dust: "Cover your nose and mouth. Protect your eyes.",
-    Smoke: "Take breaks indoors. Keep heavy work short.",
   },
   heart: {
     Heat: "Avoid hard physical activity. Stay in a cool place.",
     Cold: "Stay warm. Avoid sudden hard physical activity in the cold.",
     Air: "Avoid hard physical activity outdoors today.",
-    Smoke: "Stay indoors with the windows closed. Avoid hard physical activity.",
   },
 };
 
@@ -424,7 +388,6 @@ const HAZARD_NOUN: Record<string, string> = {
   Heat: "heat",
   UV: "the sun",
   Dust: "dust",
-  Smoke: "smoke",
   Warning: "the official warning",
 };
 
