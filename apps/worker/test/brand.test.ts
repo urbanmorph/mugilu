@@ -103,3 +103,32 @@ test("the light theme's focus ring is the brand blue itself, not a copy of its v
   const src = (await import("node:fs")).readFileSync(new URL("../src/palette.ts", import.meta.url), "utf8");
   assert.equal(src.match(/#0284c7/g)?.length, 1, "the brand hex is written once");
 });
+
+/** The stylesheets with every reduced-motion-gated block cut out. */
+function ungated(css: string): string {
+  const open = "@media (prefers-reduced-motion:no-preference){";
+  let out = css.replace(/@media \(prefers-reduced-motion: no-preference\)\{/g, open);
+  for (let i = out.indexOf(open); i >= 0; i = out.indexOf(open)) {
+    let depth = 0;
+    let j = i + open.length - 1;
+    for (; j < out.length; j++) {
+      if (out[j] === "{") depth++;
+      else if (out[j] === "}" && --depth === 0) break;
+    }
+    out = out.slice(0, i) + out.slice(j + 1);
+  }
+  return out;
+}
+
+test("motion: every animation and keyframe-driven change runs only when the reader allows motion", () => {
+  const rest = ungated(TOKENS_CSS + STANDARD_CSS);
+  assert.doesNotMatch(rest, /animation:/, "an animation outside the reduced-motion gate");
+});
+
+test("reading cards: the icon takes its hazard's hue, a raised card its level, all from tokens", () => {
+  assert.match(TOKENS_CSS, /--hz-heat:#f97316/);
+  assert.match(TOKENS_CSS, /\.mg \.hz-heat\{--hz:var\(--hz-heat\)\}/);
+  assert.match(TOKENS_CSS, /\.mg \.lv-moderate\{--rl:var\(--moderate\);--rt:var\(--rt-moderate\)\}/);
+  assert.match(TOKENS_CSS, /\.mg \.lv-b-poor\{--rl:var\(--b-poor\);--rt:var\(--bt-poor\)\}/);
+  assert.doesNotMatch(TOKENS_CSS, /\.lv-low\{|\.lv-b-good\{|\.lv-b-satisfactory\{/, "low stays neutral");
+});

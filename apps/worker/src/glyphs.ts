@@ -27,6 +27,26 @@ export interface GaugeOpts {
   marker?: boolean;
   /** A level class other than the level's (today above the normal). */
   cls?: string;
+  /** The thresholds in order of severity (moderate, high, severe): the track becomes the scale,
+   *  each zone in its level's colour, shown in full up to the reading, with a dot at it. The
+   *  ticks default to these. Falling thresholds (cold, visibility) put the worst on the left. */
+  zones?: readonly number[];
+}
+
+/** How far each zone's colour blends into the next, in points of the track. */
+const BLEND = 3;
+
+/** The scale as a gradient of the level tokens, zone edges at the thresholds' places. */
+function zoneScale(edges: number[]): string {
+  const up = edges[0] <= edges[edges.length - 1];
+  const at = up ? edges : [...edges].reverse();
+  const names = up ? RISK_BANDS : [...RISK_BANDS].reverse();
+  const stops = [`var(--${names[0]}) 0%`];
+  at.forEach((e, i) =>
+    stops.push(`var(--${names[i]}) ${fix(e - BLEND)}%`, `var(--${names[i + 1]}) ${fix(e + BLEND)}%`),
+  );
+  stops.push(`var(--${names[at.length]}) 100%`);
+  return `linear-gradient(90deg,${stops.join(",")})`;
 }
 
 /** A track filled to the reading, with a tick at each threshold. */
@@ -34,8 +54,17 @@ export function gauge(v: number, lo: number, hi: number, o: GaugeOpts = {}): str
   const p = (x: number) => at(x, lo, hi, o.log);
   const a = o.from == null ? 0 : Math.min(p(o.from), p(v));
   const b = o.from == null ? p(v) : Math.max(p(o.from), p(v));
+  const ticks = (o.ticks ?? o.zones ?? []).map((x) => `<i class="tk" style="left:${p(x)}%"></i>`).join("");
+  if (o.zones?.length) {
+    const cls = o.cls ?? RISK_BANDS[o.level ?? 0];
+    return (
+      `<div class="gauge zoned ${cls}" style="--grad:${zoneScale(o.zones.map(p))}" aria-hidden="true">` +
+      `<i class="f" style="clip-path:inset(0 ${fix(100 - b)}% 0 ${a}%)"></i>` +
+      ticks +
+      `<i class="dot" style="--at:${p(v)}%"></i></div>`
+    );
+  }
   const cls = o.cls ?? (o.level ? RISK_BANDS[o.level] : "");
-  const ticks = (o.ticks ?? []).map((x) => `<i class="tk" style="left:${p(x)}%"></i>`).join("");
   return (
     `<div class="gauge${cls ? ` ${cls}` : ""}" aria-hidden="true">` +
     `<i class="f" style="left:${a}%;width:${fix(b - a)}%"></i>` +

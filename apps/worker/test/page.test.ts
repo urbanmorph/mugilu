@@ -342,7 +342,7 @@ test("renderConditionsPage: the worst hazard comes first, then whatever else is 
     }),
   );
   assert.deepEqual(layerOrder(html).slice(0, 3), ["sun", "dust", "air"]);
-  assert.match(html, /<div class="rrow on" data-k="sun"/);
+  assert.match(html, /<div class="rrow on[^"]*" data-k="sun"/);
 });
 
 test("renderConditionsPage: rain falling now moves up past calm layers", () => {
@@ -377,7 +377,7 @@ test("renderConditionsPage: a cold driver lights the heat layer", () => {
   const html = renderConditionsPage(
     conditions({ heat: { temp_c: -2, humidity_pct: 60, apparent_c: -6, wet_bulb_c: -3, source: "open-meteo" } }),
   );
-  assert.match(html, /<div class="rrow on" data-k="heat"/);
+  assert.match(html, /<div class="rrow on[^"]*" data-k="heat"/);
   assert.equal(layerOrder(html)[0], "heat");
 });
 
@@ -429,7 +429,7 @@ test("renderConditionsPage: cold heat shows feels-like against the cold threshol
   const heat = layerHtml(html, "heat");
   assert.equal([...heat.matchAll(/<div class="gauge/g)].length, 1);
   assert.equal([...heat.matchAll(/class="tk"/g)].length, 3);
-  assert.match(heat, /class="f" style="left:22.5%;width:0%"/, "a mark, not a bar that reads as heat");
+  assert.match(heat, /class="dot" style="--at:22.5%"/, "a mark, not a bar that reads as heat");
 });
 
 test("renderConditionsPage: a notable high vs normal draws today against the normal", (t) => {
@@ -449,12 +449,29 @@ test("renderConditionsPage: wind, visibility and smoke a ruler, sun the UV steps
       smoke: { count: 3, frp_sum: 12, nearest_km: 42, radius_km: 100, source: "firms" },
     } as Partial<Conditions>),
   );
-  assert.match(layerHtml(html, "wind"), /class="gauge moderate"[\s\S]*from W · 18 km\/h steady/);
+  assert.match(layerHtml(html, "wind"), /class="gauge zoned moderate"[\s\S]*from W · 18 km\/h steady/);
   assert.match(layerHtml(html, "rain"), /<span class="num">40%<\/span><span class="qa">chance of rain<\/span>/);
   assert.doesNotMatch(layerHtml(html, "rain"), /class="chip/, "rain carries no hazard level");
   assert.match(layerHtml(html, "sun"), /<span class="uvs"/);
-  assert.match(layerHtml(html, "fog"), /class="f" style="left:0%;width:50%"/, "1 km halfway on 100 m-10 km");
+  assert.match(layerHtml(html, "fog"), /class="dot" style="--at:50%"/, "1 km halfway on 100 m-10 km");
   assert.match(layerHtml(html, "smoke"), /class="mk" style="left:42%"/);
+});
+
+test("renderConditionsPage: a card at moderate or worse carries its level; a low card stays neutral", () => {
+  const html = renderConditionsPage(
+    conditions({
+      air: { ...conditions().air!, aqi: 250, band: "poor" },
+      wind: { speed_kmh: 18, gust_kmh: 46, direction_deg: 270, source: "open-meteo" },
+    } as Partial<Conditions>),
+  );
+  assert.match(html, /<div class="rrow[^"]* lv-b-poor hz-air" data-k="air">/, "air by its CPCB band");
+  assert.match(html, /<div class="rrow[^"]* lv-moderate hz-wind" data-k="wind">/);
+  assert.match(html, /<div class="rrow hz-dust" data-k="dust">/, "low: no level on the card");
+  assert.match(html, /<div class="rrow[^"]* hz-heat[^"]*" data-k="heat">/, "the icon's hue by its kind");
+  assert.match(html, /<div class="rrow hz-none" data-k="rain">/);
+  const calm = renderConditionsPage(conditions());
+  assert.match(calm, /<div class="rrow[^"]*" data-k="air">/);
+  assert.doesNotMatch(calm, /lv-b-satisfactory|lv-b-good|lv-low/, "good and satisfactory air stay neutral");
 });
 
 // What each persona should look at on the right: their own layers tagged, the
@@ -467,7 +484,7 @@ test("renderConditionsPage: a persona's own layers carry a 'for you' tag", () =>
   assert.deepEqual(tagged(renderConditionsPage(c, "child")).sort(), ["air", "dust", "heat", "sun"]);
   assert.deepEqual(tagged(renderConditionsPage(c)), [], "everyone: no tags");
   // The headline hazard (UV 7 here) is never quiet, even when it is not the persona's trigger.
-  assert.match(renderConditionsPage(c, "asthma"), /<div class="rrow on" data-k="sun"/);
+  assert.match(renderConditionsPage(c, "asthma"), /<div class="rrow on[^"]*" data-k="sun"/);
 });
 
 test("renderConditionsPage: the heat reading that matters most to a persona is picked out", () => {

@@ -199,6 +199,9 @@ export interface ReadRow {
   brief: string;
   /** Today's high against the normal, when it stands out (heat only), markup. */
   normal?: string;
+  /** The card's level when it is raised (moderate or worse, by the chip's scale), e.g.
+   *  "moderate" or "b-poor"; a low or unlevelled card has none and stays neutral. */
+  raised?: string;
   /** The Ambient read's headline hazard. */
   driver: boolean;
   /** One of the persona's own hazards. */
@@ -211,6 +214,15 @@ function hazardChip(key: string, risk: AmbientRisk, lang: Lang): string {
   return level == null ? "" : levelChip(RISK_BANDS[level], lang);
 }
 
+/** A scored hazard's level as a raised card's class, when it is moderate or worse. */
+function raisedLevel(key: string, risk: AmbientRisk): string | undefined {
+  const level = layerBase(key, risk);
+  return level ? RISK_BANDS[level] : undefined;
+}
+
+/** The CPCB bands that raise the air's card: moderate and worse. */
+const RAISED_BANDS = new Set(["moderate", "poor", "vpoor", "severe"]);
+
 /** Every reading present, in the order they matter now. */
 export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[] {
   const out: ReadRow[] = [];
@@ -219,6 +231,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
     out.push({
       key,
       chip: hazardChip(key, risk, lang),
+      raised: raisedLevel(key, risk),
       mini: "",
       driver: isDriver(key, risk),
       mine: risk.persona !== "everyone" && forPersona(key, risk),
@@ -241,6 +254,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       num: c.air.aqi != null ? String(c.air.aqi) : "n/a",
       unit: "AQI",
       chip: bandChip(band, bandWord),
+      raised: RAISED_BANDS.has(band) ? `b-${band}` : undefined,
       more,
       mini: worst ? pollutantBars(worst) : "",
       brief: c.air.aqi != null ? `AQI ${c.air.aqi}` : "n/a",
@@ -258,21 +272,21 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
     };
     if (cold) {
       const a = h.apparent_c!;
-      gauges.push(gauge(a, -10, 30, { from: a, ticks: THRESHOLDS.cold, level: coldLevelOf(a), marker: true }));
+      gauges.push(gauge(a, -10, 30, { from: a, zones: THRESHOLDS.cold, level: coldLevelOf(a) }));
     } else {
       if (h.wet_bulb_c != null) {
         const level = heatLevelOf({ wet_bulb_c: h.wet_bulb_c });
         read(
           "wetbulb",
           `${esc(t("wet-bulb", lang))} ${round(h.wet_bulb_c)}° <b class="ql">${esc(t(WET_BULB[level], lang))}</b>`,
-          gauge(h.wet_bulb_c, 10, 35, { ticks: THRESHOLDS.wetBulb, level }),
+          gauge(h.wet_bulb_c, 10, 35, { zones: THRESHOLDS.wetBulb, level }),
         );
       }
       if (h.wbgt_c != null)
         read(
           "wbgt",
           `WBGT ${round(h.wbgt_c)}°`,
-          gauge(h.wbgt_c, 15, 40, { ticks: THRESHOLDS.wbgt, level: heatLevelOf({ wbgt_c: h.wbgt_c }) }),
+          gauge(h.wbgt_c, 15, 40, { zones: THRESHOLDS.wbgt, level: heatLevelOf({ wbgt_c: h.wbgt_c }) }),
         );
     }
     // Today's high against the normal here: drawn only when it stands out, always labelled.
@@ -325,7 +339,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       num: String(Math.round(ug)),
       unit: "µg/m³",
       qual: t(dustBand(ug), lang),
-      more: [gauge(ug, 0, 600, { ticks: THRESHOLDS.dust, level: dustLevelOf(ug) })],
+      more: [gauge(ug, 0, 600, { zones: THRESHOLDS.dust, level: dustLevelOf(ug) })],
       brief: `${Math.round(ug)} µg/m³`,
     });
   }
@@ -341,7 +355,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       unit: `km/h ${t("gusts", lang)}`,
       qual: t(windWord(gust), lang),
       more: [
-        gauge(gust, 0, 100, { ticks: THRESHOLDS.wind, level: windLevelOf(gust) }),
+        gauge(gust, 0, 100, { zones: THRESHOLDS.wind, level: windLevelOf(gust) }),
         ...(dir.length ? [`<p class="t-meta">${esc(dir.join(" · "))}</p>`] : []),
       ],
       brief: `${Math.round(gust)} km/h`,
@@ -356,7 +370,14 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       num: km(m),
       unit: "",
       qual: t(visWord(m), lang),
-      more: [gauge(m, 100, 10000, { log: true, ticks: [...THRESHOLDS.fog, 5000], level: fogLevelOf(m) })],
+      more: [
+        gauge(m, 100, 10000, {
+          log: true,
+          zones: THRESHOLDS.fog,
+          ticks: [...THRESHOLDS.fog, 5000],
+          level: fogLevelOf(m),
+        }),
+      ],
       brief: km(m),
     });
   }
@@ -404,6 +425,19 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
   return orderByRisk(out, risk, c);
 }
 
+/** Each pictogram's hazard, whose hue the icon takes (palette.ts HAZARD_TINT; rain the sky's). */
+const ICON_HUE: Partial<Record<IconName, string>> = {
+  air: "air",
+  heat: "heat",
+  cold: "cold",
+  sun: "uv",
+  dust: "dust",
+  wind: "wind",
+  fog: "fog",
+  smoke: "smoke",
+  drop: "none",
+};
+
 /** A reading as the place page's row: pictogram, label, figure and word, its level, detail. */
 /** `words`, on the place page: the label becomes a heading in the words people search, and
  *  the value is said in a sentence under the figure (phrases.ts). */
@@ -411,7 +445,7 @@ export function readRowHtml(r: ReadRow, lang: Lang, words?: { heading: string; t
   const tag = r.mine ? ` <span class="fy">${esc(t("for you", lang))}</span>` : "";
   const lab = words ? `<h2 class="lab">${esc(words.heading)}${tag}</h2>` : `<p class="lab">${esc(r.label)}${tag}</p>`;
   return (
-    `<div class="rrow${r.driver ? " on" : ""}" data-k="${r.key}">${ico(r.icon)}` +
+    `<div class="${["rrow", r.driver && "on", r.raised && `lv-${r.raised}`, ICON_HUE[r.icon] && `hz-${ICON_HUE[r.icon]}`].filter(Boolean).join(" ")}" data-k="${r.key}">${ico(r.icon)}` +
     `<div>${lab}<p class="val"><span class="num">${esc(r.num)}</span>` +
     `${r.unit ? `<span class="qa">${esc(r.unit)}</span>` : ""}${r.qual ? ` <b class="ql">${esc(r.qual)}</b>` : ""}</p>` +
     `${words?.text ? `<p class="t-meta say">${esc(words.text)}</p>` : ""}</div>` +
