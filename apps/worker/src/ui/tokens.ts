@@ -1,3 +1,4 @@
+import { FALLBACK_STACK } from "./fonts";
 import {
   BAND_COLOR,
   BAND_ON_FILL,
@@ -134,13 +135,13 @@ const MODIFIERS =
 
 const TYPE_ROLES =
   `.mg .t-kicker{font-size:var(--t-sm);font-weight:600;letter-spacing:.12em;text-transform:uppercase}` +
-  `.mg .t-title{font-size:var(--t-3xl);font-weight:800;font-stretch:75%;line-height:.95;text-transform:uppercase;margin:0}` +
-  `.mg .t-h2{font-size:var(--t-2xl);font-weight:800;font-stretch:78%;line-height:1;text-transform:uppercase;margin:0}` +
-  `.mg .t-value{font-size:var(--t-xl);font-weight:600;font-stretch:85%;line-height:1.15}` +
+  `.mg .t-title{font-family:${FALLBACK_STACK.C};font-size:var(--t-3xl);font-weight:800;font-stretch:75%;line-height:.95;text-transform:uppercase;margin:0}` +
+  `.mg .t-h2{font-family:${FALLBACK_STACK.C};font-size:var(--t-2xl);font-weight:800;font-stretch:78%;line-height:1;text-transform:uppercase;margin:0}` +
+  `.mg .t-value{font-family:${FALLBACK_STACK.S};font-size:var(--t-xl);font-weight:600;font-stretch:85%;line-height:1.15}` +
   `.mg .t-lead{font-size:var(--t-lg);font-weight:600;line-height:1.35}` +
   `.mg .t-meta{font-size:var(--t-sm);color:var(--muted);line-height:1.4}` +
   `.mg .t-legal{font-size:var(--t-xs);color:var(--muted);line-height:1.35}` +
-  `.mg .t-plate{font-size:var(--t-4xl);font-weight:800;font-stretch:75%;line-height:.88;text-transform:uppercase}` +
+  `.mg .t-plate{font-family:${FALLBACK_STACK.C};font-size:var(--t-4xl);font-weight:800;font-stretch:75%;line-height:.88;text-transform:uppercase}` +
   `.mg :lang(hi),.mg :lang(kn),.mg :lang(te),.mg :lang(bn){letter-spacing:0;text-transform:none;font-stretch:100%;line-height:1.5}` +
   `.mg :lang(hi){font-family:'Anek Devanagari',sans-serif}.mg :lang(kn){font-family:'Anek Kannada',sans-serif}` +
   `.mg :lang(te){font-family:'Anek Telugu',sans-serif}.mg :lang(bn){font-family:'Anek Bangla',sans-serif}`;
@@ -157,7 +158,7 @@ const FORCED =
 /** The tokens stylesheet (built once, at module load: every input is a constant). */
 export const TOKENS_CSS =
   `.mg{${decl({ ...themed("light"), ...FIXED })}` +
-  `font-family:'Anek Latin',system-ui,sans-serif;font-size:var(--t-base);line-height:1.5;color:var(--ink);` +
+  `font-family:${FALLBACK_STACK.N};font-size:var(--t-base);line-height:1.5;color:var(--ink);` +
   // --cbg: the colour behind a component, so a gap cut in a gauge matches what it sits on.
   `--cbg:color-mix(in srgb,var(--hue) var(--s),var(--bg));background:var(--cbg);box-sizing:border-box}` +
   Object.entries(HAZARD_TINT)

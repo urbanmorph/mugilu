@@ -141,5 +141,7 @@ test("hub page: no station and no grid still says so, in words", () => {
 test("place pages link their state hub; /places names each state's hub", async () => {
   const { renderPlaces } = await import("../src/pages/places");
   assert.match(renderPlaces("en"), /href="\/state\/karnataka"/);
+  // A finger-sized target (the link row's 44 px), not a 16 px line of small text (W3).
+  assert.match(renderPlaces("en"), /<p class="links t-meta"><a href="\/state\/karnataka">Karnataka now →<\/a><\/p>/);
   assert.ok(placeBySlug("udupi"));
 });

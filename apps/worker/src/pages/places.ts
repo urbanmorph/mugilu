@@ -22,6 +22,7 @@ import {
   LIST_FILTER_JS,
   pageHead,
   panel,
+  linkRow,
   placeTile,
   placeTiles,
   stack,
@@ -156,7 +157,12 @@ export function renderPlaces(
       fold(
         g.state,
         (hubOf(g.state)
-          ? `<p class="t-meta"><a href="${lp(`/state/${hubOf(g.state)!.slug}`, lang)}">${esc(fill("{state} now", lang, { state: stateName(g.state, lang) }))} →</a></p>`
+          ? linkRow([
+              [
+                lp(`/state/${hubOf(g.state)!.slug}`, lang),
+                `${fill("{state} now", lang, { state: stateName(g.state, lang) })} →`,
+              ],
+            ])
           : "") +
           `<ul class="plist">${g.places
             .map((p) => {
