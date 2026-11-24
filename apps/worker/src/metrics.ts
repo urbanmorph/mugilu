@@ -236,14 +236,19 @@ export async function topPlaces(env: Env, limit = 8, minN = 0): Promise<TopPlace
   }
 }
 
-/** Lowercase + strip to a safe host/name token (no www), or "" if nothing's left. */
+/** Lowercase + strip to a safe host/name token (no www), or "" if nothing's left. At most
+ *  a hostname's length: the kept value is cut shorter only after registrableHost, so a long
+ *  platform host still ends in its platform when it is matched. */
 function sanitizeHost(s: string): string {
   return s
     .replace(/^www\./i, "")
     .toLowerCase()
     .replace(/[^a-z0-9.\-]/g, "")
-    .slice(0, 60);
+    .slice(0, 253);
 }
+
+/** The longest host a referrer row keeps. */
+const HOST_MAX = 60;
 
 // Two-label public suffixes we see in practice (India first). A host under one of
 // these keeps the name in front of it (paper.co.in), not just "co.in".
@@ -288,6 +293,7 @@ const PLATFORM_SUFFIXES = new Set([
   "herokuapp.com",
 ]);
 
+const LOVABLE_PREVIEW = /^(?:id-)?preview(?:-[a-z0-9]+)?--[a-z0-9-]+\./;
 const isDomain = (h: string) => h.includes(".") && !/^[\d.]+$/.test(h);
 
 /** The adopter a host stands for, so every subdomain of one site counts once: the
@@ -295,6 +301,8 @@ const isDomain = (h: string) => h.includes(".") && !/^[\d.]+$/.test(h);
  *  platform itself (my-app.vercel.app -> vercel.app). Values that are not domain
  *  names (localhost, an IP) stay as-is. */
 export function registrableHost(host: string): string {
+  // Lovable's preview hosts, also those kept cut short (….lo) before 24 Nov 2026.
+  if (LOVABLE_PREVIEW.test(host)) return "lovable.app";
   if (!isDomain(host)) return host;
   const labels = host.split(".").filter(Boolean);
   const suffix = labels.slice(-2).join(".");
@@ -331,7 +339,7 @@ function referrerHost(req: Request, url: URL): string | null {
     if (!isDomain(host)) return null;
     site = registrableHost(host);
   }
-  return site === "mugilu.live" ? null : site;
+  return site === "mugilu.live" ? null : site.slice(0, HOST_MAX);
 }
 
 // MCP client products, from initialize's clientInfo.name. One list for ops, yellide

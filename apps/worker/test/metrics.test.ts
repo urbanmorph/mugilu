@@ -327,6 +327,32 @@ test("registrableHost: subdomains collapse to the registrable domain; a hosting 
   assert.equal(registrableHost("192.168.1.20"), "192.168.1.20");
 });
 
+test("recordReferrer: a long platform host is collapsed before it is cut to length", async () => {
+  const METRICS = testD1();
+  const env = { METRICS } as unknown as Env;
+  const long = "id-preview-6c8dabd8--48a8cfbb-b468-4262-b264-f34a559249b9.lovable.app"; // 70 characters
+  await recordReferrer(env, "api", req({ referer: `https://${long}/` }), new URL("https://mugilu.live/c/1,2.json"));
+  const rows = (await METRICS.prepare("SELECT host FROM referrers").all()).results;
+  assert.deepEqual(rows, [{ host: "lovable.app" }]);
+});
+
+test("pruneReferrers: a Lovable preview host already cut short (….lo) folds into lovable.app", async () => {
+  const METRICS = testD1();
+  const env = { METRICS } as unknown as Env;
+  const now = Math.floor(Date.parse("2026-11-24T00:00:00Z") / 1000);
+  for (const [host, n] of [
+    ["id-preview-6c8dabd8--48a8cfbb-b468-4262-b264-f34a559249b9.lo", 4],
+    ["id-preview-424c11a7--48a8cfbb-b468-4262-b264-f34a559249b9.lo", 3],
+    ["lovable.app", 174],
+  ] as const)
+    await METRICS.prepare("INSERT INTO referrers (key,host,surface,n,last) VALUES (?,?,?,?,?)")
+      .bind(`api|${host}`, host, "api", n, now - 60)
+      .run();
+  await pruneReferrers(env, now);
+  const rows = (await METRICS.prepare("SELECT host, n FROM referrers").all()).results;
+  assert.deepEqual(rows, [{ host: "lovable.app", n: 181 }]);
+});
+
 test("mcpClient: the shared list (ops, yellide, mugilu, 23 Nov 2026); a monitor whatever product it names", () => {
   const cases: [unknown, string][] = [
     ["claude-code", "claude-code"],
