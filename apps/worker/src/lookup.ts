@@ -5,6 +5,7 @@ import type { Persona } from "./score";
 import type { Served } from "./edge";
 import { buildConditions } from "./conditions";
 import { loadFires, loadGrid, loadSnapshot } from "./snapshot";
+import type { Timings } from "./timing";
 import {
   recordEvent,
   recordLookup,
@@ -41,6 +42,8 @@ interface LookupInput {
   label?: string;
   /** Snapshot reads already started for this request (conditionsData). */
   data?: ConditionsData;
+  /** Notes when each load finishes (timing.ts), on a page built for the edge cache. */
+  timings?: Timings;
 }
 
 /** The adoption surface a format counts under, or none (our own pages, kiosk, MCP:
@@ -73,9 +76,17 @@ export async function lookupConditions(
   q: LookupInput,
 ): Promise<{ conditions: Conditions; usage: UsageFacts }> {
   const d = q.data ?? conditionsData(env);
+  const tm = q.timings;
   let conditions: Conditions;
   try {
-    conditions = await buildConditions(d.snapshot, q.lat, q.lon, d.fires, d.grid);
+    conditions = await buildConditions(
+      tm ? tm.track("snapshot", d.snapshot) : d.snapshot,
+      q.lat,
+      q.lon,
+      tm ? tm.track("fires", d.fires) : d.fires,
+      tm ? () => tm.track("grid", d.grid()) : d.grid,
+      tm,
+    );
   } catch (e) {
     // Only the R2 reads can reject here: the weather and warning calls report failure.
     ctx.waitUntil(upstreamFailed(env, ["r2"]));

@@ -29,6 +29,7 @@ import { ambientRisk, ambientSummary, smokeLevel, PERSONA_LABEL } from "./score"
 import { briefs, forPersona } from "./readings";
 import type { Persona } from "./score";
 import { buildAttribution } from "./sources";
+import type { Timings } from "./timing";
 
 // Stations within this many km of the nearest one count as equally near; among
 // them a CPCB reference monitor (full pollutant set) beats a low-cost sensor.
@@ -105,14 +106,16 @@ export async function buildConditions(
   lon: number,
   firesIn: FiresSnapshot | null | Promise<FiresSnapshot | null> = null,
   gridIn?: () => Promise<ConditionsSnapshot | null>,
+  /** Notes when each load finishes (timing.ts), on a page built for the edge cache. */
+  timings?: Timings,
 ): Promise<Conditions> {
   // The snapshots (R2) and the upstreams (Open-Meteo, SACHET) are independent: all
   // four are in flight together, so a cold R2 read never delays the weather call.
   const [snapshot, fires, om, alerts] = await Promise.all([
     snapshotIn,
     firesIn,
-    getOpenMeteo(lat, lon),
-    fetchLocationAlerts(lat, lon),
+    timings ? timings.track("open-meteo", getOpenMeteo(lat, lon)) : getOpenMeteo(lat, lon),
+    timings ? timings.track("sachet", fetchLocationAlerts(lat, lon)) : fetchLocationAlerts(lat, lon),
   ]);
   const found = alerts ?? [];
   const grid = await fromGrid(om, lat, lon, gridIn);

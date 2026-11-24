@@ -99,6 +99,7 @@ export async function edgeServe<U>(
     else headers.delete("cache-control");
     headers.delete(CC);
     headers.delete(USAGE);
+    headers.set("server-timing", 'cache;desc="hit"');
     if (holds(req, headers.get("etag"))) return notModified(headers);
     return new Response(hit.body, { status: hit.status, headers });
   }
@@ -111,6 +112,10 @@ export async function edgeServe<U>(
   const served = new Headers(res.headers);
   if (!served.has("etag")) served.set("etag", await weakEtag(body));
   const stored = new Headers(served);
+  // The build's timings describe this build only: served, never stored (timing.ts).
+  stored.delete("server-timing");
+  const built = served.get("server-timing");
+  served.set("server-timing", `${built ? `${built}, ` : ""}cache;desc="miss"`);
   stored.set(CC, res.headers.get("cache-control") ?? "");
   stored.set("cache-control", `public, max-age=${ttlSeconds}`);
   // Header values are bytes: percent-encode so any place name (Kāmrūp) fits.

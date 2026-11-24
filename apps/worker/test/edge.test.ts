@@ -220,3 +220,21 @@ test("edgeServe: a stored page carries a weak ETag, and a matching If-None-Match
   assert.equal(changed.status, 200);
   assert.notEqual(changed.headers.get("etag"), etag);
 });
+
+test("edgeServe: a built page's Server-Timing is served with cache miss, never stored; a hit says hit", async () => {
+  const { cache, store } = fakeCache();
+  const req = new Request("https://mugilu.live/c/1,2");
+  const key = cacheKey(req);
+  const build = async () => {
+    const res = page();
+    res.headers.set("server-timing", "render;dur=5");
+    return { res };
+  };
+  const c1 = ctx();
+  const first = await edgeServe(req, c1.ctx, key, 300, build, undefined, cache);
+  await c1.settle();
+  assert.equal(first.headers.get("server-timing"), 'render;dur=5, cache;desc="miss"');
+  assert.equal([...store.values()][0].headers.get("server-timing"), null, "the stored copy has no timings");
+  const second = await edgeServe(req, ctx().ctx, key, 300, build, undefined, cache);
+  assert.equal(second.headers.get("server-timing"), 'cache;desc="hit"');
+});
