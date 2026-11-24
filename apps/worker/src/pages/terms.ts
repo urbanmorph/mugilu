@@ -90,13 +90,6 @@ export function renderTerms(lang: Lang = "en"): string {
         .replace("{geonames}", a("https://www.geonames.org", "GeoNames"))
         .replace("{bharatlas}", a("https://bharatlas.com", "bharatlas")),
     ],
-    [
-      "Health impact",
-      t("years of life lost uses the {aqli} methodology (U Chicago EPIC).", lang).replace(
-        "{aqli}",
-        a("https://aqli.epic.uchicago.edu", "AQLI"),
-      ),
-    ],
   ];
 
   const privacyEn = PRIVACY.replace("Cloudflare Web Analytics", "<b>Cloudflare Web Analytics</b>");

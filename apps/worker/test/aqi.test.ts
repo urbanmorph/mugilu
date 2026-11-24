@@ -1,7 +1,7 @@
 // Run with: pnpm -C apps/worker test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeAqi, aqiBand, subIndex, lifeYearsLost, AQI_BAND_LABEL } from "../src/aqi";
+import { computeAqi, aqiBand, subIndex, AQI_BAND_LABEL } from "../src/aqi";
 import { renderConditionsPage } from "../src/pages/place";
 import { renderStationMarkdown } from "../src/formats";
 import type { Conditions, NormalizedStation } from "../src/types";
@@ -114,13 +114,6 @@ test("subIndex: monotonic across every pollutant's whole range (no holes, no dip
       prev = s!;
     }
   }
-});
-
-test("lifeYearsLost: AQLI 0.098 yr per µg/m³ above the WHO 5 µg/m³ guideline", () => {
-  assert.equal(lifeYearsLost(25), 1.96);
-  assert.equal(lifeYearsLost(4), 0); // below the guideline: no loss, never negative
-  assert.equal(lifeYearsLost(undefined), null);
-  assert.equal(lifeYearsLost(NaN), null);
 });
 
 test("AQI band labels: CPCB's names, the same on the page and in the Markdown", () => {

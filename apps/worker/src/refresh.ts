@@ -1,7 +1,7 @@
 import type { Env } from "./index";
 import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
-import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
+import { computeAqi, aqiBand } from "./aqi";
 import { freshStations, LATEST_KEY, loadRawSnapshot, putJson } from "./snapshot";
 import { bump } from "./metrics";
 import { reason } from "./logs";
@@ -120,7 +120,6 @@ function normalize(provider: ProviderId, raw: UpstreamStation): NormalizedStatio
     aqi,
     band: aqiBand(aqi),
     ts: raw.last_seen ?? raw.timestamp ?? raw.last_updated ?? null,
-    yll: lifeYearsLost(pollutants.pm25),
   };
 }
 

@@ -127,7 +127,7 @@ test("terms: the warranty box, the licence boxes, a box per source, privacy as l
     html,
     /<b>code is MIT<\/b> \(see the <a href="https:\/\/github\.com\/urbanmorph\/mugilu">repository<\/a>\)\./,
   );
-  assert.equal((html.match(/<div class="card">/g) ?? []).length, 2 + 8); // licence pair + 8 sources
+  assert.equal((html.match(/<div class="card">/g) ?? []).length, 2 + 7); // licence pair + 7 sources (AQLI left 24 Nov 2026)
   for (const k of ["Accounts", "Usage counts", "Analytics", "Saved places", "Alerts"])
     assert.match(html, new RegExp(`<dt>${k}</dt>`));
 });

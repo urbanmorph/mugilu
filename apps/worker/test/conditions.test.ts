@@ -16,7 +16,7 @@ test("serializeConditionsV1: a stable, self-describing /c v1 contract", async ()
     assert.equal(v1.units.pollutants.co, "mg/m3"); // CO mg/m³ vs the rest is discoverable
     assert.ok(Array.isArray(v1.warnings)); // one null convention: always a list
     assert.equal(v1.air.kind, "measured"); // provenance always present
-    assert.equal(v1.air.yll_years, 1.96); // renamed from cryptic `yll`
+    assert.equal(v1.air.yll_years, null); // withdrawn 24 Nov 2026 (AQLI is annual), kept in v1 as null
     assert.ok("as_of" in v1.air); // per-layer freshness
     assert.equal(v1.heat.kind, "modelled");
     assert.ok("risk_band" in v1.ambient && !("band" in v1.ambient)); // no enum clash with air.band

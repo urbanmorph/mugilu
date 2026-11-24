@@ -400,14 +400,14 @@ const layerHtml = (html: string, k: string) =>
   html.match(new RegExp(`<div class="rrow[^"]*" data-k="${k}">[\\s\\S]*?(?=<div class="rrow|</div></section>)`))?.[0] ??
   "";
 
-test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit, its band chip and years of life lost", () => {
+test("renderConditionsPage: air shows a bar per pollutant against its CPCB limit and its band chip; no years of life", () => {
   const html = renderConditionsPage(conditions({ air: { ...conditions().air!, pollutants: { pm25: 64, pm10: 218 } } }));
   const air = layerHtml(html, "air");
   assert.match(air, /<div class="bars" style="--lim:40\.0%">/);
   assert.match(air, /<div class="brow b-moderate"><span>PM10<\/span>/);
   assert.match(air, /<span class="chip b-satisfactory">/);
   assert.match(air, /The dashed line is the CPCB limit\./);
-  assert.match(air, /~2\.0 years of life lost/, "one decimal");
+  assert.doesNotMatch(air, /years of life/, "AQLI is for annual averages, never an hourly reading");
 });
 
 test("renderConditionsPage: hot heat shows wet-bulb and WBGT against their thresholds", () => {

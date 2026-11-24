@@ -457,10 +457,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "Ambient रीडिंग कैसे काम करती है",
     kn: "Ambient ಓದುವಿಕೆ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
   },
-  "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO, NASA, the Australian BoM and the AQLI. Informational only, never medical or safety advice.":
+  "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO and the Australian BoM; the smoke thresholds are mugilu's own. Informational only, never medical or safety advice.":
     {
-      hi: "mugilu अभी आकाश आपके साथ जो सबसे बुरा कर रहा है, उसे नाम देता है, आप कौन हैं उसके अनुसार। यह एक पारदर्शी व्यवस्था है: नीचे दी गई सीमाएँ सार्वजनिक हैं और CPCB, IMD, WHO, NASA, Australian BoM और AQLI से आती हैं। केवल जानकारी के लिए, कभी भी चिकित्सा या सुरक्षा सलाह नहीं।",
-      kn: "ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಮಾಡುತ್ತಿರುವ ಅತ್ಯಂತ ಕೆಟ್ಟ ಒಂದೇ ವಿಷಯವನ್ನು mugilu ಹೆಸರಿಸುತ್ತದೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ. ಇದು ಒಂದು ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ: ಕೆಳಗಿನ ಮಿತಿಗಳು ಸಾರ್ವಜನಿಕವಾಗಿವೆ ಮತ್ತು CPCB, IMD, WHO, NASA, Australian BoM ಮತ್ತು AQLIಯಿಂದ ಬಂದಿವೆ. ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ಎಂದಿಗೂ ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಯಲ್ಲ.",
+      hi: "mugilu अभी आकाश आपके साथ जो सबसे बुरा कर रहा है, उसे नाम देता है, आप कौन हैं उसके अनुसार। यह एक पारदर्शी व्यवस्था है: नीचे दी गई सीमाएँ सार्वजनिक हैं और CPCB, IMD, WHO और Australian BoM से आती हैं; धुएँ की सीमाएँ mugilu की अपनी हैं। केवल जानकारी के लिए, कभी भी चिकित्सा या सुरक्षा सलाह नहीं।",
+      kn: "ಆಕಾಶವು ಈಗ ನಿಮಗೆ ಮಾಡುತ್ತಿರುವ ಅತ್ಯಂತ ಕೆಟ್ಟ ಒಂದೇ ವಿಷಯವನ್ನು mugilu ಹೆಸರಿಸುತ್ತದೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ. ಇದು ಒಂದು ಪಾರದರ್ಶಕ ವ್ಯವಸ್ಥೆ: ಕೆಳಗಿನ ಮಿತಿಗಳು ಸಾರ್ವಜನಿಕವಾಗಿವೆ ಮತ್ತು CPCB, IMD, WHO ಮತ್ತು Australian BoMನಿಂದ ಬಂದಿವೆ; ಹೊಗೆಯ ಮಿತಿಗಳು mugilu ನದೇ. ಕೇವಲ ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ಎಂದಿಗೂ ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಯಲ್ಲ.",
     },
   "One read, never an average": {
     hi: "एक ही रीडिंग, कभी औसत नहीं",
@@ -531,10 +531,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "धूल (µg/m³)",
     kn: "ಧೂಳು (µg/m³)",
   },
-  "Heat takes the worst of feels-like, wet-bulb and WBGT. The persona toggle then bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind), WHO (UV) and NASA FIRMS (smoke); the full logic is the open {score}, and every layer's source and licence is on {terms}.":
+  "Heat takes the worst of feels-like, wet-bulb and WBGT, and the persona toggle bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); the smoke thresholds are mugilu's own, used only where the air is not good or satisfactory. The full logic is the open {score}, and every layer's source and licence is on {terms}.":
     {
-      hi: "गर्मी, महसूस-तापमान, वेट-बल्ब और WBGT में से सबसे बुरा लेती है। फिर प्रोफ़ाइल टॉगल एक संवेदनशील खतरे को एक स्तर ऊपर कर देता है। ये सीमाएँ CPCB (वायु), IMD और Australian BoM (गर्मी / ठंड / हवा), WHO (UV) और NASA FIRMS (धुआं) से आती हैं; पूरा तर्क खुला {score} है, और हर परत का स्रोत और लाइसेंस {terms} पृष्ठ पर है।",
-      kn: "ಬಿಸಿಲು ಎಂಬುದು ಅನಿಸುವ ತಾಪಮಾನ, ವೆಟ್ ಬಲ್ಬ್ ಮತ್ತು WBGT ಇವುಗಳಲ್ಲಿ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ. ನಂತರ ಪರ್ಸೋನಾ ಟಾಗಲ್ ಆ ಗುಂಪಿಗೆ ಹೆಚ್ಚು ತಟ್ಟುವ ಅಪಾಯವನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸುತ್ತದೆ. ಈ ಮಟ್ಟಗಳು CPCB (ವಾಯು ಗುಣಮಟ್ಟ), IMD ಮತ್ತು Australian BoM (ಬಿಸಿಲು / ಚಳಿ / ಗಾಳಿ), WHO (UV) ಮತ್ತು NASA FIRMS (ಹೊಗೆ) ಇವುಗಳಿಂದ ಬರುತ್ತವೆ; ಸಂಪೂರ್ಣ ತರ್ಕವು ಮುಕ್ತ {score} ಆಗಿದೆ, ಮತ್ತು ಪ್ರತಿ ಪದರದ ಮೂಲ ಮತ್ತು ಪರವಾನಗಿ {terms} ಪುಟದಲ್ಲಿದೆ.",
+      hi: "गर्मी, महसूस-तापमान, वेट-बल्ब और WBGT में से सबसे बुरा लेती है, और प्रोफ़ाइल टॉगल एक संवेदनशील खतरे को एक स्तर ऊपर कर देता है। ये सीमाएँ CPCB (वायु), IMD और Australian BoM (गर्मी / ठंड / हवा) और WHO (UV) से आती हैं; धुएँ की सीमाएँ mugilu की अपनी हैं, और तभी गिनी जाती हैं जब हवा अच्छी या संतोषजनक न हो। पूरा तर्क खुला {score} है, और हर परत का स्रोत और लाइसेंस {terms} पृष्ठ पर है।",
+      kn: "ಬಿಸಿಲು ಎಂಬುದು ಅನಿಸುವ ತಾಪಮಾನ, ವೆಟ್ ಬಲ್ಬ್ ಮತ್ತು WBGT ಇವುಗಳಲ್ಲಿ ಅತ್ಯಂತ ಕೆಟ್ಟದ್ದನ್ನು ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ, ಮತ್ತು ಪರ್ಸೋನಾ ಟಾಗಲ್ ಆ ಗುಂಪಿಗೆ ಹೆಚ್ಚು ತಟ್ಟುವ ಅಪಾಯವನ್ನು ಒಂದು ಹಂತ ಮೇಲಕ್ಕೆ ಏರಿಸುತ್ತದೆ. ಈ ಮಟ್ಟಗಳು CPCB (ವಾಯು ಗುಣಮಟ್ಟ), IMD ಮತ್ತು Australian BoM (ಬಿಸಿಲು / ಚಳಿ / ಗಾಳಿ) ಮತ್ತು WHO (UV) ಇವುಗಳಿಂದ ಬರುತ್ತವೆ; ಹೊಗೆಯ ಮಿತಿಗಳು mugilu ನದೇ, ಮತ್ತು ವಾಯು ಗುಣಮಟ್ಟ ಉತ್ತಮ ಅಥವಾ ತೃಪ್ತಿಕರ ಇಲ್ಲದಿದ್ದಾಗ ಮಾತ್ರ ಎಣಿಕೆಯಾಗುತ್ತವೆ. ಸಂಪೂರ್ಣ ತರ್ಕವು ಮುಕ್ತ {score} ಆಗಿದೆ, ಮತ್ತು ಪ್ರತಿ ಪದರದ ಮೂಲ ಮತ್ತು ಪರವಾನಗಿ {terms} ಪುಟದಲ್ಲಿದೆ.",
     },
   "terms & attribution": {
     hi: "शर्तें और श्रेय",
@@ -650,10 +650,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "place search from {osm} contributors (ODbL) and {geonames} (CC-BY 4.0); admin boundaries from {bharatlas}.": {
     hi: "{osm} योगदानकर्ताओं (ODbL) और {geonames} (CC-BY 4.0) से स्थान खोज; {bharatlas} से प्रशासनिक सीमाएँ।",
     kn: "{osm} ಕೊಡುಗೆದಾರರು (ODbL) ಮತ್ತು {geonames} (CC-BY 4.0) ನಿಂದ ಸ್ಥಳ ಹುಡುಕಾಟ; {bharatlas} ನಿಂದ ಆಡಳಿತ ಗಡಿಗಳು.",
-  },
-  "years of life lost uses the {aqli} methodology (U Chicago EPIC).": {
-    hi: "जीवन के खोए वर्षों की गणना {aqli} पद्धति से होती है (U Chicago EPIC)।",
-    kn: "ಕಳೆದುಕೊಳ್ಳುವ ಆಯುಷ್ಯದ ವರ್ಷಗಳು {aqli} ವಿಧಾನವನ್ನು ಬಳಸುತ್ತವೆ (U Chicago EPIC).",
   },
   "connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.": {
     hi: "Claude, Cursor या किसी भी MCP क्लाइंट को {mcp} से जोड़ें; सेटअप और टूल उसी पेज पर हैं। {llms} में सूचीबद्ध।",
@@ -833,10 +829,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "वायु",
     kn: "ವಾಯು ಗುಣಮಟ್ಟ",
   },
-  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; cyclone tracks from JTWC; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas; years of life lost from the AQLI method. Each source keeps its own licence, and mugilu credits all of them.":
+  "Air from CPCB, Airnet (CSTEP), Aurassure and Google AirView+ via the Open Air Quality (OAQ) broker; weather, heat, UV and dust from Open-Meteo, and the 1991-2020 heat normals from ERA5 reanalysis (Copernicus) via Open-Meteo; official warnings from NDMA and IMD via SACHET; fire smoke from NASA FIRMS; cyclone tracks from JTWC; place search from OpenStreetMap and GeoNames, and boundaries from bharatlas. Each source keeps its own licence, and mugilu credits all of them.":
     {
-      hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है, और आज की गर्मी की तुलना के लिए 1991-2020 के सामान्य तापमान Open-Meteo के माध्यम से ERA5 पुनः विश्लेषण (Copernicus) से आते हैं; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; चक्रवात के मार्ग JTWC से आते हैं; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं; जीवन के खोए वर्ष AQLI विधि से आते हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
-      kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ, ಮತ್ತು ಇಂದಿನ ಬಿಸಿಲನ್ನು ಹೋಲಿಸಲು ಬಳಸುವ 1991-2020ರ ಸಾಮಾನ್ಯ ತಾಪಮಾನಗಳು Open-Meteo ಮೂಲಕ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) ಬರುತ್ತವೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಚಂಡಮಾರುತದ ಮಾರ್ಗಗಳು JTWCಯಿಂದ ಬರುತ್ತವೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ; ಕಳೆದುಕೊಳ್ಳುವ ಆಯುಷ್ಯದ ವರ್ಷಗಳು AQLI ವಿಧಾನದಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
+      hi: "वायु गुणवत्ता डेटा CPCB, Airnet (CSTEP), Aurassure और Google AirView+ से Open Air Quality (OAQ) ब्रोकर के माध्यम से आता है; मौसम, गर्मी, UV और धूल का डेटा Open-Meteo से आता है, और आज की गर्मी की तुलना के लिए 1991-2020 के सामान्य तापमान Open-Meteo के माध्यम से ERA5 पुनः विश्लेषण (Copernicus) से आते हैं; आधिकारिक चेतावनियाँ NDMA और IMD से SACHET के माध्यम से आती हैं; आग के धुएं का डेटा NASA FIRMS से आता है; चक्रवात के मार्ग JTWC से आते हैं; स्थान खोज OpenStreetMap और GeoNames से, और सीमाएँ bharatlas से आती हैं। प्रत्येक स्रोत का अपना लाइसेंस होता है, और mugilu उन सभी को श्रेय देता है।",
+      kn: "ವಾಯು ಗುಣಮಟ್ಟದ ದತ್ತಾಂಶ CPCB, Airnet (CSTEP), Aurassure ಮತ್ತು Google AirView+‌ನಿಂದ Open Air Quality (OAQ) ಬ್ರೋಕರ್ ಮೂಲಕ ಬರುತ್ತದೆ; ಹವಾಮಾನ, ಬಿಸಿಲು, UV ಮತ್ತು ಧೂಳಿನ ದತ್ತಾಂಶ Open-Meteoಯಿಂದ ಬರುತ್ತದೆ, ಮತ್ತು ಇಂದಿನ ಬಿಸಿಲನ್ನು ಹೋಲಿಸಲು ಬಳಸುವ 1991-2020ರ ಸಾಮಾನ್ಯ ತಾಪಮಾನಗಳು Open-Meteo ಮೂಲಕ ERA5 ಮರುವಿಶ್ಲೇಷಣೆಯಿಂದ (Copernicus) ಬರುತ್ತವೆ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು NDMA ಮತ್ತು IMDಯಿಂದ SACHET ಮೂಲಕ ಬರುತ್ತವೆ; ಬೆಂಕಿಯ ಹೊಗೆಯ ದತ್ತಾಂಶ NASA FIRMSನಿಂದ ಬರುತ್ತದೆ; ಚಂಡಮಾರುತದ ಮಾರ್ಗಗಳು JTWCಯಿಂದ ಬರುತ್ತವೆ; ಸ್ಥಳ ಹುಡುಕಾಟ OpenStreetMap ಮತ್ತು GeoNamesನಿಂದ, ಗಡಿಗಳು bharatlasನಿಂದ ಬರುತ್ತವೆ. ಪ್ರತಿಯೊಂದು ಮೂಲವೂ ತನ್ನದೇ ಆದ ಪರವಾನಗಿಯನ್ನು ಹೊಂದಿರುತ್ತದೆ ಮತ್ತು mugilu ಅವರೆಲ್ಲರಿಗೂ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ.",
     },
   "The air is dangerous. Stay indoors if possible.": {
     hi: "वायु गुणवत्ता खतरनाक है। संभव हो तो घर के अंदर रहें।",
@@ -1574,10 +1570,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
       hi: "mugilu आपकी सटीक जगह पर सबसे बुरे खतरे का नाम बताता है और साफ़ शब्दों में बताता है कि क्या करें, इस हिसाब से कि आप कौन हैं: अस्थमा वाले लोग, बुजुर्ग, बच्चे, बाहर काम करने वाले, या हृदय रोग वाले लोग। यह केवल जानकारी है, चिकित्सा या सुरक्षा सलाह नहीं; आधिकारिक चेतावनियों के लिए NDMA और IMD से परामर्श करें।",
       kn: "mugilu ನಿಮ್ಮ ನಿಖರವಾದ ಸ್ಥಳದ ಮೇಲಿನ ಅತ್ಯಂತ ಕೆಟ್ಟ ಅಪಾಯವನ್ನು ಹೆಸರಿಸಿ, ಏನು ಮಾಡಬೇಕು ಎಂಬುದನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳುತ್ತದೆ, ನೀವು ಯಾರು ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ: ಆಸ್ತಮಾ, ವೃದ್ಧರು, ಮಕ್ಕಳು, ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು ಅಥವಾ ಹೃದಯದ ತೊಂದರೆ. ಇದು ಮಾಹಿತಿಗಾಗಿ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ ಅಥವಾ ಸುರಕ್ಷತಾ ಸಲಹೆಯಲ್ಲ; ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ, NDMA ಮತ್ತು IMDಯನ್ನು ಸಂಪರ್ಕಿಸಿ.",
     },
-  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, JTWC for cyclone tracks, OpenStreetMap, GeoNames and bharatlas for places and the map of India, and the AQLI method for years of life lost. The code is open under the MIT licence; the data keeps each source's own terms.":
+  "mugilu owns no sensors and runs no forecasts. It stands on others' work and credits them: CPCB, Airnet, Aurassure and Google AirView+ (via the OAQ broker) for air, Open-Meteo for weather, ERA5 reanalysis (Copernicus) for the heat normals, NDMA and IMD (via SACHET) for warnings, NASA FIRMS for fire smoke, JTWC for cyclone tracks, and OpenStreetMap, GeoNames and bharatlas for places and the map of India. The code is open under the MIT licence; the data keeps each source's own terms.":
     {
-      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता। यह दूसरों के काम पर टिका है और उन्हें श्रेय देता है: वायु गुणवत्ता के लिए CPCB, Airnet, Aurassure और Google AirView+ (OAQ ब्रोकर के माध्यम से), मौसम के लिए Open-Meteo, गर्मी के सामान्य तापमान के लिए ERA5 पुनः विश्लेषण (Copernicus), चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से), आग के धुएं के लिए NASA FIRMS, चक्रवात के मार्गों के लिए JTWC, स्थानों और भारत के मानचित्र के लिए OpenStreetMap, GeoNames और bharatlas, और जीवन के खोए वर्षों के लिए AQLI विधि। कोड MIT लाइसेंस के तहत खुला है; डेटा पर हर स्रोत की अपनी शर्तें लागू रहती हैं।",
-      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB, Airnet, Aurassure ಮತ್ತು Google AirView+ (OAQ ಬ್ರೋಕರ್ ಮೂಲಕ), ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಸಾಮಾನ್ಯ ಗರಿಷ್ಠ ತಾಪಮಾನಕ್ಕಾಗಿ ERA5 ಮರುವಿಶ್ಲೇಷಣೆ (Copernicus), ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ), ಬೆಂಕಿಯ ಹೊಗೆಗಾಗಿ NASA FIRMS, ಚಂಡಮಾರುತದ ಮಾರ್ಗಗಳಿಗಾಗಿ JTWC, ಸ್ಥಳಗಳು ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ OpenStreetMap, GeoNames ಮತ್ತು bharatlas, ಮತ್ತು ಕಳೆದುಕೊಳ್ಳುವ ಆಯುಷ್ಯದ ವರ್ಷಗಳಿಗಾಗಿ AQLI ವಿಧಾನ. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ಮುಕ್ತವಾಗಿದೆ; ದತ್ತಾಂಶಕ್ಕೆ ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳೇ ಅನ್ವಯಿಸುತ್ತವೆ.",
+      hi: "mugilu के पास कोई सेंसर नहीं है और वह कोई पूर्वानुमान नहीं चलाता। यह दूसरों के काम पर टिका है और उन्हें श्रेय देता है: वायु गुणवत्ता के लिए CPCB, Airnet, Aurassure और Google AirView+ (OAQ ब्रोकर के माध्यम से), मौसम के लिए Open-Meteo, गर्मी के सामान्य तापमान के लिए ERA5 पुनः विश्लेषण (Copernicus), चेतावनियों के लिए NDMA और IMD (SACHET के माध्यम से), आग के धुएं के लिए NASA FIRMS, चक्रवात के मार्गों के लिए JTWC, और स्थानों और भारत के मानचित्र के लिए OpenStreetMap, GeoNames और bharatlas। कोड MIT लाइसेंस के तहत खुला है; डेटा पर हर स्रोत की अपनी शर्तें लागू रहती हैं।",
+      kn: "mugilu ಯಾವುದೇ ಸಂವೇದಕಗಳನ್ನು ಹೊಂದಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ ಮುನ್ಸೂಚನೆಗಳನ್ನು ನೀಡುವುದಿಲ್ಲ. ಇದು ಇತರರ ಕೆಲಸವನ್ನು ಆಧರಿಸಿದೆ ಮತ್ತು ಅವರಿಗೆ ಮನ್ನಣೆ ನೀಡುತ್ತದೆ: ವಾಯು ಗುಣಮಟ್ಟಕ್ಕಾಗಿ CPCB, Airnet, Aurassure ಮತ್ತು Google AirView+ (OAQ ಬ್ರೋಕರ್ ಮೂಲಕ), ಹವಾಮಾನಕ್ಕಾಗಿ Open-Meteo, ಸಾಮಾನ್ಯ ಗರಿಷ್ಠ ತಾಪಮಾನಕ್ಕಾಗಿ ERA5 ಮರುವಿಶ್ಲೇಷಣೆ (Copernicus), ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ NDMA ಮತ್ತು IMD (SACHET ಮೂಲಕ), ಬೆಂಕಿಯ ಹೊಗೆಗಾಗಿ NASA FIRMS, ಚಂಡಮಾರುತದ ಮಾರ್ಗಗಳಿಗಾಗಿ JTWC, ಮತ್ತು ಸ್ಥಳಗಳು ಮತ್ತು ಭಾರತದ ನಕ್ಷೆಗಾಗಿ OpenStreetMap, GeoNames ಮತ್ತು bharatlas. ಕೋಡ್ MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ಮುಕ್ತವಾಗಿದೆ; ದತ್ತಾಂಶಕ್ಕೆ ಪ್ರತಿ ಮೂಲದ ಸ್ವಂತ ನಿಯಮಗಳೇ ಅನ್ವಯಿಸುತ್ತವೆ.",
     },
   none: {
     hi: "कोई नहीं",
@@ -1677,10 +1673,6 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   wind: {
     hi: "हवा",
     kn: "ಗಾಳಿ",
-  },
-  "years of life lost": {
-    hi: "जीवन के खोए वर्ष",
-    kn: "ವರ್ಷ ಆಯುಷ್ಯ ನಷ್ಟ",
   },
   // Persona exposure steps + short disclaimer (Sarvam draft, glossary-fixed; native review pending).
   "Spend less time outdoors today. Do not exercise hard outside.": {

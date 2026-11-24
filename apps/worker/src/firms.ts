@@ -72,13 +72,22 @@ export interface FireRisk {
   nearest_km: number | null;
 }
 
-/** Smoke/fire pressure at a point: active detections within `radiusKm`, with the
- *  total FRP and the nearest fire. Distance via the shared haversine. */
+/** A detection below this fire power (MW) is at the noise floor (Indo-Gangetic studies drop
+ *  pixels under 5 MW; a crop fire averages about 5): not counted near a place. */
+export const MIN_FIRE_MW = 1;
+
+/** Whether a detection counts near a place: not low confidence (VIIRS "l"), not below the noise floor. */
+const counts = (f: FireDetection) => f.confidence !== "l" && f.frp >= MIN_FIRE_MW;
+
+/** Smoke/fire pressure at a point: active detections within `radiusKm` (low-confidence and
+ *  sub-MIN_FIRE_MW ones left out), with the total FRP and the nearest fire. Distance via the
+ *  shared haversine. */
 export function fireRiskAt(fires: FireDetection[], lat: number, lon: number, radiusKm = 100): FireRisk {
   let count = 0;
   let frp = 0;
   let nearest: number | null = null;
   for (const f of fires) {
+    if (!counts(f)) continue;
     const d = haversineKm(lat, lon, f.lat, f.lon);
     if (d > radiusKm) continue;
     count++;

@@ -206,10 +206,25 @@ function fogLevel(c: Conditions): number | null {
 // Severe is reserved for the genuine burning belt; below 3 fires is negligible.
 // Exported as the single source for both "worth showing" (null) and the band,
 // so the renderers don't re-encode these literals.
-export function smokeLevel(s: SmokeConditions | null | undefined): number | null {
+function smokeLevel(s: SmokeConditions | null | undefined): number | null {
   if (!s) return null;
   const level = Math.max(atOrAbove(s.count, THRESHOLDS.smokeCount), atOrAbove(s.frp_sum, THRESHOLDS.smokeFrp));
   return level || null;
+}
+
+/** Air bands in which nearby fires are context, not a hazard: their smoke is not in the air
+ *  measured (or modelled) here. Every public smoke system lets measured PM2.5 set the level
+ *  (supporting-docs/reports/Fire smoke and life years.md). */
+const CLEAN_AIR = new Set(["good", "satisfactory"]);
+
+/** Whether the air here is clean enough that nearby fires are only context. */
+export const smokeIsContext = (c: Pick<Conditions, "air" | "smoke">): boolean =>
+  !!c.smoke?.count && CLEAN_AIR.has(c.air?.band ?? "");
+
+/** The smoke hazard's level at a place (0-3), or null: none in clean air (fires are context
+ *  then), else from the fires nearby (count or total power, mugilu's own thresholds). */
+export function smokeLevelAt(c: Pick<Conditions, "air" | "smoke">): number | null {
+  return smokeIsContext(c) ? null : smokeLevel(c.smoke);
 }
 
 function warnLevel(c: Conditions): number | null {
@@ -230,7 +245,7 @@ export function ambientRisk(c: Conditions, persona: Persona = "everyone"): Ambie
     ["Dust", dustLevel(c)],
     ["Wind", windLevel(c)],
     ["Fog", fogLevel(c)],
-    ["Smoke", smokeLevel(c.smoke)],
+    ["Smoke", smokeLevelAt(c)],
     ["Warning", warnLevel(c)],
   ];
 

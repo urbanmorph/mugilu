@@ -19,7 +19,7 @@ const SERVER_INFO = { name: "mugilu", version: SERVER_JSON.version, title: "mugi
 // Single source of truth for how an agent should understand + credit mugilu. This
 // rides the initialize handshake so the scope, the limits, and the attribution
 // reach the model before any tool is called (the "humans in the loop" commitment).
-export const INSTRUCTIONS = `mugilu: the open sky of India. Give any place in India and get what the sky is doing to you right now: air quality (CPCB AQI + the pollutant breakdown + AQLI years-of-life-lost), heat (temperature, feels-like, wet-bulb, WBGT, and today's high against the 1991-2020 normal), cold, rain, wind, fog and visibility, dust, fire/crop-burn smoke (NASA FIRMS), UV, and any official NDMA/IMD warning over that spot, plus an "Ambient" read that names the single worst hazard for you in plain words. Readings come in order of risk (ambient.order); lead with the Ambient read, then follow that order.
+export const INSTRUCTIONS = `mugilu: the open sky of India. Give any place in India and get what the sky is doing to you right now: air quality (CPCB AQI + the pollutant breakdown), heat (temperature, feels-like, wet-bulb, WBGT, and today's high against the 1991-2020 normal), cold, rain, wind, fog and visibility, dust, fire/crop-burn smoke (NASA FIRMS), UV, and any official NDMA/IMD warning over that spot, plus an "Ambient" read that names the single worst hazard for you in plain words. Readings come in order of risk (ambient.order); lead with the Ambient read, then follow that order.
 
 Scope and limits: India only. Readings are CURRENT, not a forecast. Informational only, not for medical, emergency, or safety-critical decisions; for official hazard warnings, NDMA and IMD are the authoritative channels.
 

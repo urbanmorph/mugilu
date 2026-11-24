@@ -126,7 +126,7 @@ We count MCP calls by the app name your client sends, and keep nothing else.
 ## What a conditions response carries
 The JSON is a versioned, self-describing contract: a "schema" and "version", and a
 "units" map (notably CO is mg/m3 while other pollutants are ug/m3). Layers: air
-(AQI + band + pollutants + AQLI years-of-life-lost; measured, or modelled where no
+(AQI + band + pollutants; measured, or modelled where no
 station is within 50 km), heat (temperature, humidity, feels-like, wet-bulb, WBGT),
 heat_vs_normal (today's high against the 1991-2020 normal here; shown on pages only
 when 3 C or more apart), rain, uv, dust, wind, visibility, fire/crop-burn smoke
@@ -330,7 +330,7 @@ export function openApiSpec(siteUrl: string): object {
           summary: "One air-quality station's latest reading.",
           parameters: station,
           responses: ok(
-            "`station` (id, name, city, state, lat, lon, pollutants, CPCB aqi and band, ts, yll), with `units` and `fresh_within_hours` as for /near.",
+            "`station` (id, name, city, state, lat, lon, pollutants, CPCB aqi and band, ts), with `units` and `fresh_within_hours` as for /near.",
           ),
         },
       },
