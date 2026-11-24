@@ -54,9 +54,6 @@ export interface NormalizedStation {
   aqi: number | null;
   band: "good" | "satisfactory" | "moderate" | "poor" | "vpoor" | "severe" | "unknown";
   ts: string | null;
-  /** AQLI: years of life expectancy lost if this PM2.5 level persisted as
-   *  the annual average. max(0, pm25 − 5) × 0.098. Null if no pm25. */
-  yll?: number | null;
 }
 
 /** The pollutant set carried by a station or a modelled air reading. */
@@ -85,8 +82,6 @@ export interface AirConditions {
   aqi: number | null;
   band: NormalizedStation["band"];
   pollutants: NormalizedStation["pollutants"];
-  /** AQLI years-of-life lost from PM2.5; null if no PM2.5. */
-  yll: number | null;
   /** The station this reading came from; null when modelled (no station near). */
   station: { id: string; name: string; city: string; distance_km: number } | null;
   /** Provider behind the reading (via the OAQ broker), or "open-meteo" when modelled. */

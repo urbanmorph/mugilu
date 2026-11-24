@@ -7,7 +7,8 @@ import {
   fogLevelOf,
   heatLevelOf,
   rainLevelOf,
-  smokeLevel,
+  smokeIsContext,
+  smokeLevelAt,
   uvLevelOf,
   windLevelOf,
 } from "./score";
@@ -33,8 +34,11 @@ export type Provenance =
 type Level = 0 | 1 | 2 | 3;
 type Base = { level: Level; source: Provenance };
 
+/** A CPCB air band, as the air reading carries it. */
+type AirBand = Exclude<Conditions["air"], null>["band"];
+
 export type Fact =
-  | (Base & { key: "air"; aqi: number; band: Exclude<Conditions["air"], null>["band"] })
+  | (Base & { key: "air"; aqi: number; band: AirBand })
   | (Base & {
       key: "temp";
       /** Heat or cold, whichever is raised more (heat on a tie). */
@@ -47,7 +51,14 @@ export type Fact =
   | (Base & { key: "rain"; mm: number })
   | (Base & { key: "wind"; speed_kmh: number; gust_kmh: number; direction_deg?: number })
   | (Base & { key: "fog"; metres: number })
-  | (Base & { key: "smoke"; count: number; nearest_km: number | null; radius_km: number })
+  | (Base & {
+      key: "smoke";
+      count: number;
+      nearest_km: number | null;
+      radius_km: number;
+      /** The air band here when it is clean: the fires are context, not a hazard (score.ts). */
+      clean?: AirBand;
+    })
   | (Base & { key: "uv"; index: number })
   | (Base & { key: "dust"; ugm3: number })
   | (Base & { key: "warnings"; here: Warning[]; nearby: Warning[] });
@@ -134,7 +145,8 @@ export function facts(c: Conditions, now = new Date()): Fact[] {
       count: c.smoke.count,
       nearest_km: c.smoke.nearest_km,
       radius_km: c.smoke.radius_km,
-      level: lv(smokeLevel(c.smoke)),
+      level: lv(smokeLevelAt(c)),
+      clean: smokeIsContext(c) ? c.air!.band : undefined,
       source: { kind: "satellite", by: "NASA FIRMS", radius_km: c.smoke.radius_km, window_h: FIRMS_WINDOW_H },
     });
   if (c.uv?.index != null)

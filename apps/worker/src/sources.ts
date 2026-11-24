@@ -39,7 +39,6 @@ export const SOURCES: { layer: string; text: string; names: string[] }[] = [
     text: "place search from OpenStreetMap contributors (ODbL) and GeoNames (CC-BY 4.0, via the Open-Meteo geocoder); admin boundaries from bharatlas",
     names: ["OpenStreetMap", "GeoNames", "bharatlas"],
   },
-  { layer: "Health impact (years of life lost)", text: "the AQLI methodology (U Chicago EPIC)", names: ["AQLI"] },
 ];
 
 /** The source list as Markdown bullets, one per layer. */

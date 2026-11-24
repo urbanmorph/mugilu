@@ -156,7 +156,8 @@ export function renderStationMarkdown(s: NormalizedStation, generatedAt: string,
     `lon: ${s.lon ?? "null"}`,
     `aqi: ${s.aqi ?? "null"}`,
     `band: ${s.band}`,
-    `yll_years: ${s.yll ?? "null"}`,
+    // Withdrawn 24 Nov 2026: AQLI is for annual averages, not an hourly reading. Kept as null.
+    `yll_years: null`,
     `updated: ${generatedAt}`,
     `updated_local: "${istStamp(generatedAt, true)}"`,
     `source: https://oaq.notf.in`,
@@ -177,16 +178,6 @@ export function renderStationMarkdown(s: NormalizedStation, generatedAt: string,
     "|---|---|---|",
     ...pollutantParts(s.pollutants).map((x) => `| ${x.label} | ${x.value} | ${x.unit} |`),
     "",
-    ...(s.yll !== null && s.yll !== undefined && s.yll > 0
-      ? [
-          "## Estimated health impact (AQLI)",
-          "",
-          `If this PM2.5 level (${s.pollutants.pm25} µg/m³) persisted as the annual average, the Air Quality Life Index estimates **${s.yll.toFixed(2)} years** of life expectancy lost vs. the WHO 5 µg/m³ guideline.`,
-          "",
-          `Formula: \`max(0, PM2.5 − 5) × 0.098 years\`. From Ebenstein et al. 2017 PNAS and Greenstone & Fan 2018 (U Chicago EPIC, [aqli.epic.uchicago.edu](https://aqli.epic.uchicago.edu)). This is a long-term exposure model applied to a live snapshot. Treat as an order-of-magnitude indication.`,
-          "",
-        ]
-      : []),
     "## Location",
     "",
     s.lat !== null && s.lon !== null

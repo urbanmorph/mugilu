@@ -5,7 +5,7 @@
 // gauge it is drawn on, against the thresholds the Ambient read uses.
 
 import type { Conditions } from "./types";
-import { THRESHOLDS, SENSITIVE, smokeLevel, coldLevelOf } from "./score";
+import { THRESHOLDS, SENSITIVE, smokeLevelAt, coldLevelOf } from "./score";
 import type { AmbientRisk } from "./score";
 
 // The hazard each layer reads (the thermal layer is Heat or Cold, whichever it is now).
@@ -155,7 +155,7 @@ export function briefs(c: Conditions, risk: AmbientRisk): Brief[] {
       value: km(m),
       gauge: { v: m, lo: 100, hi: 10000, ticks: [...THRESHOLDS.fog, 5000], log: true },
     });
-  if (c.smoke && smokeLevel(c.smoke) != null)
+  if (c.smoke && smokeLevelAt(c) != null)
     out.push({
       key: "smoke",
       label: "Smoke",

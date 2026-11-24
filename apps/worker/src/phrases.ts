@@ -93,6 +93,11 @@ export const PHRASES = {
     hi: "पिछले {h} घंटों में उपग्रह ने {r} km के भीतर 1 आग देखी। वह {km} km दूर है।",
     kn: "ಕಳೆದ {h} ಗಂಟೆಗಳಲ್ಲಿ ಉಪಗ್ರಹ {r} km ಒಳಗೆ 1 ಬೆಂಕಿಯನ್ನು ಕಂಡಿದೆ. ಅದು {km} km ದೂರದಲ್ಲಿದೆ.",
   },
+  "smoke.clear": {
+    en: "The air here is {band}, so their smoke is not showing in it now.",
+    hi: "यहाँ वायु गुणवत्ता {band} है, इसलिए उनका धुआँ अभी इसमें नहीं दिख रहा।",
+    kn: "ಇಲ್ಲಿನ ವಾಯು ಗುಣಮಟ್ಟ {band}, ಆದ್ದರಿಂದ ಅವುಗಳ ಹೊಗೆ ಈಗ ಇದರಲ್ಲಿ ಕಾಣುತ್ತಿಲ್ಲ.",
+  },
   "smoke.many": {
     en: "A satellite saw {n} fires within {r} km in the last {h} hours. The nearest is {km} km away.",
     hi: "पिछले {h} घंटों में उपग्रह ने {r} km के भीतर {n} आग देखीं। सबसे नज़दीकी {km} km दूर है।",
@@ -439,7 +444,8 @@ export function factText(f: Fact, lang: Lang): string {
       const base = { r: s.radius_km, h: s.window_h };
       if (!f.count) return say("smoke.none", lang, base);
       const near = { ...base, km: f.nearest_km == null ? "" : km(f.nearest_km) };
-      return f.count === 1 ? say("smoke.one", lang, near) : say("smoke.many", lang, { ...near, n: f.count });
+      const seen = f.count === 1 ? say("smoke.one", lang, near) : say("smoke.many", lang, { ...near, n: f.count });
+      return f.clean ? `${seen} ${say("smoke.clear", lang, { band: BAND_PRED[f.clean][lang] })}` : seen;
     }
     case "uv":
       return say("uv.now", lang, { uv: num(f.index), level: levelWord(f.level, lang) }) + fallbackNote(f.source, lang);

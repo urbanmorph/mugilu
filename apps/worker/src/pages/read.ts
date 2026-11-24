@@ -15,7 +15,8 @@ import {
   ambientSummary,
   headline,
   heatLevelOf,
-  smokeLevel,
+  smokeIsContext,
+  smokeLevelAt,
   type AmbientRisk,
   type Persona,
   type RiskBand,
@@ -235,8 +236,6 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
     const worst = worstPollutant(c.air.pollutants, keyReading.pollutants);
     // Where the reading comes from is said in the row's sentence (phrases.ts), not here.
     const more = bars ? [bars] : [];
-    if (c.air.yll != null)
-      more.push(`<p class="t-meta">~${c.air.yll.toFixed(1)} ${esc(t("years of life lost", lang))}</p>`);
     if (c.grap) more.push(grapLine(c.grap, lang));
     row("air", {
       label: t("Air", lang),
@@ -371,8 +370,10 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       brief: km(m),
     });
   }
-  const smokeLvl = smokeLevel(c.smoke);
-  if (c.smoke && smokeLvl != null) {
+  // Smoke is scored only where the air is not clean; in clean air the fires are context: the
+  // card keeps the facts, with no level (score.ts smokeLevelAt).
+  const smokeLvl = smokeLevelAt(c);
+  if (c.smoke && (smokeLvl != null || smokeIsContext(c))) {
     const sub =
       c.smoke.nearest_km != null
         ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW of fire power", lang).replace("X", String(c.smoke.frp_sum))}`
@@ -382,14 +383,14 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       icon: "smoke",
       num: String(c.smoke.count),
       unit: t("fires within 100 km", lang),
-      qual: t(SMOKE_PHRASE[smokeLvl], lang),
+      qual: smokeLvl != null ? t(SMOKE_PHRASE[smokeLvl], lang) : undefined,
       more: [
         ...(c.smoke.nearest_km != null
           ? [
               gauge(c.smoke.nearest_km, 0, c.smoke.radius_km ?? 100, {
                 from: c.smoke.nearest_km,
                 marker: true,
-                level: smokeLvl,
+                level: smokeLvl ?? undefined,
               }),
             ]
           : []),

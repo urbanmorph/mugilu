@@ -19,13 +19,13 @@ import { grapRead } from "./grap";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo, wbgt } from "./openmeteo";
 import { compareWithNormal, heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
-import { computeAqi, aqiBand, lifeYearsLost } from "./aqi";
+import { computeAqi, aqiBand } from "./aqi";
 import { pollutantParts } from "./formats";
 import { nearestPlace } from "./place";
 import { fetchLocationAlerts, splitWarnings } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
-import { ambientRisk, ambientSummary, smokeLevel, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientSummary, smokeIsContext, smokeLevelAt, PERSONA_LABEL } from "./score";
 import { briefs, forPersona } from "./readings";
 import type { Persona } from "./score";
 import { buildAttribution } from "./sources";
@@ -61,7 +61,6 @@ function measuredAir(s: NearStation): AirConditions {
     aqi: s.aqi,
     band: s.band,
     pollutants: s.pollutants,
-    yll: s.yll ?? null,
     station: { id: s.id, name: s.name, city: s.city, distance_km: s.distance_km },
     source: s.provider,
   };
@@ -74,7 +73,6 @@ function modelledAir(m: AirPollutants): AirConditions {
     aqi,
     band: aqiBand(aqi),
     pollutants: m,
-    yll: lifeYearsLost(m.pm25),
     station: null,
     source: "open-meteo",
     modelled: true,
@@ -298,7 +296,6 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
     if (ug.length) out.push(`- ${ug.join(" · ")} µg/m³`);
     const coPart = pp.find((x) => x.key === "co");
     if (coPart) out.push(`- CO ${coPart.value} mg/m³`);
-    if (c.air.yll != null) out.push(`- Est. life-expectancy impact: ${c.air.yll} yrs (AQLI)`);
     if (c.air.station) {
       out.push(
         `- Nearest station: ${c.air.station.name}, ${c.air.station.city} (${c.air.station.distance_km} km) · via ${c.air.source.toUpperCase()}`,
@@ -344,10 +341,12 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
   if (c.visibility?.meters != null) {
     out.push("## Visibility", `- Visibility: ${c.visibility.meters} m`, "");
   }
-  if (c.smoke && smokeLevel(c.smoke) != null) {
+  const clean = smokeIsContext(c);
+  if (c.smoke && (clean || smokeLevelAt(c) != null)) {
     out.push("## Smoke", `- Active fires within ${c.smoke.radius_km} km: **${c.smoke.count}** (last 24h)`);
     if (c.smoke.frp_sum) out.push(`- Total fire power nearby: ${c.smoke.frp_sum} MW`);
     if (c.smoke.nearest_km != null) out.push(`- Nearest fire: ${c.smoke.nearest_km} km`);
+    if (clean) out.push(`- Not scored as a hazard: the air here is ${c.air!.band}, so the smoke is not in it now`);
     out.push("");
   }
 
@@ -413,7 +412,8 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
           aqi_scale: "cpcb",
           band: c.air.band,
           pollutants: c.air.pollutants,
-          yll_years: c.air.yll ?? null,
+          // Withdrawn 24 Nov 2026: AQLI is for annual averages, not an hourly reading. Kept in v1 as null.
+          yll_years: null,
           station: c.air.station,
           source: c.air.source,
           as_of: c.air_as_of ?? c.as_of,
@@ -427,7 +427,16 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
     dust: modelled(c.dust),
     wind: modelled(c.wind),
     visibility: modelled(c.visibility),
-    smoke: c.smoke ? { kind: "observed" as const, ...c.smoke, window_h: 24, as_of: c.as_of } : null,
+    // role: "hazard" when the smoke is scored, "context" when the air here is clean (score.ts).
+    smoke: c.smoke
+      ? {
+          kind: "observed" as const,
+          ...c.smoke,
+          window_h: 24,
+          role: smokeLevelAt(c) != null ? ("hazard" as const) : ("context" as const),
+          as_of: c.as_of,
+        }
+      : null,
     warnings: (c.warnings ?? []).map(apiWarning),
     nearby_warnings: (c.nearby_warnings ?? []).map(apiWarning),
     ambient: {
