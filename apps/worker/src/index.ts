@@ -1,3 +1,4 @@
+import { securityHeaders } from "./security";
 import { collectAirDaily } from "./airdaily";
 import { BORROW_MAX_KM, collectPlaceDaily, loadIndiaTrend, loadPlaceTrend, type PlaceTrend } from "./placedaily";
 import { refreshLatest } from "./refresh";
@@ -153,7 +154,7 @@ function storeMap(env: Env): Promise<void> {
   );
 }
 
-export default {
+const app = {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
 
@@ -962,5 +963,13 @@ export default {
         ),
       );
     }
+  },
+};
+
+/** The worker: the routes above, every response with the security headers (security.ts). */
+export default {
+  ...app,
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    return securityHeaders(req, await app.fetch(req, env, ctx));
   },
 };
