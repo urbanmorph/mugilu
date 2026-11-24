@@ -1,4 +1,5 @@
 import { securityHeaders } from "./security";
+import { Timings } from "./timing";
 import { collectAirDaily } from "./airdaily";
 import { BORROW_MAX_KM, collectPlaceDaily, loadIndiaTrend, loadPlaceTrend, type PlaceTrend } from "./placedaily";
 import { refreshLatest } from "./refresh";
@@ -527,21 +528,29 @@ const app = {
           // BORROW_MAX_KM of its centre (READING_SENTENCES_SPEC.md section 9).
           const near = !named && fmt === "html" ? recordNear(lat, lon) : undefined;
           const recordOf = named ?? (near && near.km <= BORROW_MAX_KM ? near.place : undefined);
+          // How long each load held this build up (timing.ts): Server-Timing and a log line.
+          const timings = new Timings();
           const [{ conditions, usage }, trend, past] = await Promise.all([
-            lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName }),
-            recordOf && fmt === "html"
-              ? loadPlaceTrend(env, recordOf).catch((e) => {
-                  console.error(`[place-daily] trend for ${recordOf.slug}: ${reason(e)}`);
-                  return null;
-                })
-              : null,
+            lookupConditions(env, ctx, { lat, lon, persona, fmt, label: placeName, timings }),
+            timings.track(
+              "trend",
+              recordOf && fmt === "html"
+                ? loadPlaceTrend(env, recordOf).catch((e) => {
+                    console.error(`[place-daily] trend for ${recordOf.slug}: ${reason(e)}`);
+                    return null;
+                  })
+                : null,
+            ),
             // A named place's past warnings (warnhistory.ts); a failed read leaves them off.
-            named && fmt === "html"
-              ? loadHistory(env, named.slug).catch((e) => {
-                  console.error(`[warn-history] ${named.slug}: ${reason(e)}`);
-                  return null;
-                })
-              : null,
+            timings.track(
+              "history",
+              named && fmt === "html"
+                ? loadHistory(env, named.slug).catch((e) => {
+                    console.error(`[warn-history] ${named.slug}: ${reason(e)}`);
+                    return null;
+                  })
+                : null,
+            ),
           ]);
           // A reading built while an upstream was down is served, never cached.
           const res = await renderConditions(
@@ -555,6 +564,10 @@ const app = {
             near,
             past,
           );
+          timings.mark("render");
+          const colo = (req as { cf?: { colo?: string } }).cf?.colo;
+          res.headers.set("server-timing", timings.header(colo));
+          console.log(`[timing] ${JSON.stringify({ path: url.pathname, fmt, colo, ...timings.line() })}`);
           return { res, usage, store: !conditions.degraded };
         },
         (usage, served) => recordUsage(env, ctx, usage, { fmt, caller, req, url, served }),
