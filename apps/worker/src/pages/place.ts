@@ -3,7 +3,7 @@ import { type Conditions } from "../types";
 import { placeLabel } from "../readings";
 import { esc } from "../html";
 import { AQI_BAND_LABEL } from "../aqi";
-import { PERSONAS, PERSONA_LABEL, ambientRisk, ambientSummary, type Persona } from "../score";
+import { PERSONAS, PERSONA_LABEL, ambientRisk, type Persona } from "../score";
 import { localName, nativeNames, placeBySlug, siblingPlaces, slugFromPath, titleName } from "../slugs";
 import { hubOf, stateName } from "../states";
 import { aroundLinks } from "../sister";
@@ -37,7 +37,6 @@ import {
   autoLane,
   band,
   bandChip,
-  lane,
   linkButton,
   linkRow,
   notice,

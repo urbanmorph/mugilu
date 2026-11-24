@@ -36,7 +36,6 @@ import {
   type IconName,
 } from "../ui/components";
 import { langAttr, t, type Lang } from "../i18n";
-import { HAZARDS_SHORT } from "../hazards";
 import { cycloneIn, cycloneTitle } from "../sachet";
 import { NORMALS_LABEL, heatVsNormalLine, heatVsNormalShown } from "../heatnormals";
 
@@ -544,23 +543,4 @@ export function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string
     "info",
     `<b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}`,
   );
-}
-
-/** A place page's title and the description's first sentence, in the words people search:
- *  "Delhi AQI today: 344 Very Poor". With no air reading, the title names what there is. */
-export function searchTitle(c: Conditions, placeName: string, lang: Lang): { title: string; lead?: string } {
-  const air = c.air;
-  if (!air || air.aqi == null) return { title: `${placeName}: ${t(`${HAZARDS_SHORT} now`, lang)} · mugilu` };
-  const fill = (s: string) =>
-    s
-      .replace("{place}", placeName)
-      .replace("{aqi}", String(air.aqi))
-      .replace("{band}", t(AQI_BAND_LABEL[air.band] ?? "", lang));
-  const title = `${fill(t("{place} AQI today: {aqi} {band}", lang))} · ${t(`${HAZARDS_SHORT} now`, lang)} · mugilu`;
-  const lead = air.station
-    ? fill(t("{place} AQI {aqi} ({band}) right now, from the {station} station {km} km away.", lang))
-        .replace("{station}", air.station.name)
-        .replace("{km}", air.station.distance_km.toFixed(1))
-    : fill(t("{place} AQI {aqi} ({band}) right now, modelled.", lang));
-  return { title, lead };
 }

@@ -11,8 +11,8 @@ import { gaugePos } from "./readings";
 import { RISK_BANDS, uvLevelOf } from "./score";
 import { barRows } from "./ui/components";
 import type { AirPollutants } from "./types";
+import { r1 } from "./num";
 
-const fix = (n: number) => +n.toFixed(1);
 const at = gaugePos;
 
 export interface GaugeOpts {
@@ -42,9 +42,7 @@ function zoneScale(edges: number[]): string {
   const at = up ? edges : [...edges].reverse();
   const names = up ? RISK_BANDS : [...RISK_BANDS].reverse();
   const stops = [`var(--${names[0]}) 0%`];
-  at.forEach((e, i) =>
-    stops.push(`var(--${names[i]}) ${fix(e - BLEND)}%`, `var(--${names[i + 1]}) ${fix(e + BLEND)}%`),
-  );
+  at.forEach((e, i) => stops.push(`var(--${names[i]}) ${r1(e - BLEND)}%`, `var(--${names[i + 1]}) ${r1(e + BLEND)}%`));
   stops.push(`var(--${names[at.length]}) 100%`);
   return `linear-gradient(90deg,${stops.join(",")})`;
 }
@@ -59,7 +57,7 @@ export function gauge(v: number, lo: number, hi: number, o: GaugeOpts = {}): str
     const cls = o.cls ?? RISK_BANDS[o.level ?? 0];
     return (
       `<div class="gauge zoned ${cls}" style="--grad:${zoneScale(o.zones.map(p))}" aria-hidden="true">` +
-      `<i class="f" style="clip-path:inset(0 ${fix(100 - b)}% 0 ${a}%)"></i>` +
+      `<i class="f" style="clip-path:inset(0 ${r1(100 - b)}% 0 ${a}%)"></i>` +
       ticks +
       `<i class="dot" style="--at:${p(v)}%"></i></div>`
     );
@@ -67,7 +65,7 @@ export function gauge(v: number, lo: number, hi: number, o: GaugeOpts = {}): str
   const cls = o.cls ?? (o.level ? RISK_BANDS[o.level] : "");
   return (
     `<div class="gauge${cls ? ` ${cls}` : ""}" aria-hidden="true">` +
-    `<i class="f" style="left:${a}%;width:${fix(b - a)}%"></i>` +
+    `<i class="f" style="left:${a}%;width:${r1(b - a)}%"></i>` +
     ticks +
     (o.marker ? `<i class="mk" style="left:${p(v)}%"></i>` : "") +
     `</div>`

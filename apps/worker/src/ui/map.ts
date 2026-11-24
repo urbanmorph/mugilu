@@ -16,7 +16,6 @@ import {
   LON0,
   px,
   py,
-  r1,
   S,
   STATE_PATH,
   VH,
@@ -30,6 +29,7 @@ import { relTime } from "./shell";
 import { backLink, LEVEL_SHAPE, LEVEL_WORD, panel, segmented, SHAPE, stack, stamp, stamps } from "./components";
 import { RISK_BANDS } from "../score";
 import outlines from "../../data/states.json";
+import { r1 } from "../num";
 
 // IndiaMap: one component for home and /places (design standard §4). The squares are
 // textures and outlines, never colour alone; every layer has a stamp of its age, a legend,

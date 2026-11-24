@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { AIR_DAILY_PREFIX, collectAirDaily, istDayKeys, loadAirDays, summarizeDay, type AirDay } from "../src/airdaily";
+import { AIR_DAILY_PREFIX, collectAirDaily, istDayKeys, readJson, summarizeDay, type AirDay } from "../src/airdaily";
 import { gzip } from "../src/gzip";
 import { testWorker } from "./helpers/worker";
 import type { Env } from "../src/index";
@@ -119,7 +119,7 @@ test("collectAirDaily: summarises each ended day, newest first, up to its limit;
   const third = await collectAirDaily(env, { now: NOW, start: "2026-11-09", maxDays: 2 });
   assert.deepEqual(third.written, []);
   assert.deepEqual(puts, [], "nothing rewritten");
-  const [d11] = (await loadAirDays(env, ["2026-11-11"])) as AirDay[];
+  const d11 = (await readJson<AirDay>(env, `${AIR_DAILY_PREFIX}2026-11-11.json.gz`))!;
   assert.equal(d11.hours, 3);
   assert.equal(d11.stations.a.aqi_max, 150);
 });
@@ -129,7 +129,7 @@ test("collectAirDaily: a day not yet over waits; a day with no files is recorded
   await seedDays(env, ["2026-11-12"]); // still today in India
   const r = await collectAirDaily(env, { now: NOW, start: "2026-11-10" });
   assert.deepEqual(r.written, ["2026-11-11", "2026-11-10"]);
-  const [d] = (await loadAirDays(env, ["2026-11-10"])) as AirDay[];
+  const d = (await readJson<AirDay>(env, `${AIR_DAILY_PREFIX}2026-11-10.json.gz`))!;
   assert.equal(d.hours, 0);
   assert.deepEqual(d.stations, {});
   assert.ok(!(await env.OAQ_R2.head(`${AIR_DAILY_PREFIX}2026-11-12.json.gz`)), "today waits");
@@ -141,11 +141,6 @@ test("collectAirDaily: out of time it stops between days, keeping what it wrote"
   const r = await collectAirDaily(env, { now: NOW, start: "2026-11-10", budgetMs: 0 });
   assert.deepEqual(r.written, []);
   assert.equal(r.pending, 2);
-});
-
-test("loadAirDays: a day not summarised is null", async () => {
-  const { env } = testWorker();
-  assert.deepEqual(await loadAirDays(env, ["2026-11-01"]), [null]);
 });
 
 test("/air-daily/collect is an admin route: 401 without the key", async () => {

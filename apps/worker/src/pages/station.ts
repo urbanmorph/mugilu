@@ -16,7 +16,6 @@ import {
   bandChip,
   barRows,
   dataTable,
-  ico,
   lane,
   linkButton,
   linkRow,

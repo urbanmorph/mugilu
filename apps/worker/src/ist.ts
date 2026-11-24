@@ -58,3 +58,17 @@ export function isoOf(w: When): string {
   const d = toDate(w);
   return isNaN(d.getTime()) ? "" : d.toISOString();
 }
+
+// India's calendar day as YYYY-MM-DD: the daily files, the trends and the warning history
+// count days the way India does. IST has no daylight saving, so a day is always 24 hours.
+const IST_OFFSET_MS = 5.5 * 3_600_000;
+const DAY_MS = 86_400_000;
+
+/** The India day (YYYY-MM-DD) a moment falls on. */
+export const istIsoDay = (ms: number): string => new Date(ms + IST_OFFSET_MS).toISOString().slice(0, 10);
+
+/** The moment an India day (YYYY-MM-DD) begins. */
+export const istDayStart = (day: string): number => Date.parse(`${day}T00:00:00+05:30`);
+
+/** The India day `n` days after `day` (before it, when `n` is negative). */
+export const istDayAdd = (day: string, n: number): string => istIsoDay(istDayStart(day) + (n + 0.5) * DAY_MS);

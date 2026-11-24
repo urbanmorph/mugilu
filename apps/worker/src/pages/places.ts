@@ -12,7 +12,6 @@ import { cycloneTitle, officialCyclone, type WarningsSnapshot } from "../sachet"
 import { alertParts } from "./warnings";
 import { breadcrumb, SITE, ld } from "../ui/shell";
 import { HOME_OG } from "../og-html";
-import { istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
 import {
   band,

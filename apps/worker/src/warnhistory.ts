@@ -5,6 +5,7 @@ import { allSlugPlaces } from "./slugs";
 import { loadJson, putJson } from "./snapshot";
 import { issuerName } from "./sachet";
 import type { WarnArea } from "./warnareas";
+import { istDayAdd, istIsoDay } from "./ist";
 
 // Each place's official warnings since the archive began: the alerts whose area covered the
 // place's centre (the rule /places and the state pages use for "under a warning now"), kept
@@ -76,9 +77,6 @@ export const loadHistory = async (env: Env, slug: string): Promise<PastAlert[] |
 };
 
 const RANK: Colour[] = ["green", "yellow", "orange", "red"];
-const IST_MS = 5.5 * 3_600_000;
-const istDate = (ms: number) => new Date(ms + IST_MS).toISOString().slice(0, 10);
-const nextDate = (d: string) => istDate(Date.parse(`${d}T00:00:00+05:30`) + 86_400_000);
 
 /** Each IST day (YYYY-MM-DD) one of the alerts was in force, up to today, at the worst colour
  *  in force that day. Alerts come every few hours (IMD's 3-hour nowcasts), so days, not
@@ -88,8 +86,8 @@ export function warnedDays(list: PastAlert[], now = Date.now()): Map<string, Col
   for (const a of list) {
     const from = Date.parse(a.from);
     if (!from || from > now) continue;
-    const end = istDate(Math.min(Math.max(Date.parse(a.until) || from, from), now));
-    for (let d = istDate(from); d <= end; d = nextDate(d)) {
+    const end = istIsoDay(Math.min(Math.max(Date.parse(a.until) || from, from), now));
+    for (let d = istIsoDay(from); d <= end; d = istDayAdd(d, 1)) {
       const had = days.get(d);
       if (!had || RANK.indexOf(a.colour) > RANK.indexOf(had)) days.set(d, a.colour);
     }

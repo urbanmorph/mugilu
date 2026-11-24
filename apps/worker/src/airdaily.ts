@@ -2,6 +2,8 @@ import type { Env } from "./index";
 import type { NormalizedStation, Snapshot } from "./types";
 import { gzip } from "./gzip";
 import { reason } from "./logs";
+import { istDayAdd, istDayStart, istIsoDay } from "./ist";
+import { median, r1 } from "./num";
 
 // The daily air summary: one small file per India (IST) day, archive/air-daily/<YYYY-MM-DD>.json.gz,
 // made from that day's 24 hourly snapshots in archive/air/ (refresh.ts). A trend then reads 30
@@ -21,7 +23,6 @@ export const AIR_DAILY_PREFIX = "archive/air-daily/";
 /** The first day of the hourly air archive. */
 export const AIR_ARCHIVE_START = "2026-06-29";
 const HOUR = 3_600_000;
-const IST = 5.5 * HOUR;
 /** A reading older than this, at the snapshot, is not counted in the city's hourly median. */
 const FRESH = 3 * HOUR;
 
@@ -60,29 +61,20 @@ export interface AirDay {
   cities: Record<string, CityDay>;
 }
 
-const dayStart = (day: string) => Date.parse(`${day}T00:00:00+05:30`);
-const isoDay = (ms: number) => new Date(ms + IST).toISOString().slice(0, 10);
-
 /** The 24 hourly archive files of an India day: UTC 19:00 the day before to 18:00. */
 export function istDayKeys(day: string): string[] {
-  const first = dayStart(day) + HOUR / 2;
+  const first = istDayStart(day) + HOUR / 2;
   return Array.from({ length: 24 }, (_, i) => {
     const t = new Date(first + i * HOUR).toISOString();
     return `archive/air/${t.slice(0, 10)}/${t.slice(11, 13)}.json.gz`;
   });
 }
 
-const median = (v: number[]) => {
-  const s = [...v].sort((a, b) => a - b);
-  const m = s.length >> 1;
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-};
 const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
-const r1 = (n: number) => Math.round(n * 10) / 10;
 
 /** One day from its snapshots. */
 export function summarizeDay(day: string, snaps: Snapshot[]): AirDay {
-  const from = dayStart(day);
+  const from = istDayStart(day);
   const to = from + 24 * HOUR;
   const readings = new Map<string, { s: NormalizedStation; by: Map<string, NormalizedStation> }>();
   const cityHours = new Map<string, number[]>();
@@ -157,10 +149,6 @@ export async function readJson<T>(env: Env, key: string): Promise<T | null> {
 
 const keyOf = (day: string) => `${AIR_DAILY_PREFIX}${day}.json.gz`;
 
-/** The summaries of these days, null where a day is not summarised. */
-export const loadAirDays = (env: Env, days: string[]): Promise<(AirDay | null)[]> =>
-  Promise.all(days.map((d) => readJson<AirDay>(env, keyOf(d))));
-
 export interface AirDailyOpts {
   now?: number;
   /** The first day to summarise. */
@@ -184,9 +172,9 @@ export async function collectAirDaily(env: Env, o: AirDailyOpts = {}): Promise<A
   const run: AirDailyRun = { written: [], pending: 0, ms: 0 };
   try {
     // The last India day that ended over an hour ago (its 18:00 UTC file is written at 18:05).
-    const last = isoDay(now - HOUR - 24 * HOUR);
+    const last = istIsoDay(now - HOUR - 24 * HOUR);
     const days: string[] = [];
-    for (let d = last; d >= start; d = isoDay(dayStart(d) - 12 * HOUR)) days.push(d);
+    for (let d = last; d >= start; d = istDayAdd(d, -1)) days.push(d);
     const have = new Set<string>();
     let cursor: string | undefined;
     do {

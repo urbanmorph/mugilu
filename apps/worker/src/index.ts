@@ -95,6 +95,15 @@ export interface Env {
  *  second for identical bytes. The human HTML pages deliberately omit it, so a manual
  *  reload always revalidates (with the Worker, which may answer from its own edge
  *  cache, edge.ts; `s-maxage` here is for any cache in front of that). */
+const HTML = "text/html; charset=utf-8";
+
+/** The not-found page, in the reader's language. */
+const notFound = (lang: Lang) => new Response(renderNotFound(lang), { status: 404, headers: { "content-type": HTML } });
+
+/** Matches a station in a snapshot by its provider and id. */
+const isStation = (provider: string, rawId: string) => (s: NormalizedStation) =>
+  s.provider === provider && s.raw_id === rawId;
+
 function cachedResponse(body: string, contentType: string, clientMaxAge?: number): Response {
   const cc = clientMaxAge
     ? `public, max-age=${clientMaxAge}, s-maxage=900, stale-while-revalidate=3600`
@@ -200,25 +209,25 @@ export default {
     }
 
     if (url.pathname === "/about") {
-      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderAbout(lang), "text/html; charset=utf-8"));
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderAbout(lang), HTML));
     }
 
     // Glass-box methodology: how the Ambient read + thresholds work.
     if (url.pathname === "/methodology") {
-      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderMethodology(lang), "text/html; charset=utf-8"));
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderMethodology(lang), HTML));
     }
 
     // "Put it on a screen" builder: pick a place, open the self-refreshing kiosk view.
     if (url.pathname === "/display") {
       const as = parsePersona(url.searchParams.get("as"));
-      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderDisplayBuilder(as, lang), "text/html; charset=utf-8"), {
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderDisplayBuilder(as, lang), HTML), {
         as: as === "everyone" ? undefined : as,
       });
     }
 
     // Terms & attribution (the disclaimer in every API response points here).
     if (url.pathname === "/terms") {
-      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderTerms(lang), "text/html; charset=utf-8"));
+      return cached(STATIC_EDGE_TTL, () => cachedResponse(renderTerms(lang), HTML));
     }
 
     // The place directory: every named /c/{slug} page, grouped by state. A crawlable
@@ -231,11 +240,7 @@ export default {
     const stateMatch = url.pathname.match(/^\/state\/([a-z0-9-]+)(\/warnings)?$/);
     if (stateMatch) {
       const st = hubOf(stateBySlug(stateMatch[1])?.name);
-      if (!st)
-        return new Response(renderNotFound(lang), {
-          status: 404,
-          headers: { "content-type": "text/html; charset=utf-8" },
-        });
+      if (!st) return notFound(lang);
       if (stateMatch[2])
         return cached(LIVE_EDGE_TTL, async () => {
           // As /warnings: a failed read is not stored, so a cached "none" never hides a warning.
@@ -243,10 +248,7 @@ export default {
             loadWarningsSnapshot(env).catch(() => null),
             loadMap(env),
           ]);
-          const res = cachedResponse(
-            renderWarningsPage(inForce(snap, map), lang, map, undefined, st),
-            "text/html; charset=utf-8",
-          );
+          const res = cachedResponse(renderWarningsPage(inForce(snap, map), lang, map, undefined, st), HTML);
           return { res, store: snap !== null && stored };
         });
       return cached(LIVE_EDGE_TTL, async () => {
@@ -263,7 +265,7 @@ export default {
           map,
           warnings: inForce(warnings, map),
         });
-        const res = cachedResponse(renderStatePage(st, now, lang), "text/html; charset=utf-8");
+        const res = cachedResponse(renderStatePage(st, now, lang), HTML);
         // A missing input is passing: serve it, but do not keep it for the TTL.
         return { res, store: !!grid && !!snap && stored && warnings !== null };
       });
@@ -275,10 +277,7 @@ export default {
           loadMap(env),
           loadWarningsSnapshot(env).catch(() => null),
         ]);
-        const res = cachedResponse(
-          renderPlaces(lang, { map, warnings: inForce(warnings, map) }),
-          "text/html; charset=utf-8",
-        );
+        const res = cachedResponse(renderPlaces(lang, { map, warnings: inForce(warnings, map) }), HTML);
         // A missing stored map or warnings snapshot is passing: serve it, but do not keep it for the TTL.
         return { res, store: stored && warnings !== null };
       });
@@ -362,7 +361,7 @@ export default {
             { gridAsOf: hl.gridAsOf, airAsOf: hl.airAsOf, popular, map, warnings: inForce(warnings, map), india },
             lang,
           ),
-          "text/html; charset=utf-8",
+          HTML,
         );
         // A missing grid or air snapshot leaves the hero partial, and a map composed here
         // (none stored yet) is slow: served, not stored.
@@ -459,7 +458,7 @@ export default {
             store: snap !== null,
           };
         // The page also names the places under the warnings in force, from the home map's areas.
-        const res = cachedResponse(renderWarningsPage(snap, lang, map), "text/html; charset=utf-8");
+        const res = cachedResponse(renderWarningsPage(snap, lang, map), HTML);
         return { res, store: snap !== null && stored };
       });
     }
@@ -601,7 +600,7 @@ export default {
           REFRESH_AFTER_SECONDS,
         );
       if (kiosk) {
-        return cachedResponse(renderKioskPage(conditions, persona, canonical, lang), "text/html; charset=utf-8");
+        return cachedResponse(renderKioskPage(conditions, persona, canonical, lang), HTML);
       }
       return cachedResponse(
         renderConditionsPage(
@@ -615,7 +614,7 @@ export default {
           near,
           past,
         ),
-        "text/html; charset=utf-8",
+        HTML,
       );
     }
 
@@ -640,11 +639,7 @@ export default {
     const trendsMatch = url.pathname.match(/^\/c\/([a-z0-9-]+)\/trends$/);
     if (trendsMatch) {
       const place = placeBySlug(trendsMatch[1]);
-      if (!place)
-        return new Response(renderNotFound(lang), {
-          status: 404,
-          headers: { "content-type": "text/html; charset=utf-8" },
-        });
+      if (!place) return notFound(lang);
       const span = spanOf(url.searchParams.get("days"));
       return cached(
         TRENDS_EDGE_TTL,
@@ -653,10 +648,7 @@ export default {
             console.error(`[place-daily] trends for ${place.slug}: ${reason(e)}`);
             return null;
           });
-          const res = cachedResponse(
-            renderTrendsPage(place, tr && sliceTrend(tr, span), span, lang),
-            "text/html; charset=utf-8",
-          );
+          const res = cachedResponse(renderTrendsPage(place, tr && sliceTrend(tr, span), span, lang), HTML);
           return { res, store: !!tr };
         },
         { days: span === 30 ? undefined : String(span) },
@@ -667,17 +659,13 @@ export default {
     const warnMatch = url.pathname.match(/^\/c\/([a-z0-9-]+)\/warnings$/);
     if (warnMatch) {
       const place = placeBySlug(warnMatch[1]);
-      if (!place)
-        return new Response(renderNotFound(lang), {
-          status: 404,
-          headers: { "content-type": "text/html; charset=utf-8" },
-        });
+      if (!place) return notFound(lang);
       return cached(LIVE_EDGE_TTL, async () => {
         const past = await loadHistory(env, place.slug).catch((e) => {
           console.error(`[warn-history] ${place.slug}: ${reason(e)}`);
           return null;
         });
-        const res = cachedResponse(renderWarningHistoryPage(place, past ?? [], lang), "text/html; charset=utf-8");
+        const res = cachedResponse(renderWarningHistoryPage(place, past ?? [], lang), HTML);
         return { res, store: past != null };
       });
     }
@@ -686,11 +674,7 @@ export default {
     if (slugMatch) {
       const { slug, ext } = slugMatch;
       const place = placeBySlug(slug);
-      if (!place)
-        return new Response(renderNotFound(lang), {
-          status: 404,
-          headers: { "content-type": "text/html; charset=utf-8" },
-        });
+      if (!place) return notFound(lang);
       const label = slugLabel(place);
       return serveConditions(
         place.lat,
@@ -719,11 +703,7 @@ export default {
         LIVE_EDGE_TTL,
         async () => {
           const { conditions, usage } = await lookupConditions(env, ctx, { ...coords, persona, fmt: "embed" });
-          const res = cachedResponse(
-            renderEmbed(conditions, persona, SITE_URL, lang),
-            "text/html; charset=utf-8",
-            REFRESH_AFTER_SECONDS,
-          );
+          const res = cachedResponse(renderEmbed(conditions, persona, SITE_URL, lang), HTML, REFRESH_AFTER_SECONDS);
           return { res, usage, store: !conditions.degraded };
         },
         (usage, served) => recordUsage(env, ctx, usage, { fmt: "embed", caller, req, url, served }),
@@ -738,7 +718,7 @@ export default {
       return cached(OG_EDGE_TTL, async () => {
         const snap = await loadSnapshot(env);
         if (!snap) return new Response("no snapshot yet", { status: 503 });
-        const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
+        const station = snap.stations.find(isStation(provider, rawId));
         if (!station) return new Response("station not found", { status: 404 });
         return renderStationOg(station, snap.generated_at);
       });
@@ -752,16 +732,13 @@ export default {
       const [, provider, rawId] = stationPage;
       return cached(LIVE_EDGE_TTL, async () => {
         const fresh = await loadSnapshot(env);
-        const is = (x: NormalizedStation) => x.provider === provider && x.raw_id === rawId;
+        const is = isStation(provider, rawId);
         let station = fresh?.stations.find(is);
         const live = !!station;
         station ??= (await loadRawSnapshot(env))?.stations.find(is);
         if (!station)
           return {
-            res: new Response(renderNotFound(lang), {
-              status: 404,
-              headers: { "content-type": "text/html; charset=utf-8" },
-            }),
+            res: notFound(lang),
             store: false,
           };
         const { lat, lon } = station;
@@ -774,7 +751,7 @@ export default {
                 8,
               ).filter((x) => x.distance_km <= 25)
             : [];
-        return cachedResponse(renderStationPage(station, nearby, live, lang), "text/html; charset=utf-8");
+        return cachedResponse(renderStationPage(station, nearby, live, lang), HTML);
       });
     }
 
@@ -785,7 +762,7 @@ export default {
       return cached(LIVE_EDGE_TTL, async () => {
         const snap = await loadSnapshot(env);
         if (!snap) return new Response("no snapshot yet", { status: 503 });
-        const station = snap.stations.find((s: NormalizedStation) => s.provider === provider && s.raw_id === rawId);
+        const station = snap.stations.find(isStation(provider, rawId));
         if (!station) return new Response("station not found", { status: 404 });
         return ext === "json"
           ? cachedResponse(
@@ -895,7 +872,7 @@ export default {
     return new Response(renderNotFound(lang), {
       status: 404,
       headers: {
-        "content-type": "text/html; charset=utf-8",
+        "content-type": HTML,
         "access-control-allow-origin": "*",
       },
     });

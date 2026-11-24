@@ -21,7 +21,6 @@ import {
   filterBar,
   filterInput,
   fold,
-  ico,
   linkRow,
   LIST_FILTER_JS,
   notice,

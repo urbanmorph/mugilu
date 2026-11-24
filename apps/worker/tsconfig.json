@@ -5,6 +5,8 @@
     "moduleResolution": "bundler",
     "types": ["@cloudflare/workers-types"],
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noEmit": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,

@@ -2,7 +2,6 @@ import { INSTALL_JS } from "../install";
 import { SW_REGISTER } from "../sw";
 import { esc } from "../html";
 import { FRESHEN_JS, PULL_MARKER } from "../freshen";
-import type { Lang } from "../i18n";
 import type { RiskBand } from "../score";
 import { VIEWPORT, headTags, relTimeJs, type ShellOpts } from "./shell";
 import { LATIN_FONT } from "./fonts";

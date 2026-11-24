@@ -5,6 +5,7 @@ import { getOpenMeteoBulk, type WxDay } from "./openmeteo";
 import { counted } from "./metrics";
 import centroids from "../data/centroids.json";
 import { gzip } from "./gzip";
+import { istIsoDay } from "./ist";
 
 // Districts only for the national weather grid (785 points), the right grain
 // for a national ranking, and it respects Open-Meteo's free quota (collecting
@@ -29,7 +30,6 @@ export function conditionsArchiveKey(generatedAt: string): string {
 }
 
 const DAY = 86_400_000;
-const IST = 19_800_000;
 /** Each India day's modelled figures by grid point: archive/wx-daily/{YYYY-MM-DD}.json.gz. */
 export const WX_DAILY_PREFIX = "archive/wx-daily/";
 
@@ -72,7 +72,7 @@ async function keepDay(env: Env, date: string, days: (WxDay | undefined)[]): Pro
  */
 export async function collectConditions(env: Env, delayMs = 12_000, now = Date.now()): Promise<ConditionsSnapshot> {
   // The day just ended in India, asked for once: by the first run that finds it missing.
-  const yesterday = new Date(now + IST - DAY).toISOString().slice(0, 10);
+  const yesterday = istIsoDay(now - DAY);
   const dayKey = `${WX_DAILY_PREFIX}${yesterday}.json.gz`;
   const pastDay = !(await env.OAQ_R2.head(dayKey));
   // Throttle ~12s/batch to keep any 60s window under Open-Meteo's minute limit.

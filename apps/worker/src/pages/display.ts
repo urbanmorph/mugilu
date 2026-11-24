@@ -12,7 +12,6 @@ import {
   band,
   button,
   comboboxJs,
-  ico,
   lane,
   linkButton,
   locateJs,

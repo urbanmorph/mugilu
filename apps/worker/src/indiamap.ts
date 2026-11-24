@@ -14,6 +14,7 @@ import { reason } from "./logs";
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => (m.get(k) ?? m.set(k, []).get(k)!).push(v);
 import outline from "../data/india.json";
 import states from "../data/state-lines.json";
+import { r1 } from "./num";
 
 // The home page's map of India now: one-degree squares (about 100 km), each
 // coloured by what is worst in it (air, heat or cold), scored by the same
@@ -198,7 +199,6 @@ export const VW = Math.round((98.2 - LON0) * KX * S);
 export const VH = Math.round((LAT1 - 6) * S);
 export const px = (lon: number) => (lon - LON0) * KX * S;
 export const py = (lat: number) => (LAT1 - lat) * S;
-export const r1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Douglas-Peucker: drop points within `tol` px of the line they sit on. */
 function simplify(pts: [number, number][], tol: number): [number, number][] {

@@ -9,6 +9,8 @@ import type { Centroid } from "./types";
 import centroids from "../data/centroids.json";
 import { gzip } from "./gzip";
 import { reason } from "./logs";
+import { istDayAdd, istDayStart, istIsoDay } from "./ist";
+import { median } from "./num";
 
 // The history panel's record: each India day, every named place's air, fires and modelled
 // weather, joined once a night from three daily records mugilu already keeps:
@@ -46,7 +48,6 @@ export const BORROW_MAX_KM = AIR_KM;
 const FIRE_KM = 100;
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
-const IST = 5.5 * HOUR;
 
 /** A place's day. Each field is absent when there was no data for it. */
 export interface PlaceDay extends Omit<WxDay, "date"> {
@@ -104,21 +105,13 @@ interface StateTrend {
   places: Record<string, Omit<PlaceTrend, "days">>;
 }
 
-const dayStart = (day: string) => Date.parse(`${day}T00:00:00+05:30`);
-const isoDay = (ms: number) => new Date(ms + IST).toISOString().slice(0, 10);
-const prevDay = (day: string) => isoDay(dayStart(day) - 12 * HOUR);
 const keyOf = (day: string) => `${PLACE_DAILY_PREFIX}${day}.json.gz`;
 const indiaKeyOf = (day: string) => `${INDIA_DAILY_PREFIX}${day}.json`;
 /** The `n` days ending at `end`, oldest first. */
 const daysTo = (end: string, n: number) => {
   const days = [end];
-  while (days.length < n) days.unshift(prevDay(days[0]));
+  while (days.length < n) days.unshift(istDayAdd(days[0], -1));
   return days;
-};
-const median = (v: number[]) => {
-  const s = [...v].sort((a, b) => a - b);
-  const m = s.length >> 1;
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
 /** Within `km` of a point, with a cheap latitude cut before the great circle. */
 const near = (lat: number, lon: number, km: number) => (la: number, lo: number) =>
@@ -192,7 +185,7 @@ export function summarizeIndia(date: string, air: AirDay | null, fires: FireDete
  *  record (a missing file, or an empty one: India is never without a fire for a whole day, so
  *  an empty file is an outage, as on 3 to 6 Nov 2026). */
 async function firesOf(env: Env, day: string): Promise<FireDetection[] | null> {
-  const from = dayStart(day);
+  const from = istDayStart(day);
   const utc = [new Date(from).toISOString().slice(0, 10), day];
   const files = await Promise.all(utc.map((d) => readJson<FiresSnapshot>(env, `archive/firms/${d}.json`)));
   const all = files.flatMap((f) => f?.fires ?? []);
@@ -251,7 +244,7 @@ export async function collectPlaceDaily(env: Env, o: PlaceDailyOpts = {}): Promi
   const t0 = Date.now();
   const run: PlaceDailyRun = { written: [], waiting: 0, pending: 0, ms: 0 };
   try {
-    const last = isoDay(now - DAY);
+    const last = istIsoDay(now - DAY);
     const [havePlace, haveIndia, air, wx] = await Promise.all([
       listDays(env, PLACE_DAILY_PREFIX),
       listDays(env, INDIA_DAILY_PREFIX, ".json"),
@@ -260,14 +253,14 @@ export async function collectPlaceDaily(env: Env, o: PlaceDailyOpts = {}): Promi
     ]);
     const first = start < indiaStart ? start : indiaStart;
     const todo: { day: string; place: boolean; india: boolean }[] = [];
-    for (let d = last; d >= first; d = prevDay(d)) {
+    for (let d = last; d >= first; d = istDayAdd(d, -1)) {
       const place = d >= start && !havePlace.has(d);
       const india = d >= indiaStart && !haveIndia.has(d);
       if (place || india) todo.push({ day: d, place, india });
     }
     let left = todo.length;
     for (const { day, place, india } of todo) {
-      const old = now - (dayStart(day) + DAY) >= 2 * DAY;
+      const old = now - (istDayStart(day) + DAY) >= 2 * DAY;
       const ready = air.has(day) && (!place || wx.has(day));
       if (!ready && !old) {
         run.waiting++;
