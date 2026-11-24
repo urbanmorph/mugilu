@@ -96,8 +96,13 @@ test("uvSteps: eleven steps by level, lit up to the index, the current one marke
   assert.match(u, /^<span class="uvs" aria-hidden="true">/);
   assert.equal([...u.matchAll(/<i /g)].length, 11);
   assert.equal([...u.matchAll(/<i class="[\w-]+( now)?">/g)].length, 7, "seven lit, the rest off");
-  assert.match(u, /<i class="high now">/, "UV 7 is high");
+  assert.match(u, /<i class="moderate now">/, "UV 7 is moderate, as the chip says (score.ts THRESHOLDS.uv)");
+  assert.match(
+    u,
+    /^<span class="uvs" aria-hidden="true">(<i class="low"><\/i>){5}<i class="moderate"><\/i>/,
+    "1-5 low",
+  );
   assert.equal([...u.matchAll(/ off"/g)].length, 4);
   assert.equal([...uvSteps(13).matchAll(/ off"/g)].length, 0);
-  assert.match(uvSteps(11), /<i class="b-severe now">/, "11+ is the extreme step");
+  assert.match(uvSteps(11), /<i class="high now">/, "11+ is high");
 });

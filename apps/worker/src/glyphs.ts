@@ -8,7 +8,7 @@ import type { Lang } from "./i18n";
 import { aqiBand, cpcbLimit, subIndex } from "./aqi";
 import { pollutantParts } from "./formats";
 import { gaugePos } from "./readings";
-import { RISK_BANDS } from "./score";
+import { RISK_BANDS, uvLevelOf } from "./score";
 import { barRows } from "./ui/components";
 import type { AirPollutants } from "./types";
 
@@ -107,20 +107,13 @@ export function worstPollutant(p: AirPollutants, key: readonly string[] = []): A
 }
 
 /** The WHO UV steps as levels: 1-2 low, 3-5 moderate, 6-7 high, 8-10 severe, 11+ extreme. */
-function uvClass(step: number): string {
-  if (step <= 2) return "low";
-  if (step <= 5) return "moderate";
-  if (step <= 7) return "high";
-  if (step <= 10) return "severe";
-  return "b-severe";
-}
-
-/** Eleven steps of the UV index, lit up to today's, the current one marked. */
+/** Eleven steps of the UV index, lit up to today's, the current one marked; each step in
+ *  the level the read gives it (score.ts THRESHOLDS.uv), so the steps and the chip agree. */
 export function uvSteps(index: number): string {
   const now = Math.min(11, Math.round(index));
   const steps = Array.from({ length: 11 }, (_, i) => {
     const s = i + 1;
-    return `<i class="${uvClass(s)}${s === now ? " now" : s > now ? " off" : ""}"></i>`;
+    return `<i class="${RISK_BANDS[uvLevelOf(s)]}${s === now ? " now" : s > now ? " off" : ""}"></i>`;
   });
   return `<span class="uvs" aria-hidden="true">${steps.join("")}</span>`;
 }

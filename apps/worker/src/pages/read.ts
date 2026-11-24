@@ -19,6 +19,7 @@ import {
   type AmbientRisk,
   type Persona,
   type RiskBand,
+  uvLevelOf,
   windLevelOf,
 } from "../score";
 import { HAZARD_TINT } from "../palette";
@@ -51,16 +52,6 @@ export function isHttpUrl(u: string): boolean {
 
 export function round(n: number | undefined): string {
   return n == null ? "n/a" : String(Math.round(n));
-}
-
-export function uvWord(index: number | undefined): string {
-  if (index == null) return "n/a";
-  if (index < 1) return "none";
-  if (index < 3) return "low";
-  if (index < 6) return "moderate";
-  if (index < 8) return "high";
-  if (index < 11) return "very high";
-  return "extreme";
 }
 
 // The words below name the same levels the Ambient read uses (score.ts THRESHOLDS),
@@ -326,7 +317,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       icon: "sun",
       num: String(Math.round(c.uv.index)),
       unit: t("UV index", lang),
-      qual: t(uvWord(c.uv.index), lang),
+      qual: t(RISK_BANDS[uvLevelOf(c.uv.index)], lang),
       more: [uvSteps(c.uv.index)],
       brief: `UV ${Math.round(c.uv.index)}`,
     });

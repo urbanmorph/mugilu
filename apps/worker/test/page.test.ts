@@ -474,6 +474,19 @@ test("renderConditionsPage: a card at moderate or worse carries its level; a low
   assert.doesNotMatch(calm, /lv-b-satisfactory|lv-b-good|lv-low/, "good and satisfactory air stay neutral");
 });
 
+test("renderConditionsPage: the UV card says one level: its word, its steps and its chip agree", () => {
+  for (const [index, word, chip] of [
+    [3.4, "low", "Low"],
+    [7, "moderate", "Moderate"],
+    [11.2, "high", "High"],
+  ] as const) {
+    const sun = layerHtml(renderConditionsPage(conditions({ uv: { index, source: "open-meteo" } })), "sun");
+    assert.match(sun, new RegExp(`<b class="ql">${word}</b>`), `UV ${index}`);
+    assert.match(sun, new RegExp(`<span class="chip [a-z]+">[\\s\\S]*?${chip}</span>`), `UV ${index}`);
+    assert.match(sun, new RegExp(`<i class="${word} now">`), `UV ${index}`);
+  }
+});
+
 // What each persona should look at on the right: their own layers tagged, the
 // reading that matters most to them picked out, the rest quieter.
 const tagged = (html: string) => layerOrder(html).filter((k) => /<span class="fy">/.test(layerHtml(html, k)));
