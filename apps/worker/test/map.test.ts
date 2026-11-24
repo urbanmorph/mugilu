@@ -16,7 +16,7 @@ const GRID = [
 ];
 const STATIONS = [st("anand-vihar", 28.65, 77.31, "vpoor", 350), st("hebbal", 13.03, 77.59, "good", 40)];
 const MAP: IndiaMap = {
-  cells: mapCells(GRID, STATIONS, []),
+  cells: mapCells(GRID, STATIONS),
   dots: airDots(STATIONS),
   cyclones: [],
   gridAsOf: "2026-11-18T12:07:14Z",
@@ -37,7 +37,7 @@ const AKVAN: Cyclone = {
 } as unknown as Cyclone;
 
 test("mapCells: a square remembers the district behind its heat and its rain, for the summary links", () => {
-  const cells = mapCells(GRID, [], []);
+  const cells = mapCells(GRID, []);
   const at = (lat: number, lon: number) => cells.find((c) => c.lat === Math.floor(lat) && c.lon === Math.floor(lon))!;
   assert.deepEqual(at(10.52, 76.21).heatAt, { name: "Thrissur", state: "Kerala", lat: 10.52, lon: 76.21 });
   assert.equal(at(17.69, 83.22).rainAt?.name, "Visakhapatnam");

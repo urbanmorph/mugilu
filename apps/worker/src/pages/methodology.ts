@@ -9,13 +9,13 @@ import { marked, P, splitAs, splitInto, textPage } from "./text";
 // The live paragraphs, as keys. English renders its markup version; hi/kn their reviewed
 // translation, split at sentence ends to fill the boxes (pages/text.ts).
 const LEAD =
-  "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO and the Australian BoM; the smoke thresholds are mugilu's own. Informational only, never medical or safety advice.";
-const ONE_KEY = `Each hazard is scored 0 to 3 (low, moderate, high, severe). We surface the worst one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.`;
-const ONE_EN = `Each hazard is scored 0–3 (low · moderate · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe smoke", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.`;
+  "mugilu names the single worst thing the sky is doing to you right now, weighted for who you are. It's a glass box: the thresholds below are public and come from CPCB, IMD, WHO and the Australian BoM. Informational only, never medical or safety advice.";
+const ONE_KEY = `Each hazard is scored 0 to 3 (low, moderate, high, severe). We surface the worst one, named in plain words ("Severe air", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.`;
+const ONE_EN = `Each hazard is scored 0–3 (low · moderate · high · severe). We surface the <b>worst</b> one, named in plain words ("Severe air", "High heat"), with one sentence on what to do. The other readings follow in order of risk. Averaging would hide the thing that matters, so we never average.`;
 const WHO_KEY = `Pick a vulnerability (asthma, older adults, children, outdoor workers, heart) and the hazards that group feels more keenly are bumped up one level (so an asthmatic sees moderate air as "high"). The read then says how that group should take it ("The air is moderate. For asthma & lungs, treat it as high."), and the readings that matter to that group are tagged "for you". When your trigger isn't the headline but is still elevated, a second line surfaces it ("also watch: air is high"). The persona is a toggle you choose: never inferred, never stored.`;
 const WHO_EN = esc(WHO_KEY).replace("toggle you choose", "toggle <b>you</b> choose");
 const NOTE_KEY =
-  "Heat takes the worst of feels-like, wet-bulb and WBGT, and the persona toggle bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); the smoke thresholds are mugilu's own, used only where the air is not good or satisfactory. The full logic is the open {score}, and every layer's source and licence is on {terms}.";
+  "Heat takes the worst of feels-like, wet-bulb and WBGT, and the persona toggle bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); fires seen by satellite are shown for context and never scored, because the air reading carries any smoke that reaches you. The full logic is the open {score}, and every layer's source and licence is on {terms}.";
 const NORMAL_KEY =
   "On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo. It shows only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.";
 
@@ -108,7 +108,7 @@ export function renderMethodology(lang: Lang = "en"): string {
     lang,
     title: t("How mugilu works: the Ambient read explained", lang),
     desc: t(
-      "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, smoke, UV and dust, and how the persona weighting works.",
+      "How mugilu's Ambient read is computed: the public, auditable thresholds for air, heat, cold, wind, fog, UV and dust, and how the persona weighting works.",
       lang,
     ),
     kicker: t("How it works", lang),

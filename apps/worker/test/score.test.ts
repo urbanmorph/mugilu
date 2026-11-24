@@ -164,14 +164,17 @@ test("ambientRisk: very-high UV is only moderate for everyone (not over-weighted
   assert.equal(ambientRisk(cond({ uv: { index: 9, source: "om" } }), "outdoor").band, "high");
 });
 
-test("ambientRisk: smoke bands benchmarked to real India fire density", () => {
-  const smoke = (count: number, frp_sum: number) =>
-    ambientRisk(cond({ smoke: { count, frp_sum, nearest_km: 10, radius_km: 100, source: "firms" } }), "everyone");
-  assert.equal(smoke(90, 460).band, "severe"); // peak Punjab/forest belt
-  assert.equal(smoke(90, 460).driver, "Smoke");
-  assert.equal(smoke(44, 237).band, "high"); // shoulder-season belt
-  assert.equal(smoke(9, 22).band, "moderate"); // a handful of fires near a metro
-  assert.equal(smoke(2, 5).hazards.length, 0); // 2 distant fires → negligible, not a hazard
+test("ambientRisk: fires never set a level; the air reading carries smoke that arrives", () => {
+  // mugilu's backtest (supporting-docs/analysis/smoke_backtest): fire counts and power near a
+  // place do not track ground PM2.5, so fires are context, for every persona.
+  for (const p of ["everyone", "asthma", "elderly", "child", "outdoor", "heart"] as const) {
+    const r = ambientRisk(
+      cond({ smoke: { count: 90, frp_sum: 460, nearest_km: 10, radius_km: 100, source: "firms" } }),
+      p,
+    );
+    assert.ok(!r.hazards.some((h) => h.hazard === "Smoke"), p);
+    assert.notEqual(r.driver, "Smoke", p);
+  }
 });
 
 test("ambientRisk: WBGT contributes to heat, calibrated so extreme=35 is severe", () => {

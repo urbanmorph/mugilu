@@ -25,7 +25,7 @@ import { nearestPlace } from "./place";
 import { fetchLocationAlerts, splitWarnings } from "./sachet";
 import { fireRiskAt } from "./firms";
 import type { FiresSnapshot } from "./firms";
-import { ambientRisk, ambientSummary, smokeIsContext, smokeLevelAt, PERSONA_LABEL } from "./score";
+import { ambientRisk, ambientSummary, firesInCleanAir, PERSONA_LABEL } from "./score";
 import { briefs, forPersona } from "./readings";
 import type { Persona } from "./score";
 import { buildAttribution } from "./sources";
@@ -341,12 +341,12 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
   if (c.visibility?.meters != null) {
     out.push("## Visibility", `- Visibility: ${c.visibility.meters} m`, "");
   }
-  const clean = smokeIsContext(c);
-  if (c.smoke && (clean || smokeLevelAt(c) != null)) {
+  if (c.smoke?.count) {
     out.push("## Smoke", `- Active fires within ${c.smoke.radius_km} km: **${c.smoke.count}** (last 24h)`);
     if (c.smoke.frp_sum) out.push(`- Total fire power nearby: ${c.smoke.frp_sum} MW`);
     if (c.smoke.nearest_km != null) out.push(`- Nearest fire: ${c.smoke.nearest_km} km`);
-    if (clean) out.push(`- Not scored as a hazard: the air here is ${c.air!.band}, so the smoke is not in it now`);
+    if (firesInCleanAir(c))
+      out.push(`- Not scored as a hazard: the air here is ${c.air!.band}, so the smoke is not in it now`);
     out.push("");
   }
 
@@ -433,7 +433,8 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
           kind: "observed" as const,
           ...c.smoke,
           window_h: 24,
-          role: smokeLevelAt(c) != null ? ("hazard" as const) : ("context" as const),
+          // Fires are context, never scored (score.ts firesInCleanAir). Kept for v1 clients.
+          role: "context" as const,
           as_of: c.as_of,
         }
       : null,

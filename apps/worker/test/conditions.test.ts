@@ -400,12 +400,14 @@ test("serializeConditionsV1 + markdown: the readings in order of risk, the perso
     disclaimer: "d",
   } as unknown as Conditions;
   const v1 = serializeConditionsV1(c, "asthma") as Record<string, any>;
-  assert.deepEqual(v1.ambient.order, ["heat", "smoke", "air", "sun"]);
-  assert.deepEqual(v1.ambient.persona_layers, ["smoke", "air"]);
+  // Fires are context, never scored (smoke_backtest): heavy fires near here do not enter the order.
+  assert.deepEqual(v1.ambient.order, ["heat", "air", "sun"]);
+  assert.deepEqual(v1.ambient.persona_layers, ["air"]);
   assert.deepEqual((serializeConditionsV1(c, "everyone") as Record<string, any>).ambient.persona_layers, []);
   const md = renderConditionsMarkdown(c, "asthma");
-  assert.match(md, /In order of risk: heat 48°, smoke 70 fires, air AQI 140, sun UV 9\./);
-  assert.match(md, /For asthma & lungs, also watch: smoke is severe\./);
+  assert.match(md, /In order of risk: heat 48°, air AQI 140, sun UV 9\./);
+  assert.match(md, /For asthma & lungs, also watch: air is high\./);
+  assert.match(md, /## Smoke[\s\S]*Active fires within 100 km: \*\*70\*\*/, "the fires stay, as context");
 });
 
 // When the live weather call fails, the 4-hourly grid's nearest district stands in for

@@ -48,7 +48,7 @@ const GRID = [
 ];
 const STATIONS = [st("anand-vihar", 28.65, 77.31, "vpoor", 350)];
 const base: IndiaMap = {
-  cells: mapCells(GRID, STATIONS, []),
+  cells: mapCells(GRID, STATIONS),
   dots: airDots(STATIONS),
   cyclones: [],
   gridAsOf: "2026-11-19T04:07:00Z",

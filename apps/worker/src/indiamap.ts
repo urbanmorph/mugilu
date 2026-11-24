@@ -1,11 +1,10 @@
 import type { Conditions, ConditionsPoint, NormalizedStation } from "./types";
-import type { FireDetection } from "./firms";
 import type { Cyclone } from "./cyclones";
 import type { Env } from "./index";
 import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf, RISK_BANDS } from "./score";
 import { isPlausible } from "./plausible";
 import { inIndia, type Ring } from "./india";
-import { loadCyclones, loadFires, loadGrid, loadJson, loadSnapshot, loadWarningsSnapshot, putJson } from "./snapshot";
+import { loadCyclones, loadGrid, loadJson, loadSnapshot, loadWarningsSnapshot, putJson } from "./snapshot";
 import { loadWarnAreas, severityBand, type WarnArea } from "./warnareas";
 import { simplifyPath } from "./simplify-path";
 import { reason } from "./logs";
@@ -20,15 +19,14 @@ import { r1 } from "./num";
 // coloured by what is worst in it (air, heat or cold), scored by the same
 // ambientRisk as a place's page so the two can never disagree. A Rain layer shows
 // the next 24 hours' forecast, for a cyclone. Built from what the crons already collect
-// (the district grid, the air stations, the fires), so it costs no extra upstream
+// (the district grid and the air stations), so it costs no extra upstream
 // call. The official warnings in force are a layer of their own, their areas fetched once
 // per alert from SACHET (warnareas.ts). Inline SVG, no map library, no tiles. This module is
 // the data and the projection; ui/map.ts draws it (home and /places).
 
-/** What a square's worst read is, in three groups a map can tell apart: smoke and
- *  dust are air. UV is left out, since it follows the time of day everywhere. */
+/** What a square's worst read is, in three groups a map can tell apart: dust is air. UV is left out, since it follows the time of day everywhere. */
 export type MapHazard = "air" | "heat" | "cold";
-const GROUP: Record<string, MapHazard> = { Air: "air", Smoke: "air", Dust: "air", Heat: "heat", Cold: "cold" };
+const GROUP: Record<string, MapHazard> = { Air: "air", Dust: "air", Heat: "heat", Cold: "cold" };
 /** The order equal levels are named in. */
 const ORDER: MapHazard[] = ["air", "heat", "cold"];
 
@@ -92,23 +90,15 @@ export interface MapWarning {
 const key = (lon: number, lat: number) => `${Math.floor(lon)},${Math.floor(lat)}`;
 
 /** The worst read per square: each district point scored with its square's measured
- *  air and fires, the square taking its worst point (and its most rain). Squares of
+ *  air, the square taking its worst point (and its most rain). Squares of
  *  India with no point borrow the nearest one's read (they sit inside big districts). */
-export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[], fires: FireDetection[]): MapCell[] {
+export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[]): MapCell[] {
   const air = new Map<string, number>();
   for (const s of stations) {
     if (s.lat == null || s.lon == null) continue;
     const lvl = airLevelOf(s.band);
     const k = key(s.lon, s.lat);
     if (lvl != null && lvl > (air.get(k) ?? -1) && isPlausible(s, stations)) air.set(k, lvl);
-  }
-  const smoke = new Map<string, { count: number; frp_sum: number }>();
-  for (const f of fires) {
-    const k = key(f.lon, f.lat);
-    const s = smoke.get(k) ?? { count: 0, frp_sum: 0 };
-    s.count++;
-    s.frp_sum += f.frp;
-    smoke.set(k, s);
   }
   const AIR_BAND = ["good", "moderate", "poor", "vpoor"];
   const scored = points.map((p) => {
@@ -119,7 +109,6 @@ export function mapCells(points: ConditionsPoint[], stations: NormalizedStation[
       heat: { apparent_c: p.wx.apparent_c, wet_bulb_c: p.wx.wet_bulb_c },
       uv: p.wx.uv == null ? null : { index: p.wx.uv },
       dust: p.wx.dust_ug_m3 == null ? null : { dust_ug_m3: p.wx.dust_ug_m3 },
-      smoke: smoke.get(k) ?? null,
     } as unknown as Conditions;
     let w: Worst = { worst: 0 };
     for (const h of ambientRisk(c).hazards) {
@@ -364,10 +353,9 @@ export const activeWarnings = (m: IndiaMap | undefined, now = Date.now()): MapWa
 /** The map's data, from the snapshots the crons write (each read is memoised). A failure to
  *  read the warning areas leaves them off; it never stops the map. */
 export async function composeMap(env: Env, now = Date.now()): Promise<IndiaMap | undefined> {
-  const [grid, snap, fires, cy, warned, areas] = await Promise.all([
+  const [grid, snap, cy, warned, areas] = await Promise.all([
     loadGrid(env),
     loadSnapshot(env),
-    loadFires(env),
     loadCyclones(env),
     loadWarningsSnapshot(env).catch(() => null),
     loadWarnAreas(env, now).catch((e) => {
@@ -378,7 +366,7 @@ export async function composeMap(env: Env, now = Date.now()): Promise<IndiaMap |
   if (!grid) return undefined;
   const stations = snap?.stations ?? [];
   return {
-    cells: mapCells(grid.points, stations, fires?.fires ?? []),
+    cells: mapCells(grid.points, stations),
     dots: airDots(stations),
     cyclones: cy?.systems ?? [],
     gridAsOf: grid.generated_at,
@@ -393,7 +381,7 @@ export async function composeMap(env: Env, now = Date.now()): Promise<IndiaMap |
 }
 
 /** The composed map, written by the crons so a page reads ~30 KB instead of parsing the
- *  grid, the air snapshot and the fires (~1.4 MB) on every cache miss. */
+ *  grid and the air snapshot (~1.2 MB) on every cache miss. */
 export const MAP_KEY = "data/map.json";
 interface StoredMap extends IndiaMap {
   generated_at: string;

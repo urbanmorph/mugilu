@@ -105,7 +105,7 @@ test("facts: most important first, in the order of their level; a missing layer 
   const fs = facts(MODELLED);
   assert.deepEqual(
     fs.map((f) => f.key),
-    ["air", "fog", "smoke", "warnings", "temp", "rain", "wind", "uv", "dust"],
+    ["air", "fog", "warnings", "temp", "rain", "wind", "smoke", "uv", "dust"], // fires: context, never a level
   );
   assert.equal(
     facts(cond({ uv: null })).some((f) => f.key === "uv"),
