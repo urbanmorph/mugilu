@@ -66,7 +66,7 @@ import { adminGate } from "./admin";
 import { handleMcp } from "./mcp";
 import { loadLastmods, updateHeads } from "./lastmod";
 import { conditionsText } from "./phrases";
-import type { Conditions, NormalizedStation } from "./types";
+import type { Conditions, NormalizedStation, Snapshot } from "./types";
 import { reason } from "./logs";
 import { archiveHealth } from "./archives";
 
@@ -105,6 +105,22 @@ const notFound = (lang: Lang) => new Response(renderNotFound(lang), { status: 40
 /** Matches a station in a snapshot by its provider and id. */
 const isStation = (provider: string, rawId: string) => (s: NormalizedStation) =>
   s.provider === provider && s.raw_id === rawId;
+
+/** Sent before the first station snapshot exists. */
+const noSnapshot = () => new Response("no snapshot yet", { status: 503 });
+
+/** A station in the latest snapshot, or the response to send instead (503 before the first
+ *  snapshot, 404 for a station not in it). */
+async function snapshotStation(
+  env: Env,
+  provider: string,
+  rawId: string,
+): Promise<{ snap: Snapshot; station: NormalizedStation } | Response> {
+  const snap = await loadSnapshot(env);
+  if (!snap) return noSnapshot();
+  const station = snap.stations.find(isStation(provider, rawId));
+  return station ? { snap, station } : new Response("station not found", { status: 404 });
+}
 
 function cachedResponse(body: string, contentType: string, clientMaxAge?: number): Response {
   const cc = clientMaxAge
@@ -426,7 +442,7 @@ const app = {
     if (url.pathname === "/index.json" || url.pathname === "/index.md") {
       return cached(LIVE_EDGE_TTL, async () => {
         const snap = await loadSnapshot(env);
-        if (!snap) return new Response("no snapshot yet", { status: 503 });
+        if (!snap) return noSnapshot();
         return url.pathname === "/index.json"
           ? cachedResponse(
               JSON.stringify({ ...snap, ...STATION_META }),
@@ -477,7 +493,7 @@ const app = {
         LIVE_EDGE_TTL,
         async () => {
           const snap = await loadSnapshot(env);
-          if (!snap) return new Response("no snapshot yet", { status: 503 });
+          if (!snap) return noSnapshot();
           const stations = findNearest(snap.stations, lat, lon, n);
           return cachedResponse(
             JSON.stringify(
@@ -730,11 +746,9 @@ const app = {
       const [, provider, rawId] = ogMatch;
       // A CPU-heavy render: edge-cached, and query params cannot force a re-render.
       return cached(OG_EDGE_TTL, async () => {
-        const snap = await loadSnapshot(env);
-        if (!snap) return new Response("no snapshot yet", { status: 503 });
-        const station = snap.stations.find(isStation(provider, rawId));
-        if (!station) return new Response("station not found", { status: 404 });
-        return renderStationOg(station, snap.generated_at);
+        const found = await snapshotStation(env, provider, rawId);
+        if (found instanceof Response) return found;
+        return renderStationOg(found.station, found.snap.generated_at);
       });
     }
 
@@ -774,10 +788,9 @@ const app = {
     if (stationMatch) {
       const [, provider, rawId, ext] = stationMatch;
       return cached(LIVE_EDGE_TTL, async () => {
-        const snap = await loadSnapshot(env);
-        if (!snap) return new Response("no snapshot yet", { status: 503 });
-        const station = snap.stations.find(isStation(provider, rawId));
-        if (!station) return new Response("station not found", { status: 404 });
+        const found = await snapshotStation(env, provider, rawId);
+        if (found instanceof Response) return found;
+        const { snap, station } = found;
         return ext === "json"
           ? cachedResponse(
               JSON.stringify({ generated_at: snap.generated_at, ...STATION_META, station }),
