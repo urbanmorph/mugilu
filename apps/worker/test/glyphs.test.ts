@@ -34,6 +34,37 @@ test("gauge: `from` fills only between two values (today against the normal), wi
   assert.match(gauge(36, 30, 50, { from: 40 }), /left:30%;width:20%/);
 });
 
+test("gauge: zones draw the scale, each band in its level's token, a dot at the reading", () => {
+  const g = gauge(33, 15, 40, { zones: [30, 32, 35], level: 2 });
+  assert.match(
+    g,
+    /^<div class="gauge zoned high" style="--grad:linear-gradient\(90deg,var\(--low\) 0%,var\(--low\) 57%,var\(--moderate\) 63%,/,
+  );
+  assert.match(g, /var\(--high\) 77%,var\(--severe\) 83%,var\(--severe\) 100%\)" aria-hidden="true">/);
+  assert.match(
+    g,
+    /<i class="f" style="clip-path:inset\(0 28% 0 0%\)"><\/i>/,
+    "the scale shown in full up to the reading",
+  );
+  assert.deepEqual(lefts(g, "tk"), [60, 68, 80], "the zone edges are the ticks");
+  assert.match(g, /<i class="dot" style="--at:72%"><\/i>/);
+  assert.doesNotMatch(g, /#[0-9a-f]{6}/i, "no literal colour: tokens only");
+});
+
+test("gauge: thresholds that fall (cold, visibility) run the scale the other way, the worst on the left", () => {
+  const cold = gauge(-1, -10, 30, { from: -1, zones: [10, 5, 0], level: 3 });
+  assert.match(cold, /--grad:linear-gradient\(90deg,var\(--severe\) 0%,var\(--severe\) 22%,var\(--high\) 28%,/);
+  assert.match(cold, /var\(--moderate\) 47%,var\(--low\) 53%,var\(--low\) 100%\)/);
+  assert.match(cold, /clip-path:inset\(0 77.5% 0 22.5%\)/, "a mark, not a bar that reads as heat");
+  assert.match(cold, /class="dot" style="--at:22.5%"/);
+});
+
+test("gauge: ticks can add a mark the zones do not have (hazy at 5 km)", () => {
+  const fog = gauge(1000, 100, 10000, { log: true, zones: [1000, 500, 200], ticks: [1000, 500, 200, 5000], level: 1 });
+  assert.equal(lefts(fog, "tk").length, 4);
+  assert.match(fog, /var\(--severe\) 0%/);
+});
+
 test("pollutantBars: the BarRow component, each pollutant against its CPCB limit (the line at 40%)", () => {
   const html = pollutantBars({ pm10: 218, pm25: 64, no2: 41, co: 1.2 });
   assert.match(html, /^<div class="bars" style="--lim:40\.0%">/);

@@ -414,7 +414,7 @@ html{scroll-padding-top:calc(var(--sh-h) + .5rem)}
 .mg .fbar .checks legend{width:100%}
 .mg .fbar .check{border:2px solid var(--ink);border-radius:var(--r);padding:0 var(--sp3)}
 .mg .fbar .check .c{margin-left:var(--sp2)}
-.mg .flow>.rrow{border:2px solid var(--ink);border-radius:var(--r);padding:var(--sp4);background:var(--bg)}
+.mg .flow>.rrow{--cbg:var(--bg);border:2px solid var(--ink);border-radius:var(--r);padding:var(--sp4);background:var(--cbg)}
 .mg .tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
 .mg .ph{padding:var(--sp7) 0 var(--sp5)}
 .mg .howto.cards4{grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp4)}
@@ -517,6 +517,38 @@ const PREVIEW_CSS = `
 const READ_CSS = `
 .mg .fy{display:inline-block;white-space:nowrap;margin-left:var(--sp2);padding:0 6px;border:2px solid currentColor;border-radius:var(--r);font-size:var(--t-xs);font-weight:600;letter-spacing:.06em;color:var(--ink);vertical-align:.1em}
 .mg .rrow.on .lab{color:var(--ink)}
+.mg .rrow>.ico{color:color-mix(in srgb,var(--hz,var(--ink)) 75%,var(--ink))}
+.mg .rrow[class*=" lv-"]{--cbg:color-mix(in srgb,var(--rl) 14%,var(--bg));background:var(--cbg);border-color:var(--rl)}
+.mg .rrow[class*=" lv-"] .num,.mg .rrow[class*=" lv-"] .val .ql{color:var(--rt)}
+@media (max-width:999.98px){.mg .rrow[class*=" lv-"]{padding-left:var(--sp3);padding-right:var(--sp3)}}
+.mg .gauge.zoned{background:none}
+.mg .gauge.zoned::before{content:"";position:absolute;inset:0;background:var(--grad);opacity:.3}
+.mg .gauge.zoned .f{left:0;right:0;background:var(--grad)}
+.mg .gauge.zoned .tk{top:0;bottom:0;margin-left:-1px;background:var(--cbg)}
+.mg .gauge .dot{position:absolute;top:50%;left:clamp(9px,var(--at),calc(100% - 9px));width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:var(--ink);border:3px solid var(--cbg);box-shadow:0 0 0 2px var(--ink)}
+.mg .gauge.zoned:not(.low) .dot{background:var(--lv);box-shadow:0 0 0 2px var(--lv)}
+@media (prefers-reduced-motion:no-preference){
+.mg .flow .gauge.zoned .f{animation:gsweep 1s cubic-bezier(.2,.7,.2,1) .2s both}
+.mg .flow .gauge .dot{animation:gdot 1s cubic-bezier(.2,.7,.2,1) .2s both}
+.mg .flow .track>.f{animation:ggrow .9s cubic-bezier(.2,.7,.2,1) .3s both}
+.mg .flow .hz-uv>.ico{animation:ispin 24s linear infinite}
+.mg .flow .hz-none>.ico{animation:idrip 1.8s ease-in infinite}
+.mg .flow .hz-wind>.ico{animation:isway 3s ease-in-out infinite}
+.mg .flow .hz-smoke>.ico{animation:iflicker 1.6s ease-in-out infinite;transform-origin:50% 90%}
+.mg .flow .hz-fog>.ico,.mg .flow .hz-air>.ico{animation:idrift 5s ease-in-out infinite}
+.mg .flow .hz-heat>.ico,.mg .flow .hz-cold>.ico{animation:ipulse 2.4s ease-in-out infinite}
+.mg .flow .hz-dust>.ico{animation:ijitter 2.2s steps(4) infinite}
+@keyframes gsweep{from{clip-path:inset(0 100% 0 0)}}
+@keyframes gdot{from{left:9px;opacity:0}}
+@keyframes ggrow{from{width:0}}
+@keyframes ispin{to{transform:rotate(360deg)}}
+@keyframes idrip{0%{transform:translateY(-3px);opacity:.4}40%{opacity:1}100%{transform:translateY(4px);opacity:.6}}
+@keyframes isway{50%{transform:translateX(4px)}}
+@keyframes iflicker{50%{transform:scale(.92,1.1)}}
+@keyframes idrift{50%{transform:translateX(3px)}}
+@keyframes ipulse{50%{transform:scale(1.08)}}
+@keyframes ijitter{25%{transform:translate(1px,-1px)}50%{transform:translate(-1px,1px)}75%{transform:translate(1px,1px)}}
+}
 .mg .rrow .more .key{font-weight:600}
 .mg .uvs i.off{opacity:.25}
 .mg .uvs i.now{outline:2px solid var(--ink);outline-offset:1px}

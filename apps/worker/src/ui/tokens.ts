@@ -62,6 +62,7 @@ const FIXED: Record<string, string> = {
   ...Object.fromEntries(Object.entries(ON_FILL).map(([k, v]) => [`on-${k}`, v])),
   ...Object.fromEntries(Object.entries(BAND_COLOR).map(([k, v]) => [`b-${k}`, v])),
   ...Object.fromEntries(Object.entries(BAND_ON_FILL).map(([k, v]) => [`on-b-${k}`, v])),
+  ...Object.fromEntries(Object.entries(HAZARD_TINT).map(([k, v]) => [`hz-${k.toLowerCase()}`, v])),
   brand: BRAND,
   "qr-ink": QR_INK,
   "qr-paper": QR_PAPER,
@@ -116,7 +117,20 @@ const MODIFIERS =
   Object.keys(BAND_COLOR)
     .map((k) => `.mg .b-${k}{--lv:var(--b-${k});--on:var(--on-b-${k})}`)
     .join("") +
-  `.mg .nolevel{--lv:var(--soft);--on:var(--ink)}`;
+  `.mg .nolevel{--lv:var(--soft);--on:var(--ink)}` +
+  // A raised reading card (moderate or worse): --rl its level's fill, --rt the text in it.
+  Object.keys(RISK_COLOR)
+    .filter((k) => k !== "low")
+    .map((k) => `.mg .lv-${k}{--rl:var(--${k});--rt:var(--rt-${k})}`)
+    .join("") +
+  Object.keys(BAND_COLOR)
+    .filter((k) => !["good", "satisfactory", "unknown"].includes(k))
+    .map((k) => `.mg .lv-b-${k}{--rl:var(--b-${k});--rt:var(--bt-${k})}`)
+    .join("") +
+  // A reading's kind, the hue of its icon.
+  Object.keys(HAZARD_TINT)
+    .map((k) => `.mg .hz-${k.toLowerCase()}{--hz:var(--hz-${k.toLowerCase()})}`)
+    .join("");
 
 const TYPE_ROLES =
   `.mg .t-kicker{font-size:var(--t-sm);font-weight:600;letter-spacing:.12em;text-transform:uppercase}` +
@@ -144,7 +158,8 @@ const FORCED =
 export const TOKENS_CSS =
   `.mg{${decl({ ...themed("light"), ...FIXED })}` +
   `font-family:'Anek Latin',system-ui,sans-serif;font-size:var(--t-base);line-height:1.5;color:var(--ink);` +
-  `background:color-mix(in srgb,var(--hue) var(--s),var(--bg));box-sizing:border-box}` +
+  // --cbg: the colour behind a component, so a gap cut in a gauge matches what it sits on.
+  `--cbg:color-mix(in srgb,var(--hue) var(--s),var(--bg));background:var(--cbg);box-sizing:border-box}` +
   Object.entries(HAZARD_TINT)
     .map(([k, h]) => `.mg[data-tint="${k}"]{--hue:${h}}`)
     .join("") +
