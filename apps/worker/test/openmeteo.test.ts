@@ -318,7 +318,8 @@ test("getOpenMeteo: a failed call is filled from this point's last good answer, 
     assert.equal(r.wind?.as_of, r.staleAt);
     assert.equal(r.uv?.as_of, r.staleAt);
     assert.equal(r.airModel?.pm25, 40);
-    assert.equal(r.airModelAt, r.staleAt);
+    // The air copy is dated by its own keep, which can fall a millisecond after the forecast's.
+    assert.ok(r.airModelAt && Math.abs(Date.parse(r.airModelAt) - Date.parse(r.staleAt!)) < 1000);
     assert.equal(r.todayMax, null, "an old copy's high may be another day's");
   } finally {
     down.restore();
