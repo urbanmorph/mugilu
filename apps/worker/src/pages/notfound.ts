@@ -7,15 +7,19 @@ import { backLink, comboboxJs, ico, searchBox, wrap } from "../ui/components";
 
 /** A real 404 page (the catch-all used to return 200 with a debug string), with the place
  *  search, so a wrong link still gets you to a sky. */
-export function renderNotFound(lang: Lang = "en"): string {
+export function renderNotFound(lang: Lang = "en", why: "missing" | "outside" = "missing"): string {
   const gone = "That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate.";
   const example = `<a href="${lp("/c/12.97,77.59", lang)}">/c/12.97,77.59</a>`;
-  const lead =
-    lang === "en"
+  // A coordinate outside India (a browser's /c or /embed): the same page, saying why.
+  const outside = why === "outside";
+  const head = outside ? "Not in India." : "Not here.";
+  const lead = outside
+    ? esc(t("mugilu covers India only, and that point is outside it. Look up a place in India instead.", lang))
+    : lang === "en"
       ? `That page doesn't exist on mugilu. Look up a place instead, or give it a coordinate like ${example}.`
       : `${esc(t(gone, lang))} ${example}`;
   const body = wrap(
-    `<section class="nf">${ico("turn")}<h1 class="t-title">${esc(t("Not here.", lang))}</h1><p class="t-lead">${lead}</p>` +
+    `<section class="nf">${ico("turn")}<h1 class="t-title">${esc(t(head, lang))}</h1><p class="t-lead">${lead}</p>` +
       searchBox({
         id: "nq",
         label: t("Look up a place in India", lang),
@@ -28,7 +32,7 @@ export function renderNotFound(lang: Lang = "en"): string {
       backLink(lp("/", lang), `← ${t("back to mugilu", lang)}`) +
       `</section>`,
   );
-  return pageShell(`${t("Not here.", lang).replace(/\.$/, "")}: mugilu`, body, {
+  return pageShell(`${t(head, lang).replace(/[.।]$/, "")}: mugilu`, body, {
     path: "/404",
     desc: t(SITE_DESC, lang),
     ogImage: HOME_OG,

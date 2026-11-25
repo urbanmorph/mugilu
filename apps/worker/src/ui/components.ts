@@ -506,7 +506,9 @@ export function dataTable(
   cols: Column[],
   rows: string[][],
   caption?: string,
-  o: { stackOnPhone?: boolean } = {},
+  /** `labelledBy`: the id of a heading that already names the table (a panel's title), used
+   *  in place of a caption, so a screen reader hears the name once. */
+  o: { stackOnPhone?: boolean; labelledBy?: string } = {},
 ): string {
   const th = cols
     .map((c) => {
@@ -520,7 +522,10 @@ export function dataTable(
         `<tr>${r.map((cell, i) => (i === 0 ? `<th scope="row">${cell}</th>` : `<td${cols[i]?.num ? ' class="r"' : ""}>${cell}</td>`)).join("")}</tr>`,
     )
     .join("");
-  return `<div class="tscroll" role="region" tabindex="0"${caption ? ` aria-label="${esc(caption)}"` : ""}><table class="tbl${o.stackOnPhone ? " rows" : ""}">${caption ? `<caption class="vh">${esc(caption)}</caption>` : ""}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table></div>`;
+  const by = o.labelledBy ? ` aria-labelledby="${esc(o.labelledBy)}"` : "";
+  const named = by || (caption ? ` aria-label="${esc(caption)}"` : "");
+  const cap = !by && caption ? `<caption class="vh">${esc(caption)}</caption>` : "";
+  return `<div class="tscroll" role="region" tabindex="0"${named}><table class="tbl${o.stackOnPhone ? " rows" : ""}"${by}>${cap}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 // ── CardGrid, Pairs, FAQ, pull quote, Sheet ──────────────────────────────────────────

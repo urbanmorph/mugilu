@@ -752,6 +752,10 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "इस स्टेशन से हाल का कोई आँकड़ा नहीं। आखिरी आँकड़ा: {time}",
     kn: "ಈ ನಿಲ್ದಾಣದಿಂದ ಇತ್ತೀಚಿನ ಮಾಹಿತಿ ಇಲ್ಲ. ಕೊನೆಯ ಮಾಹಿತಿ: {time}",
   },
+  "The last report from this station, {time}, has no pollutant reading that goes into the AQI.": {
+    hi: "इस स्टेशन की पिछली रिपोर्ट ({time}) में AQI में गिने जाने वाले किसी प्रदूषक की रीडिंग नहीं है।",
+    kn: "ಈ ನಿಲ್ದಾಣದ ಕೊನೆಯ ವರದಿಯಲ್ಲಿ ({time}) AQI ಗೆ ಸೇರುವ ಯಾವುದೇ ಮಾಲಿನ್ಯಕಾರಕದ ಅಳತೆ ಇಲ್ಲ.",
+  },
   "The full sky here: heat, rain, warnings and what to do": {
     hi: "यहाँ का पूरा हाल: गर्मी, बारिश, चेतावनियाँ और क्या करें",
     kn: "ಇಲ್ಲಿನ ಪೂರ್ಣ ಆಕಾಶ: ಬಿಸಿಲು, ಮಳೆ, ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ಏನು ಮಾಡಬೇಕು",
@@ -1059,6 +1063,14 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Not here.": {
     hi: "यह पृष्ठ नहीं मिला।",
     kn: "ಈ ಪುಟ ಕಂಡುಬಂದಿಲ್ಲ.",
+  },
+  "Not in India.": {
+    hi: "भारत से बाहर।",
+    kn: "ಭಾರತದ ಹೊರಗೆ.",
+  },
+  "mugilu covers India only, and that point is outside it. Look up a place in India instead.": {
+    hi: "mugilu केवल भारत की जानकारी देता है, और यह बिंदु भारत से बाहर है। इसके बजाय भारत की कोई जगह खोजें।",
+    kn: "mugilu ಭಾರತವನ್ನು ಮಾತ್ರ ಒಳಗೊಳ್ಳುತ್ತದೆ, ಈ ಬಿಂದು ಭಾರತದ ಹೊರಗಿದೆ. ಬದಲಿಗೆ ಭಾರತದ ಒಂದು ಸ್ಥಳವನ್ನು ಹುಡುಕಿ.",
   },
   "Older adults": {
     hi: "बुजुर्ग",

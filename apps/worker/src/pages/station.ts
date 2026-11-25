@@ -65,10 +65,10 @@ function nearbyPanel(nearby: NearStation[], lang: Lang): string {
     dataTable(
       [{ label: t("Station", lang) }, { label: "AQI" }, { label: t("Distance", lang), num: true }],
       rows,
-      t("Air stations near here", lang),
-      { stackOnPhone: true },
+      undefined,
+      { stackOnPhone: true, labelledBy: "near" },
     ),
-    { title: t("Air stations near here", lang), icon: "station", flush: true },
+    { title: t("Air stations near here", lang), id: "near", icon: "station", flush: true },
   );
 }
 
@@ -126,7 +126,15 @@ export function renderStationPage(
         ? stamp(t("Measured by {provider}.", lang, slots), when, { plain: true })
         : notice(
             "stale",
-            tHtml("No recent reading from this station. Last reading: {time}", lang, { time: when }),
+            // Reported within the window but with no pollutant the AQI uses (some sensors send
+            // an empty set), or not reported lately: say which.
+            fresh
+              ? tHtml(
+                  "The last report from this station, {time}, has no pollutant reading that goes into the AQI.",
+                  lang,
+                  { time: when },
+                )
+              : tHtml("No recent reading from this station. Last reading: {time}", lang, { time: when }),
             "clock",
           )),
   );

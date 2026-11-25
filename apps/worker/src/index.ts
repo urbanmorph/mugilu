@@ -12,7 +12,7 @@ import { faviconSvg, iconPng } from "./icon";
 import { ICONS, MANIFEST_PATH, webManifest } from "./install";
 import { SW_PATH, serviceWorker } from "./sw";
 import { handleSubscribe, handleUnsubscribe, runAlerts } from "./alerts";
-import { findNearest, parseLatLon, STATION_META } from "./near";
+import { distinctStations, findNearest, parseLatLon, STATION_META } from "./near";
 import { renderConditionsMarkdown, serializeConditionsV1, REFRESH_AFTER_SECONDS } from "./conditions";
 import { lookupConditions, recordUsage, type LookupFormat } from "./lookup";
 import { cacheKey, edgeServe } from "./edge";
@@ -102,6 +102,9 @@ const HTML = "text/html; charset=utf-8";
 
 /** The not-found page, in the reader's language. */
 const notFound = (lang: Lang) => new Response(renderNotFound(lang), { status: 404, headers: { "content-type": HTML } });
+/** A browser asked for a point outside India (/c or /embed with no data extension): a page. */
+const outsideIndia = (lang: Lang) =>
+  new Response(renderNotFound(lang, "outside"), { status: 400, headers: { "content-type": HTML } });
 
 /** Matches a station in a snapshot by its provider and id. */
 const isStation = (provider: string, rawId: string) => (s: NormalizedStation) =>
@@ -655,7 +658,7 @@ const app = {
     if (condMatch) {
       const [, latStr, lonStr, ext] = condMatch;
       const coords = parseLatLon(latStr, lonStr);
-      if (!coords) return badRequest(BAD_COORDS);
+      if (!coords) return ext ? badRequest(BAD_COORDS) : outsideIndia(lang);
       return serveConditions(
         coords.lat,
         coords.lon,
@@ -726,7 +729,7 @@ const app = {
     if (embedMatch) {
       const [, latStr, lonStr] = embedMatch;
       const coords = parseLatLon(latStr, lonStr);
-      if (!coords) return badRequest(BAD_COORDS);
+      if (!coords) return outsideIndia(lang);
       const persona = parsePersona(url.searchParams.get("as"));
       return edgeServe(
         req,
@@ -772,14 +775,18 @@ const app = {
             store: false,
           };
         const { lat, lon } = station;
+        // One row per site: co-located sensors of one name (and this station's own) drop out.
         const nearby =
           lat != null && lon != null
-            ? findNearest(
-                (fresh?.stations ?? []).filter((x) => x.aqi != null && !is(x)),
-                lat,
-                lon,
-                8,
-              ).filter((x) => x.distance_km <= 25)
+            ? distinctStations(
+                findNearest(
+                  (fresh?.stations ?? []).filter((x) => x.aqi != null && !is(x)),
+                  lat,
+                  lon,
+                  24,
+                ).filter((x) => x.distance_km <= 25),
+                station,
+              ).slice(0, 8)
             : [];
         return cachedResponse(renderStationPage(station, nearby, live, lang), HTML);
       });
