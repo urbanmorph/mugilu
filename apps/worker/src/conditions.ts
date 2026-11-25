@@ -18,6 +18,7 @@ import { findNearest, haversineKm, STATION_META } from "./near";
 import { grapRead } from "./grap";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo, wbgt } from "./openmeteo";
+import { earliestIso } from "./ist";
 import { compareWithNormal, heatVsNormalLine, heatVsNormalShown, NORMALS_LABEL } from "./heatnormals";
 import { computeAqi, aqiBand } from "./aqi";
 import { pollutantParts } from "./formats";
@@ -150,6 +151,8 @@ export async function buildConditions(
   // failure, so it never marks the reading degraded; a failed forecast call already does.
   const heatVsNormal = compareWithNormal(lat, lon, om.todayMax);
   const as_of = new Date().toISOString();
+  // The oldest stand-in in use: this point's last good answer, or the grid.
+  const weatherAt = earliestIso(om.staleAt, grid.at);
   const failed: UpstreamSource[] = [];
   if (om.failed) failed.push("openmeteo");
   if (alerts === null) failed.push("sachet");
@@ -159,9 +162,10 @@ export async function buildConditions(
     place: nearestPlace(lat, lon) ?? undefined,
     as_of,
     // Measured air is as old as the station's own reading; modelled air is live (~now).
-    air_as_of: air?.station && nearest?.ts ? new Date(nearest.ts).toISOString() : as_of,
+    // A stand-in (this point's last good model answer) is as old as that answer.
+    air_as_of: air?.station && nearest?.ts ? new Date(nearest.ts).toISOString() : (air && om.airModelAt) || as_of,
     air,
-    ...(grid.at ? { weather_as_of: grid.at } : {}),
+    ...(weatherAt ? { weather_as_of: weatherAt } : {}),
     heat: grid.heat ?? om.heat,
     heat_vs_normal: heatVsNormal,
     rain: grid.rain ?? om.rain,
@@ -214,6 +218,7 @@ async function fromGrid(om: OpenMeteo, lat: number, lon: number, gridIn?: () => 
   const w = near.wx;
   const as_of = grid.generated_at;
   const source = "open-meteo";
+  const dated = { as_of, stand_in: "grid" as const };
   const out = { ...none };
   if (!om.heat && w.temp_c != null)
     out.heat = {
@@ -223,11 +228,11 @@ async function fromGrid(om: OpenMeteo, lat: number, lon: number, gridIn?: () => 
       wet_bulb_c: w.wet_bulb_c,
       wbgt_c: wbgt(w.temp_c, w.humidity_pct),
       source,
-      as_of,
+      ...dated,
     };
-  if (!om.rain && w.rain_mm != null) out.rain = { precipitation_mm: w.rain_mm, source, as_of };
-  if (!om.uv && w.uv != null) out.uv = { index: w.uv, source, as_of };
-  if (!om.dust && w.dust_ug_m3 != null) out.dust = { dust_ug_m3: w.dust_ug_m3, source, as_of };
+  if (!om.rain && w.rain_mm != null) out.rain = { precipitation_mm: w.rain_mm, source, ...dated };
+  if (!om.uv && w.uv != null) out.uv = { index: w.uv, source, ...dated };
+  if (!om.dust && w.dust_ug_m3 != null) out.dust = { dust_ug_m3: w.dust_ug_m3, source, ...dated };
   if (out.heat || out.rain || out.uv || out.dust) out.at = as_of;
   return out;
 }
@@ -393,7 +398,7 @@ const apiWarning = ({ covers: _covers, ...w }: Warning) => ({ ...w, source: "sac
 export function serializeConditionsV1(c: Conditions, persona: Persona) {
   const risk = ambientRisk(c, persona);
   const say = ambientSummary(risk);
-  // A layer the grid stood in for keeps the grid's time; the rest are live.
+  // A layer a stand-in filled keeps the stand-in's time; the rest are live.
   const modelled = <T extends object>(o: T | null) =>
     o ? { kind: "modelled" as const, ...o, as_of: (o as { as_of?: string }).as_of ?? c.as_of } : null;
   return {

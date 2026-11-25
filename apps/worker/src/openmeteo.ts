@@ -9,6 +9,8 @@ import type {
   AirPollutants,
 } from "./types";
 import { reason } from "./logs";
+import { earliestIso } from "./ist";
+import type { CacheLike } from "./edge";
 
 // Open-Meteo adapter (A3). One zero-key fetch to each of the forecast and
 // air-quality endpoints fills the heat / rain / uv / dust layers of the
@@ -30,8 +32,13 @@ export interface OpenMeteoConditions {
   /** Today's modelled daily maximum here, the local date it is for, and the
    *  point's elevation: the inputs to the heat-compared-with-normal read. */
   todayMax: TodayMax | null;
-  /** A call failed or returned no reading, so some layers are missing for that reason. */
+  /** A call failed or returned no reading, so some layers are missing (or stand in) for that reason. */
   failed: boolean;
+  /** When a failed call was filled from this point's last good answer: that answer's time
+   *  (the older one, if both were). Each layer so filled carries it as as_of. */
+  staleAt?: string;
+  /** The time of a stand-in airModel; absent when it is live. */
+  airModelAt?: string;
 }
 
 export interface TodayMax {
@@ -65,21 +72,116 @@ function num(x: unknown): number | undefined {
   return typeof x === "number" && Number.isFinite(x) ? x : undefined;
 }
 
-async function fetchCurrent(url: string): Promise<OmResponse> {
-  // Cache the upstream at the edge. These values only change ~hourly.
-  // Time-boxed: this is on the page's request path, so a slow upstream nulls its
-  // layer (getOpenMeteo tolerates a failed call) instead of hanging the page.
-  const res = await fetch(url, { cf: { cacheTtl: 900, cacheEverything: true }, signal: AbortSignal.timeout(4000) });
-  if (!res.ok) throw new Error(`open-meteo ${res.status}`);
+// The page's weather call is on the request path, so it has a budget. Most answers come
+// in about half a second; a call still open at HEDGE_MS, or refused for a passing reason,
+// is asked once more (a fresh connection often answers at once), and the first good
+// answer wins. Never more than two calls, never past BUDGET_MS. (W26)
+const HEDGE_MS = 2000;
+const BUDGET_MS = 4000;
+const PASSING = new Set([429, 502, 503, 504]);
+// A good answer is kept per exact point (same URL), so a failed call can show it, dated.
+const STALE_MAX_MS = 3 * 3600_000;
+const AT = "x-mugilu-at";
+
+export interface FetchOptions {
+  store?: CacheLike;
+  hedgeMs?: number;
+  budgetMs?: number;
+  /** The time a good answer is kept as (tests). */
+  now?: number;
+}
+
+class Refused extends Error {
+  constructor(readonly status: number) {
+    super(`open-meteo ${status}`);
+  }
+}
+
+async function ask(url: string, signal: AbortSignal, again = false): Promise<OmResponse> {
+  // Cache the upstream at the edge: these values only change ~hourly. A second call goes
+  // straight to Open-Meteo, so the edge cannot hold it behind the first call's open fetch.
+  const cf = again ? { cacheEverything: false } : { cacheTtl: 900, cacheEverything: true };
+  const res = await fetch(url, { cf, signal });
+  if (!res.ok) throw new Refused(res.status);
   return (await res.json()) as OmResponse;
 }
+
+/** One answer within the budget: a second call when the first stalls or is refused for a
+ *  passing reason. The first call's error is the one reported. */
+async function fetchCurrent(url: string, hedgeMs = HEDGE_MS, budgetMs = BUDGET_MS): Promise<OmResponse> {
+  const ctl = new AbortController();
+  const budget = setTimeout(() => ctl.abort(new DOMException("open-meteo took too long", "TimeoutError")), budgetMs);
+  const signal = ctl.signal;
+  const first = ask(url, signal);
+  const second = new Promise<OmResponse>((resolve, reject) => {
+    const go = () => ask(url, signal, true).then(resolve, reject);
+    const timer = setTimeout(go, hedgeMs);
+    first.then(
+      () => clearTimeout(timer),
+      (e) => {
+        clearTimeout(timer);
+        if (e instanceof Refused && !PASSING.has(e.status)) reject(e);
+        else if (!signal.aborted) go();
+        else reject(e);
+      },
+    );
+  });
+  try {
+    return await Promise.any([first, second]);
+  } catch (e) {
+    throw (e as AggregateError).errors?.[0] ?? e;
+  } finally {
+    clearTimeout(budget);
+    ctl.abort(); // the call that lost, if one is still open
+  }
+}
+
+const staleKey = (url: string) => new Request(`https://stale.mugilu.invalid/?u=${encodeURIComponent(url)}`);
+
+/** Keep a good answer for this exact URL. Best effort: a failed write never fails the read. */
+async function keep(store: CacheLike | undefined, url: string, body: OmResponse, now: number): Promise<void> {
+  if (!store) return;
+  const headers = {
+    "content-type": "application/json",
+    "cache-control": `max-age=${STALE_MAX_MS / 1000}`,
+    [AT]: String(now),
+  };
+  await store.put(staleKey(url), new Response(JSON.stringify(body), { headers })).catch(() => {});
+}
+
+/** This URL's last good answer and its time, if one is kept and young enough. */
+async function recall(store: CacheLike | undefined, url: string): Promise<{ body: OmResponse; at: number } | null> {
+  const hit = store ? await store.match(staleKey(url)).catch(() => undefined) : undefined;
+  const at = Number(hit?.headers.get(AT));
+  if (!hit || !at || Date.now() - at > STALE_MAX_MS) return null;
+  return { body: (await hit.json()) as OmResponse, at };
+}
+
+/** A live answer (kept for next time), else the kept one with its time, else the failure. */
+async function answer(url: string, o: FetchOptions): Promise<{ body: OmResponse; staleAt?: string }> {
+  try {
+    const body = await fetchCurrent(url, o.hedgeMs, o.budgetMs);
+    if (body.current) await keep(o.store, url, body, o.now ?? Date.now());
+    return { body };
+  } catch (e) {
+    const kept = await recall(o.store, url);
+    if (!kept) throw e;
+    console.error(
+      `[open-meteo] ${url.includes("air-quality") ? "air-quality" : "forecast"} failed (${reason(e)}); used this point's answer from ${new Date(kept.at).toISOString()}`,
+    );
+    return { body: kept.body, staleAt: new Date(kept.at).toISOString() };
+  }
+}
+
+const edgeCache = (): CacheLike | undefined => (globalThis as { caches?: { default?: CacheLike } }).caches?.default;
 
 /**
  * Heat (incl. wet-bulb), rain, UV and dust for a point. Each upstream is
  * fetched independently. If one fails, the others still return (the failed
  * layer is null), so a flaky endpoint never blanks the whole response.
  */
-export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoConditions> {
+export async function getOpenMeteo(lat: number, lon: number, opts: FetchOptions = {}): Promise<OpenMeteoConditions> {
+  const o = { store: edgeCache(), ...opts };
   const coords = `latitude=${quantize(lat)}&longitude=${quantize(lon)}&timezone=auto`;
   const forecastUrl =
     `${FORECAST_URL}?${coords}&current=` +
@@ -92,7 +194,11 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     `${AIR_QUALITY_URL}?${coords}&current=` +
     "pm2_5,pm10,ozone,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide,ammonia,uv_index,dust,aerosol_optical_depth";
 
-  const [forecast, air] = await Promise.allSettled([fetchCurrent(forecastUrl), fetchCurrent(airUrl)]);
+  const [fcAns, airAns] = await Promise.allSettled([answer(forecastUrl, o), answer(airUrl, o)]);
+  const fcAt = fcAns.status === "fulfilled" ? fcAns.value.staleAt : undefined;
+  const airAt = airAns.status === "fulfilled" ? airAns.value.staleAt : undefined;
+  const forecast = settledBody(fcAns);
+  const air = settledBody(airAns);
 
   const out: OpenMeteoConditions = {
     heat: null,
@@ -103,10 +209,16 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     visibility: null,
     airModel: null,
     todayMax: null,
-    failed: [forecast, air].some((r) => r.status === "rejected" || !r.value.current),
+    failed: !!(fcAt || airAt) || [forecast, air].some((r) => r.status === "rejected" || !r.value.current),
   };
+  const staleAt = earliestIso(fcAt, airAt);
+  if (staleAt) out.staleAt = staleAt;
+  const kept = (at?: string) => (at ? { as_of: at, stand_in: "kept" as const } : {});
+  const fcDated = kept(fcAt);
+  const airDated = kept(airAt);
 
-  if (forecast.status === "fulfilled") {
+  // An old copy's daily high may be another day's, so today's high comes only live.
+  if (forecast.status === "fulfilled" && !fcAt) {
     const { daily, elevation } = forecast.value;
     const max = num(daily?.temperature_2m_max?.[0]);
     const date = daily?.time?.[0];
@@ -124,31 +236,35 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
       wet_bulb_c: num(c.wet_bulb_temperature_2m),
       wbgt_c: wbgt(t, rh),
       source: "open-meteo",
+      ...fcDated,
     };
     out.rain = {
       precipitation_mm: num(c.precipitation),
       probability_pct: num(c.precipitation_probability),
       source: "open-meteo",
+      ...fcDated,
     };
     out.wind = {
       speed_kmh: num(c.wind_speed_10m),
       gust_kmh: num(c.wind_gusts_10m),
       direction_deg: num(c.wind_direction_10m),
       source: "open-meteo",
+      ...fcDated,
     };
     const vis = num(c.visibility);
-    out.visibility = vis != null ? { meters: vis, source: "open-meteo" } : null;
+    out.visibility = vis != null ? { meters: vis, source: "open-meteo", ...fcDated } : null;
   } else if (forecast.status === "rejected") {
     console.error(`[open-meteo] forecast failed: ${reason(forecast.reason)}`);
   }
 
   if (air.status === "fulfilled" && air.value.current) {
     const c = air.value.current;
-    out.uv = { index: num(c.uv_index), source: "open-meteo" };
+    out.uv = { index: num(c.uv_index), source: "open-meteo", ...airDated };
     out.dust = {
       dust_ug_m3: num(c.dust),
       aod: num(c.aerosol_optical_depth),
       source: "open-meteo",
+      ...airDated,
     };
     const pm25 = num(c.pm2_5);
     const pm10 = num(c.pm10);
@@ -160,11 +276,17 @@ export async function getOpenMeteo(lat: number, lon: number): Promise<OpenMeteoC
     const nh3 = num(c.ammonia);
     // Only offer a model fill when at least one PM value is present (PM drives AQI).
     out.airModel = pm25 != null || pm10 != null ? { pm25, pm10, o3, no2, so2, co, nh3 } : null;
+    if (out.airModel && airAt) out.airModelAt = airAt;
   } else if (air.status === "rejected") {
     console.error(`[open-meteo] air-quality failed: ${reason(air.reason)}`);
   }
 
   return out;
+}
+
+/** The settled answer's body, in the shape the layer code reads. */
+function settledBody(r: PromiseSettledResult<{ body: OmResponse }>): PromiseSettledResult<OmResponse> {
+  return r.status === "fulfilled" ? { status: "fulfilled", value: r.value.body } : r;
 }
 
 const BULK_BATCH = 100;

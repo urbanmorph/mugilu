@@ -90,43 +90,44 @@ export interface AirConditions {
   modelled?: boolean;
 }
 
+/** A modelled layer the live call failed to give, filled by a stand-in: this exact point's
+ *  last good answer ("kept", up to 3 hours old) or the nearest district on the 4-hourly
+ *  grid ("grid"). Both fields are absent on a live layer. */
+export interface StandIn {
+  /** The stand-in's time. */
+  as_of?: string;
+  stand_in?: "kept" | "grid";
+}
+
 /** Heat / humid-heat, modelled. Filled by the Open-Meteo adapter (A3). */
-export interface HeatConditions {
+export interface HeatConditions extends StandIn {
   temp_c?: number;
   humidity_pct?: number;
   apparent_c?: number; // "feels like"
   wet_bulb_c?: number; // survivability metric
   wbgt_c?: number; // WBGT heat-stress index (°C), simplified shade estimate
   source: string;
-  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
-  as_of?: string;
 }
 
-export interface RainConditions {
+export interface RainConditions extends StandIn {
   precipitation_mm?: number;
   probability_pct?: number;
   source: string;
-  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
-  as_of?: string;
 }
 
-export interface UvConditions {
+export interface UvConditions extends StandIn {
   index?: number;
   source: string;
-  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
-  as_of?: string;
 }
 
-export interface DustConditions {
+export interface DustConditions extends StandIn {
   aod?: number; // aerosol optical depth (unitless)
   dust_ug_m3?: number;
   source: string;
-  /** Set when the live call failed and the 4-hourly grid stood in: that grid's time. */
-  as_of?: string;
 }
 
 /** Wind, modelled. Gusts drive dust-storm onset, fire spread, cyclone exposure. */
-export interface WindConditions {
+export interface WindConditions extends StandIn {
   speed_kmh?: number;
   gust_kmh?: number;
   direction_deg?: number; // meteorological: the direction wind blows FROM
@@ -134,7 +135,7 @@ export interface WindConditions {
 }
 
 /** Horizontal visibility (metres). Low values = fog/haze, a driving + health hazard. */
-export interface VisibilityConditions {
+export interface VisibilityConditions extends StandIn {
   meters?: number;
   source: string;
 }
@@ -172,8 +173,8 @@ export interface Conditions {
   /** ISO time the air reading is from: the hourly snapshot when measured, or
    *  ~now when modelled live. Anchors the "updated X ago" freshness on /c. */
   air_as_of?: string;
-  /** When the live weather call failed: the time of the 4-hourly grid that stood in
-   *  for heat, rain, UV or dust (each such layer carries it as as_of too). */
+  /** When the live weather call failed: the time of the oldest stand-in used, this
+   *  point's last good answer or the 4-hourly grid (each such layer carries its own as_of). */
   weather_as_of?: string;
   air: AirConditions | null;
   heat: HeatConditions | null;

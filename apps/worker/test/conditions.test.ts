@@ -463,11 +463,13 @@ test("buildConditions: a failed forecast falls back to the nearest district on t
     wbgt_c: c.heat!.wbgt_c,
     source: "open-meteo",
     as_of: GRID.generated_at,
+    stand_in: "grid",
   });
   assert.ok(typeof c.heat!.wbgt_c === "number");
-  assert.deepEqual(c.rain, { precipitation_mm: 0.4, source: "open-meteo", as_of: GRID.generated_at });
-  assert.deepEqual(c.uv, { index: 7, source: "open-meteo", as_of: GRID.generated_at });
-  assert.deepEqual(c.dust, { dust_ug_m3: 12, source: "open-meteo", as_of: GRID.generated_at });
+  const grid = { source: "open-meteo", as_of: GRID.generated_at, stand_in: "grid" };
+  assert.deepEqual(c.rain, { precipitation_mm: 0.4, ...grid });
+  assert.deepEqual(c.uv, { index: 7, ...grid });
+  assert.deepEqual(c.dust, { dust_ug_m3: 12, ...grid });
   assert.equal(c.wind, null); // the grid has no wind or visibility
   assert.equal(c.visibility, null);
   assert.equal(c.weather_as_of, GRID.generated_at);
@@ -498,4 +500,28 @@ test("serializeConditionsV1: a layer from the grid carries the grid's time", asy
   const v1 = serializeConditionsV1(c, "everyone") as Record<string, any>;
   assert.equal(v1.heat.as_of, GRID.generated_at);
   assert.equal(v1.uv.as_of, c.as_of); // live
+});
+
+test("buildConditions: a failed call uses this exact point's last good answer before the district grid, dated", async () => {
+  const kept = new Map<string, Response>();
+  const g = globalThis as { caches?: unknown };
+  const realCaches = g.caches;
+  g.caches = {
+    default: {
+      match: async (r: Request) => kept.get(r.url)?.clone(),
+      put: async (r: Request, res: Response) => void kept.set(r.url, res),
+    },
+  };
+  try {
+    await withOpenMeteo("none"); // a good answer, kept
+    const { c, reads } = await withOpenMeteo("both");
+    assert.equal(reads, 0, "nothing missing, so the grid is not read");
+    assert.equal(c.heat!.temp_c, 22, "this point's own answer, not the district's 31");
+    assert.ok(c.heat!.as_of);
+    assert.equal(c.weather_as_of, c.heat!.as_of);
+    assert.equal(c.wind?.as_of, c.heat!.as_of, "wind too, which the grid cannot give");
+    assert.deepEqual(c.degraded, ["openmeteo"], "still not cached as whole: the next visitor retries live");
+  } finally {
+    g.caches = realCaches;
+  }
 });

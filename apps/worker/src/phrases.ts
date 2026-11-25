@@ -114,6 +114,11 @@ export const PHRASES = {
     hi: "यह मान {at} के जिला ग्रिड से है, क्योंकि ताज़ा रीडिंग नहीं मिली।",
     kn: "ತಾಜಾ ಮಾಹಿತಿ ಸಿಗದ ಕಾರಣ, ಈ ಮೌಲ್ಯ {at} ರ ಜಿಲ್ಲಾ ಗ್ರಿಡ್‌ನಿಂದ ಬಂದಿದೆ.",
   },
+  "fallback.kept": {
+    en: "This value is the last reading here, from {at}, because the live reading failed.",
+    hi: "यह मान {at} की यहाँ की पिछली रीडिंग है, क्योंकि ताज़ा रीडिंग नहीं मिली।",
+    kn: "ತಾಜಾ ಮಾಹಿತಿ ಸಿಗದ ಕಾರಣ, ಈ ಮೌಲ್ಯ ಇಲ್ಲಿನ {at} ರ ಕೊನೆಯ ಮಾಹಿತಿಯಿಂದ ಬಂದಿದೆ.",
+  },
   "warn.none": {
     en: "No IMD or NDMA warning covers {place} now.",
     hi: "अभी {place} पर कोई IMD या NDMA चेतावनी नहीं है।",
@@ -401,9 +406,13 @@ const levelWord = (level: number, lang: Lang) => {
   return lang === "en" ? w.toLowerCase() : w;
 };
 
-/** The provenance sentence a weather value adds when the district grid stood in. */
+/** The provenance sentence a weather value adds when a stand-in filled it. */
 const fallbackNote = (s: Provenance, lang: Lang) =>
-  s.kind === "fallback" ? " " + say("fallback.grid", lang, { at: istClock(s.grid_at) }) : "";
+  s.kind === "fallback"
+    ? " " + say("fallback.grid", lang, { at: istClock(s.grid_at) })
+    : s.kind === "kept"
+      ? " " + say("fallback.kept", lang, { at: istClock(s.at) })
+      : "";
 
 // ── Surfaces ────────────────────────────────────────────────────────────────────────
 
@@ -432,13 +441,17 @@ export function factText(f: Fact, lang: Lang): string {
         (f.mm > 0 ? say("rain.some", lang, { mm: num(f.mm) }) : say("rain.none", lang)) + fallbackNote(f.source, lang)
       );
     case "wind":
-      return say("wind.now", lang, {
-        s: Math.round(f.speed_kmh),
-        g: Math.round(f.gust_kmh),
-        from: f.direction_deg == null ? "" : fromDir(f.direction_deg, lang),
-      }).replace(/, ([.।])/, "$1");
+      return (
+        say("wind.now", lang, {
+          s: Math.round(f.speed_kmh),
+          g: Math.round(f.gust_kmh),
+          from: f.direction_deg == null ? "" : fromDir(f.direction_deg, lang),
+        }).replace(/, ([.।])/, "$1") + fallbackNote(f.source, lang)
+      );
     case "fog":
-      return say(f.metres < 1000 ? "fog.fog" : "fog.clear", lang, { v: visibility(f.metres) });
+      return (
+        say(f.metres < 1000 ? "fog.fog" : "fog.clear", lang, { v: visibility(f.metres) }) + fallbackNote(f.source, lang)
+      );
     case "smoke": {
       const s = f.source.kind === "satellite" ? f.source : { radius_km: f.radius_km, window_h: 24 };
       const base = { r: s.radius_km, h: s.window_h };

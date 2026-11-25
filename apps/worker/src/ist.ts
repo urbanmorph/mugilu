@@ -72,3 +72,7 @@ export const istDayStart = (day: string): number => Date.parse(`${day}T00:00:00+
 
 /** The India day `n` days after `day` (before it, when `n` is negative). */
 export const istDayAdd = (day: string, n: number): string => istIsoDay(istDayStart(day) + (n + 0.5) * DAY_MS);
+
+/** The oldest of some ISO times (absent ones ignored); ISO UTC strings sort by time. */
+export const earliestIso = (...xs: (string | undefined)[]): string | undefined =>
+  xs.filter((x): x is string => !!x).sort()[0];
