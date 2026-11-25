@@ -1,6 +1,6 @@
 import type { Env } from "./index";
-import { pickStation, STATION_MAX_KM } from "./conditions";
-import { allSlugPlaces, type SlugPlace } from "./slugs";
+import { pickStation, speaksFor } from "./conditions";
+import { allSlugPlaces, placeElevation, type SlugPlace } from "./slugs";
 import { allHubs } from "./states";
 import { trendKey } from "./placedaily";
 import { loadJson, loadSnapshot, loadWarningsSnapshot, putJson } from "./snapshot";
@@ -25,7 +25,7 @@ export type Heads = Record<string, { s: string; d: string; w?: string }>;
  *  official warning covers it. */
 export function headOf(p: SlugPlace, stations: NormalizedStation[], warned: Set<string>): string {
   const s = stations.length ? pickStation(stations, p.lat, p.lon) : undefined;
-  const band = s && s.distance_km <= STATION_MAX_KM ? s.band : "-";
+  const band = s && speaksFor(s, placeElevation(p.slug)) ? s.band : "-";
   return warned.has(p.slug) ? band + WARNED : band;
 }
 

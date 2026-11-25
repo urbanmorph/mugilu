@@ -81,7 +81,7 @@ A conditions response (the conditions_at structuredContent, or /c/{lat},{lon}.js
 - units: a map (note: CO is mg/m3, other pollutants ug/m3)
 
 ## Layers (each carries its own source, kind and as_of)
-- air: { kind: measured|modelled, aqi, aqi_scale: "cpcb", band, pollutants, yll_years (withdrawn 24 Nov 2026: always null), station }
+- air: { kind: measured|modelled, aqi, aqi_scale: "cpcb", band, pollutants, yll_years (withdrawn 24 Nov 2026: always null), station, station_apart? } (measured from the nearest station within 50 km; modelled when there is none, or when the nearest is over 500 m above or below the point: station_apart then names it, with its distance, height difference and reading)
 - heat: { temp_c, humidity_pct, apparent_c (feels-like), wet_bulb_c, wbgt_c }
 - heat_vs_normal: { today_max_c, normal_max_c, anomaly_c, notable, date, period, baseline, source } (today's modelled high vs the 1991-2020 ERA5 normal for this time of year here; null where unknown. today_max_c is the model's estimate for the whole local day, so partly forecast early in the day; notable is the unrounded difference reaching 3 °C. Not a heatwave declaration, which only IMD makes)
 - rain, uv, dust, wind, visibility: modelled layers

@@ -32,6 +32,9 @@ export interface OpenMeteoConditions {
   /** Today's modelled daily maximum here, the local date it is for, and the
    *  point's elevation: the inputs to the heat-compared-with-normal read. */
   todayMax: TodayMax | null;
+  /** The point's ground height (m) by the forecast's elevation model, live or kept: whether the
+   *  nearest air station is in different air (conditions.ts stationApart). */
+  elevation_m?: number;
   /** A call failed or returned no reading, so some layers are missing (or stand in) for that reason. */
   failed: boolean;
   /** When a failed call was filled from this point's last good answer: that answer's time
@@ -224,6 +227,9 @@ export async function getOpenMeteo(lat: number, lon: number, opts: FetchOptions 
     const date = daily?.time?.[0];
     if (max != null && date) out.todayMax = { date, max_c: max, elevation_m: num(elevation) };
   }
+
+  const elev = forecast.status === "fulfilled" ? num(forecast.value.elevation) : undefined;
+  if (elev != null) out.elevation_m = elev;
 
   if (forecast.status === "fulfilled" && forecast.value.current) {
     const c = forecast.value.current;

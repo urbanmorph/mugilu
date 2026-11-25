@@ -3,6 +3,7 @@ import { getSignature, signUrl } from "./handshake";
 import { PROVIDERS, type NormalizedStation, type ProviderId, type Snapshot, type UpstreamStation } from "./types";
 import { computeAqi, aqiBand } from "./aqi";
 import { freshStations, LATEST_KEY, loadRawSnapshot, putJson } from "./snapshot";
+import { withElevations } from "./elevation";
 import { bump } from "./metrics";
 import { reason } from "./logs";
 import { gzip } from "./gzip";
@@ -232,7 +233,11 @@ export async function refreshLatest(env: Env): Promise<Snapshot> {
   // Stale stations (dead feeds, or carried readings past their age) are dropped
   // here too, so the stored snapshot, the archive and /data are clean; the
   // read-time filter in loadSnapshot covers a refresh that stalls.
-  const all = freshStations(carryForward(fresh, failed, failed.length ? await loadRawSnapshot(env) : null));
+  // Each station's ground height (looked up once, kept): whether it is in different air by height.
+  const all = await withElevations(
+    env,
+    freshStations(carryForward(fresh, failed, failed.length ? await loadRawSnapshot(env) : null)),
+  );
   // Health: what this run fetched fresh, against the baseline (snapshotHealth).
   const healthy = await snapshotHealth(env, freshStations(fresh).length);
   await bump(env, { "err:upstream:oaq": failed.length, "err:snapshot:empty": healthy ? 0 : 1 });

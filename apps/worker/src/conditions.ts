@@ -56,6 +56,46 @@ export function pickStation(stations: NormalizedStation[], lat: number, lon: num
 // prefer Open-Meteo's modelled PM (gap-fill) over a distant monitor.
 export const STATION_MAX_KM = 50;
 
+// A station more than this far above or below a place is in different air: a hill town over a
+// station in the plains (Shimla over Baddi, about 1,500 m lower, read Baddi's industrial air).
+// 25 of the 793 named places have their nearest station that far apart.
+export const HEIGHT_APART_M = 500;
+
+/** Whether a station and a place are in different air by height. An unknown height never counts. */
+export function stationApart(stationM: number | undefined, placeM: number | undefined): boolean {
+  return stationM != null && placeM != null && Math.abs(stationM - placeM) > HEIGHT_APART_M;
+}
+
+/** Whether a station speaks for a place: near enough, and not in different air by height. */
+export function speaksFor(s: Pick<NearStation, "distance_km" | "elev_m">, placeM: number | undefined): boolean {
+  return s.distance_km <= STATION_MAX_KM && !stationApart(s.elev_m, placeM);
+}
+
+/** The air for a place: the nearest station when it speaks for the place, else the model (with
+ *  a station in different air named apart). A far or apart station still beats nothing when
+ *  the model is unavailable. */
+export function chooseAir(
+  nearest: NearStation | undefined,
+  airModel: AirPollutants | null | undefined,
+  placeM: number | undefined,
+): AirConditions | null {
+  const s = nearest?.aqi != null ? nearest : undefined;
+  if (s && speaksFor(s, placeM)) return measuredAir(s);
+  if (airModel) {
+    const air = modelledAir(airModel);
+    if (s && s.distance_km <= STATION_MAX_KM && s.elev_m != null && placeM != null)
+      air.station_apart = {
+        name: s.name,
+        city: s.city,
+        distance_km: s.distance_km,
+        height_m: Math.round(s.elev_m - placeM),
+        aqi: s.aqi,
+      };
+    return air;
+  }
+  return s ? measuredAir(s) : null;
+}
+
 /** Air from a ground station (measured), with its provider as the source. */
 function measuredAir(s: NearStation): AirConditions {
   return {
@@ -129,14 +169,8 @@ export async function buildConditions(
   // Prefer a nearby measured station; beyond STATION_MAX_KM fall back to the
   // Open-Meteo model so air is filled for any coordinate, not just monitored
   // cities. A far station still beats nothing if the model is unavailable.
-  let air: Conditions["air"] = null;
-  if (nearest && nearest.aqi != null && nearest.distance_km <= STATION_MAX_KM) {
-    air = measuredAir(nearest);
-  } else if (om.airModel) {
-    air = modelledAir(om.airModel);
-  } else if (nearest && nearest.aqi != null) {
-    air = measuredAir(nearest);
-  }
+  // A station in different air by height (a hill town over the plains) gives way to the model.
+  const air: Conditions["air"] = chooseAir(nearest, om.airModel, om.elevation_m);
 
   // Fire / crop-burn smoke pressure from the FIRMS snapshot (active detections
   // within 100 km). Null when we haven't collected fires yet; count 0 means we
@@ -308,6 +342,11 @@ export function renderConditionsMarkdown(c: Conditions, persona: Persona = "ever
       out.push(
         `- Nearest station: ${c.air.station.name}, ${c.air.station.city} (${c.air.station.distance_km} km) · via ${c.air.source.toUpperCase()}`,
       );
+    } else if (c.air.station_apart) {
+      const a = c.air.station_apart;
+      out.push(
+        `- Modelled · via Open-Meteo. The nearest station, ${a.name}, ${a.city} (${a.distance_km} km, ${Math.abs(a.height_m).toLocaleString("en-IN")} m ${a.height_m < 0 ? "lower" : "higher"}), is in different air and is not used: it reads AQI ${a.aqi ?? "n/a"}.`,
+      );
     } else {
       out.push("- Modelled (no station nearby) · via Open-Meteo");
     }
@@ -423,6 +462,9 @@ export function serializeConditionsV1(c: Conditions, persona: Persona) {
           // Withdrawn 24 Nov 2026: AQLI is for annual averages, not an hourly reading. Kept in v1 as null.
           yll_years: null,
           station: c.air.station,
+          // Additive in v1: the nearest station when it is in different air by height (over
+          // 500 m above or below), so the model was used; present only then.
+          ...(c.air.station_apart && { station_apart: c.air.station_apart }),
           source: c.air.source,
           as_of: c.air_as_of ?? c.as_of,
         }

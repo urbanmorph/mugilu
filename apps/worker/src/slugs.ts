@@ -1,3 +1,4 @@
+import PLACE_ELEV from "../data/place-elev.json";
 import centroids from "../data/centroids.json";
 import placeNames from "../data/place-names.json";
 import { haversineKm } from "./near";
@@ -160,6 +161,11 @@ export function slugForName(name: string): string | undefined {
 export function placeByAlias(name: string): SlugPlace | undefined {
   const slug = SLUG_ALIASES[slugify(name)];
   return slug ? SLUGS.get(slug) : undefined;
+}
+
+/** A named place's ground height (m), bundled (scripts/build-place-elev.mts), or undefined. */
+export function placeElevation(slug: string): number | undefined {
+  return (PLACE_ELEV as Record<string, number>)[slug];
 }
 
 /** The other named places that share this name, in other states ("Aurangabad": Bihar and
