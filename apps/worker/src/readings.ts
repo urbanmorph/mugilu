@@ -100,6 +100,12 @@ export interface Brief {
   gauge: Gauge;
 }
 
+/** What the thermal reading is called now: Cold when the feels-like reaches a cold
+ *  level, else Heat (also when it is missing), as the Ambient read names it. */
+export function thermalLabel(apparent: number | null | undefined): "Cold" | "Heat" {
+  return apparent != null && coldLevelOf(apparent) > 0 ? "Cold" : "Heat";
+}
+
 export const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 
 /** Every reading present, short, in the order they matter now. */
@@ -114,10 +120,11 @@ export function briefs(c: Conditions, risk: AmbientRisk): Brief[] {
     });
   const a = c.heat?.apparent_c;
   if (a != null) {
-    const cold = coldLevelOf(a) > 0;
+    const label = thermalLabel(a);
+    const cold = label === "Cold";
     out.push({
       key: "heat",
-      label: "Heat",
+      label,
       value: `${Math.round(a)}°`,
       gauge: cold
         ? { v: a, lo: -10, hi: 30, ticks: THRESHOLDS.cold }
