@@ -11,7 +11,7 @@ import {
   uvLevelOf,
   windLevelOf,
 } from "./score";
-import type { Conditions, ProviderId, Warning } from "./types";
+import type { Conditions, ProviderId, StandIn, Warning } from "./types";
 
 // The facts behind every sentence mugilu writes about a place (supporting-docs/
 // READING_SENTENCES_SPEC.md): what is true, at what level, and how mugilu knows it. Every
@@ -27,6 +27,7 @@ export type Provenance =
   | { kind: "measured"; network: ProviderId; station: string; km: number; at: string }
   | { kind: "modelled"; model: "open-meteo"; reason?: "no_station"; radius_km?: number }
   | { kind: "fallback"; grid_at: string }
+  | { kind: "kept"; at: string }
   | { kind: "satellite"; by: "NASA FIRMS"; radius_km: number; window_h: number }
   | { kind: "official"; via: "SACHET" };
 
@@ -65,9 +66,14 @@ export type Fact =
 const FIRMS_WINDOW_H = 24;
 const lv = (n: number | null | undefined): Level => Math.max(0, Math.min(3, n ?? 0)) as Level;
 
-/** Weather from the live call, or the district grid that stood in for it. */
-const weather = (asOf: string | undefined): Provenance =>
-  asOf ? { kind: "fallback", grid_at: asOf } : { kind: "modelled", model: "open-meteo" };
+/** Weather from the live call, or the stand-in that filled it: this place's own kept
+ *  answer, or the district grid. */
+const weather = (l: StandIn | null | undefined): Provenance =>
+  !l?.as_of
+    ? { kind: "modelled", model: "open-meteo" }
+    : l.stand_in === "kept"
+      ? { kind: "kept", at: l.as_of }
+      : { kind: "fallback", grid_at: l.as_of };
 
 function warnLevel(ws: Warning[]): Level {
   if (!ws.length) return 0;
@@ -110,7 +116,7 @@ export function facts(c: Conditions, now = new Date()): Fact[] {
       temp_c: h.temp_c,
       feels_c: h.apparent_c,
       level: lv(Math.max(heat, cold)),
-      source: weather(h.as_of),
+      source: weather(h),
       ...(n ? { normal: { max_c: n.today_max_c, normal_c: n.normal_max_c, delta_c: n.anomaly_c, date: n.date } } : {}),
     });
   }
@@ -119,7 +125,7 @@ export function facts(c: Conditions, now = new Date()): Fact[] {
       key: "rain",
       mm: c.rain.precipitation_mm,
       level: lv(rainLevelOf(c.rain.precipitation_mm)),
-      source: weather(c.rain.as_of),
+      source: weather(c.rain),
     });
   const w = c.wind;
   if (w?.speed_kmh != null)
@@ -129,14 +135,14 @@ export function facts(c: Conditions, now = new Date()): Fact[] {
       gust_kmh: w.gust_kmh ?? w.speed_kmh,
       direction_deg: w.direction_deg,
       level: lv(windLevelOf(w.gust_kmh ?? w.speed_kmh)),
-      source: weather(undefined),
+      source: weather(w),
     });
   if (c.visibility?.meters != null)
     out.push({
       key: "fog",
       metres: c.visibility.meters,
       level: lv(fogLevelOf(c.visibility.meters)),
-      source: weather(undefined),
+      source: weather(c.visibility),
     });
   if (c.smoke)
     out.push({
@@ -149,13 +155,13 @@ export function facts(c: Conditions, now = new Date()): Fact[] {
       source: { kind: "satellite", by: "NASA FIRMS", radius_km: c.smoke.radius_km, window_h: FIRMS_WINDOW_H },
     });
   if (c.uv?.index != null)
-    out.push({ key: "uv", index: c.uv.index, level: lv(uvLevelOf(c.uv.index)), source: weather(c.uv.as_of) });
+    out.push({ key: "uv", index: c.uv.index, level: lv(uvLevelOf(c.uv.index)), source: weather(c.uv) });
   if (c.dust?.dust_ug_m3 != null)
     out.push({
       key: "dust",
       ugm3: c.dust.dust_ug_m3,
       level: lv(dustLevelOf(c.dust.dust_ug_m3)),
-      source: weather(c.dust.as_of),
+      source: weather(c.dust),
     });
   const here = c.warnings ?? [];
   out.push({

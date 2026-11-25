@@ -288,3 +288,25 @@ test("conditionsText: the answer line and each reading's sentence, the same word
   assert.notEqual(kn.answer, en.answer);
   assert.match(kn.answer, /ಬೆಂಗಳೂರು/, "the native name, as the Kannada page says it");
 });
+
+test("facts: a value from this place's own kept answer says so, apart from the district grid", () => {
+  const at = "2026-11-25T03:30:00.000Z";
+  const fs = facts(
+    cond({
+      weather_as_of: at,
+      heat: { temp_c: 23, apparent_c: 25, source: "open-meteo", as_of: at, stand_in: "kept" },
+      wind: { speed_kmh: 10, gust_kmh: 20, source: "open-meteo", as_of: at, stand_in: "kept" },
+    }),
+  );
+  assert.deepEqual(fact(fs, "temp").source, { kind: "kept", at });
+  assert.deepEqual(fact(fs, "wind").source, { kind: "kept", at });
+  for (const lang of ["en", "hi", "kn"] as const) {
+    const s = factText(fact(fs, "temp"), lang);
+    assert.ok(s.includes("09:00 IST"), `${lang}: the kept time, in IST`);
+    const grid = PHRASES["fallback.grid"][lang].replace("{at}", "09:00 IST");
+    assert.ok(!s.includes(grid), `${lang}: not the grid sentence`);
+    assert.ok(s.includes(PHRASES["fallback.kept"][lang].replace("{at}", "09:00 IST")), `${lang}: the kept sentence`);
+  }
+  assert.match(factText(fact(fs, "temp"), "en"), /last reading here, from 09:00 IST/);
+  assert.match(factText(fact(fs, "wind"), "en"), /last reading here, from 09:00 IST/);
+});

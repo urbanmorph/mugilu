@@ -207,3 +207,146 @@ test("getOpenMeteoBulk: without pastDay, no daily figures and no extra variables
     globalThis.fetch = realFetch;
   }
 });
+
+// ---- W26: a stalled or refused call asks once more; a failed call falls back to this
+// point's last good answer (the same exact point, so no accuracy cost), dated.
+
+/** caches.default stand-in, keyed by URL. */
+function memStore() {
+  const m = new Map<string, Response>();
+  return {
+    m,
+    match: async (r: Request) => m.get(r.url)?.clone(),
+    put: async (r: Request, res: Response) => void m.set(r.url, res),
+  };
+}
+
+const FAST = { hedgeMs: 30, budgetMs: 300 };
+const json = (b: object) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
+
+/** Answer each call with the next of `plan` for its endpoint: an object (200), a status
+ *  number, or "stall" (never answers until aborted). Counts calls per endpoint. */
+function planFetch(plan: { fc: Array<object | number | "stall">; aq: Array<object | number | "stall"> }) {
+  const realFetch = globalThis.fetch;
+  const calls = { fc: 0, aq: 0 };
+  const cached: boolean[] = [];
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const k = String(input).includes("air-quality") ? "aq" : "fc";
+    if (k === "fc") cached.push(!!(init as { cf?: { cacheEverything?: boolean } })?.cf?.cacheEverything);
+    const step = plan[k][Math.min(calls[k]++, plan[k].length - 1)];
+    if (step === "stall")
+      return new Promise<Response>((_, reject) =>
+        init?.signal?.addEventListener("abort", () => reject(init.signal!.reason)),
+      );
+    return typeof step === "number" ? new Response("err", { status: step }) : json(step);
+  }) as typeof fetch;
+  return { calls, cached, restore: () => (globalThis.fetch = realFetch) };
+}
+
+test("getOpenMeteo: a call that stalls past the hedge is asked again, and the second answer is used", async () => {
+  const f = planFetch({ fc: ["stall", FORECAST], aq: [AIR] });
+  try {
+    const r = await getOpenMeteo(12.97, 77.59, { ...FAST, store: memStore() });
+    assert.equal(f.calls.fc, 2);
+    assert.deepEqual(
+      f.cached,
+      [true, false],
+      "the second call goes past the edge cache, so it never waits on the first",
+    );
+    assert.equal(r.heat?.temp_c, 23.2);
+    assert.equal(r.failed, false);
+  } finally {
+    f.restore();
+  }
+});
+
+test("getOpenMeteo: a 429 or 503 is asked once more at once; a 400 is not", async () => {
+  for (const code of [429, 503]) {
+    const f = planFetch({ fc: [code, FORECAST], aq: [AIR] });
+    try {
+      const r = await getOpenMeteo(12.97, 77.59, { ...FAST, hedgeMs: 10_000, store: memStore() });
+      assert.equal(f.calls.fc, 2, `retried ${code}`);
+      assert.equal(r.heat?.temp_c, 23.2);
+    } finally {
+      f.restore();
+    }
+  }
+  const f = planFetch({ fc: [400, FORECAST], aq: [AIR] });
+  try {
+    const r = await getOpenMeteo(12.97, 77.59, { ...FAST, hedgeMs: 10_000, store: memStore() });
+    assert.equal(f.calls.fc, 1, "a bad request is not repeated");
+    assert.equal(r.heat, null);
+  } finally {
+    f.restore();
+  }
+});
+
+test("getOpenMeteo: never more than two calls per endpoint, and the budget still holds", async () => {
+  const f = planFetch({ fc: ["stall"], aq: ["stall"] });
+  const t0 = Date.now();
+  try {
+    const r = await getOpenMeteo(12.97, 77.59, { ...FAST, store: memStore() });
+    assert.deepEqual(f.calls, { fc: 2, aq: 2 });
+    assert.ok(Date.now() - t0 < FAST.budgetMs + 200, "gave up at the budget");
+    assert.equal(r.failed, true);
+    assert.equal(r.heat, null);
+  } finally {
+    f.restore();
+  }
+});
+
+test("getOpenMeteo: a failed call is filled from this point's last good answer, dated, without today's high", async () => {
+  const store = memStore();
+  const ok = planFetch({
+    fc: [{ ...FORECAST, daily: { time: ["2026-11-25"], temperature_2m_max: [30] } }],
+    aq: [{ current: { ...AIR.current, pm2_5: 40, pm10: 80 } }],
+  });
+  try {
+    await getOpenMeteo(12.97, 77.59, { ...FAST, store });
+  } finally {
+    ok.restore();
+  }
+  assert.equal(store.m.size, 2, "each endpoint's good answer kept");
+  const down = planFetch({ fc: [500], aq: ["stall"] });
+  try {
+    const r = await getOpenMeteo(12.97, 77.59, { ...FAST, store });
+    assert.equal(r.failed, true, "still marked: the live call failed, so the page is not cached as whole");
+    assert.equal(r.heat?.temp_c, 23.2);
+    assert.ok(r.staleAt, "the age of the stand-in");
+    assert.equal(r.heat?.as_of, r.staleAt);
+    assert.equal(r.wind?.as_of, r.staleAt);
+    assert.equal(r.uv?.as_of, r.staleAt);
+    assert.equal(r.airModel?.pm25, 40);
+    assert.equal(r.airModelAt, r.staleAt);
+    assert.equal(r.todayMax, null, "an old copy's high may be another day's");
+  } finally {
+    down.restore();
+  }
+  // A different point never borrows it.
+  const other = planFetch({ fc: [500], aq: [500] });
+  try {
+    const r = await getOpenMeteo(13.5, 77.59, { ...FAST, store });
+    assert.equal(r.heat, null);
+    assert.equal(r.staleAt, undefined);
+  } finally {
+    other.restore();
+  }
+});
+
+test("getOpenMeteo: a kept answer older than three hours is not used", async () => {
+  const store = memStore();
+  const ok = planFetch({ fc: [FORECAST], aq: [AIR] });
+  try {
+    await getOpenMeteo(12.97, 77.59, { ...FAST, store, now: Date.now() - 3 * 3600_000 - 60_000 });
+  } finally {
+    ok.restore();
+  }
+  const down = planFetch({ fc: [500], aq: [500] });
+  try {
+    const r = await getOpenMeteo(12.97, 77.59, { ...FAST, store });
+    assert.equal(r.heat, null);
+    assert.equal(r.staleAt, undefined);
+  } finally {
+    down.restore();
+  }
+});
