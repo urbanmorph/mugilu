@@ -17,7 +17,7 @@ const WHO_EN = esc(WHO_KEY).replace("toggle you choose", "toggle <b>you</b> choo
 const NOTE_KEY =
   "Heat takes the worst of feels-like, wet-bulb and WBGT, and the persona toggle bumps a sensitive hazard up one level. Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); fires seen by satellite are shown for context and never scored, because the air reading carries any smoke that reaches you. The full logic is the open {score}, and every layer's source and licence is on {terms}.";
 const NORMAL_KEY =
-  "On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo. It shows only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.";
+  "On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo. It shows only when the two are 3 °C or more apart, and never in the high Himalaya (Ladakh, Lahaul and Spiti, Kinnaur), where the reanalysis runs several degrees too cold. It is not a heatwave declaration, which only IMD makes.";
 
 const MAP_KEY =
   "The map of India on the home page uses the same four levels. When official warnings are in force, it opens on them: each warned area takes its level from the severity IMD or NDMA gives in the alert. Where warnings overlap, the higher level is on top. Otherwise it opens on what is worst.";

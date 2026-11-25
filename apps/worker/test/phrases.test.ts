@@ -310,3 +310,28 @@ test("facts: a value from this place's own kept answer says so, apart from the d
   assert.match(factText(fact(fs, "temp"), "en"), /last reading here, from 09:00 IST/);
   assert.match(factText(fact(fs, "wind"), "en"), /last reading here, from 09:00 IST/);
 });
+
+// From ops, 25 Nov 2026: at Leh the read was "severe, cold", but the answer opened with the air.
+test("the answer opens with the hazard that drives the read when it is not the air", async () => {
+  const { ambientRisk } = await import("../src/score");
+  const c = cond({
+    air: { ...cond().air!, aqi: 145, band: "moderate", pollutants: { pm25: 50 } },
+    heat: { temp_c: -1, apparent_c: -6, humidity_pct: 50, source: "open-meteo" },
+  });
+  const risk = ambientRisk(c);
+  assert.equal(risk.driver, "Cold");
+  const fs = facts(c);
+  assert.equal(
+    answerLine(fs, "Leh", "en", risk),
+    "Severe cold in Leh now. The air quality is moderate, AQI 145. It is -1°C, with no rain and no official warning.",
+  );
+  assert.match(answerLine(fs, "लेह", "hi", risk), /^लेह में अभी गंभीर ठंड है। वायु गुणवत्ता मध्यम है, AQI 145।/);
+  assert.match(answerLine(fs, "ಲೇಹ್", "kn", risk), /^ಲೇಹ್ ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ತೀವ್ರ ಚಳಿ\. ವಾಯು ಗುಣಮಟ್ಟ /);
+  assert.match(conditionsText(c, "en").answer, /^Severe cold in /, "the API's text.answer too");
+  // The air leads when it drives the read, as before.
+  const air = cond();
+  assert.match(
+    answerLine(facts(air), "Bengaluru Rural", "en", ambientRisk(air)),
+    /^In Bengaluru Rural now, the air quality/,
+  );
+});
