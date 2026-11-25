@@ -47,6 +47,32 @@ export function findNearest(stations: NormalizedStation[], lat: number, lon: num
   return withDist.slice(0, n);
 }
 
+/** Within this, two stations of one name are one site (co-located sensors, one CPCB mast). */
+const SAME_SITE_KM = 0.2;
+
+/** A station list with one row per site: a station of the same name (any case) within
+ *  SAME_SITE_KM of one already kept, or of `self` (the page's own station), is dropped.
+ *  Some sites carry several sensors under one name (Meher Colony: three AirView+ devices
+ *  beside the CPCB station), which would otherwise read as one station listed three times. */
+export function distinctStations<T extends NormalizedStation>(list: T[], self?: NormalizedStation): T[] {
+  const kept: NormalizedStation[] = self ? [self] : [];
+  const key = (s: NormalizedStation) => s.name.trim().toLowerCase();
+  const sameSite = (a: NormalizedStation, b: NormalizedStation) =>
+    key(a) === key(b) &&
+    a.lat != null &&
+    a.lon != null &&
+    b.lat != null &&
+    b.lon != null &&
+    haversineKm(a.lat, a.lon, b.lat, b.lon) <= SAME_SITE_KM;
+  const out: T[] = [];
+  for (const s of list) {
+    if (kept.some((k) => sameSite(k, s))) continue;
+    kept.push(s);
+    out.push(s);
+  }
+  return out;
+}
+
 /**
  * Parse + validate `lat`/`lon` request params. Returns null when either is
  * missing/empty or the point is outside India (mugilu covers India only).

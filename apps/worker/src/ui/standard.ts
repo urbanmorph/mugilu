@@ -571,6 +571,8 @@ const READ_CSS = `
 .framed .mg[data-embed]{padding:0}
 .framed .mg[data-embed] .ecard{max-width:none;height:100vh}
 .framed .mg[data-embed] .ecode{display:none}
+@media (min-height:300px){.framed .mg[data-embed] .ecard .eamb{margin-top:auto}}
+@media (max-width:371.98px) and (min-height:300px){.framed .mg[data-embed] .ecard{gap:var(--sp2)}.framed .mg[data-embed] .ecard .ereads{display:flex;max-height:none}.framed .mg[data-embed] .ecard .disc-long{display:block}.framed .mg[data-embed] .ecard .disc-short{display:none}}
 .mg[data-kiosk] main{height:100vh;height:100dvh;overflow:hidden}
 .mg .kio{position:relative;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .mg .kio .kb{overflow:hidden}

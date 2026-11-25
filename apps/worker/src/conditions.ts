@@ -14,7 +14,7 @@ import type {
   UvConditions,
   Warning,
 } from "./types";
-import { findNearest, haversineKm, STATION_META } from "./near";
+import { distinctStations, findNearest, haversineKm, STATION_META } from "./near";
 import { grapRead } from "./grap";
 import { isPlausible } from "./plausible";
 import { getOpenMeteo, wbgt } from "./openmeteo";
@@ -248,13 +248,16 @@ function grapFor(snapshot: Snapshot | null, lat: number, lon: number) {
 
 /** The air stations near a spot, for the page's links (absent when there are none). */
 function nearbyStations(snapshot: Snapshot | null, lat: number, lon: number) {
+  // One row per site (co-located sensors of one name are one station to a reader).
   const near = snapshot
-    ? findNearest(
-        snapshot.stations.filter((s) => s.aqi != null),
-        lat,
-        lon,
-        6,
-      ).filter((s) => s.distance_km <= NEARBY_STATIONS_KM)
+    ? distinctStations(
+        findNearest(
+          snapshot.stations.filter((s) => s.aqi != null),
+          lat,
+          lon,
+          18,
+        ).filter((s) => s.distance_km <= NEARBY_STATIONS_KM),
+      ).slice(0, 6)
     : [];
   return near.length ? { nearby_stations: near } : {};
 }

@@ -97,7 +97,12 @@ export function cleanStationName(name: string, city?: string): string {
   out = out.replace(/,\s*[^,]{1,60}\s*-[A-Z]{2,8}\s*$/u, "").trim();
 
   // Defensive: never return empty.
-  return out || name.trim();
+  out ||= name.trim();
+
+  // Some AirView+ sensors come named only by a device id ("2415_18") with no coordinates.
+  // Their city is all we know of where they are, so it goes in front ("Bhubaneswar 2415_18").
+  const c = city?.trim();
+  return c && /^[\d_\-\s]+$/.test(out) ? `${c} ${out}` : out;
 }
 
 function normalize(provider: ProviderId, raw: UpstreamStation): NormalizedStation {
