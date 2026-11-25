@@ -6,7 +6,7 @@ import { bump, recordEvent, recordLookup, upstreamCounts, type Caller, type Usag
 import { parsePersona } from "./score";
 import { conditionsText } from "./phrases";
 import { LANGS, type Lang } from "./i18n";
-import { buildSuggestions } from "./suggest";
+import { buildSuggestions, parseCoordQuery } from "./suggest";
 import { geocodeList } from "./geocode";
 import { findNearest } from "./near";
 import { composeHighlights } from "./highlights";
@@ -15,6 +15,8 @@ import { loadGazetteer } from "./gazetteer";
 import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { inForce } from "./sachet";
 import { loadMap } from "./indiamap";
+import { namesakeNote, namesakes } from "./slugs";
+import { warningMatches } from "./warnareas";
 
 // The MCP tool surface (Phase 2). Each tool is a thin adapter over an existing
 // internal function, no new data logic. Read-only; all live/India-only.
@@ -105,6 +107,9 @@ export const TOOLS = [
   },
 ];
 
+/** A typed coordinate outside India: say so, rather than suggest a search. */
+const outsideIndia = (place: string) => `${place} is outside India. mugilu covers India only.`;
+
 function err(message: string): ToolResult {
   return { content: [{ type: "text", text: message }], isError: true };
 }
@@ -125,6 +130,7 @@ async function conditionsAt(
   if (!place) return err('`place` is required (a name or "lat,lon").');
   const persona = parsePersona(str(args.persona) || null);
   const lang = (LANGS as readonly string[]).includes(str(args.lang)) ? (str(args.lang) as Lang) : "en";
+  if (parseCoordQuery(place) === null) return err(outsideIndia(place));
   const data = conditionsData(env); // the lookup below needs them: read while we resolve
   const loc = await resolveQuery(place, await loadGazetteer(env));
   if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
@@ -138,9 +144,14 @@ async function conditionsAt(
     data,
   });
   onUsage(usage);
+  // A name several places share: say which one this is, and how to ask for the others.
+  const [name, state] = (loc.label ?? "").split(", ");
+  const others = name ? namesakes(name, state) : [];
+  const note = others.length ? namesakeNote(loc.label!, others) : "";
   return {
-    content: [{ type: "text", text: renderConditionsMarkdown(conditions, persona) }],
+    content: [{ type: "text", text: (note ? `${note}\n\n` : "") + renderConditionsMarkdown(conditions, persona) }],
     structuredContent: {
+      ...(others.length && { also_named: others.map((p) => `${p.name}, ${p.state}`) }),
       ...serializeConditionsV1(conditions, persona),
       text: conditionsText(conditions, lang, persona),
     },
@@ -164,6 +175,7 @@ async function searchPlace(args: Record<string, unknown>, env: Env): Promise<Too
 async function nearestStations(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const place = str(args.place);
   if (!place) return err('`place` is required (a name or "lat,lon").');
+  if (parseCoordQuery(place) === null) return err(outsideIndia(place));
   const snapshot = loadSnapshot(env); // read it while we resolve the place
   snapshot.catch(() => {}); // awaited below; this only covers an early return
   const loc = await resolveQuery(place, await loadGazetteer(env));
@@ -190,7 +202,9 @@ async function activeWarnings(args: Record<string, unknown>, env: Env): Promise<
   const [feed, { map }] = await Promise.all([loadWarningsSnapshot(env), loadMap(env)]);
   const snap = inForce(feed, map);
   let alerts = snap?.alerts ?? [];
-  if (region) alerts = alerts.filter((a) => `${a.headline} ${a.category} ${a.issuer}`.toLowerCase().includes(region));
+  // Match the warning's places too: many headlines are in the state's own language.
+  const where = new Map((map?.warnings ?? []).map((w) => [w.id, w.where ?? []]));
+  if (region) alerts = alerts.filter((a) => warningMatches(a, where.get(a.identifier) ?? [], region));
   const text = listText(
     alerts,
     (a) => `- [${a.category}] ${a.headline} - ${a.issuer}`,

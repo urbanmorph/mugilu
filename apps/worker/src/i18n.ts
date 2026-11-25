@@ -1653,6 +1653,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "अपडेट:",
     kn: "ನವೀಕರಿಸಿದ್ದು",
   },
+  // The band word before "cold" at high ("Very cold"), as "very cold" below says it.
+  Very: {
+    hi: "बहुत",
+    kn: "ತುಂಬಾ",
+  },
   "very cold": {
     hi: "बहुत ठंड",
     kn: "ತುಂಬಾ ಚಳಿ",

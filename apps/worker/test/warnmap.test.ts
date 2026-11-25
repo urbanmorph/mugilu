@@ -72,7 +72,9 @@ test("mapWarnings: compact, projected paths, the higher level drawn last", () =>
     ],
   );
   assert.match(ws[0].d, /^M[\d.]+ [\d.]+l[-\d. ]+z$/, "a relative SVG path in the map's pixels");
-  assert.deepEqual(Object.keys(ws[0]).sort(), ["d", "expires", "id", "level"]);
+  assert.deepEqual(Object.keys(ws[0]).sort(), ["d", "expires", "id", "level", "where"]);
+  // The places it covers, for active_warnings' region filter (headlines are often not in English).
+  assert.ok(ws.every((w) => w.where!.length > 0));
 });
 
 test("activeWarnings: only those still in force at render time", () => {
@@ -95,7 +97,8 @@ test("writeMap: the composed map carries the areas in force, and stays small", a
     ["11"],
   );
   assert.ok(stored.warningsAsOf, "the warnings snapshot's time");
-  assert.ok(JSON.stringify(stored.warnings).length < 200);
+  // Small: the area's path and the few places it covers (the region filter's names).
+  assert.ok(JSON.stringify(stored.warnings).length < 300);
 });
 
 test("indiaMap: with a warning in force the map opens on Warnings, first in the switch", () => {

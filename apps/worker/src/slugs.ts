@@ -162,6 +162,19 @@ export function placeByAlias(name: string): SlugPlace | undefined {
   return slug ? SLUGS.get(slug) : undefined;
 }
 
+/** The other named places that share this name, in other states ("Aurangabad": Bihar and
+ *  Maharashtra), for a note on which one an answer is for. */
+export function namesakes(name: string, state?: string): SlugPlace[] {
+  const n = name.trim().toLowerCase();
+  return [...SLUGS.values()].filter((p) => p.name.toLowerCase() === n && p.state && p.state !== state);
+}
+
+/** "This is Aurangabad, Bihar. Another place has the same name: ..." */
+export function namesakeNote(label: string, others: SlugPlace[]): string {
+  const list = others.map((p) => `${p.name}, ${p.state} (ask for "${p.name}, ${p.state}")`).join("; ");
+  return `This is ${label}. ${others.length > 1 ? "Other places have" : "Another place has"} the same name: ${list}.`;
+}
+
 /** Every named place (for the sitemap). */
 export function allSlugPlaces(): SlugPlace[] {
   return [...SLUGS.values()];
