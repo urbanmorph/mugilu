@@ -1,10 +1,17 @@
 // Security headers on every response the worker sends (the static files in public/ take theirs
 // from public/_headers). Framing: the embed (/embed/...) is made for other sites and the kiosk
 // (?kiosk) for signage players and /display, so anyone may frame those two; any other page only
-// mugilu itself. Scripts and styles are not restricted here: pages still carry inline scripts
-// and style attributes (W20 in supporting-docs/platform-audit-tracker-2026-11-24.md).
+// mugilu itself.
+// Scripts (W20): every page's script is a file under /assets/ (scripts.ts); the one inline script
+// left, the theme's (it must run before the first paint), is allowed by its hash. Report-only for
+// now: browsers report what would be blocked to /csp-report, logged, and nothing is blocked.
+// Styles are not restricted (pages carry style attributes, the embed an inline <style>).
 
 const BASE_CSP = "base-uri 'self'; object-src 'none'; form-action 'self'";
+
+/** The hash of THEME_HEAD_JS (ui/components.ts); test/scripts.test.ts fails if they part. */
+export const THEME_HEAD_SHA = "'sha256-e8/v7VpLQdgl0ohpSdOSio+EzyxfRmLGOlHGadYrAJ8='";
+const SCRIPT_CSP = `script-src 'self' ${THEME_HEAD_SHA} https://static.cloudflareinsights.com; report-uri /csp-report`;
 
 const FIXED: Record<string, string> = {
   "strict-transport-security": "max-age=31536000; includeSubDomains",
@@ -28,5 +35,25 @@ export function securityHeaders(req: Request, res: Response): Response {
     "content-security-policy",
     `frame-ancestors ${framable(new URL(req.url)) ? "*" : "'self'"}; ${BASE_CSP}`,
   );
+  out.headers.set("content-security-policy-report-only", SCRIPT_CSP);
   return out;
+}
+
+/** POST /csp-report: one log line per report (what was blocked, where), for the week of
+ *  report-only before scripts are enforced. Nothing is stored. */
+export async function cspReport(req: Request): Promise<Response> {
+  if (req.method !== "POST") return new Response(null, { status: 405, headers: { allow: "POST" } });
+  const text = (await req.text()).slice(0, 8192);
+  let r: Record<string, unknown> = {};
+  try {
+    const body = JSON.parse(text) as { "csp-report"?: Record<string, unknown> };
+    r = body["csp-report"] ?? {};
+  } catch {
+    // not JSON: logged as unreadable below
+  }
+  const field = (k: string) => String(r[k] ?? "").slice(0, 200);
+  console.log(
+    `[csp] ${field("violated-directive") || "unreadable"} blocked=${field("blocked-uri")} page=${field("document-uri")} at=${field("source-file")}:${field("line-number")}`,
+  );
+  return new Response(null, { status: 204 });
 }

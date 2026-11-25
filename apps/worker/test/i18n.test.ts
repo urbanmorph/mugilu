@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { t, lp, langUrl, LANG_NAME, LANGS, TR } from "../src/i18n";
+import { t, tHtml, lp, langUrl, LANG_NAME, LANGS, TR } from "../src/i18n";
 import { renderHome } from "../src/pages/home";
 import { renderNotFound } from "../src/pages/notfound";
 import { renderConditionsPage } from "../src/pages/place";
@@ -12,6 +12,7 @@ import { renderMethodology } from "../src/pages/methodology";
 import { renderTerms } from "../src/pages/terms";
 import type { Conditions } from "../src/types";
 import { withCss } from "./helpers/css";
+import { withScript } from "./helpers/script";
 
 const REAL_DISCLAIMER =
   "Informational only, not for medical, emergency, or safety-critical decisions. For official hazard warnings consult NDMA / IMD.";
@@ -142,12 +143,12 @@ test("nav preserves language: home Popular + hero + recents carry the /kn prefix
   const hl = {
     hottest: { name: "Sitapur", state: "UP", lat: 27.5, lon: 80.7, apparent_c: 41, wet_bulb_c: 29 },
   } as unknown as Parameters<typeof renderHome>[1];
-  const kn = renderHome(undefined, hl, { popular: [{ label: "Delhi", lat: 28.6, lon: 77.2 }] }, "kn");
+  const kn = withScript(renderHome(undefined, hl, { popular: [{ label: "Delhi", lat: 28.6, lon: 77.2 }] }, "kn"));
   assert.match(kn, /href="\/kn\/c\/delhi"/); // Popular link: canonical slug, still /kn-prefixed
   assert.match(kn, /class="hl"[^>]*href="\/kn\/c\//); // hero highlight
   assert.match(kn, /var LP="\/kn"/); // client prefix
   assert.match(kn, /\+ ?LP ?\+ ?'\/c\/'/); // recents/autocomplete built with LP
-  const en = renderHome(undefined, hl, { popular: [{ label: "Delhi", lat: 28.6, lon: 77.2 }] }, "en");
+  const en = withScript(renderHome(undefined, hl, { popular: [{ label: "Delhi", lat: 28.6, lon: 77.2 }] }, "en"));
   assert.match(en, /var LP=""/);
   assert.match(en, /href="\/c\/delhi"/);
   assert.doesNotMatch(en, /\/en\/c\//);
@@ -364,4 +365,41 @@ test("footer links the MCP page in every language; the data formats are API and 
   assert.match(hi, /<a href="\/hi\/mcp">MCP सर्वर<\/a>/);
   const kn = renderHome(undefined, undefined, undefined, "kn");
   assert.match(kn, /<a href="\/kn\/mcp">MCP ಸರ್ವರ್<\/a>/);
+});
+
+// ---- W18: one way to fill a sentence.
+
+test("t: fills named slots in the translated sentence; a slot with no value fails loudly", () => {
+  assert.equal(t("until {time}", "en", { time: "17:30 IST" }), "until 17:30 IST");
+  assert.equal(t("until {time}", "hi", { time: "17:30 IST" }), "17:30 IST तक");
+  assert.equal(t("{n} squares", "en", { n: 3 }), "3 squares");
+  assert.throws(() => t("until {time}", "en", {}), /no value for \{time\}/);
+  assert.equal(t("until {time}", "en"), "until {time}", "no slots given: the sentence as is");
+});
+
+test("t: a slot value is inserted once, never read as a slot itself", () => {
+  assert.equal(t("as of {time}", "en", { time: "{n}" }), "as of {n}");
+});
+
+test("tHtml: the sentence is escaped, the slots go in as given (already safe HTML)", () => {
+  const out = tHtml('No place found for "{query}". Type the name of a city or a place.', "en", { query: "<b>x</b>" });
+  assert.equal(out, "No place found for &quot;<b>x</b>&quot;. Type the name of a city or a place.");
+  assert.ok(
+    !t("as of {time}", "en", { time: "<i>" }).includes("&lt;"),
+    "the plain variant leaves escaping to the caller",
+  );
+});
+
+test("TR: every translation has exactly the slots of its English sentence, and none uses a bare X", () => {
+  const slots = (s: string) =>
+    [...s.matchAll(/\{(\w+)\}/g)]
+      .map((m) => m[1])
+      .sort()
+      .join(",");
+  const bad: string[] = [];
+  for (const [en, tr] of Object.entries(TR)) {
+    if (/(?<![A-Za-z])X(?![A-Za-z])/.test(en)) bad.push(`bare X: ${en}`);
+    for (const [lang, s] of Object.entries(tr)) if (s && slots(s) !== slots(en)) bad.push(`${lang}: ${en}`);
+  }
+  assert.deepEqual(bad, []);
 });

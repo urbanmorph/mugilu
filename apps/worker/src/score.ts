@@ -1,4 +1,5 @@
 import type { Conditions, Warning } from "./types";
+import { put } from "./i18n";
 
 // The Ambient risk, mugilu's signature read. The WORST active hazard, never an
 // average (so it can't be diluted and isn't air-biased), with the dominant
@@ -332,9 +333,10 @@ export function ambientMeaning(risk: AmbientRisk, tr: (en: string) => string = (
   const advice = ADVICE[risk.driver]?.[RISK_BANDS[risk.base]];
   if (!advice) return tr("Be careful outdoors.");
   if (risk.persona === "everyone" || risk.level === risk.base) return tr(advice);
-  return `${tr(advice.slice(0, advice.indexOf(". ") + 1) || advice)} ${tr("For {persona}, treat it as {band}.")
-    .replace("{persona}", tr(PERSONA_LABEL[risk.persona]).toLowerCase())
-    .replace("{band}", tr(risk.band))}`;
+  return `${tr(advice.slice(0, advice.indexOf(". ") + 1) || advice)} ${put(tr("For {persona}, treat it as {band}."), {
+    persona: tr(PERSONA_LABEL[risk.persona]).toLowerCase(),
+    band: tr(risk.band),
+  })}`;
 }
 
 // What a persona can do to cut its exposure when its own trigger drives the
@@ -403,10 +405,11 @@ export function personaAlso(risk: AmbientRisk, tr: (en: string) => string = (en)
     .filter((h) => sensitive.includes(h.hazard) && h.hazard !== risk.driver && h.level >= 2)
     .sort((a, b) => b.level - a.level)[0];
   if (!top) return null;
-  return tr("For {persona}, also watch: {hazard} is {band}.")
-    .replace("{persona}", tr(PERSONA_LABEL[risk.persona]).toLowerCase())
-    .replace("{hazard}", tr(HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()))
-    .replace("{band}", tr(top.band));
+  return put(tr("For {persona}, also watch: {hazard} is {band}."), {
+    persona: tr(PERSONA_LABEL[risk.persona]).toLowerCase(),
+    hazard: tr(HAZARD_NOUN[top.hazard] ?? top.hazard.toLowerCase()),
+    band: tr(top.band),
+  });
 }
 
 /** Everything a renderer says about the Ambient read (in English, or translated by

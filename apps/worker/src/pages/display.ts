@@ -3,7 +3,7 @@ import { START_CITIES } from "../slugs";
 import { langPrefixJs, withPersona } from "../links";
 import { esc } from "../html";
 import { PERSONAS, PERSONA_LABEL, type Persona } from "../score";
-import { lp, t, type Lang } from "../i18n";
+import { lp, t, tHtml, type Lang } from "../i18n";
 import { SITE } from "../ui/shell";
 import { HOME_OG } from "../og-html";
 import { pageShell } from "../ui/page-shell";
@@ -30,6 +30,12 @@ const FIRST = START_CITIES[0].slug;
 // The builder in the page: picking a city, a searched place or this screen's location, or a
 // persona, updates the live preview, the Open display link and the shown link, with no
 // reload. Without script the city tiles open their display and the search goes through /go.
+/** The display builder's own script, for the persona it opened with. */
+export const displayPageJs = (persona: Persona, lang: Lang) =>
+  displayJs(persona, lang) +
+  locateJs("dhere", lang, "DSP.here") +
+  comboboxJs("dq", lang, { onPick: "function(x){q.value=x.label;DSP.pick(x);}" });
+
 function displayJs(persona: Persona, lang: Lang): string {
   const LP = langPrefixJs(lang);
   return `(function(){var LP=${LP},place=${JSON.stringify(FIRST)},as=${JSON.stringify(persona)};
@@ -117,14 +123,11 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
       ]
         .map((s) => `<li><span>${s}</span></li>`)
         .join("")}</ol>` +
-        `<p class="t-meta">${esc(
-          t(
-            "The display link is just {link}, so you can bookmark or script it. Add {as} (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.",
-            lang,
-          ),
-        )
-          .replace("{link}", "<code>/c/{place}?kiosk</code>")
-          .replace("{as}", "<code>&amp;as=elderly</code>")}</p>`,
+        `<p class="t-meta">${tHtml(
+          "The display link is just {link}, so you can bookmark or script it. Add {as} (or asthma, child, outdoor, heart) to weight the read for a clinic, school or worksite.",
+          lang,
+          { link: "<code>/c/{place}?kiosk</code>", as: "<code>&amp;as=elderly</code>" },
+        )}</p>`,
     ),
     { title: t("How it runs", lang) },
   );
@@ -144,9 +147,6 @@ export function renderDisplayBuilder(persona: Persona = "everyone", lang: Lang =
     canonical: `${SITE}/display`,
     ogImage: HOME_OG,
     lang,
-    js:
-      displayJs(persona, lang) +
-      locateJs("dhere", lang, "DSP.here") +
-      comboboxJs("dq", lang, { onPick: "function(x){q.value=x.label;DSP.pick(x);}" }),
+    script: { key: `display.${persona}`, js: displayPageJs(persona, lang) },
   });
 }

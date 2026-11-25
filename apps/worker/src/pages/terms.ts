@@ -1,4 +1,4 @@
-import { t, type Lang } from "../i18n";
+import { put, t, type Lang } from "../i18n";
 import { cardBody, cards, pairs, pull, warnBox } from "../ui/components";
 import { P, TOOLS_URL, builtBy, plain, splitInto, textPage } from "./text";
 import { contactLink } from "../contact";
@@ -44,13 +44,10 @@ export function renderTerms(lang: Lang = "en"): string {
   const licenceEn = LICENCE.replace("code is MIT", "<b>code is MIT</b>")
     .replace("data is not relicensed", "<b>data is not relicensed</b>")
     .replace("non-commercial, for individuals", "<b>non-commercial, for individuals</b>");
-  const licence = splitInto(
-    licenceEn,
-    LICENCE,
-    lang,
-    3,
-    (l) => cards([P(l[0]), P(l[1])], { cols: 2 }) + P(l[2]),
-  ).replace("{repo}", repo);
+  const licence = put(
+    splitInto(licenceEn, LICENCE, lang, 3, (l) => cards([P(l[0]), P(l[1])], { cols: 2 }) + P(l[2])),
+    { repo },
+  );
 
   const sources: [string, string][] = [
     [
@@ -62,7 +59,7 @@ export function renderTerms(lang: Lang = "en"): string {
     ],
     [
       "Modelled air, heat, rain, UV, dust, wind",
-      t("{ometeo}, licensed CC-BY 4.0.", lang).replace("{ometeo}", a("https://open-meteo.com", "Open-Meteo")),
+      t("{ometeo}, licensed CC-BY 4.0.", lang, { ometeo: a("https://open-meteo.com", "Open-Meteo") }),
     ],
     [
       "Heat compared with normal",
@@ -85,10 +82,12 @@ export function renderTerms(lang: Lang = "en"): string {
       t(
         "place search from {osm} contributors (ODbL) and {geonames} (CC-BY 4.0); admin boundaries from {bharatlas}.",
         lang,
-      )
-        .replace("{osm}", a("https://www.openstreetmap.org/copyright", "OpenStreetMap"))
-        .replace("{geonames}", a("https://www.geonames.org", "GeoNames"))
-        .replace("{bharatlas}", a("https://bharatlas.com", "bharatlas")),
+        {
+          osm: a("https://www.openstreetmap.org/copyright", "OpenStreetMap"),
+          geonames: a("https://www.geonames.org", "GeoNames"),
+          bharatlas: a("https://bharatlas.com", "bharatlas"),
+        },
+      ),
     ],
   ];
 
@@ -109,11 +108,12 @@ export function renderTerms(lang: Lang = "en"): string {
       ]),
     (whole) => P(`${whole} ${alerts}`),
   );
-  const commons = t("A digital commons by {um}: one of its {tools}, with {bl} and {md}.", lang)
-    .replace("{um}", a("https://urbanmorph.com", "urbanmorph"))
-    .replace("{tools}", a(TOOLS_URL, t("free, open tools", lang)))
-    .replace("{bl}", a("https://bharatlas.com", "bharatlas"))
-    .replace("{md}", a("https://mdshare.live", "mdshare"));
+  const commons = t("A digital commons by {um}: one of its {tools}, with {bl} and {md}.", lang, {
+    um: a("https://urbanmorph.com", "urbanmorph"),
+    tools: a(TOOLS_URL, t("free, open tools", lang)),
+    bl: a("https://bharatlas.com", "bharatlas"),
+    md: a("https://mdshare.live", "mdshare"),
+  });
 
   return textPage({
     path: "/terms",
@@ -157,7 +157,7 @@ export function renderTerms(lang: Lang = "en"): string {
           pairs([
             [t("Retention", lang), t(RETENTION, lang)],
             [t("Any age", lang), t(ANY_AGE, lang)],
-            [t("Your choices", lang), t(DELETE, lang).replace("{contact}", contactLink())],
+            [t("Your choices", lang), t(DELETE, lang, { contact: contactLink() })],
           ]) +
           P(t(LAWS, lang)) +
           P(commons),
@@ -167,7 +167,7 @@ export function renderTerms(lang: Lang = "en"): string {
         id: "content",
         title: t("Content and reports", lang),
         icon: "warn",
-        body: P(t(CONTENT, lang)) + P(t(REPORT, lang).replace("{contact}", contactLink())),
+        body: P(t(CONTENT, lang)) + P(t(REPORT, lang, { contact: contactLink() })),
       },
     ],
   });

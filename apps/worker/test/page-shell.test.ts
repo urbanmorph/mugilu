@@ -4,6 +4,7 @@ import { pageShell } from "../src/ui/page-shell";
 import { SITE_CSS_LINK } from "../src/ui/assets";
 import { withCss } from "./helpers/css";
 import { DISCLAIMER_FULL } from "../src/ui/components";
+import { withScript } from "./helpers/script";
 
 // The signage page shell: the one site stylesheet, the standard's landmarks, the theme.
 
@@ -26,7 +27,9 @@ test("pageShell: the embed card inlines only the rules its markup uses, with no 
 });
 
 test("pageShell: in another site's iframe the card fills the frame (the framed rules survive the cut)", () => {
-  const card = pageShell("c", '<a class="ecard">x</a><div class="ecode">y</div>', { path: "/embed", variant: "embed" });
+  const card = withScript(
+    pageShell("c", '<a class="ecard">x</a><div class="ecode">y</div>', { path: "/embed", variant: "embed" }),
+  );
   // The script marks <html class="framed">, a class the markup never carries.
   assert.match(card, /documentElement\.classList\.add\('framed'\)/);
   assert.match(card, /\.framed \.mg\[data-embed\]\{padding:0\}/);
@@ -46,9 +49,10 @@ test("pageShell: skip link, header, one main with id, footer with the disclaimer
 test("pageShell: the stored theme applies before paint; scripts for theme, install, offline, time", () => {
   const head = page.slice(0, page.indexOf("</head>"));
   assert.match(head, /localStorage\.getItem\('mugilu-theme'\)/);
-  assert.match(page, /input\[name=theme\]/);
-  assert.match(page, /install-app/);
-  assert.match(page, /time\[data-rel\]/);
+  const all = withScript(page);
+  assert.match(all, /input\[name=theme\]/);
+  assert.match(all, /install-app/);
+  assert.match(all, /time\[data-rel\]/);
 });
 
 test("pageShell: no tint means no wash; a kiosk is always dark, chromeless, with data-kiosk", () => {

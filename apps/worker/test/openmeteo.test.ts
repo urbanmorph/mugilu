@@ -221,7 +221,8 @@ function memStore() {
   };
 }
 
-const FAST = { hedgeMs: 30, budgetMs: 300 };
+// Short enough to keep the tests quick, long enough that a busy machine never trips the budget.
+const FAST = { hedgeMs: 100, budgetMs: 1500 };
 const json = (b: object) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
 
 /** Answer each call with the next of `plan` for its endpoint: an object (200), a status

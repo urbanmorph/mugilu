@@ -332,8 +332,8 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
   if (c.wind && (c.wind.gust_kmh != null || c.wind.speed_kmh != null)) {
     const gust = c.wind.gust_kmh ?? c.wind.speed_kmh!;
     const dir: string[] = [];
-    if (c.wind.direction_deg != null) dir.push(t("from X", lang).replace("X", compassDir(c.wind.direction_deg)));
-    if (c.wind.speed_kmh != null) dir.push(t("X km/h steady", lang).replace("X", String(Math.round(c.wind.speed_kmh))));
+    if (c.wind.direction_deg != null) dir.push(t("from {dir}", lang, { dir: compassDir(c.wind.direction_deg) }));
+    if (c.wind.speed_kmh != null) dir.push(t("{n} km/h steady", lang, { n: Math.round(c.wind.speed_kmh) }));
     row("wind", {
       label: t("Wind", lang),
       icon: "wind",
@@ -372,7 +372,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
   if (c.smoke?.count) {
     const sub =
       c.smoke.nearest_km != null
-        ? `${t("nearest X km", lang).replace("X", String(c.smoke.nearest_km))} · ${t("X MW of fire power", lang).replace("X", String(c.smoke.frp_sum))}`
+        ? `${t("nearest {n} km", lang, { n: c.smoke.nearest_km })} · ${t("{n} MW of fire power", lang, { n: c.smoke.frp_sum })}`
         : `${c.smoke.frp_sum} MW`;
     row("smoke", {
       label: t("Smoke", lang),
@@ -402,8 +402,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       num: pct != null ? `${pct}%` : String(mm),
       unit: pct != null ? t("chance of rain", lang) : "mm",
       qual: pct != null ? undefined : t("now", lang),
-      more:
-        pct != null && mm ? [`<p class="t-meta">${esc(t("X mm of rain now", lang).replace("X", String(mm)))}</p>`] : [],
+      more: pct != null && mm ? [`<p class="t-meta">${esc(t("{n} mm of rain now", lang, { n: mm }))}</p>`] : [],
       brief: pct != null ? `${pct}%` : `${mm} mm`,
     });
   }
@@ -446,7 +445,7 @@ export function headText(risk: AmbientRisk, lang: Lang): string {
 
 /** "Ambient · Everyone": the read and whose it is. */
 const ambientKicker = (risk: AmbientRisk, lang: Lang) =>
-  t("Ambient · {persona}", lang).replace("{persona}", t(PERSONA_LABEL[risk.persona], lang));
+  t("Ambient · {persona}", lang, { persona: t(PERSONA_LABEL[risk.persona], lang) });
 
 /** The level hero: the Ambient read on its level's fill, shape and word, the advice under it.
  *  `more` (markup) follows the advice: the screen display's official warning. */
@@ -484,7 +483,7 @@ export function warningIcon(w: Warning, lang: Lang = "en"): IconName {
  *  SACHET colour code, the end time), then one quiet line for those near but not at it. */
 export function warningBand(c: Conditions, lang: Lang): string {
   const plates = (c.warnings ?? []).map((w) => {
-    const meta = [w.severity, w.until ? t("until X", lang).replace("X", w.until) : ""].filter(Boolean).join(" · ");
+    const meta = [w.severity, w.until ? t("until {time}", lang, { time: w.until }) : ""].filter(Boolean).join(" · ");
     const title = warningTitle(w, lang);
     return warningPlate({
       bar: [`<span>${esc(t("Official warning", lang))} · ${esc(w.issuer)}</span>`],
@@ -507,7 +506,7 @@ export function nearbyWarnings(ws: Warning[], lang: Lang): string {
   const items = [...byEvent]
     .map(([event, list]) => {
       const one = list.length === 1 ? list[0] : undefined;
-      const detail = one ? (one.until ? t("until X", lang).replace("X", one.until) : "") : String(list.length);
+      const detail = one ? (one.until ? t("until {time}", lang, { time: one.until }) : "") : String(list.length);
       return `${event}${detail ? ` (${detail})` : ""}`;
     })
     .join(" · ");
@@ -529,11 +528,8 @@ export function grapLine(g: NonNullable<Conditions["grap"]>, lang: Lang): string
       ? "Delhi's AQI averages {aqi} across {n} CPCB stations now, in the Stage {stage} range ({range}). The stage in force is set by CAQM."
       : "Delhi's AQI averages {aqi} across {n} CPCB stations now, below the Stage I range (201-300). The stage in force is set by CAQM.",
     lang,
-  )
-    .replace("{aqi}", String(g.aqi))
-    .replace("{n}", String(g.stations))
-    .replace("{stage}", ROMAN[g.stage])
-    .replace("{range}", t(GRAP_RANGE[g.stage], lang));
+    { aqi: g.aqi, n: g.stations, stage: ROMAN[g.stage], range: t(GRAP_RANGE[g.stage], lang) },
+  );
   return notice(
     "info",
     `<b>GRAP</b>: ${esc(text).replace("CAQM", '<a href="https://caqm.nic.in/" rel="noopener">CAQM</a>')}`,

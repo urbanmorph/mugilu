@@ -33,6 +33,6 @@ export function renderNotFound(lang: Lang = "en"): string {
     desc: t(SITE_DESC, lang),
     ogImage: HOME_OG,
     lang,
-    js: comboboxJs("nq", lang),
+    script: { key: "notfound", js: comboboxJs("nq", lang) },
   });
 }

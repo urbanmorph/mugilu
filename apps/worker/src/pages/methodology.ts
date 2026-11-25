@@ -1,6 +1,6 @@
 import { esc, trusted } from "../html";
 import { RISK_BANDS, THRESHOLD_ROWS } from "../score";
-import { lp, t, type Lang } from "../i18n";
+import { lp, put, t, type Lang } from "../i18n";
 import { cards, dataTable, LEVEL_SHAPE, LEVEL_WORD, levelChip, pull, shape } from "../ui/components";
 import { SQUARES_NOTE } from "../ui/map";
 import { SEVERITY_BAND } from "../warnareas";
@@ -73,14 +73,14 @@ export function renderMethodology(lang: Lang = "en"): string {
   // after lookup.
   const scoreLink = `<a href="https://github.com/urbanmorph/mugilu/blob/main/apps/worker/src/score.ts">score.ts</a>`;
   const termsLink = `<a href="${lp("/terms", lang)}">${marked("terms & attribution", lang, "terms &amp; attribution")}</a>`;
-  const fill = (s: string) => s.replace("{score}", scoreLink).replace("{terms}", termsLink);
+  const withLinks = (s: string) => put(s, { score: scoreLink, terms: termsLink });
   const noteBody = splitInto(
     NOTE_KEY,
     NOTE_KEY,
     lang,
     3,
-    (s) => cards([P(s[0]), P(s[1])], { cols: 2, quiet: true }) + cards([P(fill(s[2]))], { quiet: true }),
-    (whole) => P(fill(whole)),
+    (s) => cards([P(s[0]), P(s[1])], { cols: 2, quiet: true }) + cards([P(withLinks(s[2]))], { quiet: true }),
+    (whole) => P(withLinks(whole)),
   );
 
   const normalBody = splitInto(

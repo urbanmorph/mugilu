@@ -21,7 +21,7 @@ import {
   shape,
   wrap,
 } from "../ui/components";
-import { airLead, dayChart, dayLabel, fill, HAZARD_DEFS, type HazardDef } from "../ui/history";
+import { airLead, dayChart, dayLabel, HAZARD_DEFS, type HazardDef } from "../ui/history";
 
 // A named place's trend page, /c/{slug}/trends: every hazard mugilu reads, a day at a time over
 // the last 7, 30 or 90 days (placedaily.ts keeps the record), in the order of the risk it
@@ -61,14 +61,14 @@ function summary(r: Read, lang: Lang): { line: string; peak: string } {
   const d = r.d;
   const line =
     r.h.key === "air"
-      ? fill("Poor or worse on {h} of {d} days, very poor or severe on {s}.", lang, { h: high + sev, d, s: sev })
+      ? t("Poor or worse on {h} of {d} days, very poor or severe on {s}.", lang, { h: high + sev, d, s: sev })
       : high + sev
-        ? fill("High or severe on {h} of {d} days.", lang, { h: high + sev, d })
+        ? t("High or severe on {h} of {d} days.", lang, { h: high + sev, d })
         : mod
-          ? fill("Moderate on {n} of {d} days, never higher.", lang, { n: mod, d })
-          : fill("Low on every one of {d} days.", lang, { d });
+          ? t("Moderate on {n} of {d} days, never higher.", lang, { n: mod, d })
+          : t("Low on every one of {d} days.", lang, { d });
   const peak = r.peak
-    ? fill(r.h.falling ? "Lowest: {v} on {day}." : "Highest: {v} on {day}.", lang, {
+    ? t(r.h.falling ? "Lowest: {v} on {day}." : "Highest: {v} on {day}.", lang, {
         v: r.h.say(r.peak.v, lang),
         day: dayLabel(r.peak.day, lang),
       })
@@ -137,7 +137,7 @@ function calmPanel(calm: Read[], tr: PlaceTrend, lang: Lang): string {
     )
     .join("");
   return panel(
-    `<p class="t-lead">${esc(fill("These stayed low on every one of the {n} days.", lang, { n: tr.days.length }))}</p>` +
+    `<p class="t-lead">${esc(t("These stayed low on every one of the {n} days.", lang, { n: tr.days.length }))}</p>` +
       table +
       charts,
     { title: t("Low on every day", lang), icon: "good", tag: "section", id: "t-calm" },
@@ -150,20 +150,17 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
   // The words people search ("almora aqi last 30 days"), the same name rule as the place page.
   // On hi/kn pages the native name leads, and the Latin one follows in the title tag.
   const native = localName(place, lang) !== place.name ? localName(place, lang) : undefined;
-  const title = fill("{place} AQI and weather: last {n} days", lang, { place: native ?? titleName(place), n: span });
+  const title = t("{place} AQI and weather: last {n} days", lang, { place: native ?? titleName(place), n: span });
   const period = segLinks(
     "per",
     t("Period", lang),
     TREND_SPANS.map((n) => ({
-      label: fill("{n} days", lang, { n }),
+      label: t("{n} days", lang, { n }),
       href: lp(n === 30 ? base : `${base}?days=${n}`, lang),
       current: n === span,
     })),
   );
-  const back = linkRow(
-    [[lp(`/c/${place.slug}`, lang), `← ${fill("{place} now", lang, { place: name })}`]],
-    "t-meta back",
-  );
+  const back = linkRow([[lp(`/c/${place.slug}`, lang), `← ${t("{place} now", lang, { place: name })}`]], "t-meta back");
   const reads = tr ? HAZARD_DEFS.map((h) => read(h, tr)).filter((r) => r.d > 0) : [];
   // The order of risk: the hazards that reached the highest levels most often first.
   reads.sort(
@@ -187,12 +184,12 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
     : "";
   // The snippet says what this period was like, so each page's is its own; the hazard list
   // when the record is calm or the sentence will not fit.
-  const opener = fill("{place}, last {n} days:", lang, { place: titleName(place), n: span });
+  const opener = t("{place}, last {n} days:", lang, { place: titleName(place), n: span });
   const desc =
     [`${opener} ${sentence} ${s ? s.peak : ""}`.trim(), `${opener} ${sentence}`].find(
       (d) => top && d.length <= DESCRIPTION_MAX,
     ) ??
-    fill("{place}, India: air, heat, cold, rain, wind, fog and UV, a day at a time over the last {n} days.", lang, {
+    t("{place}, India: air, heat, cold, rain, wind, fog and UV, a day at a time over the last {n} days.", lang, {
       place: name,
       n: span,
     });
@@ -222,10 +219,10 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
   const finding = plate({
     fill: topLevel,
     shape: LEVEL_SHAPE[topLevel],
-    kicker: fill("The {n} days in one line", lang, { n: span }),
+    kicker: t("The {n} days in one line", lang, { n: span }),
     word: esc(top ? t(top.h.name, lang) : t("Every hazard stayed low.", lang)),
     say: top ? esc(`${sentence} ${s!.peak}`) : undefined,
-    label: fill("The {n} days in one line", lang, { n: span }),
+    label: t("The {n} days in one line", lang, { n: span }),
   });
   const heads = RISK_BANDS.map((k) => ({
     label: trusted(shape(LEVEL_SHAPE[k]) + esc(t(LEVEL_WORD[k], lang))),
@@ -243,7 +240,7 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
     ),
     { title: t("Days at each level", lang), icon: "list", tag: "section", flush: true },
   );
-  const lead = fill(
+  const lead = t(
     "{from} to {to}. Every hazard mugilu reads, a day at a time, in the order of the risk it brought.",
     lang,
     {

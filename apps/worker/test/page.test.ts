@@ -6,6 +6,7 @@ import { renderKioskPage } from "../src/pages/kiosk";
 import { renderWarningsPage } from "../src/pages/warnings";
 import type { WarningsSnapshot } from "../src/sachet";
 import type { Conditions } from "../src/types";
+import { withScript } from "./helpers/script";
 
 function conditions(overrides: Partial<Conditions> = {}): Conditions {
   return {
@@ -88,7 +89,7 @@ test("renderConditionsPage: a sub-zero reading renders as Cold (directional ther
 });
 
 test("renderConditionsPage: records the visit into the browser 'Your places' store", () => {
-  const html = renderConditionsPage(conditions());
+  const html = withScript(renderConditionsPage(conditions()));
   assert.match(html, /mugilu:places/); // localStorage recorder present
   assert.match(html, /h1\.loc/); // reads the reverse-geocoded label off the page
   // the coordinate is exposed so NAMED slug pages (/c/bengaluru, no comma) record too
@@ -145,7 +146,7 @@ test("renderConditionsPage: has a meta description (SEO) naming the place", () =
 });
 
 test("renderConditionsPage: stamps freshness as a relative <time> (absolute fallback + upgrade script)", () => {
-  const html = renderConditionsPage(conditions());
+  const html = withScript(renderConditionsPage(conditions()));
   // server renders the absolute IST time inside a data-rel <time> (the no-JS fallback)
   assert.match(html, /<time[^>]*data-rel[^>]*datetime="[^"]+"[^>]*>[^<]*IST/);
   // and the shell ships the tiny upgrade script that rewrites it to "X ago" at view-time

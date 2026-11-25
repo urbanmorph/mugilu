@@ -10,6 +10,7 @@ import { renderEmbed } from "../src/pages/embed";
 import { renderHome } from "../src/pages/home";
 import { renderKioskPage } from "../src/pages/kiosk";
 import type { Conditions } from "../src/types";
+import { scriptResponse } from "../src/scripts";
 
 const ORIGIN = "https://mugilu.live";
 const NOTE = `<p id="${OFFLINE_NOTE_ID}" hidden>last reading</p>`;
@@ -291,12 +292,18 @@ test("a place's page carries the hidden last-reading note, with the reading's ti
   assert.match(note[1], /warnings can be different now/i);
 });
 
-test("ordinary pages register the worker; the kiosk display and the embed card do not", () => {
-  assert.ok(renderHome().includes(SW_REGISTER));
+/** The script file a page links (W20: pages carry no inline script but the theme's). */
+const scriptOf = async (html: string) => {
+  const src = html.match(/<script src="(\/assets\/js\/[^"]+)"/)?.[1];
+  return src ? await scriptResponse(src)!.text() : "";
+};
+
+test("ordinary pages register the worker; the kiosk display and the embed card do not", async () => {
+  assert.ok((await scriptOf(renderHome())).includes(SW_REGISTER));
   const kiosk = renderKioskPage(C, "everyone", "https://mugilu.live/c/bengaluru");
   const embed = renderEmbed(C, "everyone", "https://mugilu.live");
-  assert.ok(!kiosk.includes(SW_REGISTER));
-  assert.ok(!embed.includes(SW_REGISTER));
+  assert.ok(!(await scriptOf(kiosk)).includes(SW_REGISTER));
+  assert.ok(!(await scriptOf(embed)).includes(SW_REGISTER));
 });
 
 test("offline, the real page's note is the one the worker shows, with the reading's time", async () => {
@@ -354,4 +361,25 @@ test("an alert that cannot be read still shows, and a link to another site opens
   assert.equal(w.shown[0].title, "mugilu");
   await w.dispatch("notificationclick", { notification: { data: { url: "https://evil.example/" }, close: () => {} } });
   assert.deepEqual(w.opened, [`${ORIGIN}/`]);
+});
+
+// W20: a page's script is a file now, so a page saved for offline keeps its script.
+const SRC = "/assets/js/en/page/1/place-abc.js";
+const withScript = (src: string) => `/c/x reading 1${NOTE}<script src="${src}"></script>`;
+
+test("a saved page's script file is saved with it, and served offline", async () => {
+  w.state.page = withScript(SRC);
+  await w.page("/c/lucknow");
+  assert.ok(w.saved().includes(SRC), "the script saved beside the page");
+  w.state.online = false;
+  assert.ok(await w.request(SRC), "answered from the cache");
+});
+
+test("activating keeps the scripts saved pages still use and drops the rest", async () => {
+  w.state.page = withScript(SRC);
+  await w.page("/c/lucknow");
+  w.stores.get("mugilu-readings")!.set(`${ORIGIN}/assets/js/en/page/1/place-old.js`, new Response("x"));
+  await w.lifecycle("activate");
+  assert.ok(w.saved().includes(SRC));
+  assert.ok(!w.saved().includes("/assets/js/en/page/1/place-old.js"));
 });

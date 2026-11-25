@@ -351,17 +351,17 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "वायु के बिंदु वर्गों से लगभग एक घंटा नए हैं।",
     kn: "ವಾಯು ಚುಕ್ಕೆಗಳು ಚೌಕಗಳಿಗಿಂತ ಸುಮಾರು ಒಂದು ಗಂಟೆ ಹೊಸವು.",
   },
-  "The air dots are about X hours newer than the squares.": {
-    hi: "वायु के बिंदु वर्गों से लगभग X घंटे नए हैं।",
-    kn: "ವಾಯು ಚುಕ್ಕೆಗಳು ಚೌಕಗಳಿಗಿಂತ ಸುಮಾರು X ಗಂಟೆ ಹೊಸವು.",
+  "The air dots are about {n} hours newer than the squares.": {
+    hi: "वायु के बिंदु वर्गों से लगभग {n} घंटे नए हैं।",
+    kn: "ವಾಯು ಚುಕ್ಕೆಗಳು ಚೌಕಗಳಿಗಿಂತ ಸುಮಾರು {n} ಗಂಟೆ ಹೊಸವು.",
   },
   "The squares are about an hour newer than the air dots.": {
     hi: "वर्ग वायु के बिंदुओं से लगभग एक घंटा नए हैं।",
     kn: "ಚೌಕಗಳು ವಾಯು ಚುಕ್ಕೆಗಳಿಗಿಂತ ಸುಮಾರು ಒಂದು ಗಂಟೆ ಹೊಸವು.",
   },
-  "The squares are about X hours newer than the air dots.": {
-    hi: "वर्ग वायु के बिंदुओं से लगभग X घंटे नए हैं।",
-    kn: "ಚೌಕಗಳು ವಾಯು ಚುಕ್ಕೆಗಳಿಗಿಂತ ಸುಮಾರು X ಗಂಟೆ ಹೊಸವು.",
+  "The squares are about {n} hours newer than the air dots.": {
+    hi: "वर्ग वायु के बिंदुओं से लगभग {n} घंटे नए हैं।",
+    kn: "ಚೌಕಗಳು ವಾಯು ಚುಕ್ಕೆಗಳಿಗಿಂತ ಸುಮಾರು {n} ಗಂಟೆ ಹೊಸವು.",
   },
   "Each square, about 100 km across, has the colour of what is worst in it, where that is high or severe. Air includes smoke and dust. Select a square, or pick a place from the list below.":
     {
@@ -386,9 +386,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "1 आधिकारिक चेतावनी लागू है।",
     kn: "1 ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ ಜಾರಿಯಲ್ಲಿದೆ.",
   },
-  "X official warnings are in force.": {
-    hi: "X आधिकारिक चेतावनियाँ लागू हैं।",
-    kn: "X ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಜಾರಿಯಲ್ಲಿವೆ.",
+  "{n} official warnings are in force.": {
+    hi: "{n} आधिकारिक चेतावनियाँ लागू हैं।",
+    kn: "{n} ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳು ಜಾರಿಯಲ್ಲಿವೆ.",
   },
   "No official warnings are on the map now.": {
     hi: "अभी मानचित्र पर कोई आधिकारिक चेतावनी नहीं है।",
@@ -403,35 +403,44 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     kn: "ಭಾರತದ ನಕ್ಷೆ. ಪ್ರತಿ ಚೌಕದ ಬಣ್ಣ ಮುಂದಿನ 24 ಗಂಟೆಗಳ ಮಳೆಯ ಮುನ್ಸೂಚನೆಯನ್ನು ತೋರಿಸುತ್ತದೆ.",
   },
   "1 square": { hi: "1 वर्ग में", kn: "1 ಚೌಕದಲ್ಲಿ" },
-  "X squares": { hi: "X वर्गों में", kn: "X ಚೌಕಗಳಲ್ಲಿ" },
+  "{n} squares": { hi: "{n} वर्गों में", kn: "{n} ಚೌಕಗಳಲ್ಲಿ" },
   and: { hi: "और", kn: "ಮತ್ತು" },
-  "Air is high or severe in X.": { hi: "X वायु प्रदूषण अधिक या गंभीर है।", kn: "X ವಾಯು ಮಾಲಿನ್ಯ ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರವಾಗಿದೆ." },
-  "Heat is high or severe in X.": { hi: "X गर्मी अधिक या गंभीर है।", kn: "X ಬಿಸಿಲು ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರವಾಗಿದೆ." },
-  "Cold is high or severe in X.": { hi: "X ठंड अधिक या गंभीर है।", kn: "X ಚಳಿ ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರವಾಗಿದೆ." },
+  "Air is high or severe in {squares}.": {
+    hi: "{squares} वायु प्रदूषण अधिक या गंभीर है।",
+    kn: "{squares} ವಾಯು ಮಾಲಿನ್ಯ ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರವಾಗಿದೆ.",
+  },
+  "Heat is high or severe in {squares}.": {
+    hi: "{squares} गर्मी अधिक या गंभीर है।",
+    kn: "{squares} ಬಿಸಿಲು ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರವಾಗಿದೆ.",
+  },
+  "Cold is high or severe in {squares}.": {
+    hi: "{squares} ठंड अधिक या गंभीर है।",
+    kn: "{squares} ಚಳಿ ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರವಾಗಿದೆ.",
+  },
   "Nothing is high or severe anywhere right now.": {
     hi: "अभी कहीं भी कुछ भी अधिक या गंभीर नहीं है।",
     kn: "ಈಗ ಎಲ್ಲಿಯೂ ಯಾವುದೂ ಹೆಚ್ಚು ಅಥವಾ ತೀವ್ರವಾಗಿಲ್ಲ.",
   },
-  "X air stations:": { hi: "X वायु केंद्र:", kn: "X ವಾಯು ಕೇಂದ್ರಗಳು:" },
-  "Heat is severe in X.": { hi: "X गर्मी गंभीर है।", kn: "X ಬಿಸಿಲು ತೀವ್ರವಾಗಿದೆ." },
-  "Heat is high in X.": { hi: "X गर्मी अधिक है।", kn: "X ಬಿಸಿಲು ಹೆಚ್ಚಾಗಿದೆ." },
-  "Heat is moderate in X.": { hi: "X गर्मी मध्यम है।", kn: "X ಬಿಸಿಲು ಮಧ್ಯಮವಾಗಿದೆ." },
+  "{n} air stations:": { hi: "{n} वायु केंद्र:", kn: "{n} ವಾಯು ಕೇಂದ್ರಗಳು:" },
+  "Heat is severe in {squares}.": { hi: "{squares} गर्मी गंभीर है।", kn: "{squares} ಬಿಸಿಲು ತೀವ್ರವಾಗಿದೆ." },
+  "Heat is high in {squares}.": { hi: "{squares} गर्मी अधिक है।", kn: "{squares} ಬಿಸಿಲು ಹೆಚ್ಚಾಗಿದೆ." },
+  "Heat is moderate in {squares}.": { hi: "{squares} गर्मी मध्यम है।", kn: "{squares} ಬಿಸಿಲು ಮಧ್ಯಮವಾಗಿದೆ." },
   "Everywhere else it is low.": { hi: "बाकी सब जगह यह कम है।", kn: "ಉಳಿದೆಲ್ಲೆಡೆ ಕಡಿಮೆ ಇದೆ." },
   "Heat is low everywhere.": { hi: "हर जगह गर्मी कम है।", kn: "ಎಲ್ಲೆಡೆ ಬಿಸಿಲು ಕಡಿಮೆ ಇದೆ." },
-  "Heavy rain is forecast in X in the next 24 hours.": {
-    hi: "अगले 24 घंटों में X भारी बारिश का पूर्वानुमान है।",
-    kn: "ಮುಂದಿನ 24 ಗಂಟೆಗಳಲ್ಲಿ X ಭಾರೀ ಮಳೆಯ ಮುನ್ಸೂಚನೆ ಇದೆ.",
+  "Heavy rain is forecast in {squares} in the next 24 hours.": {
+    hi: "अगले 24 घंटों में {squares} भारी बारिश का पूर्वानुमान है।",
+    kn: "ಮುಂದಿನ 24 ಗಂಟೆಗಳಲ್ಲಿ {squares} ಭಾರೀ ಮಳೆಯ ಮುನ್ಸೂಚನೆ ಇದೆ.",
   },
-  "X is in the Bay of Bengal.": { hi: "X बंगाल की खाड़ी में है।", kn: "X ಬಂಗಾಳ ಕೊಲ್ಲಿಯಲ್ಲಿದೆ." },
-  "X is in the Arabian Sea.": { hi: "X अरब सागर में है।", kn: "X ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿದೆ." },
+  "{name} is in the Bay of Bengal.": { hi: "{name} बंगाल की खाड़ी में है।", kn: "{name} ಬಂಗಾಳ ಕೊಲ್ಲಿಯಲ್ಲಿದೆ." },
+  "{name} is in the Arabian Sea.": { hi: "{name} अरब सागर में है।", kn: "{name} ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿದೆ." },
   "The map is not ready yet.": { hi: "मानचित्र अभी तैयार नहीं है।", kn: "ನಕ್ಷೆ ಇನ್ನೂ ಸಿದ್ಧವಾಗಿಲ್ಲ." },
   "It appears once the first readings are in. Look up a place to see its sky now.": {
     hi: "पहले आँकड़े आते ही यह दिखेगा। किसी जगह का अभी का आसमान देखने के लिए उसे खोजें।",
     kn: "ಮೊದಲ ಮಾಹಿತಿ ಬಂದ ಕೂಡಲೇ ಇದು ಕಾಣಿಸುತ್ತದೆ. ಒಂದು ಸ್ಥಳದ ಈಗಿನ ಆಕಾಶ ನೋಡಲು ಅದನ್ನು ಹುಡುಕಿ.",
   },
-  "Favourite X": { hi: "X को पसंदीदा बनाएँ", kn: "X ಅನ್ನು ಮೆಚ್ಚಿನದಾಗಿಸಿ" },
-  "Rename X": { hi: "X का नाम बदलें", kn: "X ಹೆಸರು ಬದಲಿಸಿ" },
-  "Remove X": { hi: "X हटाएँ", kn: "X ತೆಗೆದುಹಾಕಿ" },
+  "Favourite {place}": { hi: "{place} को पसंदीदा बनाएँ", kn: "{place} ಅನ್ನು ಮೆಚ್ಚಿನದಾಗಿಸಿ" },
+  "Rename {place}": { hi: "{place} का नाम बदलें", kn: "{place} ಹೆಸರು ಬದಲಿಸಿ" },
+  "Remove {place}": { hi: "{place} हटाएँ", kn: "{place} ತೆಗೆದುಹಾಕಿ" },
   States: { hi: "राज्य", kn: "ರಾಜ್ಯಗಳು" },
   "Each dot is a place on mugilu. Select a state to see its places.": {
     hi: "हर बिंदु mugilu पर एक जगह है। किसी राज्य की जगहें देखने के लिए उसे चुनें।",
@@ -739,9 +748,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     kn: "{station} ({city}) AQI ಈಗ {aqi} ({band}), {provider} ಅಳೆದದ್ದು.",
   },
   "Measured by {provider}.": { hi: "{provider} द्वारा मापा गया।", kn: "{provider} ಅಳೆದದ್ದು." },
-  "No recent reading from this station. Last reading: X": {
-    hi: "इस स्टेशन से हाल का कोई आँकड़ा नहीं। आखिरी आँकड़ा: X",
-    kn: "ಈ ನಿಲ್ದಾಣದಿಂದ ಇತ್ತೀಚಿನ ಮಾಹಿತಿ ಇಲ್ಲ. ಕೊನೆಯ ಮಾಹಿತಿ: X",
+  "No recent reading from this station. Last reading: {time}": {
+    hi: "इस स्टेशन से हाल का कोई आँकड़ा नहीं। आखिरी आँकड़ा: {time}",
+    kn: "ಈ ನಿಲ್ದಾಣದಿಂದ ಇತ್ತೀಚಿನ ಮಾಹಿತಿ ಇಲ್ಲ. ಕೊನೆಯ ಮಾಹಿತಿ: {time}",
   },
   "The full sky here: heat, rain, warnings and what to do": {
     hi: "यहाँ का पूरा हाल: गर्मी, बारिश, चेतावनियाँ और क्या करें",
@@ -891,9 +900,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "अभी परिस्थितियाँ अच्छी हैं।",
     kn: "ಈಗ ಪರಿಸ್ಥಿತಿಗಳು ಉತ್ತಮವಾಗಿವೆ.",
   },
-  'No place found for "X". Type the name of a city or a place.': {
-    hi: '"X" नाम का कोई स्थान नहीं मिला। किसी शहर या स्थान का नाम लिखें।',
-    kn: '"X" ಎಂಬ ಸ್ಥಳ ಸಿಗಲಿಲ್ಲ. ಒಂದು ನಗರ ಅಥವಾ ಸ್ಥಳದ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ.',
+  'No place found for "{query}". Type the name of a city or a place.': {
+    hi: '"{query}" नाम का कोई स्थान नहीं मिला। किसी शहर या स्थान का नाम लिखें।',
+    kn: '"{query}" ಎಂಬ ಸ್ಥಳ ಸಿಗಲಿಲ್ಲ. ಒಂದು ನಗರ ಅಥವಾ ಸ್ಥಳದ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ.',
   },
   "The wind can cause damage. Stay indoors, away from trees and hoardings.": {
     hi: "हवा से नुकसान हो सकता है। घर के अंदर रहें, पेड़ों और होर्डिंग से दूर रहें।",
@@ -1173,13 +1182,13 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "अरब सागर में एक चक्रवात है।",
     kn: "ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿ ಒಂದು ಚಂಡಮಾರುತವಿದೆ.",
   },
-  "Cyclone X is in the Bay of Bengal.": {
-    hi: "चक्रवात X बंगाल की खाड़ी में है।",
-    kn: "X ಚಂಡಮಾರುತ ಬಂಗಾಳ ಕೊಲ್ಲಿಯಲ್ಲಿದೆ.",
+  "Cyclone {name} is in the Bay of Bengal.": {
+    hi: "चक्रवात {name} बंगाल की खाड़ी में है।",
+    kn: "{name} ಚಂಡಮಾರುತ ಬಂಗಾಳ ಕೊಲ್ಲಿಯಲ್ಲಿದೆ.",
   },
-  "Cyclone X is in the Arabian Sea.": {
-    hi: "चक्रवात X अरब सागर में है।",
-    kn: "X ಚಂಡಮಾರುತ ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿದೆ.",
+  "Cyclone {name} is in the Arabian Sea.": {
+    hi: "चक्रवात {name} अरब सागर में है।",
+    kn: "{name} ಚಂಡಮಾರುತ ಅರಬ್ಬೀ ಸಮುದ್ರದಲ್ಲಿದೆ.",
   },
   "It moves north.": {
     hi: "यह उत्तर की ओर बढ़ रहा है।",
@@ -1362,17 +1371,17 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "सबसे खराब वायु गुणवत्ता",
     kn: "ಅತ್ಯಂತ ಕೆಟ್ಟ ವಾಯು ಗುಣಮಟ್ಟ",
   },
-  "X days ago": {
-    hi: "X दिन पहले",
-    kn: "X ದಿನಗಳ ಹಿಂದೆ",
+  "{n} days ago": {
+    hi: "{n} दिन पहले",
+    kn: "{n} ದಿನಗಳ ಹಿಂದೆ",
   },
-  "X hours ago": {
-    hi: "X घंटे पहले",
-    kn: "X ಗಂಟೆಗಳ ಹಿಂದೆ",
+  "{n} hours ago": {
+    hi: "{n} घंटे पहले",
+    kn: "{n} ಗಂಟೆಗಳ ಹಿಂದೆ",
   },
-  "X min ago": {
-    hi: "X मिनट पहले",
-    kn: "X ನಿಮಿಷಗಳ ಹಿಂದೆ",
+  "{n} min ago": {
+    hi: "{n} मिनट पहले",
+    kn: "{n} ನಿಮಿಷಗಳ ಹಿಂದೆ",
   },
   "Yes. It is free, open source (MIT) and non-commercial, with no sign-up. Every reading is also available as JSON, Markdown, an embeddable card, an OpenAPI spec, and an MCP server for AI agents.":
     {
@@ -1777,10 +1786,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Tap Add.": { hi: "जोड़ें पर टैप करें।", kn: "ಸೇರಿಸಿ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ." },
   OK: { hi: "ठीक है", kn: "ಸರಿ" },
   // Offline (sw.ts): drafted here, native review pending.
-  "No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.": {
-    hi: "कनेक्शन नहीं है। ये इस डिवाइस पर सहेजे गए आख़िरी आँकड़े हैं, X के। तब से हालात और चेतावनियाँ बदल चुकी हो सकती हैं।",
-    kn: "ಸಂಪರ್ಕವಿಲ್ಲ. ಇದು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಿದ ಕೊನೆಯ ಮಾಹಿತಿ (X). ಈಗ ಪರಿಸ್ಥಿತಿ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಬೇರೆ ಇರಬಹುದು.",
-  },
+  "No connection. This is the last reading on this device, from {time}. The conditions and warnings can be different now.":
+    {
+      hi: "कनेक्शन नहीं है। ये इस डिवाइस पर सहेजे गए आख़िरी आँकड़े हैं, {time} के। तब से हालात और चेतावनियाँ बदल चुकी हो सकती हैं।",
+      kn: "ಸಂಪರ್ಕವಿಲ್ಲ. ಇದು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಿದ ಕೊನೆಯ ಮಾಹಿತಿ ({time}). ಈಗ ಪರಿಸ್ಥಿತಿ ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳು ಬೇರೆ ಇರಬಹುದು.",
+    },
   "You are offline": { hi: "आप ऑफ़लाइन हैं", kn: "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ" },
   "mugilu shows the sky right now, so it needs a connection. Places you have opened on this device keep their last reading.":
     {
@@ -1790,8 +1800,11 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   "Near this point, but not at it:": { hi: "पास में, इस जगह पर नहीं:", kn: "ಈ ಸ್ಥಳದ ಹತ್ತಿರ, ಆದರೆ ಇಲ್ಲೇ ಅಲ್ಲ:" },
   "See your places": { hi: "अपनी जगहें देखें", kn: "ನಿಮ್ಮ ಸ್ಥಳಗಳನ್ನು ನೋಡಿ" },
   // Opt-in alerts (alerts.ts, alerts-ui.ts): drafted here, native review pending.
-  "Official warning for X, until Y.": { hi: "X के लिए आधिकारिक चेतावनी, Y तक।", kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ: X, Y ವರೆಗೆ." },
-  "Official warning for X.": { hi: "X के लिए आधिकारिक चेतावनी।", kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ: X." },
+  "Official warning for {place}, until {time}.": {
+    hi: "{place} के लिए आधिकारिक चेतावनी, {time} तक।",
+    kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ: {place}, {time} ವರೆಗೆ.",
+  },
+  "Official warning for {place}.": { hi: "{place} के लिए आधिकारिक चेतावनी।", kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ: {place}." },
   "Send me official warnings for this place": {
     hi: "यहाँ की आधिकारिक चेतावनियों के बारे में मुझे सूचित करें",
     kn: "ಇಲ್ಲಿನ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆಗಳ ಬಗ್ಗೆ ನನಗೆ ತಿಳಿಸಿ",
@@ -1859,45 +1872,41 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "वेट-बल्ब",
     kn: "ವೆಟ್ ಬಲ್ಬ್",
   },
-  "from X": {
-    hi: "X दिशा से",
-    kn: "X ದಿಕ್ಕಿನಿಂದ",
+  "from {dir}": {
+    hi: "{dir} दिशा से",
+    kn: "{dir} ದಿಕ್ಕಿನಿಂದ",
   },
-  "X km/h steady": {
-    hi: "X km/h स्थिर",
-    kn: "X km/h ಸ್ಥಿರ",
+  "{n} km/h steady": {
+    hi: "{n} km/h स्थिर",
+    kn: "{n} km/h ಸ್ಥಿರ",
   },
-  "nearest X km": {
-    hi: "निकटतम X km",
-    kn: "ಹತ್ತಿರದ್ದು X km",
+  "nearest {n} km": {
+    hi: "निकटतम {n} km",
+    kn: "ಹತ್ತಿರದ್ದು {n} km",
   },
-  "X MW of fire power": {
-    hi: "आग की शक्ति X MW",
-    kn: "X MW ಬೆಂಕಿಯ ಶಕ್ತಿ",
+  "{n} MW of fire power": {
+    hi: "आग की शक्ति {n} MW",
+    kn: "{n} MW ಬೆಂಕಿಯ ಶಕ್ತಿ",
   },
   "fires within 100 km": {
     hi: "100 km के भीतर आग",
     kn: "100 km ಒಳಗಿನ ಬೆಂಕಿ",
   },
-  "X mm of rain now": {
-    hi: "अभी X mm बारिश",
-    kn: "ಈಗ X mm ಮಳೆ",
+  "{n} mm of rain now": {
+    hi: "अभी {n} mm बारिश",
+    kn: "ಈಗ {n} mm ಮಳೆ",
   },
   now: {
     hi: "अभी",
     kn: "ಈಗ",
   },
-  "until X": {
-    hi: "X तक",
-    kn: "X ವರೆಗೆ",
+  "until {time}": {
+    hi: "{time} तक",
+    kn: "{time} ವರೆಗೆ",
   },
   "Official warning": {
     hi: "आधिकारिक चेतावनी",
     kn: "ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ",
-  },
-  "+X more": {
-    hi: "+X और",
-    kn: "+X ಇನ್ನಷ್ಟು",
   },
   "Reading the sky": {
     hi: "आसमान पढ़ रहे हैं",
@@ -1923,9 +1932,9 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
     hi: "आसमान की ओर देख रहे हैं",
     kn: "ಆಕಾಶವನ್ನು ನೋಡುತ್ತಿದೆ",
   },
-  "as of X": {
-    hi: "X की स्थिति",
-    kn: "X ರಂತೆ",
+  "as of {time}": {
+    hi: "{time} की स्थिति",
+    kn: "{time} ರಂತೆ",
   },
   "Embed this": {
     hi: "इसे एम्बेड करें",
@@ -2231,8 +2240,26 @@ export const andList = (parts: string[], lang: Lang) =>
 /** The locale of each language, for dates and numbers. */
 export const LOCALE: Record<Lang, string> = { en: "en-IN", hi: "hi-IN", kn: "kn-IN" };
 
-export function t(en: string, lang: Lang): string {
-  if (lang === "en") return en;
-  const e = TR[en];
-  return (e && e[lang]) || en;
+/** Values for a sentence's named slots, `{name}`. */
+export type Slots = Record<string, string | number>;
+
+/** Fill each `{name}` with its value, in one pass (a value is never read as a slot). A slot
+ *  with no value throws, so a renamed slot fails a test instead of reaching a page. */
+export function put(s: string, v: Slots): string {
+  return s.replace(/\{(\w+)\}/g, (_, k: string) => {
+    if (!(k in v)) throw new Error(`i18n: no value for {${k}}`);
+    return String(v[k]);
+  });
 }
+
+/** The sentence in the page's language, its slots filled when values are given. Plain
+ *  text: the caller escapes the result for HTML. */
+export function t(en: string, lang: Lang, slots?: Slots): string {
+  const e = lang === "en" ? undefined : TR[en];
+  const s = (e && e[lang as Exclude<Lang, "en">]) || en;
+  return slots ? put(s, slots) : s;
+}
+
+/** The sentence as HTML: the sentence escaped, the slots inserted as given (each already
+ *  safe HTML: a link, or a value the caller escaped). */
+export const tHtml = (en: string, lang: Lang, slots: Slots): string => put(esc(t(en, lang)), slots);

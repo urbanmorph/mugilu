@@ -1,5 +1,5 @@
 import { esc } from "../html";
-import { andList, lp, quoted, t, type Lang } from "../i18n";
+import { andList, lp, quoted, t, tHtml, type Lang } from "../i18n";
 import { AQI_BAND_LABEL } from "../aqi";
 import { allSlugPlaces } from "../slugs";
 import { langPrefixJs, placeHref } from "../links";
@@ -191,10 +191,9 @@ function mapSvg(
 }
 
 // ── Words: the stamps, the summaries, the cyclone ──────────────────────────────────
-const asOf = (iso: string, lang: Lang) => esc(t("as of X", lang)).replace("X", relTime(iso));
-const squares = (n: number, lang: Lang) =>
-  n === 1 ? t("1 square", lang) : t("X squares", lang).replace("X", String(n));
-const sentence = (en: string, n: number, lang: Lang) => esc(t(en, lang)).replace("X", esc(squares(n, lang)));
+const asOf = (iso: string, lang: Lang) => tHtml("as of {time}", lang, { time: relTime(iso) });
+const squares = (n: number, lang: Lang) => (n === 1 ? t("1 square", lang) : t("{n} squares", lang, { n }));
+const sentence = (en: string, n: number, lang: Lang) => tHtml(en, lang, { squares: esc(squares(n, lang)) });
 
 /** How much newer one stamp is than the other, said once they are an hour or more apart. */
 function gapLine(m: IndiaMap, lang: Lang): string {
@@ -205,11 +204,12 @@ function gapLine(m: IndiaMap, lang: Lang): string {
     h > 0
       ? h === 1
         ? "The air dots are about an hour newer than the squares."
-        : "The air dots are about X hours newer than the squares."
+        : "The air dots are about {n} hours newer than the squares."
       : h === -1
         ? "The squares are about an hour newer than the air dots."
-        : "The squares are about X hours newer than the air dots.";
-  return `<p class="t-meta"><b>${esc(t(en, lang)).replace("X", String(Math.abs(h)))}</b></p>`;
+        : "The squares are about {n} hours newer than the air dots.";
+  // The one-hour sentences have no slot; put() ignores the extra value.
+  return `<p class="t-meta"><b>${tHtml(en, lang, { n: Math.abs(h) })}</b></p>`;
 }
 
 /** A place on the map as a link to its page, with the word for how bad it is. */
@@ -236,9 +236,7 @@ function worstLinks(
 
 /** "N official warnings are in force." */
 export const inForce = (n: number, lang: Lang) =>
-  n === 1
-    ? esc(t("1 official warning is in force.", lang))
-    : esc(t("X official warnings are in force.", lang)).replace("X", String(n));
+  n === 1 ? esc(t("1 official warning is in force.", lang)) : tHtml("{n} official warnings are in force.", lang, { n });
 
 /** The way to every warning, map or not. */
 export const allWarningsLink = (lang: Lang) => backLink(lp("/warnings", lang), `${t("Active warnings", lang)} →`);
@@ -250,7 +248,7 @@ function summaries(m: IndiaMap, warned: MapWarning[], lang: Lang): string {
   const worst = (["air", "heat", "cold"] as const)
     .map((h) => [h, m.cells.filter((c) => c.what === h && c.worst >= 2).length] as const)
     .filter(([, n]) => n > 0)
-    .map(([h, n]) => sentence(`${h[0].toUpperCase()}${h.slice(1)} is high or severe in X.`, n, lang));
+    .map(([h, n]) => sentence(`${h[0].toUpperCase()}${h.slice(1)} is high or severe in {squares}.`, n, lang));
   // Air: the stations by band.
   const counts = BANDS.filter((x) => m.airCounts?.[x]).map(
     (x) => `${m.airCounts![x]} ${esc(t(AQI_BAND_LABEL[x], lang).toLowerCase())}`,
@@ -260,14 +258,12 @@ function summaries(m: IndiaMap, warned: MapWarning[], lang: Lang): string {
   const heat = [3, 2, 1]
     .map((l) => [l, m.cells.filter((c) => c.heat === l).length] as const)
     .filter(([, n]) => n > 0)
-    .map(([l, n]) => sentence(`Heat is ${LEVEL_WORD[RISK_BANDS[l]].toLowerCase()} in X.`, n, lang));
+    .map(([l, n]) => sentence(`Heat is ${LEVEL_WORD[RISK_BANDS[l]].toLowerCase()} in {squares}.`, n, lang));
   const rainy = m.cells.filter((c) => c.rain).length;
   return (
     (warned.length ? sum("o", b(inForce(warned.length, lang)) + allWarningsLink(lang)) : "") +
     sum("w", b(worst.length ? worst.join(" ") : esc(t("Nothing is high or severe anywhere right now.", lang)))) +
-    (total
-      ? sum("a", b(`${esc(t("X air stations:", lang)).replace("X", String(total))} ${andList(counts, lang)}.`))
-      : "") +
+    (total ? sum("a", b(`${tHtml("{n} air stations:", lang, { n: total })} ${andList(counts, lang)}.`)) : "") +
     sum(
       "h",
       b(
@@ -288,7 +284,7 @@ function summaries(m: IndiaMap, warned: MapWarning[], lang: Lang): string {
           "r",
           b(
             rainy
-              ? sentence("Heavy rain is forecast in X in the next 24 hours.", rainy, lang)
+              ? sentence("Heavy rain is forecast in {squares} in the next 24 hours.", rainy, lang)
               : esc(t("No heavy rain is forecast in the next 24 hours.", lang)),
           ) +
             worstLinks(
@@ -311,9 +307,9 @@ function cycloneSentence(c: Cyclone, lang: Lang, official?: string): string {
     c.kind === "alert"
       ? esc(t(`A cyclone can form in the ${sea}.`, lang))
       : named
-        ? esc(t(`X is in the ${sea}.`, lang)).replace("X", quoted(official, lang))
+        ? tHtml(`{name} is in the ${sea}.`, lang, { name: esc(quoted(official, lang)) })
         : c.name
-          ? esc(t(`Cyclone X is in the ${sea}.`, lang)).replace("X", esc(c.name))
+          ? tHtml(`Cyclone {name} is in the ${sea}.`, lang, { name: esc(c.name) })
           : esc(t(`A cyclone is in the ${sea}.`, lang));
   return c.moving ? `${where} ${esc(t(DIR_SENTENCE[c.moving], lang))}` : where;
 }

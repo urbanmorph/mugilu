@@ -149,9 +149,6 @@ const AIR_EDGES = [
   { v: 401, band: "severe" },
 ] as const;
 
-export const fill = (en: string, lang: Lang, slots: Record<string, string | number>) =>
-  Object.entries(slots).reduce((s, [k, v]) => s.replace(`{${k}}`, String(v)), t(en, lang));
-
 /** "21 Oct" in the page's language, for a YYYY-MM-DD day. */
 export function dayLabel(day: string, lang: Lang): string {
   return new Intl.DateTimeFormat(LOCALE[lang], { day: "numeric", month: "short", timeZone: "UTC" }).format(
@@ -246,7 +243,7 @@ function airChart(tr: PlaceTrend, lang: Lang): string {
   return dayChart({
     days: tr.days,
     lang,
-    label: fill("Air, the worst AQI of each day, for {n} days", lang, { n: tr.days.length }),
+    label: t("Air, the worst AQI of each day, for {n} days", lang, { n: tr.days.length }),
     lines: AIR_EDGES.map((e) => ({ v: e.v, num: String(e.v), word: t(AQI_BAND_LABEL[e.band], lang) })),
     bars: tr.air.map((v, i) =>
       v == null
@@ -263,10 +260,10 @@ function airChart(tr: PlaceTrend, lang: Lang): string {
 export function airLead(levels: number[], lang: Lang): string {
   const d = levels.length;
   const at = (l: number) => levels.filter((x) => x === l).length;
-  if (at(3)) return fill("Air was very poor or severe on {n} of {d} days.", lang, { n: at(3), d });
-  if (at(2)) return fill("Air was poor on {n} of {d} days, never worse.", lang, { n: at(2), d });
-  if (at(1)) return fill("Air was moderate on {n} of {d} days, never worse.", lang, { n: at(1), d });
-  return fill("Air was good or satisfactory on every one of {d} days.", lang, { d });
+  if (at(3)) return t("Air was very poor or severe on {n} of {d} days.", lang, { n: at(3), d });
+  if (at(2)) return t("Air was poor on {n} of {d} days, never worse.", lang, { n: at(2), d });
+  if (at(1)) return t("Air was moderate on {n} of {d} days, never worse.", lang, { n: at(1), d });
+  return t("Air was good or satisfactory on every one of {d} days.", lang, { d });
 }
 
 /** The "Last 30 days" panel, or "" when there is nothing to show. */
@@ -281,7 +278,7 @@ const kmText = (x: number) => (x < 10 ? x.toFixed(1) : String(Math.round(x)));
 
 /** Too far to borrow: one line to the nearest place with a daily record. */
 export function nearestRecordLine(b: Borrow, lang: Lang): string {
-  const line = fill("The nearest place with a daily record is {place}, {km} km away.", lang, {
+  const line = t("The nearest place with a daily record is {place}, {km} km away.", lang, {
     place: b.name,
     km: kmText(b.km),
   });
@@ -312,11 +309,11 @@ export function historyPanel(
   if (from)
     parts.push(
       `<p class="t-lead">${esc(
-        fill("This is the record for {place}, {km} km from this point.", lang, {
+        t("This is the record for {place}, {km} km from this point.", lang, {
           place: from.name,
           km: kmText(from.km),
         }),
-      )} ${esc(fill("Air uses the stations within {r} km of the centre of {place}.", lang, { r: AIR_KM, place: from.name }))} ` +
+      )} ${esc(t("Air uses the stations within {r} km of the centre of {place}.", lang, { r: AIR_KM, place: from.name }))} ` +
         `<a href="${lp(`/c/${from.place.slug}`, lang)}">${esc(from.name)} →</a></p>`,
     );
   if (airVals.length) {
@@ -324,12 +321,12 @@ export function historyPanel(
     const source =
       tr.stations === 1
         ? t("Each bar is a day: the worst AQI of the one station within 25 km.", lang)
-        : fill("Each bar is a day: the worst AQI of the middle station of {s} within 25 km.", lang, { s: tr.stations });
+        : t("Each bar is a day: the worst AQI of the middle station of {s} within 25 km.", lang, { s: tr.stations });
     parts.push(
       `<p class="t-lead">${esc(airLead(airVals.map(airLevel), lang))}</p>` +
         `<p class="t-meta">${esc(source)} ${esc(t("Measured.", lang))}` +
         (missing
-          ? ` ${esc(missing === 1 ? t("No reading on 1 day.", lang) : fill("No reading on {m} days.", lang, { m: missing }))}`
+          ? ` ${esc(missing === 1 ? t("No reading on 1 day.", lang) : t("No reading on {m} days.", lang, { m: missing }))}`
           : "") +
         `</p>` +
         airChart(tr, lang),
@@ -337,7 +334,7 @@ export function historyPanel(
   } else {
     // The live reading may still be measured (up to 50 km) or modelled: say why this record has none.
     parts.push(
-      `<p class="t-lead">${esc(fill("This record has no air quality. It uses only the stations within {km} km, and none is that close.", lang, { km: AIR_KM }))}</p>`,
+      `<p class="t-lead">${esc(t("This record has no air quality. It uses only the stations within {km} km, and none is that close.", lang, { km: AIR_KM }))}</p>`,
     );
   }
 
@@ -347,7 +344,7 @@ export function historyPanel(
   const lines = raised.map((o) => {
     const band = RISK_BANDS[o.worst];
     const word = t(LEVEL_WORD[band], lang);
-    const say = fill("raised on {n} of {d} days, up to {level}.", lang, {
+    const say = t("raised on {n} of {d} days, up to {level}.", lang, {
       n: o.raised,
       d: o.d,
       level: lang === "en" ? word.toLowerCase() : word,
@@ -370,9 +367,9 @@ export function historyPanel(
 
   return panel(`<div class="tsplit"><div>${parts.join("")}</div><div>${otherCol}</div></div>`, {
     title: from
-      ? fill("Last 30 days in {place}", lang, { place: from.name })
+      ? t("Last 30 days in {place}", lang, { place: from.name })
       : own
-        ? fill("{place} AQI and weather, last 30 days", lang, { place: own })
+        ? t("{place} AQI and weather, last 30 days", lang, { place: own })
         : t("Last 30 days", lang),
     icon: "clock",
     tag: "section",
@@ -401,20 +398,20 @@ export function indiaPanel(tr: IndiaTrend | null, lang: Lang): string {
   const peak = Math.max(...bad.map((v) => v ?? -1));
   const peakAt = bad.indexOf(peak);
   const lead =
-    fill("Poor or worse air in {n} of {c} cities on {day}.", lang, {
+    t("Poor or worse air in {n} of {c} cities on {day}.", lang, {
       n: bad[last]!,
       c: cities[last]!,
       day: dayLabel(days[last], lang),
     }) +
     (peakAt !== last && peak > bad[last]!
-      ? ` ${fill("At the peak, {day}, it was {n}.", lang, { day: dayLabel(days[peakAt], lang), n: peak })}`
+      ? ` ${t("At the peak, {day}, it was {n}.", lang, { day: dayLabel(days[peakAt], lang), n: peak })}`
       : "");
 
   const cs = scale(peak);
   const citiesChart = dayChart({
     days,
     lang,
-    label: fill("Cities with poor or worse air, each day for {n} days", lang, { n: days.length }),
+    label: t("Cities with poor or worse air, each day for {n} days", lang, { n: days.length }),
     max: cs.max,
     lines: cs.lines,
     bars: days.map((d, i) =>
@@ -425,7 +422,7 @@ export function indiaPanel(tr: IndiaTrend | null, lang: Lang): string {
               { v: very[i] ?? 0, cls: "severe" },
               { v: bad[i]!, cls: "high" },
             ],
-            title: fill("{day}: {n} cities poor or worse, {v} very poor or severe", lang, {
+            title: t("{day}: {n} cities poor or worse, {v} very poor or severe", lang, {
               day: dayLabel(d, lang),
               n: bad[i]!,
               v: very[i] ?? 0,
@@ -437,13 +434,13 @@ export function indiaPanel(tr: IndiaTrend | null, lang: Lang): string {
   const firesChart = dayChart({
     days,
     lang,
-    label: fill("Fires seen by satellite across India, each day for {n} days", lang, { n: days.length }),
+    label: t("Fires seen by satellite across India, each day for {n} days", lang, { n: days.length }),
     max: fs.max,
     lines: fs.lines,
     bars: fires.map((v, i) =>
       v == null
         ? null
-        : { segs: [{ v, cls: "ink" }], title: fill("{day}: {n} fires", lang, { day: dayLabel(days[i], lang), n: v }) },
+        : { segs: [{ v, cls: "ink" }], title: t("{day}: {n} fires", lang, { day: dayLabel(days[i], lang), n: v }) },
     ),
   });
   const noFire = fires.filter((v) => v == null).length;
@@ -460,7 +457,7 @@ export function indiaPanel(tr: IndiaTrend | null, lang: Lang): string {
       `<p class="t-kicker">${esc(t("Fires seen by satellite", lang))}</p>` +
       `<p class="t-meta">${esc(t("Crop and forest burning across India, from NASA FIRMS.", lang))}` +
       (noFire
-        ? ` ${esc(noFire === 1 ? t("No fire record on 1 day.", lang) : fill("No fire record on {m} days.", lang, { m: noFire }))}`
+        ? ` ${esc(noFire === 1 ? t("No fire record on 1 day.", lang) : t("No fire record on {m} days.", lang, { m: noFire }))}`
         : "") +
       `</p>` +
       firesChart +

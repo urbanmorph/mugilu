@@ -63,7 +63,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((c) => Promise.all([c.add(new Request('/', { cache: 'reload' })), c.add(CSS_PATH)]))
+      .then(async (c) => {
+        await Promise.all([c.add(new Request('/', { cache: 'reload' })), c.add(CSS_PATH)]);
+        const home = await c.match('/');
+        if (home) await keepScript(c, await home.text());
+      })
       .catch(() => {}),
   );
 });
@@ -71,21 +75,40 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     for (const name of await caches.keys()) if (name !== CACHE) await caches.delete(name);
-    // Stylesheets from earlier deploys.
+    // Stylesheets from earlier deploys, and scripts no saved page links any more.
     const cache = await caches.open(CACHE);
-    for (const r of await cache.keys()) {
+    const keys = await cache.keys();
+    const used = new Set([CSS_PATH]);
+    for (const r of keys) {
+      if (new URL(r.url).pathname.startsWith('/assets/')) continue;
+      const src = scriptOf(await (await cache.match(r)).text());
+      if (src) used.add(src);
+    }
+    for (const r of keys) {
       const p = new URL(r.url).pathname;
-      if (p.startsWith('/assets/') && p !== CSS_PATH) await cache.delete(r);
+      if (p.startsWith('/assets/') && !used.has(p)) await cache.delete(r);
     }
     await self.registration.navigationPreload?.enable();
     await self.clients.claim();
   })());
 });
 
-/** Saves a page, then keeps only the KEEP most recently opened places (a put moves an entry to the end). */
+/** The script file a page links (its path is versioned), if any. */
+const scriptOf = (html) => (html.match(/<script src="(\/assets\/js\/[^"]+)"/) || [])[1];
+
+/** Saves the script a page links, so the page works offline as it did online. */
+async function keepScript(cache, html) {
+  const src = scriptOf(html);
+  if (src && !(await cache.match(src))) await cache.add(src);
+}
+
+/** Saves a page and its script, then keeps only the KEEP most recently opened places (a put
+ *  moves an entry to the end). */
 async function keep(key, response) {
   const cache = await caches.open(CACHE);
+  const html = await response.clone().text();
   await cache.put(key, response);
+  await keepScript(cache, html);
   const places = (await cache.keys()).filter((r) => isPlace(new URL(r.url).pathname));
   for (const old of places.slice(0, -KEEP)) await cache.delete(old);
 }
@@ -101,7 +124,8 @@ async function saved(key) {
 const offline = (path) =>
   new Response(OFFLINE[langOf(path)], { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
-/** The site stylesheet: from the cache when saved (it never changes at a path), else the network. */
+/** The site stylesheet and page scripts: from the cache when saved (a versioned path never
+ *  changes), else the network. */
 async function asset(request) {
   const hit = await caches.match(request, { cacheName: CACHE });
   if (hit) return hit;
