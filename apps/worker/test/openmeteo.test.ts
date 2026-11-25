@@ -308,17 +308,27 @@ test("getOpenMeteo: a failed call is filled from this point's last good answer, 
     ok.restore();
   }
   assert.equal(store.m.size, 2, "each endpoint's good answer kept");
+  // Make the air copy 5 ms older than the forecast's, as a busy run can: each layer must still
+  // carry its own copy's time, and staleAt the older one.
+  for (const [k, res] of store.m)
+    if (k.includes("air-quality")) {
+      const at = Number(res.headers.get("x-mugilu-at")) - 5;
+      store.m.set(k, new Response(await res.clone().text(), { headers: { "x-mugilu-at": String(at) } }));
+    }
   const down = planFetch({ fc: [500], aq: ["stall"] });
   try {
     const r = await getOpenMeteo(12.97, 77.59, { ...FAST, store });
     assert.equal(r.failed, true, "still marked: the live call failed, so the page is not cached as whole");
     assert.equal(r.heat?.temp_c, 23.2);
-    assert.ok(r.staleAt, "the age of the stand-in");
-    assert.equal(r.heat?.as_of, r.staleAt);
-    assert.equal(r.wind?.as_of, r.staleAt);
-    assert.equal(r.uv?.as_of, r.staleAt);
+    // Each layer carries the time of the copy it came from: the forecast's (heat, wind) or the
+    // air's (UV, the modelled air). The two copies are kept separately, so they can differ by a
+    // millisecond; staleAt is the older of them.
+    assert.ok(r.heat?.as_of && r.uv?.as_of, "each stand-in is dated");
+    assert.equal(r.wind?.as_of, r.heat?.as_of);
+    assert.equal(r.airModelAt, r.uv?.as_of);
+    assert.equal(r.staleAt, r.uv?.as_of, "the older copy, the air's");
+    assert.equal(Date.parse(r.heat!.as_of!) - Date.parse(r.uv!.as_of!), 5);
     assert.equal(r.airModel?.pm25, 40);
-    assert.equal(r.airModelAt, r.staleAt);
     assert.equal(r.todayMax, null, "an old copy's high may be another day's");
   } finally {
     down.restore();
