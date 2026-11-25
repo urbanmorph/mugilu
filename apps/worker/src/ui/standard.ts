@@ -601,5 +601,37 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .mg [hidden]{display:none!important}
 `;
 
+// The place page on phones (W8-W10, PR 2): the persona switch as one line that opens the six;
+// the detail in folds (open on wide screens, OPEN_WIDE_JS); a tighter hero; headings that are
+// not a place name smaller. F1: the plate's word shrinks to fit its row, so the longest
+// headline (Kannada "ಸೂರ್ಯನ", 4.3 em wide) never widens a 320 px phone; the row's other 80 px
+// are the shape and the gap. Scoped to the hero: the kiosk sizes its word with its own fit().
+const PHONE_CSS = `
+.mg .whod>summary{display:flex;align-items:center;gap:var(--sp2);min-height:var(--hit);border:2px solid var(--ink);border-radius:var(--r);padding:0 var(--sp3);cursor:pointer;list-style:none;font-weight:600}
+.mg .whod>summary::-webkit-details-marker{display:none}
+.mg .whod>summary .t-kicker{margin:0}
+.mg .whod>summary .cur{font-size:var(--t-sm)}
+.mg .whod>summary .chg{margin-left:auto;font-size:var(--t-sm);text-decoration:underline}
+.mg .whod[open]>summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.mg .whod>.seg{margin-top:-2px;width:100%}
+@media ${DESKTOP}{.mg details.fold[data-wide]:not(.qa-list>*){border:0;background:none}.mg details.fold[data-wide]:not(.qa-list>*)>summary{display:none}.mg details.fold[data-wide]:not(.qa-list>*)>.in{padding:0}}
+@media ${DESKTOP}{.mg .whod>summary{border:0;padding:0;min-height:0;pointer-events:none;margin-bottom:var(--sp2)}.mg .whod>summary :is(.cur,.chg){display:none}.mg .whod>.seg{margin-top:0}}
+.mg details.fold>summary:not(:has(.n))::after{margin-left:auto}
+.mg .qa-list{display:grid;gap:var(--sp2)}
+.mg .qa-list details.fold>summary{text-transform:none;letter-spacing:0;font-size:var(--t-base)}
+.mg .qa-list .fold p{margin:0}
+.mg .rrow .more>details.fold{margin-top:var(--sp2)}
+.mg .phero .plate .row{container-type:inline-size}
+.mg .phero .plate .row .t-plate{font-size:min(var(--t-4xl),calc((100cqi - 80px) / 4.3))}
+@media (max-width:600px){
+.mg h1.t-title:not(.loc){font-size:clamp(30px,8.2vw,40px);line-height:1}
+.mg .phero .ptitle.stack>*+*{margin-top:var(--sp2)}
+.mg .phero .plate{padding-block:var(--sp3)}
+.mg .phero .plate.stack>*+*{margin-top:var(--sp2)}
+.mg main .band{padding-top:var(--sp4)}
+.mg .rrow{padding-block:var(--sp3)}
+}
+`;
+
 export const STANDARD_CSS =
-  COMPONENTS_CSS + HISTORY_CSS + PREVIEW_CSS + READ_CSS + PULL_CSS + LANG_NAMES_CSS + SAFE_AREA_CSS;
+  COMPONENTS_CSS + HISTORY_CSS + PREVIEW_CSS + READ_CSS + PULL_CSS + LANG_NAMES_CSS + SAFE_AREA_CSS + PHONE_CSS;

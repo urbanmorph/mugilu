@@ -247,3 +247,13 @@ test("home: India's 30 days after the map, before your places; none before the f
   assert.ok(at > html.indexOf('id="mland"'), "after the map");
   assert.ok(at < html.indexOf('id="yp"'), "before your places");
 });
+
+test("the 30-day panel: the air's lead stays in view; the chart folds on phones (W9), still in the HTML", () => {
+  const html = historyPanel(trend(), "en");
+  const lead = html.indexOf('class="t-lead"');
+  const fold = html.indexOf(
+    '<details class="fold" data-wide><summary>The air, day by day<span class="n">30</span></summary>',
+  );
+  assert.ok(lead >= 0 && fold > lead, "the lead, then the fold");
+  assert.ok(html.indexOf("Each bar is a day", fold) > fold, "how the chart is made, inside the fold");
+});

@@ -187,7 +187,7 @@ test("renderConditionsPage: falls back to coords when no station/air", () => {
 test("renderConditionsPage: cross-links nearby places in the same state (internal linking)", () => {
   const html = renderConditionsPage(conditions(), "everyone", "https://mugilu.live/c/bengaluru");
   assert.match(html, /<nav class="panel" aria-label="Nearby places">/);
-  assert.match(html, /Nearby:/);
+  assert.match(html, /<summary>Nearby places<span class="n">\d+<\/span><\/summary>/); // folded on phones (W9)
   assert.match(html, /<a class="ptile" href="\/c\/[a-z][a-z0-9-]*">/); // links to other named pages, not coords
   assert.match(html, /href="\/places"/); // and a path to the full directory
 });

@@ -111,7 +111,11 @@ test("place page: the official warnings always have their section, also when the
 
 test("place page: questions people ask, answered from the facts; the persona one carries the disclaimer", () => {
   const html = page();
-  assert.equal((html.match(/<dt>/g) ?? []).length, 5);
+  const qa = html.slice(html.indexOf('<div class="qa-list">'));
+  assert.equal(
+    (qa.slice(0, qa.indexOf("</section>")).match(/<details class="fold" data-wide><summary>/g) ?? []).length,
+    5,
+  );
   const s = text(html);
   assert.match(s, /What is the AQI in Bengaluru Rural now\?/);
   assert.match(
