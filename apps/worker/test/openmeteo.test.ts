@@ -310,11 +310,10 @@ test("getOpenMeteo: a failed call is filled from this point's last good answer, 
   assert.equal(store.m.size, 2, "each endpoint's good answer kept");
   // Make the air copy 5 ms older than the forecast's, as a busy run can: each layer must still
   // carry its own copy's time, and staleAt the older one.
+  const fcAt = Number([...store.m].find(([k]) => !k.includes("air-quality"))![1].headers.get("x-mugilu-at"));
   for (const [k, res] of store.m)
-    if (k.includes("air-quality")) {
-      const at = Number(res.headers.get("x-mugilu-at")) - 5;
-      store.m.set(k, new Response(await res.clone().text(), { headers: { "x-mugilu-at": String(at) } }));
-    }
+    if (k.includes("air-quality"))
+      store.m.set(k, new Response(await res.clone().text(), { headers: { "x-mugilu-at": String(fcAt - 5) } }));
   const down = planFetch({ fc: [500], aq: ["stall"] });
   try {
     const r = await getOpenMeteo(12.97, 77.59, { ...FAST, store });

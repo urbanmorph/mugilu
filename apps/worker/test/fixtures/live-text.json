@@ -84,7 +84,7 @@
     "UV (index)",
     "Dust (µg/m³)",
     "Heat takes the worst of feels-like, wet-bulb and WBGT, and the persona toggle bumps a sensitive hazard up one level.",
-    "Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); fires seen by satellite are shown for context and never scored, because the air reading carries any smoke that reaches you.",
+    "Bands come from CPCB (air), IMD and the Australian BoM (heat / cold / wind) and WHO (UV); the air is the nearest station within 50 km, unless it stands over 500 m above or below the place (then Open-Meteo's model, with the station named); fires seen by satellite are shown for context and never scored, because the air reading carries any smoke that reaches you.",
     "The full logic is the open score.ts, and every layer's source and licence is on terms & attribution.",
     "Today against normal",
     "On days when it stands out, the heat layer compares today's modelled high with the normal high for that place and time of year, from 1991-2020 ERA5 reanalysis (Copernicus) via Open-Meteo.",

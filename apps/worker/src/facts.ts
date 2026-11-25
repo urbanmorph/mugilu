@@ -26,6 +26,15 @@ export { STATION_MAX_KM };
 export type Provenance =
   | { kind: "measured"; network: ProviderId; station: string; km: number; at: string }
   | { kind: "modelled"; model: "open-meteo"; reason?: "no_station"; radius_km?: number }
+  | {
+      kind: "modelled";
+      model: "open-meteo";
+      reason: "station_apart";
+      station: string;
+      km: number;
+      height_m: number;
+      aqi: number | null;
+    }
   | { kind: "fallback"; grid_at: string }
   | { kind: "kept"; at: string }
   | { kind: "satellite"; by: "NASA FIRMS"; radius_km: number; window_h: number }
@@ -102,7 +111,17 @@ export function facts(c: Conditions, now = new Date()): Fact[] {
             km: a.station.distance_km,
             at: c.air_as_of ?? c.as_of,
           }
-        : { kind: "modelled", model: "open-meteo", reason: "no_station", radius_km: STATION_MAX_KM },
+        : a.station_apart
+          ? {
+              kind: "modelled",
+              model: "open-meteo",
+              reason: "station_apart",
+              station: [a.station_apart.name, a.station_apart.city].filter(Boolean).join(", "),
+              km: a.station_apart.distance_km,
+              height_m: a.station_apart.height_m,
+              aqi: a.station_apart.aqi,
+            }
+          : { kind: "modelled", model: "open-meteo", reason: "no_station", radius_km: STATION_MAX_KM },
     });
   const h = c.heat;
   if (h?.temp_c != null && h.apparent_c != null) {

@@ -127,7 +127,8 @@ We count MCP calls by the app name your client sends, and keep nothing else.
 The JSON is a versioned, self-describing contract: a "schema" and "version", and a
 "units" map (notably CO is mg/m3 while other pollutants are ug/m3). Layers: air
 (AQI + band + pollutants; measured, or modelled where no
-station is within 50 km), heat (temperature, humidity, feels-like, wet-bulb, WBGT),
+station is within 50 km or the nearest is over 500 m above or below the point, then named
+in air.station_apart), heat (temperature, humidity, feels-like, wet-bulb, WBGT),
 heat_vs_normal (today's high against the 1991-2020 normal here; shown on pages only
 when 3 C or more apart), rain, uv, dust, wind, visibility, fire/crop-burn smoke
 (NASA FIRMS), and any official NDMA/SACHET warnings whose area covers the point

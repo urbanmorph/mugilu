@@ -1,6 +1,7 @@
 import type { Env } from "./index";
 import type { RiskBand } from "./score";
-import type { Ring } from "./india";
+import { inAnyRing, type Ring } from "./india";
+import { districtAt } from "./place";
 import type { FeedAlert } from "./sachet";
 import { loadWarningsSnapshot } from "./snapshot";
 import { simplifyRing } from "./simplify-path";
@@ -129,6 +130,43 @@ export function simplifyArea(rings: Ring[], { tolerance = TOLERANCE, places = 2 
         .filter(([x, y], i, a) => i === 0 || x !== a[i - 1][0] || y !== a[i - 1][1]),
     )
     .filter((r) => r.length >= 3);
+}
+
+// About 5 km between the sample points inside an area, and never more than this many points.
+const PLACE_STEP = 0.05;
+const MAX_SAMPLES = 1000;
+
+/** The places a warning covers, for a region filter that cannot read the headline (SACHET
+ *  headlines are often in the state's language): its area description, and the districts and
+ *  states its area touches (every corner, and points about 5 km apart inside). */
+export function warningPlaces(rings: Ring[], areaDesc = ""): string[] {
+  const out = new Set<string>(areaDesc ? [areaDesc] : []);
+  const add = (lon: number, lat: number) => {
+    const d = districtAt(lat, lon);
+    if (d) out.add(d.name).add(d.state ?? d.name);
+  };
+  const pts = rings.flat();
+  for (const [lon, lat] of pts) add(lon, lat);
+  if (pts.length) {
+    const xs = pts.map((p) => p[0]),
+      ys = pts.map((p) => p[1]);
+    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    const step = Math.max(PLACE_STEP, Math.sqrt(((x1 - x0) * (y1 - y0)) / MAX_SAMPLES));
+    const inside = inAnyRing(rings);
+    for (let x = x0 + step / 2; x < x1; x += step)
+      for (let y = y0 + step / 2; y < y1; y += step) if (inside(x, y)) add(x, y);
+  }
+  return [...out];
+}
+
+/** Whether a warning answers a region filter: its places, or its headline, category or issuer. */
+export function warningMatches(
+  a: { headline: string; category: string; issuer: string },
+  where: string[],
+  region: string,
+): boolean {
+  const r = region.trim().toLowerCase();
+  return [a.headline, a.category, a.issuer, ...where].some((s) => s.toLowerCase().includes(r));
 }
 
 /** CAP severity onto the risk bands. An unknown level still shows, at moderate. */

@@ -2,9 +2,9 @@ import { esc } from "../html";
 import { lp, t, type Lang } from "../i18n";
 import { istTime } from "../ist";
 import { AQI_BAND_LABEL } from "../aqi";
-import { pickStation, STATION_MAX_KM } from "../conditions";
+import { pickStation, speaksFor, STATION_MAX_KM } from "../conditions";
 import { DESCRIPTION_MAX } from "../phrases";
-import { localName, type SlugPlace } from "../slugs";
+import { localName, placeElevation, type SlugPlace } from "../slugs";
 import { stateName, type State } from "../states";
 import type { IndiaMap } from "../indiamap";
 import type { WarningsSnapshot } from "../sachet";
@@ -64,7 +64,7 @@ export function stateNow(
   const air: StateNow["air"] = [];
   for (const p of st.places) {
     const s = stations.length ? pickStation(stations, p.lat, p.lon) : undefined;
-    if (!s || s.aqi == null || s.distance_km > STATION_MAX_KM || seen.has(s.id)) continue;
+    if (!s || s.aqi == null || !speaksFor(s, placeElevation(p.slug)) || seen.has(s.id)) continue;
     seen.add(s.id);
     air.push({ p, aqi: s.aqi, band: s.band });
   }

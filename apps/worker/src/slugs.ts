@@ -1,3 +1,4 @@
+import PLACE_ELEV from "../data/place-elev.json";
 import centroids from "../data/centroids.json";
 import placeNames from "../data/place-names.json";
 import { haversineKm } from "./near";
@@ -160,6 +161,24 @@ export function slugForName(name: string): string | undefined {
 export function placeByAlias(name: string): SlugPlace | undefined {
   const slug = SLUG_ALIASES[slugify(name)];
   return slug ? SLUGS.get(slug) : undefined;
+}
+
+/** A named place's ground height (m), bundled (scripts/build-place-elev.mts), or undefined. */
+export function placeElevation(slug: string): number | undefined {
+  return (PLACE_ELEV as Record<string, number>)[slug];
+}
+
+/** The other named places that share this name, in other states ("Aurangabad": Bihar and
+ *  Maharashtra), for a note on which one an answer is for. */
+export function namesakes(name: string, state?: string): SlugPlace[] {
+  const n = name.trim().toLowerCase();
+  return [...SLUGS.values()].filter((p) => p.name.toLowerCase() === n && p.state && p.state !== state);
+}
+
+/** "This is Aurangabad, Bihar. Another place has the same name: ..." */
+export function namesakeNote(label: string, others: SlugPlace[]): string {
+  const list = others.map((p) => `${p.name}, ${p.state} (ask for "${p.name}, ${p.state}")`).join("; ");
+  return `This is ${label}. ${others.length > 1 ? "Other places have" : "Another place has"} the same name: ${list}.`;
 }
 
 /** Every named place (for the sitemap). */

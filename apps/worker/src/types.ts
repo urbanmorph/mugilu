@@ -54,6 +54,8 @@ export interface NormalizedStation {
   aqi: number | null;
   band: "good" | "satisfactory" | "moderate" | "poor" | "vpoor" | "severe" | "unknown";
   ts: string | null;
+  /** Ground height (m), from Open-Meteo's elevation model (elevation.ts); absent until looked up. */
+  elev_m?: number;
 }
 
 /** The pollutant set carried by a station or a modelled air reading. */
@@ -88,6 +90,10 @@ export interface AirConditions {
   source: ProviderId | "open-meteo";
   /** True when air is modelled (Open-Meteo) rather than a ground station. */
   modelled?: boolean;
+  /** The nearest station when it is in different air (over 500 m above or below the place, so
+   *  the model was used instead): named apart, with its reading. height_m is the station's
+   *  height minus the place's. */
+  station_apart?: { name: string; city: string; distance_km: number; height_m: number; aqi: number | null };
 }
 
 /** A modelled layer the live call failed to give, filled by a stand-in: this exact point's

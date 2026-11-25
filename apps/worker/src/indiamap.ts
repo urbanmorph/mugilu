@@ -5,7 +5,7 @@ import { airLevelOf, ambientRisk, heatLevelOf, rainLevelOf, RISK_BANDS } from ".
 import { isPlausible } from "./plausible";
 import { inIndia, type Ring } from "./india";
 import { loadCyclones, loadGrid, loadJson, loadSnapshot, loadWarningsSnapshot, putJson } from "./snapshot";
-import { loadWarnAreas, severityBand, type WarnArea } from "./warnareas";
+import { loadWarnAreas, severityBand, warningPlaces, type WarnArea } from "./warnareas";
 import { simplifyPath } from "./simplify-path";
 import { reason } from "./logs";
 
@@ -85,6 +85,9 @@ export interface MapWarning {
   level: number;
   expires: string;
   d: string;
+  /** The places it covers (warnareas.ts warningPlaces), for the region filter. Older stored
+   *  maps lack it. */
+  where?: string[];
 }
 
 const key = (lon: number, lat: number) => `${Math.floor(lon)},${Math.floor(lat)}`;
@@ -342,6 +345,7 @@ export function mapWarnings(areas: WarnArea[]): MapWarning[] {
       level: RISK_BANDS.indexOf(severityBand(a.severity)),
       expires: a.expires,
       d: areaPath(a.rings),
+      where: warningPlaces(a.rings, a.areaDesc),
     }))
     .sort((a, b) => a.level - b.level || a.id.localeCompare(b.id));
 }

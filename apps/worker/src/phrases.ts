@@ -43,6 +43,17 @@ export const PHRASES = {
     hi: "यह Open-Meteo का अनुमान है। {radius} km के भीतर कोई वायु स्टेशन नहीं है।",
     kn: "ಇದು Open-Meteo ಅಂದಾಜು. {radius} km ಒಳಗೆ ಯಾವುದೇ ವಾಯು ನಿಲ್ದಾಣವಿಲ್ಲ.",
   },
+  // The nearest station is over 500 m above or below the place (conditions.ts stationApart).
+  "air.apart.lower": {
+    en: "Open-Meteo models this value. The nearest air station, {station}, is {km} km away and {dz} m lower, in different air; it reads AQI {aqi}.",
+    hi: "यह Open-Meteo का अनुमान है। सबसे पास का वायु स्टेशन, {station}, {km} km दूर और {dz} m नीचे है, जहाँ की हवा अलग है; वहाँ AQI {aqi} है।",
+    kn: "ಇದು Open-Meteo ಅಂದಾಜು. ಹತ್ತಿರದ ವಾಯು ನಿಲ್ದಾಣ {station} {km} km ದೂರದಲ್ಲಿ, {dz} m ಕೆಳಗೆ ಇದೆ; ಅಲ್ಲಿನ ಗಾಳಿ ಬೇರೆ. ಅಲ್ಲಿ AQI {aqi}.",
+  },
+  "air.apart.higher": {
+    en: "Open-Meteo models this value. The nearest air station, {station}, is {km} km away and {dz} m higher, in different air; it reads AQI {aqi}.",
+    hi: "यह Open-Meteo का अनुमान है। सबसे पास का वायु स्टेशन, {station}, {km} km दूर और {dz} m ऊपर है, जहाँ की हवा अलग है; वहाँ AQI {aqi} है।",
+    kn: "ಇದು Open-Meteo ಅಂದಾಜು. ಹತ್ತಿರದ ವಾಯು ನಿಲ್ದಾಣ {station} {km} km ದೂರದಲ್ಲಿ, {dz} m ಮೇಲೆ ಇದೆ; ಅಲ್ಲಿನ ಗಾಳಿ ಬೇರೆ. ಅಲ್ಲಿ AQI {aqi}.",
+  },
   "temp.now": {
     en: "The temperature is {t}°C. It feels like {f}°C.",
     hi: "तापमान {t}°C है। यह {f}°C जैसा महसूस होता है।",
@@ -180,6 +191,11 @@ export const PHRASES = {
     en: "{place} AQI {aqi} ({band}), modelled: no air station within {radius} km.",
     hi: "{place} में AQI {aqi} ({band}), अनुमानित: {radius} km के भीतर कोई वायु स्टेशन नहीं।",
     kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ AQI {aqi} ({band}), ಅಂದಾಜು: {radius} km ಒಳಗೆ ವಾಯು ನಿಲ್ದಾಣವಿಲ್ಲ.",
+  },
+  "desc.apart": {
+    en: "{place} AQI {aqi} ({band}), modelled: the nearest air station is in different air.",
+    hi: "{place} में AQI {aqi} ({band}), अनुमानित: सबसे पास का वायु स्टेशन अलग हवा में है।",
+    kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ AQI {aqi} ({band}), ಅಂದಾಜು: ಹತ್ತಿರದ ವಾಯು ನಿಲ್ದಾಣದ ಗಾಳಿ ಬೇರೆ.",
   },
   "desc.temp": { en: "{t}°C.", hi: "तापमान {t}°C।", kn: "ತಾಪಮಾನ {t}°C." },
   "desc.calm": {
@@ -428,6 +444,8 @@ export function factText(f: Fact, lang: Lang): string {
       const s = f.source;
       if (s.kind === "measured")
         return `${value} ${say("air.measured", lang, { network: NETWORK[s.network] ?? s.network, station: s.station, km: km(s.km), at: istClock(s.at) })}`;
+      if (s.kind === "modelled" && s.reason === "station_apart")
+        return `${value} ${say(s.height_m < 0 ? "air.apart.lower" : "air.apart.higher", lang, { station: s.station, km: km(s.km), dz: Math.abs(s.height_m).toLocaleString("en-IN"), aqi: s.aqi ?? "n/a" })}`;
       if (s.kind === "modelled") return `${value} ${say("air.modelled", lang, { radius: s.radius_km ?? "" })}`;
       return value;
     }
@@ -598,7 +616,9 @@ export function placeDescription(fs: Fact[], place: string, at: string, lang: La
             network: NETWORK[s.network] ?? s.network,
             station: s.station,
           })
-        : say("desc.modelled", lang, { ...v, radius: s.kind === "modelled" ? (s.radius_km ?? "") : "" }),
+        : s.kind === "modelled" && s.reason === "station_apart"
+          ? say("desc.apart", lang, v)
+          : say("desc.modelled", lang, { ...v, radius: s.kind === "modelled" ? (s.radius_km ?? "") : "" }),
     );
   }
   if (temp) parts.push(say("desc.temp", lang, { t: Math.round(temp.temp_c) }));

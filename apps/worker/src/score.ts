@@ -255,6 +255,9 @@ export const RISK_LABEL: Record<RiskBand, string> = {
   high: "High",
   severe: "Severe",
 };
+/** Where the band word reads oddly before the noun ("High cold"), the word said instead. */
+const BAND_WORD: Record<string, Partial<Record<RiskBand, string>>> = { Cold: { high: "Very" } };
+
 export const COND_NOUN: Record<string, string> = {
   Air: "air",
   Heat: "heat",
@@ -274,7 +277,8 @@ export function headline(
   tr: (en: string) => string = (en) => en,
 ): { word: string; noun: string | null } {
   if (risk.band === "low") return { word: tr("All clear"), noun: null };
-  return { word: tr(RISK_LABEL[risk.band]), noun: tr(COND_NOUN[risk.driver] ?? "sky") };
+  const word = BAND_WORD[risk.driver]?.[risk.band] ?? RISK_LABEL[risk.band];
+  return { word: tr(word), noun: tr(COND_NOUN[risk.driver] ?? "sky") };
 }
 
 // What each band means in plain language, per dominant hazard, so the score
