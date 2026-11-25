@@ -26,6 +26,7 @@ import {
   LEVEL_SHAPE,
   band,
   bandChip,
+  fold,
   ico,
   levelChip,
   notice,
@@ -181,6 +182,8 @@ export interface ReadRow {
   chip: string;
   /** The detail under the figure (graphics and notes), markup. */
   more: string[];
+  /** When set, `more` is folded under this label on phones (W9; open on wide screens). */
+  fold?: string;
   /** The screen display's one graphic: the worst pollutant, the heat gauges. */
   mini: string;
   /** The short value for the display's quiet line, e.g. "12 km/h". */
@@ -234,6 +237,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
     // Where the reading comes from is said in the row's sentence (phrases.ts), not here.
     const more = bars ? [bars] : [];
     if (c.grap) more.push(grapLine(c.grap, lang));
+    const fold = more.length ? t(c.grap ? "Pollutants and GRAP" : "Pollutants", lang) : undefined;
     row("air", {
       label: t("Air", lang),
       icon: "air",
@@ -242,6 +246,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       chip: bandChip(band, bandWord),
       raised: RAISED_BANDS.has(band) ? `b-${band}` : undefined,
       more,
+      fold,
       mini: worst ? pollutantBars(worst) : "",
       brief: c.air.aqi != null ? `AQI ${c.air.aqi}` : "n/a",
     });
@@ -296,11 +301,12 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
       // No feels-like, no word (never read a missing value as 0°, "dangerous cold").
       unit: h.apparent_c != null ? t("feels like", lang) : "",
       qual: h.apparent_c != null ? t(heatPhrase(h.apparent_c, h.wet_bulb_c), lang) : undefined,
+      // Today's high against the normal stays in view (normal, below): it is the notable line.
       more: [
         `<p class="t-meta">${round(h.temp_c)}° ${esc(t("actual", lang))} · ${round(h.humidity_pct)}% ${esc(t("humidity", lang))}</p>`,
         ...gauges,
-        ...normal,
       ],
+      fold: t(cold ? "Actual temperature and humidity" : "Humidity, wet-bulb and WBGT", lang),
       mini: lines.join(""),
       normal: normal.join(""),
       brief: `${round(h.apparent_c)}°`,
@@ -422,6 +428,12 @@ const ICON_HUE: Partial<Record<IconName, string>> = {
   drop: "none",
 };
 
+/** A card's detail: folded under its label when it has one, then the line that stays in view. */
+const detail = (r: ReadRow) =>
+  (r.fold && r.more.length
+    ? fold(r.fold, `<div class="stack">${r.more.join("")}</div>`, { wide: true })
+    : r.more.join("")) + (r.normal ?? "");
+
 /** A reading as the place page's row: pictogram, label, figure and word, its level, detail. */
 /** `words`, on the place page: the label becomes a heading in the words people search, and
  *  the value is said in a sentence under the figure (phrases.ts). */
@@ -433,7 +445,7 @@ export function readRowHtml(r: ReadRow, lang: Lang, words?: { heading: string; t
     `<div>${lab}<p class="val"><span class="num">${esc(r.num)}</span>` +
     `${r.unit ? `<span class="qa">${esc(r.unit)}</span>` : ""}${r.qual ? ` <b class="ql">${esc(r.qual)}</b>` : ""}</p>` +
     `${words?.text ? `<p class="t-meta say">${esc(words.text)}</p>` : ""}</div>` +
-    `${r.chip}${r.more.length ? `<div class="more stack">${r.more.join("")}</div>` : ""}</div>`
+    `${r.chip}${r.more.length || r.normal ? `<div class="more stack">${detail(r)}</div>` : ""}</div>`
   );
 }
 

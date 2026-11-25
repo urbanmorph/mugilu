@@ -7,8 +7,7 @@ import { PERSONAS, type Persona } from "./score";
 import { scriptPath, shellScript, type Variant } from "./ui/page-shell";
 import { fnv1a } from "./ui/assets";
 import { comboboxJs } from "./ui/components";
-import { ALERTS_JS } from "./alerts-ui";
-import { PLACE_RECORDER } from "./pages/read";
+import { placeJs } from "./pages/place";
 import { homeJs } from "./pages/home";
 import { placesJs } from "./pages/places";
 import { WARNINGS_JS } from "./pages/warnings";
@@ -20,8 +19,8 @@ const PAGE: Record<string, (lang: Lang, arg?: string) => string | undefined> = {
   home: homeJs,
   places: placesJs,
   warnings: () => WARNINGS_JS,
-  place: () => PLACE_RECORDER,
-  "place.alerts": () => PLACE_RECORDER + ALERTS_JS,
+  place: () => placeJs(false),
+  "place.alerts": () => placeJs(true),
   notfound: (lang) => comboboxJs("nq", lang),
   kiosk: kioskJs,
   display: (lang, persona) =>

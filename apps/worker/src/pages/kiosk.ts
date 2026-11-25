@@ -45,6 +45,11 @@ function showLoad(){clearTimeout(vbT);var v=veil();if(!v)return;var w=v.querySel
 function hideLoad(){clearTimeout(vbT);var v=veil();if(v)v.classList.remove('on');}
 function refresh(){showLoad();if(++n%${RELOAD_EVERY}===0){setTimeout(function(){location.reload();},500);return;}fetch(location.href,{cache:'no-cache'}).then(function(r){return r.ok?r.text():Promise.reject();}).then(function(h){var d=new DOMParser().parseFromString(h,'text/html'),nk=d.querySelector('.kio'),ck=document.querySelector('.kio');if(!nk||!ck)throw 0;ck.parentNode.replaceChild(document.importNode(nk,true),ck);hideLoad();start();}).catch(function(){hideLoad();refT=setTimeout(refresh,60000);});}
 function start(){clearInterval(clkI);clearInterval(agoI);clearTimeout(refT);clock();rel();fit();clkI=setInterval(clock,15000);agoI=setInterval(rel,30000);refT=setTimeout(refresh,${REFRESH_MS});}
+// Burn-in (F2): the screen never changes layout, so every 6 minutes the whole display moves a
+// few pixels round a small loop; too little to see, enough that no pixel holds one colour all day.
+var oi=0,O=[[0,0],[2,1],[4,2],[3,4],[1,3]];
+function orbit(){var k=document.querySelector('.kio');if(!k)return;var o=O[oi++%O.length];k.style.transform='translate('+o[0]+'px,'+o[1]+'px)';}
+setInterval(orbit,360000);
 function lock(){try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(function(){});}catch(e){}}
 lock();document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')lock();});
 var rz=0;window.addEventListener('resize',function(){if(!rz)rz=requestAnimationFrame(function(){rz=0;fit();});});setTimeout(fit,300);

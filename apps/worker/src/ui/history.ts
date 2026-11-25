@@ -14,7 +14,7 @@ import {
   uvLevelOf,
   windLevelOf,
 } from "../score";
-import { LEVEL_SHAPE, LEVEL_WORD, linkButton, panel, shape, type IconName } from "./components";
+import { LEVEL_SHAPE, LEVEL_WORD, fold, linkButton, panel, shape, type IconName } from "./components";
 import { AIR_KM, TREND_DAYS } from "../placedaily";
 
 // The place page's "Last 30 days" (placedaily.ts keeps the record): the air a day at a time, a
@@ -322,14 +322,19 @@ export function historyPanel(
       tr.stations === 1
         ? t("Each bar is a day: the worst AQI of the one station within 25 km.", lang)
         : t("Each bar is a day: the worst AQI of the middle station of {s} within 25 km.", lang, { s: tr.stations });
+    // The lead stays in view; the chart and how it is made fold on phones (W9).
     parts.push(
       `<p class="t-lead">${esc(airLead(airVals.map(airLevel), lang))}</p>` +
-        `<p class="t-meta">${esc(source)} ${esc(t("Measured.", lang))}` +
-        (missing
-          ? ` ${esc(missing === 1 ? t("No reading on 1 day.", lang) : t("No reading on {m} days.", lang, { m: missing }))}`
-          : "") +
-        `</p>` +
-        airChart(tr, lang),
+        fold(
+          t("The air, day by day", lang),
+          `<p class="t-meta">${esc(source)} ${esc(t("Measured.", lang))}` +
+            (missing
+              ? ` ${esc(missing === 1 ? t("No reading on 1 day.", lang) : t("No reading on {m} days.", lang, { m: missing }))}`
+              : "") +
+            `</p>` +
+            airChart(tr, lang),
+          { count: n, wide: true },
+        ),
     );
   } else {
     // The live reading may still be measured (up to 50 km) or modelled: say why this record has none.

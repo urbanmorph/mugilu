@@ -190,6 +190,11 @@ test("place page: the warnings panel tells the past under the present, with each
   assert.match(s, /Since 27 Jun, official warnings covered Udupi on 3 days: orange on 1, yellow on 2\./);
   // three alerts: all of them, and no link to a longer list
   assert.match(s, /The last 3 warnings/);
+  // Folded on phones (W9), the list still in the HTML; opened on wide screens.
+  assert.match(
+    html,
+    /<details class="fold" data-wide><summary>The last 3 warnings<span class="n">3<\/span><\/summary>/,
+  );
   assert.doesNotMatch(html, /\/c\/udupi\/warnings/);
   assert.match(s, /06:00 IST · 18 Nov · until 21:00 IST · 18 Nov/);
   assert.match(s, /Heavy rain likely over Udupi and Dakshina Kannada\./);

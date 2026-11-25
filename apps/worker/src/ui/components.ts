@@ -5,6 +5,7 @@ import type { RiskBand } from "../score";
 import { installButton } from "../install";
 import { qrSvg } from "../qr";
 import { CLIENT_ESC } from "./shell";
+import { DESKTOP } from "./standard";
 
 // The design standard's components (supporting-docs/redesign/design-standard.md §4), one
 // function each, returning markup for the classes in standard.ts. Pages compose these and
@@ -672,13 +673,21 @@ export function checkGroup(name: string, legend: string, items: CheckItem[]): st
 export const filterBar = (groups: string[], label: string) =>
   `<div class="fbar" role="group" aria-label="${esc(label)}">${groups.join("")}</div>`;
 
-/** Fold: a disclosure (mobile filters, a state's places). */
-export function fold(summary: string, body: string, o: { count?: number; open?: boolean; id?: string } = {}): string {
+/** Fold: a disclosure (mobile filters, a state's places). `wide`: shut on phones, opened on
+ *  wide screens by OPEN_WIDE_JS (the place page's detail). */
+export function fold(
+  summary: string,
+  body: string,
+  o: { count?: number; open?: boolean; id?: string; wide?: boolean } = {},
+): string {
   return (
-    `<details class="fold"${o.open ? " open" : ""}${o.id ? ` id="${esc(o.id)}"` : ""}><summary>${esc(summary)}` +
+    `<details class="fold"${o.open ? " open" : ""}${o.wide ? " data-wide" : ""}${o.id ? ` id="${esc(o.id)}"` : ""}><summary>${esc(summary)}` +
     `${o.count != null ? `<span class="n">${o.count}</span>` : ""}</summary><div class="in">${body}</div></details>`
   );
 }
+
+/** Opens the `wide` folds on a wide screen, where there is room for everything at once. */
+export const OPEN_WIDE_JS = `(function(){if(matchMedia(${JSON.stringify(DESKTOP)}).matches)document.querySelectorAll('details[data-wide]').forEach(function(d){d.open=true;});})();`;
 
 // ── PlaceTile ────────────────────────────────────────────────────────────────────────
 /** A place as a tile; a warned place is marked with the warning symbol (never a level colour). */

@@ -2014,6 +2014,14 @@ export const TR: Record<string, Partial<Record<Exclude<Lang, "en">, string>>> = 
   },
   "Species of {state}": { hi: "{state} की प्रजातियाँ", kn: "{state}: ಜೀವಪ್ರಭೇದಗಳು" },
   "Nearby places": { hi: "आस-पास के स्थान", kn: "ಹತ್ತಿರದ ಸ್ಥಳಗಳು" },
+  // The place page's folds on phones (W9) and the persona switch's one line (W8).
+  Change: { hi: "बदलें", kn: "ಬದಲಿಸಿ" },
+  Pollutants: { hi: "प्रदूषक", kn: "ಮಾಲಿನ್ಯಕಾರಕಗಳು" },
+  "Pollutants and GRAP": { hi: "प्रदूषक और GRAP", kn: "ಮಾಲಿನ್ಯಕಾರಕಗಳು ಮತ್ತು GRAP" },
+  "Humidity, wet-bulb and WBGT": { hi: "आर्द्रता, वेट-बल्ब और WBGT", kn: "ಆರ್ದ್ರತೆ, ವೆಟ್ ಬಲ್ಬ್ ಮತ್ತು WBGT" },
+  "Actual temperature and humidity": { hi: "वास्तविक तापमान और आर्द्रता", kn: "ನಿಜವಾದ ತಾಪಮಾನ ಮತ್ತು ಆರ್ದ್ರತೆ" },
+  "The air, day by day": { hi: "वायु, दिन-ब-दिन", kn: "ವಾಯು, ದಿನದಿಂದ ದಿನಕ್ಕೆ" },
+  Stations: { hi: "स्टेशन", kn: "ನಿಲ್ದಾಣಗಳು" },
   "all places": { hi: "सभी स्थान", kn: "ಎಲ್ಲಾ ಸ್ಥಳಗಳು" },
   // The footer's groups and the two links named for what they open.
   "Use it": { hi: "इस्तेमाल करें", kn: "ಬಳಸಿ" },

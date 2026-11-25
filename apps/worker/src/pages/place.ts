@@ -43,7 +43,8 @@ import {
   panel,
   placeTile,
   placeTiles,
-  segLinks,
+  fold,
+  OPEN_WIDE_JS,
   stack,
   stamp,
   stamps,
@@ -61,17 +62,23 @@ import {
   warningBand,
 } from "./read";
 
-/** The persona switch: one choice of six, each a link to the read for that group. */
+/** The place page's own script: it records the visit, opens the folds on a wide screen, and
+ *  runs the alerts box when alerts are set up. */
+export const placeJs = (alerts: boolean) => PLACE_RECORDER + OPEN_WIDE_JS + (alerts ? ALERTS_JS : "");
+
+/** The persona switch: one choice of six, each a link to the read for that group. On a phone
+ *  it is one line, "Who is this for · Everyone · Change", that opens the six (W8); on a wide
+ *  screen it is open. The choices stay plain links: crawlable, no script needed. */
 function whoSwitch(base: string, current: Persona, lang: Lang): string {
-  return segLinks(
-    "who",
-    t("Who is this for", lang),
-    PERSONAS.map((p) => ({
-      label: t(PERSONA_LABEL[p], lang),
-      href: withPersona(base, p),
-      current: p === current,
-    })),
-    { segClass: "grid2 d3" },
+  const links = PERSONAS.map(
+    (p) =>
+      `<a href="${esc(withPersona(base, p))}"${p === current ? ' aria-current="page"' : ""}>${esc(t(PERSONA_LABEL[p], lang))}</a>`,
+  ).join("");
+  return (
+    `<nav class="segf" aria-labelledby="who"><details class="whod" data-wide><summary>` +
+    `<span class="t-kicker" id="who">${esc(t("Who is this for", lang))}</span>` +
+    `<span class="cur">${esc(t(PERSONA_LABEL[current], lang))}</span><span class="chg">${esc(t("Change", lang))}</span>` +
+    `</summary><div class="seg grid2 d3">${links}</div></details></nav>`
   );
 }
 
@@ -116,7 +123,11 @@ function stationsPanel(c: Conditions, lang: Lang): string {
         `<span class="a">${s.aqi ?? ""}</span>${bandChip(s.band, t(AQI_BAND_LABEL[s.band] ?? "n/a", lang))}</a>`,
     )
     .join("");
-  return panel(rows, { title: t("Air stations near here", lang), icon: "station", tag: "nav" });
+  return panel(fold(t("Stations", lang), rows, { count: c.nearby_stations.length, wide: true }), {
+    title: t("Air stations near here", lang),
+    icon: "station",
+    tag: "nav",
+  });
 }
 
 /** Nearby named places in the same state, and the same place on the sister sites. Only on a
@@ -128,8 +139,14 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
   const sibs = siblingPlaces(slug);
   if (sibs.length)
     parts.push(
-      `<p><b>${esc(t("Nearby:", lang))}</b></p>` +
+      fold(
+        t("Nearby places", lang),
         placeTiles(sibs.map((s) => placeTile(lp(`/c/${s.slug}`, lang), localName(s, lang)))),
+        {
+          count: sibs.length,
+          wide: true,
+        },
+      ),
     );
   const hub = hubOf(placeBySlug(slug)?.state);
   if (hub)
@@ -164,8 +181,10 @@ function warningsPanel(fs: Fact[], place: string, lang: Lang, past: PastAlert[] 
   const history = past
     ? `<div class="stack"><p>${esc(pastWarningsText(past, place, lang))}</p>` +
       (recent.length
-        ? `<p class="t-kicker">${esc(say("warn.past.recent", lang, { n: recent.length }))}</p>` +
-          pastAlertList(recent, lang) +
+        ? fold(say("warn.past.recent", lang, { n: recent.length }), pastAlertList(recent, lang), {
+            count: recent.length,
+            wide: true,
+          }) +
           (past.length > recent.length && allHref
             ? `<p>${linkButton(allHref, say("warn.past.all", lang, { n: past.length, since: istDay(HISTORY_FROM) }), false, "list")}</p>`
             : "")
@@ -185,7 +204,7 @@ function questionsPanel(fs: Fact[], place: string, lang: Lang): string {
   const qa = questions(fs, place, lang);
   if (!qa.length) return "";
   return panel(
-    `<dl class="qa-list">${qa.map(([q, a]) => `<div><dt>${esc(q)}</dt><dd>${esc(a)}</dd></div>`).join("")}</dl>`,
+    `<div class="qa-list">${qa.map(([q, a]) => fold(q, `<p>${esc(a)}</p>`, { wide: true })).join("")}</div>`,
     { title: say("h.qa", lang, { place }), icon: "list", tag: "section", id: "qa" },
   );
 }
@@ -349,6 +368,6 @@ export function renderConditionsPage(
     lang,
     noindex,
     tint: readTint(risk),
-    script: alertsKey ? { key: "place.alerts", js: PLACE_RECORDER + ALERTS_JS } : { key: "place", js: PLACE_RECORDER },
+    script: alertsKey ? { key: "place.alerts", js: placeJs(true) } : { key: "place", js: placeJs(false) },
   });
 }
