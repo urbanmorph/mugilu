@@ -2,7 +2,7 @@ import { PLACES_STORE_JS } from "../ui/places-store";
 import { type Conditions, type NormalizedStation, type Warning } from "../types";
 import { AQI_BAND_LABEL } from "../aqi";
 import { gauge, pollutantBars, uvSteps, worstPollutant } from "../glyphs";
-import { forPersona, isDriver, km, layerBase, orderByRisk } from "../readings";
+import { forPersona, isDriver, km, layerBase, orderByRisk, thermalLabel } from "../readings";
 import { esc } from "../html";
 import {
   PERSONA_LABEL,
@@ -253,7 +253,8 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
   }
   if (c.heat) {
     const h = c.heat;
-    const cold = h.apparent_c != null && coldLevelOf(h.apparent_c) > 0;
+    const label = thermalLabel(h.apparent_c);
+    const cold = label === "Cold";
     // The heat-stress reads, each a line and a gauge on the page; the display shows the lines.
     const gauges: string[] = [];
     const lines: string[] = [];
@@ -295,7 +296,7 @@ export function readRows(c: Conditions, risk: AmbientRisk, lang: Lang): ReadRow[
         ]
       : [];
     row("heat", {
-      label: t("Heat", lang),
+      label: t(label, lang),
       icon: cold ? "cold" : "heat",
       num: `${round(h.apparent_c)}°`,
       // No feels-like, no word (never read a missing value as 0°, "dangerous cold").

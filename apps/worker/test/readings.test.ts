@@ -102,3 +102,35 @@ test("heatPhrase: a cool day is not called warm; the hazard words are unchanged"
     assert.notEqual(tr(w, "kn"), w);
   }
 });
+
+// From ops, 25 Nov 2026: Spiti read "The cold is dangerous", then "In order of risk: heat -1°".
+const spiti = {
+  ...base,
+  location: { lat: 32.3196, lon: 78.0089 },
+  air: { aqi: 30, band: "good", pollutants: { pm25: 12 }, station: null, source: "cpcb" },
+  heat: { temp_c: 2, humidity_pct: 40, apparent_c: -1, wet_bulb_c: -2, source: "om" },
+} as unknown as Conditions;
+
+test("briefs: the thermal reading is named Cold when cold is the hazard, Heat otherwise", () => {
+  assert.equal(briefs(spiti, ambientRisk(spiti))[0].label, "Cold");
+  assert.equal(briefs(calm, ambientRisk(calm)).find((x) => x.key === "heat")!.label, "Heat");
+  assert.equal(briefs(hot, ambientRisk(hot))[0].label, "Heat");
+});
+
+test("the place page names the thermal row Cold when cold, in en, hi and kn", async () => {
+  const { readRows } = await import("../src/pages/read");
+  const label = (lang: "en" | "hi" | "kn", c: Conditions) =>
+    readRows(c, ambientRisk(c), lang).find((r) => r.key === "heat")!.label;
+  assert.equal(label("en", spiti), "Cold");
+  assert.equal(label("hi", spiti), "ठंड");
+  assert.equal(label("kn", spiti), "ಚಳಿ");
+  assert.equal(label("en", calm), "Heat");
+  assert.equal(label("hi", calm), "गर्मी");
+});
+
+test("markdown: the order line says cold, not heat, when cold is the hazard", async () => {
+  const { renderConditionsMarkdown } = await import("../src/conditions");
+  const md = renderConditionsMarkdown(spiti);
+  assert.match(md, /In order of risk: cold -1°, air AQI 30\./);
+  assert.doesNotMatch(md, /heat -1°/);
+});
