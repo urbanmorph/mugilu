@@ -5,7 +5,7 @@ import { type NationalHighlights } from "../highlights";
 import { esc } from "../html";
 import { coordKey, langPrefixJs, placeHref } from "../links";
 import { START_CITIES } from "../slugs";
-import { langAttr, lp, t, type Lang } from "../i18n";
+import { langAttr, lp, t, tHtml, type Lang } from "../i18n";
 import { HAZARDS_SHORT, SITE_DESC } from "../hazards";
 import { AQI_BAND_LABEL } from "../aqi";
 import type { RiskBand } from "../score";
@@ -145,15 +145,15 @@ function cyclonePlate(c: ReturnType<typeof officialCyclone>, lang: Lang): string
 /** Your places: recents and favourites from this browser (first-party, no login), as .yp rows. */
 const yourPlacesJs = (lang: Lang) => {
   const S = (s: string) => JSON.stringify(t(s, lang));
-  return `(function(){${PLACES_STORE_JS}var yp=document.getElementById('yp');if(!yp)return;var ul=yp.querySelector('ul.yp'),LP=${langPrefixJs(lang)},FAV=${S("Favourite X")},REN=${S("Rename X")},DEL=${S("Remove X")},NAME=${S("Type a name for this place (for example, Home or Office)")};
+  return `(function(){${PLACES_STORE_JS}var yp=document.getElementById('yp');if(!yp)return;var ul=yp.querySelector('ul.yp'),LP=${langPrefixJs(lang)},FAV=${S("Favourite {place}")},REN=${S("Rename {place}")},DEL=${S("Remove {place}")},NAME=${S("Type a name for this place (for example, Home or Office)")};
 ${CLIENT_ESC}
 function pf(u){pf.s=pf.s||{};if(pf.s[u])return;pf.s[u]=1;var l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l);}
 function nm(p){return p.name||p.label||(p.lat+', '+p.lon);}
-function lab(s,p){return esc(s.replace('X',nm(p)));}
+function lab(s,p){return esc(s.replace('{place}',nm(p)));}
 function render(){var L=PS.ord(PS.load());if(!L.length){yp.hidden=true;return;}yp.hidden=false;
 ul.innerHTML=L.map(function(p){return '<li data-id="'+esc(p.id)+'"><button type="button" data-a="fav" aria-pressed="'+(p.fav?'true':'false')+'" title="Favourite" aria-label="'+lab(FAV,p)+'">'+(p.fav?'\\u2605':'\\u2606')+'</button><a href="'+LP+'/c/'+esc(p.lat)+','+esc(p.lon)+'">'+esc(nm(p))+'</a><button type="button" data-a="ren" title="Rename" aria-label="'+lab(REN,p)+'">\\u270e</button><button type="button" data-a="del" title="Remove" aria-label="'+lab(DEL,p)+'">\\u00d7</button></li>';}).join('');
 L.slice(0,4).forEach(function(p){pf(LP+'/c/'+p.lat+','+p.lon);});
-if(L[0]&&!render.sr){render.sr=1;try{var sr=document.createElement('script');sr.type='speculationrules';sr.textContent=JSON.stringify({prerender:[{source:'list',urls:[LP+'/c/'+L[0].lat+','+L[0].lon]}]});document.head.appendChild(sr);}catch(e){}}}
+}
 ul.addEventListener('click',function(e){var b=e.target.closest('button[data-a]');if(!b)return;var id=b.closest('li').getAttribute('data-id'),a=b.getAttribute('data-a');var L=PS.load(),p=L.filter(function(x){return x.id===id})[0];if(!p)return;
 if(a==='fav')p.fav=!p.fav;else if(a==='ren'){var n=prompt(NAME,p.name||p.label||'');if(n===null)return;p.name=(n.trim()||undefined);}else if(a==='del')L=L.filter(function(x){return x.id!==id;});PS.save(L);render();});
 render();})();`;
@@ -192,7 +192,10 @@ export function renderHome(
       ? `Type the name of a place in India, in any language ${examples}. You then see <b>its sky</b>: air, heat, rain and dust.`
       : `${T("Type the name of a place in India, in any language")} ${examples}. ${T("You then see its sky: air, heat, rain and dust.")}`;
   const missing = notFound
-    ? notice("err", T('No place found for "X". Type the name of a city or a place.').replace("X", esc(notFound)))
+    ? notice(
+        "err",
+        tHtml('No place found for "{query}". Type the name of a city or a place.', lang, { query: esc(notFound) }),
+      )
     : "";
   const official = officialCyclone(meta?.warnings);
 
@@ -263,11 +266,14 @@ export function renderHome(
     ogImage: HOME_OG,
     lang,
     live: true,
-    js:
-      comboboxJs("q", lang) +
-      MAP_JS(lang) +
-      `function goHere(a,o){location.href=${JSON.stringify(lp("/c/", lang))}+a+","+o;}` +
-      locateJs("nearme", lang, "goHere") +
-      yourPlacesJs(lang),
+    script: { key: "home", js: homeJs(lang) },
   });
 }
+
+/** The home page's own script: search, the map, "near me" and your places. */
+export const homeJs = (lang: Lang) =>
+  comboboxJs("q", lang) +
+  MAP_JS(lang) +
+  `function goHere(a,o){location.href=${JSON.stringify(lp("/c/", lang))}+a+","+o;}` +
+  locateJs("nearme", lang, "goHere") +
+  yourPlacesJs(lang);

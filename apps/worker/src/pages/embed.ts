@@ -47,7 +47,7 @@ export function renderEmbed(c: Conditions, persona: Persona, siteUrl: string, la
       // A persona's own step follows the meaning ("Asthma: do not exercise hard outdoors.").
       say: say.action ? `${say.meaning} ${say.action}` : say.meaning,
       reads: cardReads(c, risk, lang),
-      asOf: esc(t("as of X", lang).replace("X", istTime(c.as_of))),
+      asOf: esc(t("as of {time}", lang, { time: istTime(c.as_of) })),
     },
     lang,
   );

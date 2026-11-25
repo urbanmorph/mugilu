@@ -4,7 +4,7 @@ import { placeLabel } from "./readings";
 import { localName, placeBySlug, slugForName } from "./slugs";
 import type { Conditions } from "./types";
 import { periodText } from "./heatnormals";
-import { t, type Lang } from "./i18n";
+import { put, t, type Lang, type Slots } from "./i18n";
 import { istClock, istDay } from "./ist";
 import { HISTORY_FROM, warnedDays, type Colour, type PastAlert } from "./warnhistory";
 import { issuerName, warningLabel } from "./pages/warnings";
@@ -383,15 +383,7 @@ const COLOUR_WORD: Record<Colour, ByLang> = {
 
 // ── Filling ─────────────────────────────────────────────────────────────────────────
 type Id = keyof typeof PHRASES;
-type Slots = Record<string, string | number>;
 
-function put(s: string, v: Slots): string {
-  const out = s.replace(/\{(\w+)\}/g, (_, k: string) => {
-    if (!(k in v)) throw new Error(`phrases: no value for {${k}}`);
-    return String(v[k]);
-  });
-  return out;
-}
 export const say = (id: Id, lang: Lang, v: Slots = {}) => put(PHRASES[id][lang], v);
 
 /** Digits as the page shows them: one decimal at most, none when whole. */

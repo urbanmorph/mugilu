@@ -93,7 +93,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     .map(
       (w) =>
         `<li class="t-lead">${ico(warningIcon(w, lang))}<span><b>${esc(warningTitle(w, lang))}</b>${
-          w.until ? ` · ${esc(t("until X", lang).replace("X", w.until))}` : ""
+          w.until ? ` · ${esc(t("until {time}", lang, { time: w.until }))}` : ""
         } · ${esc(w.issuer)}</span></li>`,
     )
     .join("");
@@ -114,7 +114,7 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     `${qrBlock(qrTarget, t("scan to see this on your phone", lang))}</footer>` +
     `<div class="kveil" aria-hidden="true"><p class="t-title">${esc(t(KIOSK_VERBS[0], lang))}…</p></div></div>`;
 
-  return pageShell(`${t("{place} on a screen", lang).replace("{place}", placeName)}: mugilu`, body, {
+  return pageShell(`${t("{place} on a screen", lang, { place: placeName })}: mugilu`, body, {
     path: `/c/${slug}`,
     desc: t("{place}: a live wall-display of the whole sky over this spot, self-refreshing.", lang).replace(
       "{place}",
@@ -126,6 +126,6 @@ export function renderKioskPage(c: Conditions, persona: Persona, canonical: stri
     noBeacon: true,
     lang,
     variant: "kiosk",
-    js: kioskJs(lang),
+    script: { key: "kiosk", js: kioskJs(lang) },
   });
 }

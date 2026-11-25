@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderHome } from "../src/pages/home";
 import type { WarningsSnapshot } from "../src/sachet";
+import { withScript } from "./helpers/script";
 
 test("renderHome: a valid HTML doc on the signage shell, with a search form to /go", () => {
   const html = renderHome();
@@ -75,7 +76,7 @@ test("renderHome: the worst-air row names the monitor before its city", () => {
 });
 
 test("renderHome: the search is a combobox wired to /suggest, with the live help and placeholder", () => {
-  const html = renderHome();
+  const html = withScript(renderHome());
   assert.match(html, /<input type="search" name="q" id="q" role="combobox"/);
   assert.match(html, /aria-controls="q-list"/);
   assert.match(html, /placeholder="A place in India, or lat,lon"/);
@@ -88,7 +89,7 @@ test("renderHome: the search is a combobox wired to /suggest, with the live help
 });
 
 test("renderHome: near-me is progressive enhancement and resets on bfcache restore", () => {
-  const html = renderHome();
+  const html = withScript(renderHome());
   assert.match(html, /<button type="button" class="btn" id="nearme" hidden>/);
   assert.match(html, /geolocation/);
   assert.match(html, /pageshow/);
@@ -104,14 +105,13 @@ test("renderHome: schema.org WebSite + SearchAction JSON-LD, and the share card"
 });
 
 test("renderHome: Your places is a panel the script fills from this browser, with named buttons", () => {
-  const html = renderHome();
+  const html = withScript(renderHome());
   assert.match(html, /<section class="panel" id="yp" hidden/);
   assert.match(html, /mugilu:places/);
   assert.match(html, /rel='prefetch'/);
-  assert.match(html, /speculationrules/);
-  assert.match(html, /"Favourite X"/);
-  assert.match(html, /"Rename X"/);
-  assert.match(html, /"Remove X"/);
+  assert.match(html, /"Favourite {place}"/);
+  assert.match(html, /"Rename {place}"/);
+  assert.match(html, /"Remove {place}"/);
   const yp = html.slice(html.indexOf("var PS={K:'mugilu:places'"));
   assert.match(yp.slice(0, yp.indexOf("})();")), /function esc\(/);
 });
@@ -160,10 +160,10 @@ test("renderHome: no separate level key (the map box carries its own legend), th
 });
 
 test("renderHome: the location button and rename prompt speak the page's language", () => {
-  const kn = renderHome(undefined, undefined, undefined, "kn");
+  const kn = withScript(renderHome(undefined, undefined, undefined, "kn"));
   assert.match(kn, /ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ/);
   assert.doesNotMatch(kn, /Locating|Location unavailable|Name this place/);
-  assert.match(renderHome(), /"Finding your location…"/);
+  assert.match(withScript(renderHome()), /"Finding your location…"/);
 });
 
 test("home: the site and its publisher as entities, linked to where else they live (sameAs)", () => {

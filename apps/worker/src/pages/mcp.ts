@@ -72,7 +72,8 @@ export function renderMcpPage(lang: Lang = "en"): string {
     desc: t(
       "Connect Claude, Cursor or any MCP client to mugilu: live {hazards} for any place in India. No key, read only.",
       lang,
-    ).replace("{hazards}", t(HAZARDS_SHORT, lang)),
+      { hazards: t(HAZARDS_SHORT, lang) },
+    ),
     contentLang: "en",
     canonical: endpoint,
     jsonLd,

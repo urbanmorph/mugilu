@@ -197,8 +197,8 @@ interface Row extends PushTarget {
 export function alertMessage(w: Warning, row: Pick<Row, "label" | "lang" | "lat" | "lon">) {
   const lang = row.lang;
   const main = w.until
-    ? t("Official warning for X, until Y.", lang).replace("X", row.label).replace("Y", w.until)
-    : t("Official warning for X.", lang).replace("X", row.label);
+    ? t("Official warning for {place}, until {time}.", lang, { place: row.label, time: w.until })
+    : t("Official warning for {place}.", lang, { place: row.label });
   return {
     title: [w.event, w.severity].filter(Boolean).join(" · "),
     body: w.issuer ? `${main} ${w.issuer}` : main,

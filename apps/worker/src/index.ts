@@ -1,4 +1,4 @@
-import { securityHeaders } from "./security";
+import { cspReport, securityHeaders } from "./security";
 import { Timings } from "./timing";
 import { collectAirDaily } from "./airdaily";
 import { BORROW_MAX_KM, collectPlaceDaily, loadIndiaTrend, loadPlaceTrend, type PlaceTrend } from "./placedaily";
@@ -38,6 +38,7 @@ import { geocodeList } from "./geocode";
 import { INDEXNOW_KEY, INDEXNOW_PATH, runIndexNow } from "./indexnow";
 import { loadHistory, type PastAlert } from "./warnhistory";
 import { buildSuggestions } from "./suggest";
+import { scriptResponse, SPECULATION_PATH } from "./scripts";
 import { collectConditions } from "./collect";
 import { collectWarnings, inForce, renderWarningsMarkdown } from "./sachet";
 import { collectWarnAreas } from "./warnareas";
@@ -332,7 +333,7 @@ const app = {
       return new Response(INDEXNOW_KEY, { headers: { "content-type": "text/plain; charset=utf-8" } });
 
     if (url.pathname.startsWith("/assets/")) {
-      const asset = assetResponse(url.pathname);
+      const asset = assetResponse(url.pathname) ?? scriptResponse(url.pathname);
       if (asset) return asset;
     }
     if (url.pathname === "/favicon.svg" || url.pathname === "/favicon.ico") return faviconSvg();
@@ -381,6 +382,7 @@ const app = {
           ),
           HTML,
         );
+        res.headers.set("speculation-rules", `"${SPECULATION_PATH}"`);
         // A missing grid or air snapshot leaves the hero partial, and a map composed here
         // (none stored yet) is slow: served, not stored.
         return { res, store: hl.complete && stored };
@@ -996,6 +998,7 @@ const app = {
 export default {
   ...app,
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    if (new URL(req.url).pathname === "/csp-report") return securityHeaders(req, await cspReport(req));
     return securityHeaders(req, await app.fetch(req, env, ctx));
   },
 };

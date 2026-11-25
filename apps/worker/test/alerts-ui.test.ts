@@ -7,6 +7,7 @@ import { alertsBox } from "../src/ui/components";
 import { renderConditionsPage } from "../src/pages/place";
 import { renderTerms } from "../src/pages/terms";
 import type { Conditions } from "../src/types";
+import { withScript } from "./helpers/script";
 
 const KEY = "BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8";
 const IDS = [
@@ -219,9 +220,9 @@ test("a place's page carries the box, hidden until the script decides, with the 
   assert.match(box, /data-lang="en"/);
   assert.match(box, /approximately 1 km/);
   for (const id of IDS) assert.ok(box.includes(`id="${id}"`), id);
-  const on = renderConditionsPage(C, "everyone", "https://mugilu.live/c/14.91,79.99", "en", KEY);
+  const on = withScript(renderConditionsPage(C, "everyone", "https://mugilu.live/c/14.91,79.99", "en", KEY));
   assert.ok(on.includes(box) && on.includes(ALERTS_JS));
-  const off = renderConditionsPage(C, "everyone", "https://mugilu.live/c/14.91,79.99", "en");
+  const off = withScript(renderConditionsPage(C, "everyone", "https://mugilu.live/c/14.91,79.99", "en"));
   assert.ok(!off.includes('id="alerts"'));
 });
 

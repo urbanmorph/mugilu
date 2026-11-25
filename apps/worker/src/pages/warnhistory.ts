@@ -24,7 +24,7 @@ const COLOUR_LEVEL: Record<Colour, RiskBand> = { green: "low", yellow: "moderate
  *  its words as issued, then when, until when and which office. */
 export const pastAlertItem = (a: PastAlert, lang: Lang): string => {
   const lv = COLOUR_LEVEL[a.colour];
-  const meta = [istTime(a.from), a.until && t("until X", lang).replace("X", istTime(a.until)), a.office]
+  const meta = [istTime(a.from), a.until && t("until {time}", lang, { time: istTime(a.until) }), a.office]
     .filter(Boolean)
     .map(esc)
     .join(" · ");

@@ -84,38 +84,38 @@ export function renderAbout(lang: Lang = "en"): string {
           t(
             "connect Claude, Cursor or any MCP client to {mcp}; setup and the tools are on that page. Listed in {llms}.",
             lang,
-          )
-            .replace("{mcp}", `<a href="/mcp">/mcp</a>`)
-            .replace("{llms}", `<a href="/llms.txt">llms.txt</a>`),
+            { mcp: `<a href="/mcp">/mcp</a>`, llms: `<a href="/llms.txt">llms.txt</a>` },
+          ),
         ),
         "ai",
       ),
       cardBody(
         t("For developers", lang),
         P(
-          t("a documented {openapi}, and every reading as {json} or {md}.", lang)
-            .replace("{openapi}", `<a href="/openapi.json">${openapi}</a>`)
-            .replace("{json}", `<a href="/c/12.97,77.59.json">JSON</a>`)
-            .replace("{md}", `<a href="/c/12.97,77.59.md">Markdown</a>`),
+          t("a documented {openapi}, and every reading as {json} or {md}.", lang, {
+            openapi: `<a href="/openapi.json">${openapi}</a>`,
+            json: `<a href="/c/12.97,77.59.json">JSON</a>`,
+            md: `<a href="/c/12.97,77.59.md">Markdown</a>`,
+          }),
         ),
         "code",
       ),
       cardBody(
         t("Embed it", lang),
         P(
-          t("a live card in one line of HTML ({embed}), or a {png}.", lang)
-            .replace("{embed}", `<a href="/embed/12.97,77.59"><code>/embed/{lat},{lon}</code></a>`)
-            .replace("{png}", `<a href="/c/12.97,77.59.png">${snapshot}</a>`),
+          t("a live card in one line of HTML ({embed}), or a {png}.", lang, {
+            embed: `<a href="/embed/12.97,77.59"><code>/embed/{lat},{lon}</code></a>`,
+            png: `<a href="/c/12.97,77.59.png">${snapshot}</a>`,
+          }),
         ),
         "embed",
       ),
       cardBody(
         t("Put it on a screen", lang),
         P(
-          t(
-            "a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.",
-            lang,
-          ).replace("{display}", `<a href="/display">/display</a>`),
+          t("a self-refreshing wall display or kiosk for a clinic, school or lobby, set up at {display}.", lang, {
+            display: `<a href="/display">/display</a>`,
+          }),
         ),
         "screen",
       ),

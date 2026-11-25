@@ -11,6 +11,7 @@ import { buildGazIndex, type GazRow } from "../src/gazetteer";
 import type { Conditions, NormalizedStation } from "../src/types";
 import type { WarningsSnapshot } from "../src/sachet";
 import { withCss } from "./helpers/css";
+import { withScript } from "./helpers/script";
 
 const c = (o: Partial<Conditions> = {}) =>
   ({
@@ -155,7 +156,7 @@ test("7. the embed card carries the brand mark beside the place", () => {
 });
 
 test("8. the display setup page previews a live display and suggests places as you type", () => {
-  const html = renderDisplayBuilder("elderly");
+  const html = withScript(renderDisplayBuilder("elderly"));
   assert.match(html, /<iframe[^>]+src="\/c\/bengaluru\?kiosk&amp;as=elderly"[^>]+tabindex="-1"/);
   assert.match(html, /<ul class="ac" role="listbox" id="dq-list"/);
   assert.match(html, /fetch\('\/suggest\?q='/);

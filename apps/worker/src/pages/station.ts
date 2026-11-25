@@ -4,7 +4,7 @@ import { providerName } from "../sources";
 import { pollutantParts } from "../formats";
 import { esc } from "../html";
 import { RISK_BANDS, airLevelOf } from "../score";
-import { lp, t, type Lang } from "../i18n";
+import { lp, t, tHtml, type Lang } from "../i18n";
 import { SITE, ld, relTime } from "../ui/shell";
 import { HOME_OG } from "../og-html";
 import { pageShell } from "../ui/page-shell";
@@ -88,17 +88,18 @@ export function renderStationPage(
   const provider = providerName(s.provider);
   const where = [s.city, s.state].filter(Boolean).join(", ");
   const tail = `${where ? `${where} · ` : ""}${t("air quality station", lang)} · mugilu`;
-  const fill = (x: string) =>
-    x
-      .replace("{place}", s.name)
-      .replace("{station}", s.name)
-      .replace("{city}", s.city || s.name)
-      .replace("{aqi}", String(s.aqi))
-      .replace("{band}", bandWord)
-      .replace("{provider}", provider);
-  const title = live ? `${fill(t("{place} AQI today: {aqi} {band}", lang))} · ${tail}` : `${s.name} · ${tail}`;
+  // Every slot a station sentence can have; each sentence takes the ones it names.
+  const slots = {
+    place: s.name,
+    station: s.name,
+    city: s.city || s.name,
+    aqi: String(s.aqi),
+    band: bandWord,
+    provider,
+  };
+  const title = live ? `${t("{place} AQI today: {aqi} {band}", lang, slots)} · ${tail}` : `${s.name} · ${tail}`;
   const desc = live
-    ? fill(t("{station} ({city}) AQI {aqi} ({band}) right now, measured by {provider}.", lang))
+    ? t("{station} ({city}) AQI {aqi} ({band}) right now, measured by {provider}.", lang, slots)
     : `${s.name}${where ? ` (${where})` : ""}: ${t("air quality station", lang)}, ${provider}.`;
   const when = s.ts ? relTime(s.ts) : "n/a";
 
@@ -111,10 +112,7 @@ export function renderStationPage(
           fill: live ? `b-${s.band}` : "nolevel",
           shape: live ? BAND_SHAPE[s.band] : undefined,
           word: `<p class="big"><span class="t-plate">${s.aqi}</span><span class="t-value">AQI · ${esc(bandWord)}</span></p>`,
-          say:
-            live && lead
-              ? esc(t("Prominent pollutant: {pollutant}", lang).replace("{pollutant}", lead.label))
-              : undefined,
+          say: live && lead ? esc(t("Prominent pollutant: {pollutant}", lang, { pollutant: lead.label })) : undefined,
           label: aqiText,
           inline: true,
         })
@@ -125,10 +123,10 @@ export function renderStationPage(
       extra: `<p class="t-meta">${esc(where || "India")} · ${esc(provider)}</p>`,
     }) +
       (live
-        ? stamp(fill(t("Measured by {provider}.", lang)), when, { plain: true })
+        ? stamp(t("Measured by {provider}.", lang, slots), when, { plain: true })
         : notice(
             "stale",
-            esc(t("No recent reading from this station. Last reading: X", lang)).replace("X", when),
+            tHtml("No recent reading from this station. Last reading: {time}", lang, { time: when }),
             "clock",
           )),
   );

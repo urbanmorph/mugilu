@@ -11,7 +11,6 @@ import { pageShell } from "../ui/page-shell";
 import type { IndiaMap } from "../indiamap";
 import { allSlugPlaces, localName, type SlugPlace } from "../slugs";
 import { hubOf, officeStates, stateName, type State } from "../states";
-import { fill } from "../ui/history";
 import { DESCRIPTION_MAX } from "../phrases";
 import { alertPlaces } from "./places";
 import {
@@ -87,7 +86,7 @@ export function warningType(headline: string): string {
 // Applies the filters: a warning stays when its kind and office are ticked and it holds the
 // search text; an office's list hides when none of its warnings show. On wide screens the
 // filters start open.
-const WARNINGS_JS = `(function(){var f=document.getElementById('wfilter');if(!f)return;if(matchMedia(${JSON.stringify(DESKTOP)}).matches)f.open=true;
+export const WARNINGS_JS = `(function(){var f=document.getElementById('wfilter');if(!f)return;if(matchMedia(${JSON.stringify(DESKTOP)}).matches)f.open=true;
 ${LIST_FILTER_JS}
 var q=document.getElementById('wq');function on(n){return [].slice.call(f.querySelectorAll('input[name='+n+']:checked')).map(function(i){return i.value})}
 function go(){var ty=on('type'),of=on('issuer'),s=(q.value||'').trim().toLowerCase();
@@ -103,7 +102,7 @@ const when = (a: Alert) => Date.parse(a.sent) || 0;
 export function alertParts(a: Alert, lang: Lang): { office: string; time: string; cap: string } {
   const office = issuerName(a.issuer || "");
   const time = istTime(a.sent);
-  const label = t("Original alert (CAP): {issuer}, {time}", lang).replace("{issuer}", office).replace("{time}", time);
+  const label = t("Original alert (CAP): {issuer}, {time}", lang, { issuer: office, time });
   const cap = isHttpUrl(a.link) ? `<a href="${esc(a.link)}" rel="noopener" aria-label="${esc(label)}">CAP</a>` : "";
   return { office, time, cap };
 }
@@ -122,8 +121,8 @@ function warnedByState(under: Set<string>): [state: string, places: SlugPlace[]]
 /** "The warnings in force now cover 12 places in 3 states." */
 function coverLine(places: number, states: number, lang: Lang): string {
   if (places === 1) return t("The warnings in force now cover 1 place in 1 state.", lang);
-  if (states === 1) return fill("The warnings in force now cover {p} places in 1 state.", lang, { p: places });
-  return fill("The warnings in force now cover {p} places in {s} states.", lang, { p: places, s: states });
+  if (states === 1) return t("The warnings in force now cover {p} places in 1 state.", lang, { p: places });
+  return t("The warnings in force now cover {p} places in {s} states.", lang, { p: places, s: states });
 }
 
 // IMD's colour code, as IMD words it. Text of the page's own that stays true between events.
@@ -184,7 +183,7 @@ export function renderWarningsPage(
     .map((a) => {
       const { office, time, cap } = alertParts(a, lang);
       const [type, label, , icon] = typeOf(a.headline || "");
-      const until = a.expires && t("until X", lang).replace("X", istTime(a.expires));
+      const until = a.expires && t("until {time}", lang, { time: istTime(a.expires) });
       const meta = [time && esc(time), until && esc(until), cap].filter(Boolean).join(" · ");
       return { a, office, type, label, icon, meta };
     });
@@ -273,23 +272,23 @@ export function renderWarningsPage(
     ? [
         st
           ? alerts.length === 1
-            ? fill("1 official NDMA / IMD alert for {state} now.", lang, { state: sn! })
-            : fill("{n} official NDMA / IMD alerts for {state} now.", lang, { n: alerts.length, state: sn! })
-          : t("The latest {n} official NDMA / IMD alerts across India.", lang).replace("{n}", String(alerts.length)),
+            ? t("1 official NDMA / IMD alert for {state} now.", lang, { state: sn! })
+            : t("{n} official NDMA / IMD alerts for {state} now.", lang, { n: alerts.length, state: sn! })
+          : t("The latest {n} official NDMA / IMD alerts across India.", lang, { n: alerts.length }),
         !byState.length
           ? ""
           : st
             ? nPlaces === 1
               ? t("1 place under an official warning.", lang)
-              : fill("{n} places under an official warning.", lang, { n: nPlaces })
+              : t("{n} places under an official warning.", lang, { n: nPlaces })
             : coverLine(nPlaces, byState.length, lang),
-        fill("Most common type: {kind}.", lang, {
+        t("Most common type: {kind}.", lang, {
           kind: t([...WARNING_TYPES, OTHER].find(([k]) => k === top[0])![1], lang),
         }),
       ].filter(Boolean)
     : [];
   const india = t("Official weather warnings across India now", lang);
-  const heading = st ? fill("Official weather warnings in {state} now", lang, { state: sn! }) : india;
+  const heading = st ? t("Official weather warnings in {state} now", lang, { state: sn! }) : india;
   const head = pageHead(heading, {
     extra:
       (summary.length ? `<p class="t-lead">${esc(summary.join(" "))}</p>` : "") +
@@ -331,7 +330,7 @@ export function renderWarningsPage(
             notice(
               "empty",
               st
-                ? esc(fill("No official warning covers a place in {state} now.", lang, { state: sn! }))
+                ? esc(t("No official warning covers a place in {state} now.", lang, { state: sn! }))
                 : T("No active national alerts right now."),
               "list",
             ),
@@ -354,7 +353,7 @@ export function renderWarningsPage(
   const desc =
     [summary.join(" "), summary.slice(0, 2).join(" ")].find((d) => d && d.length <= DESCRIPTION_MAX) ??
     (st
-      ? fill("Official NDMA / IMD weather warnings for {state} now, mirrored from the SACHET feed.", lang, {
+      ? t("Official NDMA / IMD weather warnings for {state} now, mirrored from the SACHET feed.", lang, {
           state: sn!,
         })
       : t(
@@ -370,7 +369,7 @@ export function renderWarningsPage(
       {
         "@type": "Dataset",
         name: st
-          ? fill("Active official warnings in {state}", lang, { state: sn! })
+          ? t("Active official warnings in {state}", lang, { state: sn! })
           : t("Active official warnings in India", lang),
         description: desc,
         url,
@@ -397,7 +396,7 @@ export function renderWarningsPage(
     ],
   });
   const title = st
-    ? fill("{state} weather warnings today: IMD and state alerts", lang, { state: sn! })
+    ? t("{state} weather warnings today: IMD and state alerts", lang, { state: sn! })
     : t("Weather warnings in India today: IMD and NDMA alerts by state", lang);
   return pageShell(`${title} | mugilu`, body, {
     path,
@@ -408,6 +407,6 @@ export function renderWarningsPage(
     lang,
     // Any official warning active washes the page in the warning hue at high; none, no wash.
     tint: alerts.length ? { hue: "Warning", level: "high" } : undefined,
-    js: alerts.length ? WARNINGS_JS : "",
+    script: alerts.length ? { key: "warnings", js: WARNINGS_JS } : undefined,
   });
 }

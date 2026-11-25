@@ -11,7 +11,6 @@ import type { WarningsSnapshot } from "../sachet";
 import type { ConditionsSnapshot, NormalizedStation } from "../types";
 import { breadcrumb, ld, SITE } from "../ui/shell";
 import { pageShell } from "../ui/page-shell";
-import { fill } from "../ui/history";
 import {
   band,
   dataTable,
@@ -90,7 +89,7 @@ export function stateNow(
   };
 }
 
-const plural = (n: number, one: string, many: string, lang: Lang) => (n === 1 ? t(one, lang) : fill(many, lang, { n }));
+const plural = (n: number, one: string, many: string, lang: Lang) => (n === 1 ? t(one, lang) : t(many, lang, { n }));
 
 /** The state in a few lines: worst air, hottest, coldest, rain, warnings. */
 function summary(s: StateNow, lang: Lang): string[] {
@@ -99,16 +98,15 @@ function summary(s: StateNow, lang: Lang): string[] {
   const a = s.air[0];
   if (a)
     lines.push(
-      fill("Worst air now: {place}, AQI {aqi} ({band}).", lang, {
+      t("Worst air now: {place}, AQI {aqi} ({band}).", lang, {
         place: name(a.p),
         aqi: a.aqi,
         band: t(AQI_BAND_LABEL[a.band], lang),
       }),
     );
-  if (s.hot[0])
-    lines.push(fill("Feels hottest: {place}, {c}°C.", lang, { place: name(s.hot[0].p), c: s.hot[0].feels }));
+  if (s.hot[0]) lines.push(t("Feels hottest: {place}, {c}°C.", lang, { place: name(s.hot[0].p), c: s.hot[0].feels }));
   if (s.cold[0] && s.cold[0].p !== s.hot[0]?.p)
-    lines.push(fill("Feels coldest: {place}, {c}°C.", lang, { place: name(s.cold[0].p), c: s.cold[0].feels }));
+    lines.push(t("Feels coldest: {place}, {c}°C.", lang, { place: name(s.cold[0].p), c: s.cold[0].feels }));
   lines.push(
     s.rain.length
       ? plural(s.rain.length, "Rain now in 1 place.", "Rain now in {n} places.", lang)
@@ -132,7 +130,7 @@ export function renderStatePage(st: State, s: StateNow, lang: Lang = "en"): stri
   const cols = [{ label: t("Place", lang) }, { label: t("Now", lang), num: true }];
   const lines = summary(s, lang);
 
-  const head = pageHead(fill("{state} now: air, heat, rain and official warnings", lang, { state: sn }), {
+  const head = pageHead(t("{state} now: air, heat, rain and official warnings", lang, { state: sn }), {
     extra:
       `<p class="t-lead">${esc(lines.join(" "))}</p>` +
       stamps(
@@ -149,7 +147,7 @@ export function renderStatePage(st: State, s: StateNow, lang: Lang = "en"): stri
           s.air.map((r) => [link(r.p), esc(`AQI ${r.aqi} ${t(AQI_BAND_LABEL[r.band], lang)}`)]),
           t("Worst air now", lang),
         )
-      : `<p>${esc(fill("No air station is within {km} km of a place here.", lang, { km: STATION_MAX_KM }))}</p>`,
+      : `<p>${esc(t("No air station is within {km} km of a place here.", lang, { km: STATION_MAX_KM }))}</p>`,
     { title: t("Worst air now", lang), icon: "air", id: "air" },
   );
   const tempPanel = (key: "hot" | "cold", title: string) =>
@@ -173,18 +171,18 @@ export function renderStatePage(st: State, s: StateNow, lang: Lang = "en"): stri
       (s.warned.length
         ? tiles(s.warned, true)
         : `<p>${esc(t("No official warning covers a place here now.", lang))}</p>`) +
-        `<p><a href="${lp(`/state/${st.slug}/warnings`, lang)}">${esc(fill("Official weather warnings in {state} now", lang, { state: sn }))} →</a></p>`,
+        `<p><a href="${lp(`/state/${st.slug}/warnings`, lang)}">${esc(t("Official weather warnings in {state} now", lang, { state: sn }))} →</a></p>`,
     ),
     { title: t("Under an official warning now", lang), icon: "warn", id: "warn", strong: s.warned.length > 0 },
   );
   const allPanel = panel(tiles(st.places), {
-    title: fill("Every place in {state}", lang, { state: sn }),
+    title: t("Every place in {state}", lang, { state: sn }),
     icon: "pin",
     id: "all",
     count: st.places.length,
   });
   const method = `<p class="t-meta">${esc(
-    fill(
+    t(
       "Air: each place's nearest air station within {km} km, as on its own page. Weather: the model at each district's centre.",
       lang,
       { km: STATION_MAX_KM },
@@ -214,7 +212,7 @@ export function renderStatePage(st: State, s: StateNow, lang: Lang = "en"): stri
   const desc = [lines.join(" "), lines.slice(0, 3).join(" "), lines.slice(0, 2).join(" ")].find(
     (x) => x.length <= DESCRIPTION_MAX,
   );
-  return pageShell(`${fill("{state} air quality, weather and warnings now", lang, { state: sn })} | mugilu`, body, {
+  return pageShell(`${t("{state} air quality, weather and warnings now", lang, { state: sn })} | mugilu`, body, {
     path,
     lang,
     desc: desc ?? lines[0],

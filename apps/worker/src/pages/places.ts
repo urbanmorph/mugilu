@@ -2,7 +2,6 @@ import { MOBILE } from "../ui/standard";
 import { esc } from "../html";
 import { allSlugPlaces, localName, slugPlacesByState } from "../slugs";
 import { hubOf, stateName } from "../states";
-import { fill } from "../ui/history";
 import { lp, quoted, t, type Lang } from "../i18n";
 import { HAZARDS, HAZARDS_SHORT } from "../hazards";
 import { activeWarnings, px, py, type IndiaMap, type MapWarning } from "../indiamap";
@@ -85,6 +84,9 @@ export function alertPlaces(
 // The page's behaviour: find a place (filters the lists), the state picker and the map's state
 // click (open that state's list and go to it), and on phones the lists start folded except a
 // state with a warned place.
+/** The places page's own script: the filter and the map. */
+export const placesJs = (lang: Lang) => PLACES_JS + MAP_JS(lang);
+
 const PLACES_JS = `(function(){var q=document.getElementById('pq'),sel=document.getElementById('ps'),F=document.querySelectorAll('.flow details.fold');
 window.openState=function(id){var d=document.getElementById(id);if(!d)return;d.hidden=false;d.open=true;d.scrollIntoView({block:'start'});var s=d.querySelector('summary');if(s)s.focus({preventScroll:true});};
 if(sel)sel.addEventListener('change',function(){if(sel.value)openState(sel.value);});
@@ -160,7 +162,7 @@ export function renderPlaces(
           ? linkRow([
               [
                 lp(`/state/${hubOf(g.state)!.slug}`, lang),
-                `${fill("{state} now", lang, { state: stateName(g.state, lang) })} →`,
+                `${t("{state} now", lang, { state: stateName(g.state, lang) })} →`,
               ],
             ])
           : "") +
@@ -196,7 +198,7 @@ export function renderPlaces(
       jsonLd: crumb,
       ogImage: HOME_OG,
       lang,
-      js: PLACES_JS + MAP_JS(lang),
+      script: { key: "places", js: placesJs(lang) },
     },
   );
 }

@@ -5,6 +5,7 @@ import { renderDisplayBuilder } from "../src/pages/display";
 import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions } from "../src/types";
 import { kioskJs } from "../src/pages/kiosk";
+import { withScript } from "./helpers/script";
 
 function conditions(overrides: Partial<Conditions> = {}): Conditions {
   return {
@@ -30,7 +31,7 @@ function conditions(overrides: Partial<Conditions> = {}): Conditions {
 }
 
 test("renderKioskPage: full-bleed display with the QR, self-refresh and wake lock", () => {
-  const html = renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi");
+  const html = withScript(renderKioskPage(conditions(), "everyone", "https://mugilu.live/c/delhi"));
   assert.match(html, /^<!doctype html>/i);
   assert.match(html, /Delhi, Delhi/); // place
   assert.match(html, /Ambient/); // the headline read
@@ -145,7 +146,7 @@ test("renderKioskPage: a calm day still fills four tiles, and a persona gets the
 // A display can be any place: a city, a neighbourhood, an exact point, or wherever the
 // screen stands. /display says so, and every place page offers its own display.
 test("renderDisplayBuilder: any place, not only cities, and a button for where the screen is", () => {
-  const html = renderDisplayBuilder("everyone");
+  const html = withScript(renderDisplayBuilder("everyone"));
   assert.match(html, /placeholder="A city, area or address"/);
   assert.match(html, /A display can show a city, a neighbourhood or an exact point/);
   assert.match(

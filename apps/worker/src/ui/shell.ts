@@ -102,7 +102,7 @@ export function relTimeJs(lang: Lang): string {
   const relFn =
     lang === "en"
       ? `function r(ms){var m=Math.round(ms/6e4);if(m<1)return'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');var d=Math.round(h/24);return d+(d===1?' day ago':' days ago');}`
-      : `function r(ms){var m=Math.round(ms/6e4);if(m<1)return ${JSON.stringify(t("just now", lang))};if(m<60)return ${JSON.stringify(t("X min ago", lang))}.replace('X',m);var h=Math.round(m/60);if(h<24)return ${JSON.stringify(t("X hours ago", lang))}.replace('X',h);var d=Math.round(h/24);return ${JSON.stringify(t("X days ago", lang))}.replace('X',d);}`;
+      : `function r(ms){var m=Math.round(ms/6e4);if(m<1)return ${JSON.stringify(t("just now", lang))};if(m<60)return ${JSON.stringify(t("{n} min ago", lang))}.replace('{n}',m);var h=Math.round(m/60);if(h<24)return ${JSON.stringify(t("{n} hours ago", lang))}.replace('{n}',h);var d=Math.round(h/24);return ${JSON.stringify(t("{n} days ago", lang))}.replace('{n}',d);}`;
   // window.mgRel re-runs it: the screen display calls it on its interval and after a data swap.
   return `(function(){${relFn}window.mgRel=function(){var n=Date.now();document.querySelectorAll('time[data-rel][datetime]').forEach(function(t){var d=new Date(t.getAttribute('datetime')).getTime();if(!isNaN(d))t.textContent=r(n-d);});};mgRel();})();`;
 }

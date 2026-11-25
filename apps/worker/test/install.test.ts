@@ -11,6 +11,7 @@ import { renderAbout } from "../src/pages/about";
 import { renderConditionsPage } from "../src/pages/place";
 import type { Conditions } from "../src/types";
 import { withCss } from "./helpers/css";
+import { withScript } from "./helpers/script";
 
 // --- the client script, run against a fake browser -------------------------------
 
@@ -193,7 +194,7 @@ function cond(): Conditions {
 }
 
 test("pages: manifest + light/dark theme-color in the head; hidden install button + iOS guide + script", () => {
-  for (const html of [renderHome(), renderAbout()]) {
+  for (const html of [withScript(renderHome()), withScript(renderAbout())]) {
     assert.match(html, /<link rel="manifest" href="\/manifest\.webmanifest">/);
     assert.match(html, /<meta name="theme-color" media="\(prefers-color-scheme: light\)" content="#[0-9a-f]{6}">/);
     assert.match(html, /<meta name="theme-color" media="\(prefers-color-scheme: dark\)" content="#[0-9a-f]{6}">/);

@@ -15,7 +15,7 @@ import { breadcrumb, SITE, ld, relTime } from "../ui/shell";
 import { HOME_OG } from "../og-html";
 import { istDay, istTime } from "../ist";
 import { pageShell } from "../ui/page-shell";
-import { fill, historyPanel, nearestRecordLine, type Borrow } from "../ui/history";
+import { historyPanel, nearestRecordLine, type Borrow } from "../ui/history";
 import type { PlaceTrend } from "../placedaily";
 import { facts, type Fact } from "../facts";
 import {
@@ -86,9 +86,10 @@ function hero(c: Conditions, plate: string, who: string, answer: string, lang: L
     "quiet",
     esc(
       t(
-        "No connection. This is the last reading on this device, from X. The conditions and warnings can be different now.",
+        "No connection. This is the last reading on this device, from {time}. The conditions and warnings can be different now.",
         lang,
-      ).replace("X", istTime(c.air_as_of ?? c.as_of)),
+        { time: istTime(c.air_as_of ?? c.as_of) },
+      ),
     ),
     undefined,
     OFFLINE_NOTE_ID,
@@ -133,21 +134,21 @@ function nearbyPanel(canonical: string | undefined, lang: Lang): string {
   const hub = hubOf(placeBySlug(slug)?.state);
   if (hub)
     parts.push(
-      `<p><a href="${lp(`/state/${hub.slug}`, lang)}">${esc(fill("{state} now", lang, { state: stateName(hub.name, lang) }))} →</a></p>`,
+      `<p><a href="${lp(`/state/${hub.slug}`, lang)}">${esc(t("{state} now", lang, { state: stateName(hub.name, lang) }))} →</a></p>`,
     );
   const around = aroundLinks(slug);
   if (around && (around.wards || around.species)) {
     const links = [
       around.wards
-        ? `<a href="${esc(around.wards)}">${esc(t("Find your ward: {place} ward map", lang).replace("{place}", around.city))} (bharatlas)</a>`
+        ? `<a href="${esc(around.wards)}">${esc(t("Find your ward: {place} ward map", lang, { place: around.city }))} (bharatlas)</a>`
         : "",
       around.species
-        ? `<a href="${esc(around.species)}">${esc(t("Species of {state}", lang).replace("{state}", around.state))} (yellide)</a>`
+        ? `<a href="${esc(around.species)}">${esc(t("Species of {state}", lang, { state: around.state }))} (yellide)</a>`
         : "",
     ]
       .filter(Boolean)
       .join(" · ");
-    parts.push(`<p><b>${esc(t("Around {place}:", lang).replace("{place}", around.city))}</b> ${links}</p>`);
+    parts.push(`<p><b>${esc(t("Around {place}:", lang, { place: around.city }))}</b> ${links}</p>`);
   }
   return parts.length ? panel(stack(parts.join("")), { tag: "nav", label: t("Nearby places", lang) }) : "";
 }
@@ -304,8 +305,8 @@ export function renderConditionsPage(
         "@graph": [
           {
             "@type": "Dataset",
-            name: t("Sky conditions at {place}", lang).replace("{place}", placeName),
-            description: t(`The ${HAZARDS} at {place}, India, right now.`, lang).replace("{place}", placeName),
+            name: t("Sky conditions at {place}", lang, { place: placeName }),
+            description: t(`The ${HAZARDS} at {place}, India, right now.`, lang, { place: placeName }),
             inLanguage: lang,
             url: canonical,
             isAccessibleForFree: true,
@@ -348,6 +349,6 @@ export function renderConditionsPage(
     lang,
     noindex,
     tint: readTint(risk),
-    js: PLACE_RECORDER + (alertsKey ? ALERTS_JS : ""),
+    script: alertsKey ? { key: "place.alerts", js: PLACE_RECORDER + ALERTS_JS } : { key: "place", js: PLACE_RECORDER },
   });
 }

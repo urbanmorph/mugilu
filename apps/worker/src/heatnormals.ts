@@ -155,7 +155,7 @@ export function periodText(date: string, lang: Lang): string {
   const month = new Intl.DateTimeFormat(LOCALE[lang], { month: "long", timeZone: "UTC" }).format(
     Date.UTC(2001, +date.slice(5, 7) - 1, 15),
   );
-  return t(part, lang).replace("{month}", month);
+  return t(part, lang, { month });
 }
 
 const IST_DATE = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" });
@@ -180,10 +180,8 @@ export function heatVsNormalLine(h: HeatVsNormal, lang: Lang): string {
       ? "The high today is {t}°C. That is {d}°C above normal for {period}."
       : "The high today is {t}°C. That is {d}°C below normal for {period}.",
     lang,
-  )
-    .replace("{t}", String(h.today_max_c))
-    .replace("{d}", String(Math.abs(h.anomaly_c)))
-    .replace("{period}", periodText(h.date, lang));
+    { t: h.today_max_c, d: Math.abs(h.anomaly_c), period: periodText(h.date, lang) },
+  );
 }
 
 /** The label that rides with the line wherever it is shown: what both halves are. */

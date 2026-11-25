@@ -18,6 +18,7 @@ import type { WarningsSnapshot } from "../src/sachet";
 import { pt, st } from "./helpers/map-fixtures";
 import { FIXTURE_NOW, testWorker } from "./helpers/worker";
 import worker from "../src/index";
+import { withScript } from "./helpers/script";
 
 const NOW = Date.parse("2026-11-19T06:00:00Z");
 const area = (identifier: string, severity: string, rings: WarnArea["rings"], expires = "2026-11-19T18:00:00+05:30") =>
@@ -140,7 +141,7 @@ test("indiaMap: in Hindi and Kannada the Warnings layer has no English", () => {
 });
 
 test("MAP_JS: a click on a warned area opens the warnings", () => {
-  const html = renderHome(undefined, undefined, { map: withWarnings([VIZAG]) });
+  const html = withScript(renderHome(undefined, undefined, { map: withWarnings([VIZAG]) }));
   assert.match(html, /closest\('\.mwarn'\)\)\{location\.href=LP\+'\/warnings'/);
   assert.match(html, /data-layers/);
 });
