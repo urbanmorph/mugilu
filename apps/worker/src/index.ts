@@ -618,7 +618,7 @@ const app = {
         return cachedResponse(
           // Plus the page's own sentences (`text`), in the request's language (/hi/c/….json).
           JSON.stringify(
-            { ...serializeConditionsV1(conditions, persona), text: conditionsText(conditions, lang) },
+            { ...serializeConditionsV1(conditions, persona), text: conditionsText(conditions, lang, persona) },
             null,
             2,
           ),

@@ -3,6 +3,7 @@ import { facts, type Fact, type Provenance } from "./facts";
 import { placeLabel } from "./readings";
 import { localName, placeBySlug, slugForName } from "./slugs";
 import type { Conditions } from "./types";
+import { ambientRisk, headline, type AmbientRisk, type Persona } from "./score";
 import { periodText } from "./heatnormals";
 import { put, t, type Lang, type Slots } from "./i18n";
 import { istClock, istDay } from "./ist";
@@ -143,6 +144,17 @@ export const PHRASES = {
     en: "In {place} now, the air quality is {band}, AQI {aqi}.",
     hi: "{place} में अभी वायु गुणवत्ता {band} है, AQI {aqi}।",
     kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಈಗ ವಾಯು ಗುಣಮಟ್ಟ {band}, AQI {aqi}.",
+  },
+  // When the read's headline hazard is not the air, the answer opens with it ("Severe cold").
+  "answer.lead": {
+    en: "{head} in {place} now.",
+    hi: "{place} में अभी {head} है।",
+    kn: "{place} ಪ್ರದೇಶದಲ್ಲಿ ಈಗ {head}.",
+  },
+  "answer.air.next": {
+    en: "The air quality is {band}, AQI {aqi}.",
+    hi: "वायु गुणवत्ता {band} है, AQI {aqi}।",
+    kn: "ವಾಯು ಗುಣಮಟ್ಟ {band}, AQI {aqi}.",
   },
   "answer.calm": {
     en: "It is {t}°C, with no rain and no official warning.",
@@ -516,12 +528,18 @@ const get = <K extends Fact["key"]>(fs: Fact[], key: K) =>
   fs.find((f) => f.key === key) as Extract<Fact, { key: K }> | undefined;
 
 /** The page's answer in two short sentences: the air, then the temperature, rain and warnings. */
-export function answerLine(fs: Fact[], place: string, lang: Lang): string {
+export function answerLine(fs: Fact[], place: string, lang: Lang, risk?: AmbientRisk): string {
   const air = get(fs, "air");
   const temp = get(fs, "temp");
   const rain = get(fs, "rain");
   const warned = !!get(fs, "warnings")?.here.length;
-  const first = air ? say("answer.air", lang, { place, band: BAND_PRED[air.band][lang], aqi: air.aqi }) : "";
+  // The read's headline hazard first when it is not the air ("Severe cold in Leh now.").
+  const h = risk && risk.driver !== "Air" ? headline(risk, (en) => t(en, lang)) : null;
+  const lead = h?.noun ? say("answer.lead", lang, { place, head: `${h.word} ${h.noun}` }) : "";
+  const airSays = air && { place, band: BAND_PRED[air.band][lang], aqi: air.aqi };
+  const first = [lead, airSays ? say(lead ? "answer.air.next" : "answer.air", lang, airSays) : ""]
+    .filter(Boolean)
+    .join(" ");
   if (!temp) return first;
   const tc = Math.round(temp.temp_c);
   const second = warned
@@ -537,6 +555,7 @@ export function answerLine(fs: Fact[], place: string, lang: Lang): string {
 export function conditionsText(
   c: Conditions,
   lang: Lang,
+  persona: Persona = "everyone",
 ): { lang: Lang; answer: string; readings: Partial<Record<Fact["key"], string>> } {
   const fs = facts(c);
   // A named place by the name the page gives it: its native-script name on hi/kn, where it has one.
@@ -546,7 +565,7 @@ export function conditionsText(
   const readings = Object.fromEntries(
     fs.map((f) => [f.key, f.key === "warnings" ? warningsText(f, place, lang) : factText(f, lang)]),
   );
-  return { lang, answer: answerLine(fs, place, lang), readings };
+  return { lang, answer: answerLine(fs, place, lang, ambientRisk(c, persona)), readings };
 }
 
 /** The Google title: the place and its AQI, then as much as fits. hi/kn add the Latin name. */

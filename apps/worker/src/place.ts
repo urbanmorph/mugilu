@@ -1,4 +1,5 @@
 import centroids from "../data/centroids.json";
+import shapes from "../data/district-shapes.json";
 import { haversineKm } from "./near";
 import type { Centroid } from "./types";
 
@@ -6,6 +7,40 @@ import type { Centroid } from "./types";
 // a city ward in the 16 metros, a district elsewhere. Self-contained (no
 // per-request API call); nearest-centroid is approximate near borders but fast.
 const GRID = centroids as Centroid[];
+const BY_ID = new Map(GRID.map((c) => [c.id, c]));
+
+// Each LGD district's outline (scripts/build-district-shapes.mts), simplified to about 1 km:
+// [minLon, minLat, maxLon, maxLat, ...rings] in thousandths of a degree, each ring a start
+// point then steps. Index i is centroid `lgd_districts-<i>`.
+const SHAPES = shapes as (number[] | null)[];
+const Q = 1000;
+
+/** Whether (x, y) lies inside a district's rings (even-odd, so holes and enclaves count). */
+function inside(shape: (number | number[])[], x: number, y: number): boolean {
+  let hit = false;
+  for (const ring of shape.slice(4) as number[][]) {
+    let [px, py] = [ring[0], ring[1]];
+    for (let k = 2; k <= ring.length; k += 2) {
+      // The last edge closes the ring back to its start.
+      const [qx, qy] = k < ring.length ? [px + ring[k], py + ring[k + 1]] : [ring[0], ring[1]];
+      if (qy > y !== py > y && x < ((qx - px) * (y - py)) / (qy - py) + px) hit = !hit;
+      [px, py] = [qx, qy];
+    }
+  }
+  return hit;
+}
+
+/** The district whose outline holds the point, or null (at sea, abroad, or in a ~1 km
+ *  sliver the simplified outlines miss). */
+export function districtAt(lat: number, lon: number): Centroid | null {
+  const [x, y] = [lon * Q, lat * Q];
+  for (let i = 0; i < SHAPES.length; i++) {
+    const s = SHAPES[i];
+    if (s && x >= s[0] && y >= s[1] && x <= s[2] && y <= s[3] && inside(s, x, y))
+      return BY_ID.get(`lgd_districts-${i}`) ?? null;
+  }
+  return null;
+}
 
 /** "Bengaluru" from a ward source_layer like "wards_bengaluru_gba". */
 function cityOf(sourceLayer: string): string | null {
@@ -60,7 +95,10 @@ function nearestCentroid(lat: number, lon: number): Centroid | null {
 
 /** Nearest admin label for a point: "Ward, City" in metros, "District, State" elsewhere. */
 export function nearestPlace(lat: number, lon: number): string | null {
-  const best = nearestCentroid(lat, lon);
+  const near = nearestCentroid(lat, lon);
+  // A metro point reads its nearest ward; elsewhere, the district that holds it (the nearest
+  // district centre misleads in big districts: Leh town's nearest centre is Kargil's).
+  const best = near?.level === "ward" ? near : (districtAt(lat, lon) ?? near);
   if (!best) return null;
   if (best.level === "ward") {
     const city = cityOf(best.source_layer);
@@ -79,5 +117,5 @@ export function nearestPlace(lat: number, lon: number): string | null {
 /** The state/UT a point falls in, via the nearest grid centroid (for points
  *  whose own source lacks a reliable state, e.g. the air stations). */
 export function stateAt(lat: number, lon: number): string | undefined {
-  return nearestCentroid(lat, lon)?.state ?? undefined;
+  return (districtAt(lat, lon) ?? nearestCentroid(lat, lon))?.state ?? undefined;
 }

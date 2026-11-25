@@ -49,7 +49,7 @@ export const TOOLS = [
           type: "string",
           enum: [...LANGS],
           description:
-            "The language of `text`, the sentences mugilu's page says about this place (default en). Quote them as they are.",
+            "The language of `structuredContent.text`, the sentences mugilu's page says about this place (default en). Quote them as they are. Only `text` is translated: the Markdown content block and the JSON fields stay in English.",
         },
       },
       required: ["place"],
@@ -140,7 +140,10 @@ async function conditionsAt(
   onUsage(usage);
   return {
     content: [{ type: "text", text: renderConditionsMarkdown(conditions, persona) }],
-    structuredContent: { ...serializeConditionsV1(conditions, persona), text: conditionsText(conditions, lang) },
+    structuredContent: {
+      ...serializeConditionsV1(conditions, persona),
+      text: conditionsText(conditions, lang, persona),
+    },
   };
 }
 

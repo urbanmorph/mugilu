@@ -296,7 +296,14 @@ export function renderConditionsPage(
     ),
   );
   const body = wrap(
-    hero(c, ambientPlate(risk, lang), whoSwitch(base, risk.persona, lang), answerLine(fs, short, lang), lang, native) +
+    hero(
+      c,
+      ambientPlate(risk, lang),
+      whoSwitch(base, risk.persona, lang),
+      answerLine(fs, short, lang, risk),
+      lang,
+      native,
+    ) +
       warningBand(c, lang) +
       readings +
       band(warningsPanel(fs, short, lang, past, named && lp(`/c/${named}/warnings`, lang))) +

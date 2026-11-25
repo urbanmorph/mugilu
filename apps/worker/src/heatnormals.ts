@@ -59,6 +59,13 @@ export function seasonalValue(values: number[], day: number, start = 0): number 
   return Number.isFinite(a) && Number.isFinite(b) ? a * (1 - f) + b * f : null;
 }
 
+// Over this average grid height (the high Himalaya: Ladakh, Lahaul and Spiti, Kinnaur, upper
+// Kishtwar) ERA5 runs several degrees cold even after the height correction, so a place there
+// gets no normal. Checked against IMD station normals for late November: Srinagar (grid 3,161 m)
+// 12 °C vs about 12-14, Shimla 13 vs 14-15, Darjeeling 15 vs 15; above the line Leh -4 vs about
+// 4, Kargil 1 vs 5, Manali 10 vs 13. 6 of the 793 named places fall above it.
+export const HIGH_GRID_M = 3500;
+
 /** A grid node's key in the normals file ("28.5,77.5"). */
 export const nodeKey = (lat: number, lon: number) => `${+lat.toFixed(3)},${+lon.toFixed(3)}`;
 
@@ -84,6 +91,7 @@ export function normalMaxAt(
   const day = noleapDay(date);
   let sum = 0;
   let wsum = 0;
+  let height = 0;
   for (const [dy, dx, w] of [
     [0, 0, (1 - fy) * (1 - fx)],
     [0, 1, (1 - fy) * fx],
@@ -95,9 +103,11 @@ export function normalMaxAt(
     if (v == null) continue; // not built yet, or a gap: drops out like a missing node
     const lapse = elevationM != null ? LAPSE_C_PER_M * (elevationM - node[0]) : 0;
     sum += w * (v / 10 - lapse);
+    height += w * node[0];
     wsum += w;
   }
-  return wsum >= 0.25 ? +(sum / wsum).toFixed(1) : null;
+  if (wsum < 0.25 || height / wsum > HIGH_GRID_M) return null;
+  return +(sum / wsum).toFixed(1);
 }
 
 export interface HeatVsNormal {

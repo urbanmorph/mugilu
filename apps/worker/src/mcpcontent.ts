@@ -52,7 +52,7 @@ ${THRESHOLD_ROWS.map((r) => `- ${r.hazard}: ${r.cells.join(" / ")}`).join("\n")}
 Heat takes the worst of feels-like, wet-bulb and WBGT.
 
 ## Today against normal
-Where it stands out, today's modelled high is compared with the 1991-2020 ERA5 normal for that place and time of year (heat_vs_normal); pages show it only when the two are 3 °C or more apart. It is not a heatwave declaration, which only IMD makes.
+Where it stands out, today's modelled high is compared with the 1991-2020 ERA5 normal for that place and time of year (heat_vs_normal); pages show it only when the two are 3 °C or more apart. In the high Himalaya (the ERA5 grid around the place averaging over 3,500 m: Ladakh, Lahaul and Spiti, Kinnaur) there is no normal (heat_vs_normal is null), because ERA5 runs several degrees cold there. It is not a heatwave declaration, which only IMD makes.
 
 ## Sources
 ${sourcesMarkdown()}

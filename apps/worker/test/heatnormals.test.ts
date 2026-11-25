@@ -136,3 +136,20 @@ test("heatVsNormalLine: above / below in plain words, no em-dash, never 'heatwav
     assert.doesNotMatch(s, /—|heat ?wave/i);
   }
 });
+
+// From ops, 25 Nov 2026: Leh read "+10 °C above normal" (normal -3 °C, IMD's late-November
+// mean high there is about +4). Where the ERA5 grid around a place averages over 3,500 m (the
+// high Himalaya), ERA5 runs several degrees cold even after the height correction, so there
+// is no normal. Measured against IMD station normals, late November: Srinagar (grid 3,161 m)
+// 12 vs about 12-14, Shimla 13 vs 14-15, Darjeeling 15 vs 15; Leh -4 vs 4, Kargil 1 vs 5,
+// Manali 10 vs 13.
+test("normalMaxAt: no normal where the grid around the place stands over 3,500 m (high Himalaya)", () => {
+  assert.equal(normalMaxAt(34.1526, 77.5771, "2026-11-25", 3500), null, "Leh");
+  assert.equal(normalMaxAt(32.3196, 78.0089, "2026-11-25", 3700), null, "Spiti");
+  assert.equal(normalMaxAt(34.5539, 76.1349, "2026-11-25", 2680), null, "Kargil");
+  assert.equal(normalMaxAt(32.2432, 77.1892, "2026-11-25", 2050), null, "Manali");
+  const near = (v: number | null, want: number) => assert.ok(v != null && Math.abs(v - want) <= 2, `${v} vs ${want}`);
+  near(normalMaxAt(34.0837, 74.7973, "2026-11-25", 1585), 12.5); // Srinagar
+  near(normalMaxAt(31.1048, 77.1734, "2026-11-25", 2200), 14); // Shimla
+  near(normalMaxAt(27.041, 88.2663, "2026-11-25", 2050), 15); // Darjeeling
+});
