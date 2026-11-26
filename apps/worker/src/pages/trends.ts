@@ -31,7 +31,7 @@ import { airLead, dayChart, dayLabel, HAZARD_DEFS, type HazardDef } from "../ui/
 export const TREND_SPANS = [7, 30, 90] as const;
 export type TrendSpan = (typeof TREND_SPANS)[number];
 
-interface Read {
+export interface Read {
   h: HazardDef;
   vals: (number | null)[];
   /** Days at each level, low to severe. */
@@ -42,7 +42,7 @@ interface Read {
   peak: { v: number; day: string } | null;
 }
 
-function read(h: HazardDef, tr: PlaceTrend): Read {
+export function read(h: HazardDef, tr: PlaceTrend): Read {
   const vals = tr[h.series];
   const counts = [0, 0, 0, 0];
   let peak: Read["peak"] = null;
@@ -53,6 +53,20 @@ function read(h: HazardDef, tr: PlaceTrend): Read {
   });
   const d = counts.reduce((a, b) => a + b, 0);
   return { h, vals, counts, d, worst: d ? Math.max(...counts.map((c, l) => (c ? l : 0))) : -1, peak };
+}
+
+/** Each hazard with data over the record, in the order of risk: the hazards that reached the
+ *  highest levels most often first. Shared by the page, its JSON and the MCP. */
+export function hazardReads(tr: PlaceTrend): Read[] {
+  return HAZARD_DEFS.map((h) => read(h, tr))
+    .filter((r) => r.d > 0)
+    .sort(
+      (a, b) =>
+        b.counts[3] - a.counts[3] ||
+        b.counts[2] - a.counts[2] ||
+        b.counts[1] - a.counts[1] ||
+        a.h.key.localeCompare(b.h.key),
+    );
 }
 
 /** The hazard's period in a sentence, then its peak. */
@@ -161,15 +175,7 @@ export function renderTrendsPage(place: SlugPlace, tr: PlaceTrend | null, span: 
     })),
   );
   const back = linkRow([[lp(`/c/${place.slug}`, lang), `← ${t("{place} now", lang, { place: name })}`]], "t-meta back");
-  const reads = tr ? HAZARD_DEFS.map((h) => read(h, tr)).filter((r) => r.d > 0) : [];
-  // The order of risk: the hazards that reached the highest levels most often first.
-  reads.sort(
-    (a, b) =>
-      b.counts[3] - a.counts[3] ||
-      b.counts[2] - a.counts[2] ||
-      b.counts[1] - a.counts[1] ||
-      a.h.key.localeCompare(b.h.key),
-  );
+  const reads = tr ? hazardReads(tr) : [];
   const raised = reads.filter((r) => r.worst > 0);
   const calm = reads.filter((r) => r.worst <= 0);
   const top = raised[0];

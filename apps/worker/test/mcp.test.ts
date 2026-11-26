@@ -130,7 +130,14 @@ function callEnv(body: unknown, mockEnv: Env): Promise<Response> {
 test("mcp tools/list: the five tools, with schemas + annotations", async () => {
   const j = (await (await call({ jsonrpc: "2.0", id: 10, method: "tools/list" })).json()) as any;
   const names = j.result.tools.map((t: any) => t.name).sort();
-  assert.deepEqual(names, ["active_warnings", "conditions_at", "national_now", "nearest_stations", "search_place"]);
+  assert.deepEqual(names, [
+    "active_warnings",
+    "conditions_at",
+    "national_now",
+    "nearest_stations",
+    "place_history",
+    "search_place",
+  ]);
   const c = j.result.tools.find((t: any) => t.name === "conditions_at");
   assert.deepEqual(c.inputSchema.required, ["place"]);
   assert.deepEqual(c.inputSchema.properties.lang.enum, ["en", "hi", "kn"], "the sentences' language");

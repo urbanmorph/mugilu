@@ -1,3 +1,4 @@
+import { RECORD_STARTS } from "./placehistory";
 import { allSlugPlaces } from "./slugs";
 import { allHubs } from "./states";
 import { sourcesMarkdown } from "./sources";
@@ -97,7 +98,7 @@ export function llmsTxt(siteUrl: string): string {
 > Informational only, not for medical, emergency, or safety-critical decisions.
 
 ## Entry points
-- [MCP server](${siteUrl}/mcp): for AI agents (JSON-RPC 2.0 over Streamable HTTP, MCP 2025-06-18; tools: conditions_at, search_place, nearest_stations, active_warnings, national_now; plus resources and prompts)
+- [MCP server](${siteUrl}/mcp): for AI agents (JSON-RPC 2.0 over Streamable HTTP, MCP 2025-06-18; tools: conditions_at, search_place, nearest_stations, active_warnings, national_now, place_history; plus resources and prompts)
 - [OpenAPI spec](${siteUrl}/openapi.json): the REST read API
 - [Conditions page](${siteUrl}/c/12.97,77.59): ${siteUrl}/c/{lat},{lon}, or a named place like ${siteUrl}/c/bengaluru
 - [Conditions JSON](${siteUrl}/c/12.97,77.59.json): ${siteUrl}/c/{lat},{lon}.json
@@ -262,6 +263,25 @@ export function openApiSpec(siteUrl: string): object {
               content: { "image/png": { schema: { type: "string", format: "binary" } } },
             },
           },
+        },
+      },
+      "/c/{slug}/trends.json": {
+        get: {
+          operationId: "placeHistory",
+          summary: `A named place's last 7, 30 or 90 days, a day at a time (mugilu.place_history v1). The record starts ${RECORD_STARTS}.`,
+          parameters: [
+            {
+              name: "slug",
+              in: "path",
+              required: true,
+              description: "A named place's slug, as in /c/{slug} (see /places).",
+              schema: { type: "string" },
+            },
+            { name: "days", in: "query", required: false, schema: { type: "integer", enum: [7, 30, 90], default: 30 } },
+          ],
+          responses: ok(
+            "Each day's air (measured: the middle of the stations within 25 km, each by its worst reading), feels-like high and low, rain, gust, UV, visibility and dust (modelled), and fires within 100 km; each hazard's days at each level and its peak, in the order of risk; attribution and disclaimer.",
+          ),
         },
       },
       "/near": {

@@ -15,7 +15,9 @@ import { loadGazetteer } from "./gazetteer";
 import { loadSnapshot, loadWarningsSnapshot } from "./snapshot";
 import { inForce } from "./sachet";
 import { loadMap } from "./indiamap";
-import { namesakeNote, namesakes } from "./slugs";
+import { namesakeNote, namesakes, placeBySlug, recordNear } from "./slugs";
+import { HISTORY_SPANS, loadPlaceHistory, placeHistoryText, RECORD_STARTS, type HistorySpan } from "./placehistory";
+import { BORROW_MAX_KM } from "./placedaily";
 import { warningMatches } from "./warnareas";
 
 // The MCP tool surface (Phase 2). Each tool is a thin adapter over an existing
@@ -34,7 +36,7 @@ export const TOOLS = [
   {
     name: "conditions_at",
     description:
-      "What the sky is doing at a place in India RIGHT NOW (not a forecast): air quality (CPCB AQI + pollutants), heat (feels-like, wet-bulb, WBGT), cold, rain, wind, fog/visibility, dust, fire-smoke, UV, and any official NDMA warning over that spot, plus an Ambient read naming the single worst hazard and the readings in order of risk (ambient.order). Separately, `heat_vs_normal`: today's modelled daily high (the model's estimate for the whole local day, so partly forecast early in the day) against the 1991-2020 normal there, null where there is no normal; `notable` is true when it stands out, and `text.readings.temp` says it in words. Pass `persona` to weight it for a vulnerable person. To target a specific ward, hospital, forest, river or boundary, resolve it with a geo source (e.g. the bharatlas MCP) first, then pass the coordinate here. Surface the returned `attribution` and `disclaimer`.",
+      "What the sky is doing at a place in India RIGHT NOW (not a forecast): air quality (CPCB AQI + pollutants), heat (feels-like, wet-bulb, WBGT), cold, rain, wind, fog/visibility, dust, fire-smoke, UV, and any official NDMA warning over that spot, plus an Ambient read naming the single worst hazard and the readings in order of risk (ambient.order). Separately, `heat_vs_normal`: today's modelled daily high (the model's estimate for the whole local day, so partly forecast early in the day) against the 1991-2020 normal there, null where there is no normal; `notable` is true when it stands out, and `text.readings.temp` says it in words. Pass `persona` to weight it for a vulnerable person. To target a specific ward, hospital, forest, river or boundary, resolve it with a geo source (e.g. the bharatlas MCP) first, then pass the coordinate here. For the past days (each day's air, heat, cold, rain, wind, fog, UV and fires, up to 90 days), use place_history. Surface the returned `attribution` and `disclaimer`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -53,6 +55,23 @@ export const TOOLS = [
           description:
             "The language of `structuredContent.text`, the sentences mugilu's page says about this place (default en). Quote them as they are. Only `text` is translated: the Markdown content block and the JSON fields stay in English.",
         },
+      },
+      required: ["place"],
+    },
+    annotations: READ_ONLY,
+  },
+  {
+    name: "place_history",
+    description: `The last 7, 30 or 90 days at a named place in India, a day at a time: the day's air (the middle of the stations within 25 km, each by its worst reading; measured), its highest and lowest feels-like temperature, rain, strongest gust, highest UV, lowest visibility and dust (modelled, Open-Meteo), and fires seen by satellite within 100 km (NASA FIRMS). Each hazard comes with its days at each level (low, moderate, high, severe) and its peak, in the order of risk, the same as the place's trends page. Limits: named places only (mugilu's 793 districts and cities; a coordinate borrows the nearest one within 25 km, and says how far); the record starts ${RECORD_STARTS}, so nothing before that; at most 90 days; daily summaries, not hourly readings. Surface the returned \`attribution\` and \`disclaimer\`.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        place: {
+          type: "string",
+          description:
+            'A named place ("Delhi", "Almora") or a coordinate "lat,lon" (the nearest named place within 25 km).',
+        },
+        days: { type: "number", enum: [...HISTORY_SPANS], description: "How many days back (default 30)." },
       },
       required: ["place"],
     },
@@ -216,6 +235,32 @@ async function activeWarnings(args: Record<string, unknown>, env: Env): Promise<
   };
 }
 
+async function placeHistoryTool(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
+  const place = str(args.place);
+  if (!place) return err('`place` is required (a name or "lat,lon").');
+  if (parseCoordQuery(place) === null) return err(outsideIndia(place));
+  const span = (HISTORY_SPANS as readonly number[]).includes(Number(args.days))
+    ? (Number(args.days) as HistorySpan)
+    : 30;
+  const loc = await resolveQuery(place, await loadGazetteer(env));
+  if (!loc) return err(`Could not find a place in India matching "${place}". Try search_place first.`);
+  // A named place's own record, else the nearest named place's within 25 km (as its page shows).
+  const near = loc.slug ? undefined : recordNear(loc.lat, loc.lon);
+  const p = loc.slug ? placeBySlug(loc.slug) : near && near.km <= BORROW_MAX_KM ? near.place : undefined;
+  if (!p)
+    return err(
+      `No daily record near "${place}": records are kept for mugilu's named places, and the nearest, ${near?.place.name ?? "none"}, is ${near ? Math.round(near.km) : "?"} km away (over ${BORROW_MAX_KM} km).`,
+    );
+  const h = await loadPlaceHistory(env, p, span);
+  if (!h) return err(`The record for ${p.name} is not ready yet; try again later.`);
+  const borrowed = near && !loc.slug ? { borrowed_km: +near.km.toFixed(1) } : {};
+  const lead = near && !loc.slug ? `The nearest named place, ${p.name}, ${near.km.toFixed(1)} km away.\n` : "";
+  return {
+    content: [{ type: "text", text: lead + placeHistoryText(h) }],
+    structuredContent: { ...h, ...borrowed },
+  };
+}
+
 async function nationalNow(args: Record<string, unknown>, env: Env): Promise<ToolResult> {
   const kind = str(args.kind) || "all";
   const want = (k: string) => kind === "all" || kind === k;
@@ -253,6 +298,7 @@ const RUN: Record<string, Run> = {
   nearest_stations: nearestStations,
   active_warnings: activeWarnings,
   national_now: nationalNow,
+  place_history: placeHistoryTool,
 };
 
 /** Dispatch a tools/call and record it: a counter per tool and one for errors (D1),

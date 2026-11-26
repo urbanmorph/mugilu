@@ -1,6 +1,7 @@
 import { cspReport, securityHeaders } from "./security";
 import { Timings } from "./timing";
 import { collectAirDaily } from "./airdaily";
+import { loadPlaceHistory } from "./placehistory";
 import { BORROW_MAX_KM, collectPlaceDaily, loadIndiaTrend, loadPlaceTrend, type PlaceTrend } from "./placedaily";
 import { refreshLatest } from "./refresh";
 import { refreshHierarchy } from "./hierarchy";
@@ -671,11 +672,33 @@ const app = {
     // Named place: /c/{slug}.{json,md,png} (e.g. /c/lucknow), keyword URLs for
     // search. Resolve the slug to its centroid and serve the same conditions.
     // A named place's trend page: /c/{slug}/trends(?days=7|90), every hazard a day at a time.
-    const trendsMatch = url.pathname.match(/^\/c\/([a-z0-9-]+)\/trends$/);
+    const trendsMatch = url.pathname.match(/^\/c\/([a-z0-9-]+)\/trends(\.json)?$/);
     if (trendsMatch) {
       const place = placeBySlug(trendsMatch[1]);
-      if (!place) return notFound(lang);
       const span = spanOf(url.searchParams.get("days"));
+      // The same record as data (placehistory.ts), for agents and anyone building on it.
+      if (trendsMatch[2]) {
+        const json = (status: number, body: unknown) =>
+          new Response(JSON.stringify(body, null, 2), {
+            status,
+            headers: { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*" },
+          });
+        if (!place) return json(404, { error: "not a named place; see /places" });
+        return cached(
+          TRENDS_EDGE_TTL,
+          async () => {
+            const h = await loadPlaceHistory(env, place, span).catch((e) => {
+              console.error(`[place-daily] history for ${place.slug}: ${reason(e)}`);
+              return null;
+            });
+            return h
+              ? { res: cachedResponse(JSON.stringify(h, null, 2), "application/json; charset=utf-8"), store: true }
+              : { res: json(503, { error: "the record is not ready; try again later" }), store: false };
+          },
+          { days: span === 30 ? undefined : String(span) },
+        );
+      }
+      if (!place) return notFound(lang);
       return cached(
         TRENDS_EDGE_TTL,
         async () => {

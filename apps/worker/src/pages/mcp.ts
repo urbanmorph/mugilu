@@ -17,6 +17,7 @@ const TOOL_ICON: Record<string, IconName> = {
   nearest_stations: "target",
   active_warnings: "warn",
   national_now: "ruler",
+  place_history: "clock",
 };
 
 /** A tool's first sentence, from the list the server answers with, so this page can't drift
