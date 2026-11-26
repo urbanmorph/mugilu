@@ -68,7 +68,14 @@ test("/mcp: the page for a browser, JSON-RPC for a client", async () => {
   });
   assert.equal(res.status, 200);
   const body = await res.text();
-  for (const tool of ["conditions_at", "search_place", "nearest_stations", "active_warnings", "national_now"])
+  for (const tool of [
+    "conditions_at",
+    "search_place",
+    "nearest_stations",
+    "active_warnings",
+    "national_now",
+    "place_history",
+  ])
     assert.ok(body.includes(tool), tool);
 });
 

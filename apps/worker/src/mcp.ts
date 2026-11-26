@@ -1,3 +1,4 @@
+import { RECORD_STARTS } from "./placehistory";
 import type { Env } from "./index";
 import { recordMcpClient, requestCaller } from "./metrics";
 import { TOOLS, callTool } from "./mcptools";
@@ -21,13 +22,13 @@ const SERVER_INFO = { name: "mugilu", version: SERVER_JSON.version, title: "mugi
 // reach the model before any tool is called (the "humans in the loop" commitment).
 export const INSTRUCTIONS = `mugilu: the open sky of India. Give any place in India and get what the sky is doing to you right now: air quality (CPCB AQI + the pollutant breakdown), heat (temperature, feels-like, wet-bulb, WBGT, and today's high against the 1991-2020 normal), cold, rain, wind, fog and visibility, dust, fire/crop-burn smoke (NASA FIRMS), UV, and any official NDMA/IMD warning over that spot, plus an "Ambient" read that names the single worst hazard for you in plain words. Readings come in order of risk (ambient.order); lead with the Ambient read, then follow that order.
 
-Scope and limits: India only. Readings are CURRENT, not a forecast. Informational only, not for medical, emergency, or safety-critical decisions; for official hazard warnings, NDMA and IMD are the authoritative channels.
+Scope and limits: India only. Readings are CURRENT, not a forecast; for the past, place_history gives a named place's last 7, 30 or 90 days, a day at a time (the record starts ${RECORD_STARTS}). Informational only, not for medical, emergency, or safety-critical decisions; for official hazard warnings, NDMA and IMD are the authoritative channels.
 
 For a vulnerable person: pass persona (one of asthma, elderly, child, outdoor, heart) to weight the Ambient read for who is actually affected (e.g. an asthmatic sees poor air rank above heat).
 
 Attribution: every response carries "attribution" and "disclaimer" fields. Please surface them. Data sources: ${SOURCES.map((s) => `${s.layer}: ${s.text}`).join("; ")}. Code is MIT; each source keeps its own licence.
 
-Tools: use conditions_at for the sky at a place (by name or coordinate); search_place to disambiguate a name; nearest_stations to see how close real measurement is; active_warnings for official alerts; national_now for the worst-air or hottest picture across India.
+Tools: use conditions_at for the sky at a place (by name or coordinate); search_place to disambiguate a name; nearest_stations to see how close real measurement is; active_warnings for official alerts; national_now for the worst-air or hottest picture across India; place_history for the days before today.
 
 Composing with geography: mugilu tells you what the sky is doing. It does not resolve sub-city wards, hospitals, forests, rivers, highways, or administrative/zone boundaries. For those, pair mugilu with the bharatlas MCP (India's open geo data): let bharatlas find the place or feature and its coordinate, then ask mugilu for the sky over it.`;
 
